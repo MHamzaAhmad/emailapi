@@ -4,6 +4,8 @@ import type {
     CreateUserRequest,
     CreateUserResponse,
     UpdateUserRequest,
+    ListUsersResponse,
+    ListUsersRequest,
 } from '@/types';
 
 /**
@@ -11,6 +13,12 @@ import type {
  * Handles all user-related API operations
  */
 export const userService = {
+    /**
+     * List all users
+     */
+    list: async (params?: ListUsersRequest): Promise<ListUsersResponse> => {
+        return api.get<ListUsersResponse>('/v1/users', { params });
+    },
     /**
      * Create a new user
      */

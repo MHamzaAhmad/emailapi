@@ -4,9 +4,6 @@
 up:
 	docker compose -f tools/docker-compose.yaml up -d
 
-dev: 
-	docker compose -f tools/docker-compose.yaml up --build
-
 down:
 	docker compose -f tools/docker-compose.yaml down
 
@@ -46,7 +43,7 @@ test-all:
 
 # Development
 dev-api:
-	cd apps/api && go run main.go
+	cd apps/api && air
 
 dev-web:
 	cd apps/web && pnpm dev

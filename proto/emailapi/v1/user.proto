@@ -31,6 +31,13 @@ service UserService {
       body: "*"
     };
   }
+
+  // ListUsers lists all users.
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {
+      get: "/v1/users"
+    };
+  }
 }
 
 enum UserRole {
@@ -68,4 +75,16 @@ message UpdateUserRequest {
   optional string name = 3;
   optional UserRole role = 4;
   optional bool is_active = 5;
+}
+
+message ListUsersRequest {
+  int32 page_size = 1;
+  string page_token = 2; // Not used yet based on internal service, but standard proto practice
+  int32 offset = 3;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  int32 total_count = 2;
+  string next_page_token = 3;
 }

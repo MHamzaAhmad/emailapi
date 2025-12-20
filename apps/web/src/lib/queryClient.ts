@@ -55,6 +55,7 @@ export const queryKeys = {
     // User keys
     users: {
         all: ['users'] as const,
+        list: (params?: any) => [...queryKeys.users.all, 'list', params] as const,
         me: () => [...queryKeys.users.all, 'me'] as const,
         detail: (id: string) => [...queryKeys.users.all, id] as const,
     },

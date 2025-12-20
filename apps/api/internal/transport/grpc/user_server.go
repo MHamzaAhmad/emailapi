@@ -92,6 +92,38 @@ func (s *UserServer) UpdateUser(ctx context.Context, req *emailapiv1.UpdateUserR
 	return toProtoUser(user), nil
 }
 
+// ListUsers handles the ListUsers RPC.
+func (s *UserServer) ListUsers(ctx context.Context, req *emailapiv1.ListUsersRequest) (*emailapiv1.ListUsersResponse, error) {
+	_, ok := ctx.Value("user_id").(string)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
+	}
+
+	// In a real scenario, check for admin role here.
+	// For now, we assume any authenticated user can list users (or restrict to admin in service/middleware).
+
+	limit := int(req.PageSize)
+	if limit <= 0 {
+		limit = 20
+	}
+	offset := int(req.Offset)
+
+	users, err := s.svc.List(ctx, limit, offset)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to list users: %v", err)
+	}
+
+	protoUsers := make([]*emailapiv1.User, len(users))
+	for i, u := range users {
+		protoUsers[i] = toProtoUser(u)
+	}
+
+	return &emailapiv1.ListUsersResponse{
+		Users:      protoUsers,
+		TotalCount: int32(len(protoUsers)), // Approximate since service doesn't return total
+	}, nil
+}
+
 func toRole(r emailapiv1.UserRole) domain.UserRole {
 	switch r {
 	case emailapiv1.UserRole_USER_ROLE_ADMIN:

@@ -18,6 +18,7 @@ import (
 	emailapiv1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/config"
 	"github.com/emailapi/api/internal/external/ses"
+	middleware "github.com/emailapi/api/internal/middleware"
 	"github.com/emailapi/api/internal/repository/postgres"
 	"github.com/emailapi/api/internal/service"
 	grpctransport "github.com/emailapi/api/internal/transport/grpc"
@@ -75,7 +76,13 @@ func runGRPCServer(cfg *config.Config, svc *service.Service) error {
 		return err
 	}
 
-	grpcServer := grpc.NewServer()
+	// Create auth interceptor
+	authInterceptor := middleware.NewAuthInterceptor(svc.APIKey)
+
+	// Create gRPC server with auth interceptor
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(authInterceptor.Unary()),
+	)
 
 	// Register services
 	emailapiv1.RegisterUserServiceServer(grpcServer, grpctransport.NewUserServer(svc.User))
@@ -113,11 +120,32 @@ func runHTTPServer(cfg *config.Config) error {
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      mux,
+		Handler:      corsMiddleware(mux),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 	}
 
 	log.Printf("HTTP server listening on :%s (gRPC-Gateway)", cfg.Port)
 	return srv.ListenAndServe()
+}
+
+// corsMiddleware adds CORS headers to allow cross-origin requests from the frontend.
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*") // In production, specify exact origins
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept")
+		w.Header().Set("Access-Control-Expose-Headers", "Content-Length, Content-Type")
+		w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
+
+		// Handle preflight requests
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		// Call the next handler
+		next.ServeHTTP(w, r)
+	})
 }

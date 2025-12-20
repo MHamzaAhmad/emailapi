@@ -388,6 +388,126 @@ func (x *UpdateUserRequest) GetIsActive() bool {
 	return false
 }
 
+type ListUsersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"` // Not used yet based on internal service, but standard proto practice
+	Offset        int32                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUsersRequest) Reset() {
+	*x = ListUsersRequest{}
+	mi := &file_v1_user_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUsersRequest) ProtoMessage() {}
+
+func (x *ListUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_user_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUsersRequest.ProtoReflect.Descriptor instead.
+func (*ListUsersRequest) Descriptor() ([]byte, []int) {
+	return file_v1_user_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ListUsersRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListUsersRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+func (x *ListUsersRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+type ListUsersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*User                `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	TotalCount    int32                  `protobuf:"varint,2,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,3,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUsersResponse) Reset() {
+	*x = ListUsersResponse{}
+	mi := &file_v1_user_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUsersResponse) ProtoMessage() {}
+
+func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_user_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUsersResponse.ProtoReflect.Descriptor instead.
+func (*ListUsersResponse) Descriptor() ([]byte, []int) {
+	return file_v1_user_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ListUsersResponse) GetUsers() []*User {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
+func (x *ListUsersResponse) GetTotalCount() int32 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
+}
+
+func (x *ListUsersResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
 var File_v1_user_proto protoreflect.FileDescriptor
 
 const file_v1_user_proto_rawDesc = "" +
@@ -421,17 +541,28 @@ const file_v1_user_proto_rawDesc = "" +
 	"\x05_nameB\a\n" +
 	"\x05_roleB\f\n" +
 	"\n" +
-	"_is_active*P\n" +
+	"_is_active\"f\n" +
+	"\x10ListUsersRequest\x12\x1b\n" +
+	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x05R\x06offset\"\x85\x01\n" +
+	"\x11ListUsersResponse\x12'\n" +
+	"\x05users\x18\x01 \x03(\v2\x11.emailapi.v1.UserR\x05users\x12\x1f\n" +
+	"\vtotal_count\x18\x02 \x01(\x05R\n" +
+	"totalCount\x12&\n" +
+	"\x0fnext_page_token\x18\x03 \x01(\tR\rnextPageToken*P\n" +
 	"\bUserRole\x12\x19\n" +
 	"\x15USER_ROLE_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fUSER_ROLE_ADMIN\x10\x01\x12\x14\n" +
-	"\x10USER_ROLE_MEMBER\x10\x022\xad\x02\n" +
+	"\x10USER_ROLE_MEMBER\x10\x022\x8c\x03\n" +
 	"\vUserService\x12c\n" +
 	"\n" +
 	"CreateUser\x12\x1e.emailapi.v1.CreateUserRequest\x1a\x1f.emailapi.v1.CreateUserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/users\x12]\n" +
 	"\x0eGetCurrentUser\x12\".emailapi.v1.GetCurrentUserRequest\x1a\x11.emailapi.v1.User\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/users/me\x12Z\n" +
 	"\n" +
-	"UpdateUser\x12\x1e.emailapi.v1.UpdateUserRequest\x1a\x11.emailapi.v1.User\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*2\x0e/v1/users/{id}B\x94\x01\n" +
+	"UpdateUser\x12\x1e.emailapi.v1.UpdateUserRequest\x1a\x11.emailapi.v1.User\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*2\x0e/v1/users/{id}\x12]\n" +
+	"\tListUsers\x12\x1d.emailapi.v1.ListUsersRequest\x1a\x1e.emailapi.v1.ListUsersResponse\"\x11\x82\xd3\xe4\x93\x02\v\x12\t/v1/usersB\x94\x01\n" +
 	"\x0fcom.emailapi.v1B\tUserProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
 var (
@@ -447,7 +578,7 @@ func file_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_v1_user_proto_goTypes = []any{
 	(UserRole)(0),                 // 0: emailapi.v1.UserRole
 	(*CreateUserRequest)(nil),     // 1: emailapi.v1.CreateUserRequest
@@ -455,26 +586,31 @@ var file_v1_user_proto_goTypes = []any{
 	(*GetCurrentUserRequest)(nil), // 3: emailapi.v1.GetCurrentUserRequest
 	(*User)(nil),                  // 4: emailapi.v1.User
 	(*UpdateUserRequest)(nil),     // 5: emailapi.v1.UpdateUserRequest
-	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
+	(*ListUsersRequest)(nil),      // 6: emailapi.v1.ListUsersRequest
+	(*ListUsersResponse)(nil),     // 7: emailapi.v1.ListUsersResponse
+	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
 }
 var file_v1_user_proto_depIdxs = []int32{
-	0, // 0: emailapi.v1.CreateUserRequest.role:type_name -> emailapi.v1.UserRole
-	4, // 1: emailapi.v1.CreateUserResponse.user:type_name -> emailapi.v1.User
-	0, // 2: emailapi.v1.User.role:type_name -> emailapi.v1.UserRole
-	6, // 3: emailapi.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	6, // 4: emailapi.v1.User.updated_at:type_name -> google.protobuf.Timestamp
-	0, // 5: emailapi.v1.UpdateUserRequest.role:type_name -> emailapi.v1.UserRole
-	1, // 6: emailapi.v1.UserService.CreateUser:input_type -> emailapi.v1.CreateUserRequest
-	3, // 7: emailapi.v1.UserService.GetCurrentUser:input_type -> emailapi.v1.GetCurrentUserRequest
-	5, // 8: emailapi.v1.UserService.UpdateUser:input_type -> emailapi.v1.UpdateUserRequest
-	2, // 9: emailapi.v1.UserService.CreateUser:output_type -> emailapi.v1.CreateUserResponse
-	4, // 10: emailapi.v1.UserService.GetCurrentUser:output_type -> emailapi.v1.User
-	4, // 11: emailapi.v1.UserService.UpdateUser:output_type -> emailapi.v1.User
-	9, // [9:12] is the sub-list for method output_type
-	6, // [6:9] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	0,  // 0: emailapi.v1.CreateUserRequest.role:type_name -> emailapi.v1.UserRole
+	4,  // 1: emailapi.v1.CreateUserResponse.user:type_name -> emailapi.v1.User
+	0,  // 2: emailapi.v1.User.role:type_name -> emailapi.v1.UserRole
+	8,  // 3: emailapi.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	8,  // 4: emailapi.v1.User.updated_at:type_name -> google.protobuf.Timestamp
+	0,  // 5: emailapi.v1.UpdateUserRequest.role:type_name -> emailapi.v1.UserRole
+	4,  // 6: emailapi.v1.ListUsersResponse.users:type_name -> emailapi.v1.User
+	1,  // 7: emailapi.v1.UserService.CreateUser:input_type -> emailapi.v1.CreateUserRequest
+	3,  // 8: emailapi.v1.UserService.GetCurrentUser:input_type -> emailapi.v1.GetCurrentUserRequest
+	5,  // 9: emailapi.v1.UserService.UpdateUser:input_type -> emailapi.v1.UpdateUserRequest
+	6,  // 10: emailapi.v1.UserService.ListUsers:input_type -> emailapi.v1.ListUsersRequest
+	2,  // 11: emailapi.v1.UserService.CreateUser:output_type -> emailapi.v1.CreateUserResponse
+	4,  // 12: emailapi.v1.UserService.GetCurrentUser:output_type -> emailapi.v1.User
+	4,  // 13: emailapi.v1.UserService.UpdateUser:output_type -> emailapi.v1.User
+	7,  // 14: emailapi.v1.UserService.ListUsers:output_type -> emailapi.v1.ListUsersResponse
+	11, // [11:15] is the sub-list for method output_type
+	7,  // [7:11] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_v1_user_proto_init() }
@@ -489,7 +625,7 @@ func file_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_user_proto_rawDesc), len(file_v1_user_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

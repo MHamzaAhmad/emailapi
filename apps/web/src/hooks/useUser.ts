@@ -1,7 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '@/services';
 import { queryKeys } from '@/lib/queryClient';
-import type { UpdateUserRequest, User } from '@/types';
+import type { UpdateUserRequest, ListUsersRequest, User } from '@/types';
+
+/**
+ * Hook to list users
+ */
+export const useUsers = (params?: ListUsersRequest) => {
+    return useQuery({
+        queryKey: queryKeys.users.list(params),
+        queryFn: () => userService.list(params),
+    });
+};
 
 /**
  * Hook to get the current authenticated user

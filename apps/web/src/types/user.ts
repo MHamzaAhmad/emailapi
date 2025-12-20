@@ -31,3 +31,15 @@ export interface CreateUserResponse {
     user: User;
     message: string;
 }
+
+export interface ListUsersRequest {
+    pageSize?: number;
+    pageToken?: string;
+    offset?: number;
+}
+
+export interface ListUsersResponse {
+    users: User[];
+    totalCount: number;
+    nextPageToken: string;
+}
