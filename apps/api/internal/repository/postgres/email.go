@@ -2,137 +2,159 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	db "github.com/emailapi/api/internal/db"
 	"github.com/emailapi/api/internal/domain"
 )
 
-// EmailRepository implements repository.EmailRepository using PostgreSQL.
+// EmailRepository implements repository.EmailRepository using sqlc-generated queries.
 type EmailRepository struct {
-	pool *pgxpool.Pool
+	pool    *pgxpool.Pool
+	queries *db.Queries
 }
 
-// Create stores a new email.
+// NewEmailRepository creates a new EmailRepository.
+func NewEmailRepository(pool *pgxpool.Pool) *EmailRepository {
+	return &EmailRepository{
+		pool:    pool,
+		queries: db.New(pool),
+	}
+}
+
+// Create stores a new email using sqlc.
 func (r *EmailRepository) Create(ctx context.Context, email *domain.Email) error {
-	query := `
-		INSERT INTO emails (id, from_address, to_addresses, cc_addresses, bcc_addresses, 
-			subject, body, html_body, status, provider_id, user_id, webhook_id, 
-			metadata, scheduled_at, sent_at, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-	`
+	metadata, err := json.Marshal(email.Metadata)
+	if err != nil {
+		return fmt.Errorf("failed to marshal metadata: %w", err)
+	}
 
-	now := time.Now()
-	email.CreatedAt = now
-	email.UpdatedAt = now
-
-	_, err := r.pool.Exec(ctx, query,
-		email.ID, email.From, email.To, email.Cc, email.Bcc,
-		email.Subject, email.Body, email.HTML, email.Status,
-		email.ProviderID, email.UserID, email.WebhookID, email.Metadata,
-		email.ScheduledAt, email.SentAt, email.CreatedAt, email.UpdatedAt,
-	)
+	result, err := r.queries.CreateEmail(ctx, db.CreateEmailParams{
+		ID:           email.ID,
+		FromAddress:  email.From,
+		ToAddresses:  email.To,
+		CcAddresses:  email.Cc,
+		BccAddresses: email.Bcc,
+		Subject:      email.Subject,
+		Body:         toPgText(email.Body),
+		HtmlBody:     toPgText(email.HTML),
+		Status:       string(email.Status),
+		ProviderID:   toPgText(email.ProviderID),
+		UserID:       email.UserID,
+		WebhookID:    toPgText(email.WebhookID),
+		Metadata:     metadata,
+		ScheduledAt:  toPgTimestamp(email.ScheduledAt),
+		SentAt:       toPgTimestamp(email.SentAt),
+		CreatedAt:    toPgTimestampNow(),
+		UpdatedAt:    toPgTimestampNow(),
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create email: %w", err)
 	}
 
+	email.CreatedAt = result.CreatedAt.Time
+	email.UpdatedAt = result.UpdatedAt.Time
 	return nil
 }
 
-// GetByID retrieves an email by its ID.
+// GetByID retrieves an email by its ID using sqlc.
 func (r *EmailRepository) GetByID(ctx context.Context, id string) (*domain.Email, error) {
-	query := `
-		SELECT id, from_address, to_addresses, cc_addresses, bcc_addresses,
-			subject, body, html_body, status, provider_id, user_id, webhook_id,
-			metadata, scheduled_at, sent_at, created_at, updated_at
-		FROM emails
-		WHERE id = $1
-	`
-
-	var email domain.Email
-	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&email.ID, &email.From, &email.To, &email.Cc, &email.Bcc,
-		&email.Subject, &email.Body, &email.HTML, &email.Status,
-		&email.ProviderID, &email.UserID, &email.WebhookID, &email.Metadata,
-		&email.ScheduledAt, &email.SentAt, &email.CreatedAt, &email.UpdatedAt,
-	)
+	row, err := r.queries.GetEmailByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get email: %w", err)
 	}
-
-	return &email, nil
+	return toDomainEmail(row), nil
 }
 
-// GetByUserID retrieves all emails for a user.
+// GetByUserID retrieves all emails for a user using sqlc.
 func (r *EmailRepository) GetByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.Email, error) {
-	query := `
-		SELECT id, from_address, to_addresses, cc_addresses, bcc_addresses,
-			subject, body, html_body, status, provider_id, user_id, webhook_id,
-			metadata, scheduled_at, sent_at, created_at, updated_at
-		FROM emails
-		WHERE user_id = $1
-		ORDER BY created_at DESC
-		LIMIT $2 OFFSET $3
-	`
-
-	rows, err := r.pool.Query(ctx, query, userID, limit, offset)
+	rows, err := r.queries.GetEmailsByUserID(ctx, db.GetEmailsByUserIDParams{
+		UserID: userID,
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to query emails: %w", err)
 	}
-	defer rows.Close()
 
-	var emails []*domain.Email
-	for rows.Next() {
-		var email domain.Email
-		err := rows.Scan(
-			&email.ID, &email.From, &email.To, &email.Cc, &email.Bcc,
-			&email.Subject, &email.Body, &email.HTML, &email.Status,
-			&email.ProviderID, &email.UserID, &email.WebhookID, &email.Metadata,
-			&email.ScheduledAt, &email.SentAt, &email.CreatedAt, &email.UpdatedAt,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan email: %w", err)
-		}
-		emails = append(emails, &email)
+	emails := make([]*domain.Email, len(rows))
+	for i, row := range rows {
+		emails[i] = toDomainEmail(row)
 	}
-
 	return emails, nil
 }
 
-// Update updates an existing email.
+// Update updates an existing email using sqlc.
 func (r *EmailRepository) Update(ctx context.Context, email *domain.Email) error {
-	query := `
-		UPDATE emails
-		SET from_address = $2, to_addresses = $3, cc_addresses = $4, bcc_addresses = $5,
-			subject = $6, body = $7, html_body = $8, status = $9, provider_id = $10,
-			webhook_id = $11, metadata = $12, scheduled_at = $13, sent_at = $14, updated_at = $15
-		WHERE id = $1
-	`
+	metadata, err := json.Marshal(email.Metadata)
+	if err != nil {
+		return fmt.Errorf("failed to marshal metadata: %w", err)
+	}
 
-	email.UpdatedAt = time.Now()
-
-	_, err := r.pool.Exec(ctx, query,
-		email.ID, email.From, email.To, email.Cc, email.Bcc,
-		email.Subject, email.Body, email.HTML, email.Status, email.ProviderID,
-		email.WebhookID, email.Metadata, email.ScheduledAt, email.SentAt, email.UpdatedAt,
-	)
+	result, err := r.queries.UpdateEmail(ctx, db.UpdateEmailParams{
+		ID:           email.ID,
+		FromAddress:  email.From,
+		ToAddresses:  email.To,
+		CcAddresses:  email.Cc,
+		BccAddresses: email.Bcc,
+		Subject:      email.Subject,
+		Body:         toPgText(email.Body),
+		HtmlBody:     toPgText(email.HTML),
+		Status:       string(email.Status),
+		ProviderID:   toPgTextPtr(email.ProviderID),
+		WebhookID:    toPgTextPtr(email.WebhookID),
+		Metadata:     metadata,
+		ScheduledAt:  toPgTimestamp(email.ScheduledAt),
+		SentAt:       toPgTimestamp(email.SentAt),
+		UpdatedAt:    toPgTimestampNow(),
+	})
 	if err != nil {
 		return fmt.Errorf("failed to update email: %w", err)
 	}
 
+	email.UpdatedAt = result.UpdatedAt.Time
 	return nil
 }
 
-// UpdateStatus updates only the status of an email.
+// UpdateStatus updates only the status of an email using sqlc.
 func (r *EmailRepository) UpdateStatus(ctx context.Context, id string, status domain.EmailStatus) error {
-	query := `UPDATE emails SET status = $2, updated_at = $3 WHERE id = $1`
-
-	_, err := r.pool.Exec(ctx, query, id, status, time.Now())
+	err := r.queries.UpdateEmailStatus(ctx, db.UpdateEmailStatusParams{
+		ID:     id,
+		Status: string(status),
+	})
 	if err != nil {
 		return fmt.Errorf("failed to update email status: %w", err)
 	}
-
 	return nil
+}
+
+// toDomainEmail converts a sqlc Email to a domain Email.
+func toDomainEmail(e db.Email) *domain.Email {
+	var metadata map[string]string
+	if e.Metadata != nil {
+		_ = json.Unmarshal(e.Metadata, &metadata)
+	}
+
+	return &domain.Email{
+		ID:          e.ID,
+		From:        e.FromAddress,
+		To:          e.ToAddresses,
+		Cc:          e.CcAddresses,
+		Bcc:         e.BccAddresses,
+		Subject:     e.Subject,
+		Body:        fromPgText(e.Body),
+		HTML:        fromPgText(e.HtmlBody),
+		Status:      domain.EmailStatus(e.Status),
+		ProviderID:  fromPgText(e.ProviderID),
+		UserID:      e.UserID,
+		WebhookID:   fromPgText(e.WebhookID),
+		Metadata:    toMetadata(metadata),
+		ScheduledAt: fromPgTimestamp(e.ScheduledAt),
+		SentAt:      fromPgTimestamp(e.SentAt),
+		CreatedAt:   e.CreatedAt.Time,
+		UpdatedAt:   e.UpdatedAt.Time,
+	}
 }

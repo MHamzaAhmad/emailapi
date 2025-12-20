@@ -3,218 +3,198 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	db "github.com/emailapi/api/internal/db"
 	"github.com/emailapi/api/internal/domain"
 )
 
-// WebhookRepository implements repository.WebhookRepository using PostgreSQL.
+// WebhookRepository implements repository.WebhookRepository using sqlc-generated queries.
 type WebhookRepository struct {
-	pool *pgxpool.Pool
+	pool    *pgxpool.Pool
+	queries *db.Queries
 }
 
-// Create stores a new webhook.
+// NewWebhookRepository creates a new WebhookRepository.
+func NewWebhookRepository(pool *pgxpool.Pool) *WebhookRepository {
+	return &WebhookRepository{
+		pool:    pool,
+		queries: db.New(pool),
+	}
+}
+
+// Create stores a new webhook using sqlc.
 func (r *WebhookRepository) Create(ctx context.Context, webhook *domain.Webhook) error {
-	query := `
-		INSERT INTO webhooks (id, user_id, name, url, secret_hash, events, is_active, 
-			retry_count, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	`
-
-	now := time.Now()
-	webhook.CreatedAt = now
-	webhook.UpdatedAt = now
-
-	_, err := r.pool.Exec(ctx, query,
-		webhook.ID, webhook.UserID, webhook.Name, webhook.URL, webhook.Secret,
-		webhook.Events, webhook.IsActive, webhook.RetryCount,
-		webhook.CreatedAt, webhook.UpdatedAt,
-	)
+	result, err := r.queries.CreateWebhook(ctx, db.CreateWebhookParams{
+		ID:         webhook.ID,
+		UserID:     webhook.UserID,
+		Name:       webhook.Name,
+		Url:        webhook.URL,
+		SecretHash: webhook.Secret,
+		Events:     toStringArray(webhook.Events),
+		IsActive:   webhook.IsActive,
+		RetryCount: int32(webhook.RetryCount),
+		CreatedAt:  toPgTimestampNow(),
+		UpdatedAt:  toPgTimestampNow(),
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create webhook: %w", err)
 	}
 
+	webhook.CreatedAt = result.CreatedAt.Time
+	webhook.UpdatedAt = result.UpdatedAt.Time
 	return nil
 }
 
-// GetByID retrieves a webhook by its ID.
+// GetByID retrieves a webhook by its ID using sqlc.
 func (r *WebhookRepository) GetByID(ctx context.Context, id string) (*domain.Webhook, error) {
-	query := `
-		SELECT id, user_id, name, url, events, is_active, retry_count,
-			last_success, last_failure, created_at, updated_at
-		FROM webhooks
-		WHERE id = $1
-	`
-
-	var webhook domain.Webhook
-	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&webhook.ID, &webhook.UserID, &webhook.Name, &webhook.URL,
-		&webhook.Events, &webhook.IsActive, &webhook.RetryCount,
-		&webhook.LastSuccess, &webhook.LastFailure,
-		&webhook.CreatedAt, &webhook.UpdatedAt,
-	)
+	row, err := r.queries.GetWebhookByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get webhook: %w", err)
 	}
-
-	return &webhook, nil
+	return toDomainWebhookFromRow(row), nil
 }
 
-// GetByUserID retrieves all webhooks for a user.
+// GetByUserID retrieves all webhooks for a user using sqlc.
 func (r *WebhookRepository) GetByUserID(ctx context.Context, userID string) ([]*domain.Webhook, error) {
-	query := `
-		SELECT id, user_id, name, url, events, is_active, retry_count,
-			last_success, last_failure, created_at, updated_at
-		FROM webhooks
-		WHERE user_id = $1
-		ORDER BY created_at DESC
-	`
-
-	rows, err := r.pool.Query(ctx, query, userID)
+	rows, err := r.queries.GetWebhooksByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query webhooks: %w", err)
 	}
-	defer rows.Close()
 
-	var webhooks []*domain.Webhook
-	for rows.Next() {
-		var webhook domain.Webhook
-		err := rows.Scan(
-			&webhook.ID, &webhook.UserID, &webhook.Name, &webhook.URL,
-			&webhook.Events, &webhook.IsActive, &webhook.RetryCount,
-			&webhook.LastSuccess, &webhook.LastFailure,
-			&webhook.CreatedAt, &webhook.UpdatedAt,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan webhook: %w", err)
-		}
-		webhooks = append(webhooks, &webhook)
+	webhooks := make([]*domain.Webhook, len(rows))
+	for i, row := range rows {
+		webhooks[i] = toDomainWebhookFromRow(row)
 	}
-
 	return webhooks, nil
 }
 
-// GetActiveByEvent retrieves all active webhooks for a specific event type.
+// GetActiveByEvent retrieves all active webhooks for a specific event type using sqlc.
 func (r *WebhookRepository) GetActiveByEvent(ctx context.Context, eventType domain.WebhookEventType) ([]*domain.Webhook, error) {
-	query := `
-		SELECT id, user_id, name, url, events, is_active, retry_count,
-			last_success, last_failure, created_at, updated_at
-		FROM webhooks
-		WHERE is_active = true AND $1 = ANY(events)
-	`
-
-	rows, err := r.pool.Query(ctx, query, eventType)
+	rows, err := r.queries.GetActiveWebhooksByEvent(ctx, string(eventType))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query webhooks by event: %w", err)
 	}
-	defer rows.Close()
 
-	var webhooks []*domain.Webhook
-	for rows.Next() {
-		var webhook domain.Webhook
-		err := rows.Scan(
-			&webhook.ID, &webhook.UserID, &webhook.Name, &webhook.URL,
-			&webhook.Events, &webhook.IsActive, &webhook.RetryCount,
-			&webhook.LastSuccess, &webhook.LastFailure,
-			&webhook.CreatedAt, &webhook.UpdatedAt,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan webhook: %w", err)
-		}
-		webhooks = append(webhooks, &webhook)
+	webhooks := make([]*domain.Webhook, len(rows))
+	for i, row := range rows {
+		webhooks[i] = toDomainWebhookFromRow(row)
 	}
-
 	return webhooks, nil
 }
 
-// Update updates an existing webhook.
+// Update updates an existing webhook using sqlc.
 func (r *WebhookRepository) Update(ctx context.Context, webhook *domain.Webhook) error {
-	query := `
-		UPDATE webhooks
-		SET name = $2, url = $3, events = $4, is_active = $5, retry_count = $6,
-			last_success = $7, last_failure = $8, updated_at = $9
-		WHERE id = $1
-	`
-
-	webhook.UpdatedAt = time.Now()
-
-	_, err := r.pool.Exec(ctx, query,
-		webhook.ID, webhook.Name, webhook.URL, webhook.Events, webhook.IsActive,
-		webhook.RetryCount, webhook.LastSuccess, webhook.LastFailure, webhook.UpdatedAt,
-	)
+	result, err := r.queries.UpdateWebhook(ctx, db.UpdateWebhookParams{
+		ID:          webhook.ID,
+		Name:        webhook.Name,
+		Url:         webhook.URL,
+		Events:      toStringArray(webhook.Events),
+		IsActive:    webhook.IsActive,
+		RetryCount:  int32(webhook.RetryCount),
+		LastSuccess: toPgTimestamp(webhook.LastSuccess),
+		LastFailure: toPgTimestamp(webhook.LastFailure),
+		UpdatedAt:   toPgTimestampNow(),
+	})
 	if err != nil {
 		return fmt.Errorf("failed to update webhook: %w", err)
 	}
 
+	webhook.UpdatedAt = result.UpdatedAt.Time
 	return nil
 }
 
-// Delete removes a webhook.
+// Delete removes a webhook using sqlc.
 func (r *WebhookRepository) Delete(ctx context.Context, id string) error {
-	query := `DELETE FROM webhooks WHERE id = $1`
-
-	_, err := r.pool.Exec(ctx, query, id)
+	err := r.queries.DeleteWebhook(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete webhook: %w", err)
 	}
-
 	return nil
 }
 
-// CreateDelivery stores a webhook delivery attempt.
+// CreateDelivery stores a webhook delivery attempt using sqlc.
 func (r *WebhookRepository) CreateDelivery(ctx context.Context, delivery *domain.WebhookDelivery) error {
-	query := `
-		INSERT INTO webhook_deliveries (id, webhook_id, event_type, payload, 
-			response_code, response_body, success, attempt_count, next_retry, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	`
-
-	delivery.CreatedAt = time.Now()
-
-	_, err := r.pool.Exec(ctx, query,
-		delivery.ID, delivery.WebhookID, delivery.EventType, delivery.Payload,
-		delivery.ResponseCode, delivery.ResponseBody, delivery.Success,
-		delivery.AttemptCount, delivery.NextRetry, delivery.CreatedAt,
-	)
+	result, err := r.queries.CreateWebhookDelivery(ctx, db.CreateWebhookDeliveryParams{
+		ID:           delivery.ID,
+		WebhookID:    delivery.WebhookID,
+		EventType:    string(delivery.EventType),
+		Payload:      delivery.Payload,
+		ResponseCode: toPgInt4(delivery.ResponseCode),
+		ResponseBody: toPgTextPtr(delivery.ResponseBody),
+		Success:      delivery.Success,
+		AttemptCount: int32(delivery.AttemptCount),
+		NextRetry:    toPgTimestamp(delivery.NextRetry),
+		CreatedAt:    toPgTimestampNow(),
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create webhook delivery: %w", err)
 	}
 
+	delivery.CreatedAt = result.CreatedAt.Time
 	return nil
 }
 
-// GetDeliveriesByWebhookID retrieves delivery history for a webhook.
+// GetDeliveriesByWebhookID retrieves delivery history for a webhook using sqlc.
 func (r *WebhookRepository) GetDeliveriesByWebhookID(ctx context.Context, webhookID string, limit int) ([]*domain.WebhookDelivery, error) {
-	query := `
-		SELECT id, webhook_id, event_type, payload, response_code, response_body,
-			success, attempt_count, next_retry, created_at
-		FROM webhook_deliveries
-		WHERE webhook_id = $1
-		ORDER BY created_at DESC
-		LIMIT $2
-	`
-
-	rows, err := r.pool.Query(ctx, query, webhookID, limit)
+	rows, err := r.queries.GetWebhookDeliveriesByWebhookID(ctx, db.GetWebhookDeliveriesByWebhookIDParams{
+		WebhookID: webhookID,
+		Limit:     int32(limit),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to query webhook deliveries: %w", err)
 	}
-	defer rows.Close()
 
-	var deliveries []*domain.WebhookDelivery
-	for rows.Next() {
-		var delivery domain.WebhookDelivery
-		err := rows.Scan(
-			&delivery.ID, &delivery.WebhookID, &delivery.EventType, &delivery.Payload,
-			&delivery.ResponseCode, &delivery.ResponseBody, &delivery.Success,
-			&delivery.AttemptCount, &delivery.NextRetry, &delivery.CreatedAt,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan webhook delivery: %w", err)
+	deliveries := make([]*domain.WebhookDelivery, len(rows))
+	for i, row := range rows {
+		deliveries[i] = &domain.WebhookDelivery{
+			ID:           row.ID,
+			WebhookID:    row.WebhookID,
+			EventType:    domain.WebhookEventType(row.EventType),
+			Payload:      row.Payload,
+			ResponseCode: fromPgInt4(row.ResponseCode),
+			ResponseBody: fromPgTextPtr(row.ResponseBody),
+			Success:      row.Success,
+			AttemptCount: int(row.AttemptCount),
+			NextRetry:    fromPgTimestamp(row.NextRetry),
+			CreatedAt:    row.CreatedAt.Time,
 		}
-		deliveries = append(deliveries, &delivery)
 	}
-
 	return deliveries, nil
+}
+
+// toDomainWebhookFromRow converts a sqlc webhook row to domain.Webhook.
+func toDomainWebhookFromRow(row db.GetWebhookByIDRow) *domain.Webhook {
+	return &domain.Webhook{
+		ID:          row.ID,
+		UserID:      row.UserID,
+		Name:        row.Name,
+		URL:         row.Url,
+		Events:      toWebhookEventTypes(row.Events),
+		IsActive:    row.IsActive,
+		RetryCount:  int(row.RetryCount),
+		LastSuccess: fromPgTimestamp(row.LastSuccess),
+		LastFailure: fromPgTimestamp(row.LastFailure),
+		CreatedAt:   row.CreatedAt.Time,
+		UpdatedAt:   row.UpdatedAt.Time,
+	}
+}
+
+// toStringArray converts []WebhookEventType to []string.
+func toStringArray(events []domain.WebhookEventType) []string {
+	result := make([]string, len(events))
+	for i, e := range events {
+		result[i] = string(e)
+	}
+	return result
+}
+
+// toWebhookEventTypes converts []string to []WebhookEventType.
+func toWebhookEventTypes(events []string) []domain.WebhookEventType {
+	result := make([]domain.WebhookEventType, len(events))
+	for i, e := range events {
+		result[i] = domain.WebhookEventType(e)
+	}
+	return result
 }
