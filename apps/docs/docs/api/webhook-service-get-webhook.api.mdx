@@ -1,0 +1,71 @@
+---
+id: webhook-service-get-webhook
+title: "GetWebhook retrieves a webhook by ID."
+description: "GetWebhook retrieves a webhook by ID."
+sidebar_label: "GetWebhook retrieves a webhook by ID."
+hide_title: true
+hide_table_of_contents: true
+api: eJy1VFFv2jAQ/ivRPW2SN9ruLU+jkHZRGaBCW00IIRMf4DaxU/uSFUX575OTwFJBEXtYXuLc3Zf7fPfdFaBTNJykVqEAH55wudH6ZYImlxEubpEaCzAwaFOtLFrwC7i6uHAvgTYyMnV48KHr2SyK0NpVFnu78K/AINKKUJFD8DSNZVRl7DxbByvARhtMuDvRNkXwQS+fMSJgkBrHj2SdVIpWjCUj1RpKBplFEx53KZ7gcYyJj9oxR0W25eLG8C0wkISJPYQwQJUl4M/gKbj+MRrdLYLHYDhdTH+Ng8XDcDIOeuFNGPSBHQsIfnbDwWISDKen/P1gED4G96d/ctMNB6cjrkcPw97pkNE4GJ6O6A3C3l3QhzkDgSuexeRUc/rqZclA2m5EMm83Y6l1jFy5qhsks+3prJZI45eKcI0GGKy0STjVpm9XDhBzS5Naa8d6sgcITviFZII70A2XcWaOaOIjUGSQE4ounQ/JUvFvkOppFfRgrpSXKXxLMSIUHhqjzf8Yr0gLPLP+CVrL18dHSyBxGZ8zQx/w+F67D35dMuBCSHc3Ho/bkHL3MEi54QkSGgv+rGgWgNscDKSrZcppUy2z10waFOCTyZAd1mifdM6A+NpWI/5uO9Yz0O7T33XpOUVLzNF63Pvd2JZbL+y7fiVIG+3W7Rqr2ztKPnTyy04TajuFFGVFeaUrUpJixyq/7GDCZfw1NZo0MMjR2Dp5c/KUJs8iuU6k2lLCKw00dTiX4bt77WtC+EadNOZStVZozX4G+SUw2PEHBr4UrkIbbcm5i2LJLT6YuCyd+TVDswV/NmeQcyP50l1vVoCQ1p0F+CseWzxgspc6fLpvWvjZA3ac4U5+yokv53HmvoDBC25rTZTzksEGuUBTZa8d3SjClFqQg6Fyotg38TaYQln+ASCEcVU=
+sidebar_class_name: "get api-method"
+info_path: docs/api/v-1-email-proto
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"GetWebhook retrieves a webhook by ID."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/webhooks/{id}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+GetWebhook retrieves a webhook by ID.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"id","in":"path","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A successful response.","content":{"application/json":{"schema":{"type":"object","properties":{"id":{"type":"string"},"userId":{"type":"string"},"name":{"type":"string"},"url":{"type":"string"},"events":{"type":"array","items":{"type":"string","enum":["WEBHOOK_EVENT_TYPE_UNSPECIFIED","WEBHOOK_EVENT_TYPE_EMAIL_SENT","WEBHOOK_EVENT_TYPE_EMAIL_DELIVERED","WEBHOOK_EVENT_TYPE_EMAIL_FAILED","WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED","WEBHOOK_EVENT_TYPE_EMAIL_OPENED","WEBHOOK_EVENT_TYPE_EMAIL_CLICKED"],"default":"WEBHOOK_EVENT_TYPE_UNSPECIFIED"}},"isActive":{"type":"boolean"},"retryCount":{"type":"integer","format":"int32"},"lastSuccess":{"type":"string","format":"date-time"},"lastFailure":{"type":"string","format":"date-time"},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"}}}}}},"default":{"description":"An unexpected error response.","content":{"application/json":{"schema":{"type":"object","properties":{"code":{"type":"integer","format":"int32"},"message":{"type":"string"},"details":{"type":"array","items":{"type":"object","properties":{"@type":{"type":"string"}},"additionalProperties":{}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

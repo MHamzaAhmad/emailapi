@@ -82,16 +82,26 @@ func (EmailStatus) EnumDescriptor() ([]byte, []int) {
 	return file_v1_email_proto_rawDescGZIP(), []int{0}
 }
 
+// SendEmailRequest is the payload for sending an email.
 type SendEmailRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	From          string                 `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
-	To            []string               `protobuf:"bytes,2,rep,name=to,proto3" json:"to,omitempty"`
-	Cc            []string               `protobuf:"bytes,3,rep,name=cc,proto3" json:"cc,omitempty"`
-	Bcc           []string               `protobuf:"bytes,4,rep,name=bcc,proto3" json:"bcc,omitempty"`
-	Subject       string                 `protobuf:"bytes,5,opt,name=subject,proto3" json:"subject,omitempty"`
-	Body          string                 `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`
-	Html          string                 `protobuf:"bytes,7,opt,name=html,proto3" json:"html,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Sender email address (must be verified).
+	From string `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	// List of primary recipient email addresses.
+	To []string `protobuf:"bytes,2,rep,name=to,proto3" json:"to,omitempty"`
+	// List of CC recipient email addresses.
+	Cc []string `protobuf:"bytes,3,rep,name=cc,proto3" json:"cc,omitempty"`
+	// List of BCC recipient email addresses.
+	Bcc []string `protobuf:"bytes,4,rep,name=bcc,proto3" json:"bcc,omitempty"`
+	// Email subject line.
+	Subject string `protobuf:"bytes,5,opt,name=subject,proto3" json:"subject,omitempty"`
+	// Plain text content of the email.
+	Body string `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`
+	// HTML content of the email.
+	Html string `protobuf:"bytes,7,opt,name=html,proto3" json:"html,omitempty"`
+	// Custom key-value metadata to attach to the email.
+	Metadata map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Optional timestamp to schedule the email for future delivery.
 	ScheduledAt   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=scheduled_at,json=scheduledAt,proto3" json:"scheduled_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -190,10 +200,13 @@ func (x *SendEmailRequest) GetScheduledAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// SendEmailResponse contains the ID of the sent email.
 type SendEmailResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Status        EmailStatus            `protobuf:"varint,2,opt,name=status,proto3,enum=emailapi.v1.EmailStatus" json:"status,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Unique identifier for the email.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Current status of the email.
+	Status        EmailStatus `protobuf:"varint,2,opt,name=status,proto3,enum=emailapi.v1.EmailStatus" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -242,9 +255,11 @@ func (x *SendEmailResponse) GetStatus() EmailStatus {
 	return EmailStatus_EMAIL_STATUS_UNSPECIFIED
 }
 
+// GetEmailRequest identifies the email to retrieve.
 type GetEmailRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The ID of the email to retrieve.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -286,23 +301,40 @@ func (x *GetEmailRequest) GetId() string {
 	return ""
 }
 
+// Email represents a single email message and its status.
 type Email struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	From          string                 `protobuf:"bytes,2,opt,name=from,proto3" json:"from,omitempty"`
-	To            []string               `protobuf:"bytes,3,rep,name=to,proto3" json:"to,omitempty"`
-	Cc            []string               `protobuf:"bytes,4,rep,name=cc,proto3" json:"cc,omitempty"`
-	Bcc           []string               `protobuf:"bytes,5,rep,name=bcc,proto3" json:"bcc,omitempty"`
-	Subject       string                 `protobuf:"bytes,6,opt,name=subject,proto3" json:"subject,omitempty"`
-	Body          string                 `protobuf:"bytes,7,opt,name=body,proto3" json:"body,omitempty"`
-	Html          string                 `protobuf:"bytes,8,opt,name=html,proto3" json:"html,omitempty"`
-	Status        EmailStatus            `protobuf:"varint,9,opt,name=status,proto3,enum=emailapi.v1.EmailStatus" json:"status,omitempty"`
-	ProviderId    string                 `protobuf:"bytes,10,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,11,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,12,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	ScheduledAt   *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=scheduled_at,json=scheduledAt,proto3" json:"scheduled_at,omitempty"`
-	SentAt        *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=sent_at,json=sentAt,proto3" json:"sent_at,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Unique identifier for the email.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Sender email address.
+	From string `protobuf:"bytes,2,opt,name=from,proto3" json:"from,omitempty"`
+	// Primary recipients.
+	To []string `protobuf:"bytes,3,rep,name=to,proto3" json:"to,omitempty"`
+	// CC recipients.
+	Cc []string `protobuf:"bytes,4,rep,name=cc,proto3" json:"cc,omitempty"`
+	// BCC recipients.
+	Bcc []string `protobuf:"bytes,5,rep,name=bcc,proto3" json:"bcc,omitempty"`
+	// Email subject.
+	Subject string `protobuf:"bytes,6,opt,name=subject,proto3" json:"subject,omitempty"`
+	// Plain text content.
+	Body string `protobuf:"bytes,7,opt,name=body,proto3" json:"body,omitempty"`
+	// HTML content.
+	Html string `protobuf:"bytes,8,opt,name=html,proto3" json:"html,omitempty"`
+	// Current status.
+	Status EmailStatus `protobuf:"varint,9,opt,name=status,proto3,enum=emailapi.v1.EmailStatus" json:"status,omitempty"`
+	// Provider-specific ID (e.g. SES Message ID).
+	ProviderId string `protobuf:"bytes,10,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
+	// ID of the user who sent the email.
+	UserId string `protobuf:"bytes,11,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// Custom metadata attached to the email.
+	Metadata map[string]string `protobuf:"bytes,12,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Time when the email is scheduled to be sent.
+	ScheduledAt *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=scheduled_at,json=scheduledAt,proto3" json:"scheduled_at,omitempty"`
+	// Time when the email was sent to the provider.
+	SentAt *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=sent_at,json=sentAt,proto3" json:"sent_at,omitempty"`
+	// Time when the email record was created.
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// Time when the email record was last updated.
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -450,10 +482,13 @@ func (x *Email) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// ListEmailsRequest filters and pagination for listing emails.
 type ListEmailsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
-	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Maximum number of emails to return (default: 20, max: 100).
+	Limit int32 `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	// Number of emails to skip.
+	Offset        int32 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -502,11 +537,15 @@ func (x *ListEmailsRequest) GetOffset() int32 {
 	return 0
 }
 
+// ListEmailsResponse returns a page of emails.
 type ListEmailsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          []*Email               `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
-	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
-	Offset        int32                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The list of emails.
+	Data []*Email `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
+	// The limit applied to the request.
+	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	// The offset applied to the request.
+	Offset        int32 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

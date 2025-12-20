@@ -44,10 +44,15 @@ const (
 // EmailServiceClient is a client for the emailapi.v1.EmailService service.
 type EmailServiceClient interface {
 	// SendEmail queues an email for sending.
+	//
+	// It supports both text and HTML content, multiple recipients (To, CC, BCC),
+	// metadata, and scheduled sending.
 	SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error)
-	// GetEmail retrieves an email by ID.
+	// GetEmail retrieves the details of a specific email by its ID.
 	GetEmail(context.Context, *connect.Request[v1.GetEmailRequest]) (*connect.Response[v1.Email], error)
-	// ListEmails retrieves a list of emails.
+	// ListEmails retrieves a paginated list of emails sent by the authenticated user.
+	//
+	// Results are ordered by creation time descending.
 	ListEmails(context.Context, *connect.Request[v1.ListEmailsRequest]) (*connect.Response[v1.ListEmailsResponse], error)
 }
 
@@ -108,10 +113,15 @@ func (c *emailServiceClient) ListEmails(ctx context.Context, req *connect.Reques
 // EmailServiceHandler is an implementation of the emailapi.v1.EmailService service.
 type EmailServiceHandler interface {
 	// SendEmail queues an email for sending.
+	//
+	// It supports both text and HTML content, multiple recipients (To, CC, BCC),
+	// metadata, and scheduled sending.
 	SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error)
-	// GetEmail retrieves an email by ID.
+	// GetEmail retrieves the details of a specific email by its ID.
 	GetEmail(context.Context, *connect.Request[v1.GetEmailRequest]) (*connect.Response[v1.Email], error)
-	// ListEmails retrieves a list of emails.
+	// ListEmails retrieves a paginated list of emails sent by the authenticated user.
+	//
+	// Results are ordered by creation time descending.
 	ListEmails(context.Context, *connect.Request[v1.ListEmailsRequest]) (*connect.Response[v1.ListEmailsResponse], error)
 }
 

@@ -28,13 +28,18 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// EmailService handles email operations.
+// EmailService handles all email-related operations including sending, retrieving, and listing emails.
 type EmailServiceClient interface {
 	// SendEmail queues an email for sending.
+	//
+	// It supports both text and HTML content, multiple recipients (To, CC, BCC),
+	// metadata, and scheduled sending.
 	SendEmail(ctx context.Context, in *SendEmailRequest, opts ...grpc.CallOption) (*SendEmailResponse, error)
-	// GetEmail retrieves an email by ID.
+	// GetEmail retrieves the details of a specific email by its ID.
 	GetEmail(ctx context.Context, in *GetEmailRequest, opts ...grpc.CallOption) (*Email, error)
-	// ListEmails retrieves a list of emails.
+	// ListEmails retrieves a paginated list of emails sent by the authenticated user.
+	//
+	// Results are ordered by creation time descending.
 	ListEmails(ctx context.Context, in *ListEmailsRequest, opts ...grpc.CallOption) (*ListEmailsResponse, error)
 }
 
@@ -80,13 +85,18 @@ func (c *emailServiceClient) ListEmails(ctx context.Context, in *ListEmailsReque
 // All implementations must embed UnimplementedEmailServiceServer
 // for forward compatibility.
 //
-// EmailService handles email operations.
+// EmailService handles all email-related operations including sending, retrieving, and listing emails.
 type EmailServiceServer interface {
 	// SendEmail queues an email for sending.
+	//
+	// It supports both text and HTML content, multiple recipients (To, CC, BCC),
+	// metadata, and scheduled sending.
 	SendEmail(context.Context, *SendEmailRequest) (*SendEmailResponse, error)
-	// GetEmail retrieves an email by ID.
+	// GetEmail retrieves the details of a specific email by its ID.
 	GetEmail(context.Context, *GetEmailRequest) (*Email, error)
-	// ListEmails retrieves a list of emails.
+	// ListEmails retrieves a paginated list of emails sent by the authenticated user.
+	//
+	// Results are ordered by creation time descending.
 	ListEmails(context.Context, *ListEmailsRequest) (*ListEmailsResponse, error)
 	mustEmbedUnimplementedEmailServiceServer()
 }

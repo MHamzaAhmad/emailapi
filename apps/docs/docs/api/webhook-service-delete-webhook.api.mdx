@@ -1,0 +1,71 @@
+---
+id: webhook-service-delete-webhook
+title: "DeleteWebhook deletes a webhook."
+description: "DeleteWebhook deletes a webhook."
+sidebar_label: "DeleteWebhook deletes a webhook."
+hide_title: true
+hide_table_of_contents: true
+api: eJytU01v2zAM/SsGTxsg1E1382kF2sOAHYZ9YIcgGBiLSdTKkirSXgND/32gnQRpU2A7zBdL/HyPfBohJsooLoZPFhr4SetdjI/fKA+upV935EnoYAQDmTjFwMTQjHBzfa0/S9xml7QENHBbcd+2xLzpfXUMvwIDbQxCQTQDU/KunZrWD6xpI3C7ow71JPtE0EBcP1ArUEopBixtsPfyRrtQ9YGeE7VCtqKcY/4fXQ2krIMRN1Nto6WzKBeEtpTBwCbmDmU2fbiBYqAjZtyeR7NkF7Yw0RB0ns98mDPuwYAT6vjvOD7O7ovSxQBa65Qb+i/nKeX4GUiYsSOhzNAsRwjYTVysttdZJpTdtOOn3mWy0EjuyVzO6NR0ZUBwq9Ve6QZW5tWeXgipstONK6x+zxZdVUeyi6rB2avcFVAD9bCoD3Fcj86WCfAmTpCceMU0LGrq0PmrlKNEMDBQ5rn14VSFKBWT6B5SZOlwUsBhCv+A7wWh0zCEnqVOHl3Qwn326puBL2FYgIEjdDDQOKuj2UUWdY/jGpl+ZF+Kmp96yntolisDA2aHa2W2HME61rOFZoOe6QLJSePw7uthd+8rMG8jPOouqOoG9L3ewMAj7WcxlFUxsCO0lKfus+O2bSnJWcrFa1I1nFZ4d//5/vs9lPIHb/iB/Q==
+sidebar_class_name: "delete api-method"
+info_path: docs/api/v-1-email-proto
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"DeleteWebhook deletes a webhook."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1/webhooks/{id}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+DeleteWebhook deletes a webhook.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"id","in":"path","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A successful response.","content":{"application/json":{"schema":{"type":"object"}}}},"default":{"description":"An unexpected error response.","content":{"application/json":{"schema":{"type":"object","properties":{"code":{"type":"integer","format":"int32"},"message":{"type":"string"},"details":{"type":"array","items":{"type":"object","properties":{"@type":{"type":"string"}},"additionalProperties":{}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

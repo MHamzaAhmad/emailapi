@@ -23,3 +23,10 @@ plugins:
     opt:
       - paths=source_relative
       - generate_unbound_methods=true
+
+  # OpenAPI v2 spec for API docs
+  - remote: buf.build/grpc-ecosystem/openapiv2
+    out: ../apps/docs/openapi
+    opt:
+      - allow_merge=true
+      - merge_file_name=openapi

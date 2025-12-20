@@ -7,9 +7,12 @@ option go_package = "github.com/emailapi/api/gen/emailapi/v1";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-// EmailService handles email operations.
+// EmailService handles all email-related operations including sending, retrieving, and listing emails.
 service EmailService {
   // SendEmail queues an email for sending.
+  //
+  // It supports both text and HTML content, multiple recipients (To, CC, BCC),
+  // metadata, and scheduled sending.
   rpc SendEmail(SendEmailRequest) returns (SendEmailResponse) {
     option (google.api.http) = {
       post: "/v1/send"
@@ -17,14 +20,16 @@ service EmailService {
     };
   }
 
-  // GetEmail retrieves an email by ID.
+  // GetEmail retrieves the details of a specific email by its ID.
   rpc GetEmail(GetEmailRequest) returns (Email) {
     option (google.api.http) = {
       get: "/v1/emails/{id}"
     };
   }
 
-  // ListEmails retrieves a list of emails.
+  // ListEmails retrieves a paginated list of emails sent by the authenticated user.
+  //
+  // Results are ordered by creation time descending.
   rpc ListEmails(ListEmailsRequest) returns (ListEmailsResponse) {
     option (google.api.http) = {
       get: "/v1/emails"
@@ -42,53 +47,92 @@ enum EmailStatus {
   EMAIL_STATUS_BOUNCED = 5;
 }
 
+// SendEmailRequest is the payload for sending an email.
 message SendEmailRequest {
+  // Sender email address (must be verified).
   string from = 1;
+  // List of primary recipient email addresses.
   repeated string to = 2;
+  // List of CC recipient email addresses.
   repeated string cc = 3;
+  // List of BCC recipient email addresses.
   repeated string bcc = 4;
+  // Email subject line.
   string subject = 5;
+  // Plain text content of the email.
   string body = 6;
+  // HTML content of the email.
   string html = 7;
+  // Custom key-value metadata to attach to the email.
   map<string, string> metadata = 8;
+  // Optional timestamp to schedule the email for future delivery.
   google.protobuf.Timestamp scheduled_at = 9;
 }
 
+// SendEmailResponse contains the ID of the sent email.
 message SendEmailResponse {
+  // Unique identifier for the email.
   string id = 1;
+  // Current status of the email.
   EmailStatus status = 2;
 }
 
+// GetEmailRequest identifies the email to retrieve.
 message GetEmailRequest {
+  // The ID of the email to retrieve.
   string id = 1;
 }
 
+// Email represents a single email message and its status.
 message Email {
+  // Unique identifier for the email.
   string id = 1;
+  // Sender email address.
   string from = 2;
+  // Primary recipients.
   repeated string to = 3;
+  // CC recipients.
   repeated string cc = 4;
+  // BCC recipients.
   repeated string bcc = 5;
+  // Email subject.
   string subject = 6;
+  // Plain text content.
   string body = 7;
+  // HTML content.
   string html = 8;
+  // Current status.
   EmailStatus status = 9;
+  // Provider-specific ID (e.g. SES Message ID).
   string provider_id = 10;
+  // ID of the user who sent the email.
   string user_id = 11;
+  // Custom metadata attached to the email.
   map<string, string> metadata = 12;
+  // Time when the email is scheduled to be sent.
   google.protobuf.Timestamp scheduled_at = 13;
+  // Time when the email was sent to the provider.
   google.protobuf.Timestamp sent_at = 14;
+  // Time when the email record was created.
   google.protobuf.Timestamp created_at = 15;
+  // Time when the email record was last updated.
   google.protobuf.Timestamp updated_at = 16;
 }
 
+// ListEmailsRequest filters and pagination for listing emails.
 message ListEmailsRequest {
+  // Maximum number of emails to return (default: 20, max: 100).
   int32 limit = 1;
+  // Number of emails to skip.
   int32 offset = 2;
 }
 
+// ListEmailsResponse returns a page of emails.
 message ListEmailsResponse {
+  // The list of emails.
   repeated Email data = 1;
+  // The limit applied to the request.
   int32 limit = 2;
+  // The offset applied to the request.
   int32 offset = 3;
 }

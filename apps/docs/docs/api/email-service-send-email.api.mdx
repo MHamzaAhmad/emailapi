@@ -1,0 +1,71 @@
+---
+id: email-service-send-email
+title: "SendEmail queues an email for sending."
+description: "SendEmail queues an email for sending."
+sidebar_label: "SendEmail queues an email for sending."
+hide_title: true
+hide_table_of_contents: true
+api: eJy1Vd9vGjEM/ldOfg4/t6rbPY2W64TUUVRgD0OoChcD6e6Sa+KjRYj/fUpSyhXotkpbXjg7tmN/n202oAs0nKRWPQExJDmX2RDNSqZ4N0QlvAIYGLSFVhYtxBtoN5vuR6BNjSycM8TQiWyZpmjtvMyinXkdGKRaESpyHrwoMpn65xr31rltwKZLzLn7onWBEIOe3WNKwKAwLjmS4VEpKjaWjFQL2DKwxKm0x1cMUJU5xBNIvnV613fDUWc0Ht6N+8NBctm76iVdYK+vBkm/2+t/PVQPk/7oUNdNrnvfk9vjGFed3vWx9uJm3L9MujBlIHDOy4wc1G+n9RrYwIkvMzJYGLSoyEa0xEhgJldo1lFAoQ5bfyrPHLGkolLhU4EpoYjQGG3+B1mpFlixkopwgQYYzLXJOQXVh7YjMEdr+QJPkiuQuMyq7HJj+BoYSMLc/jmPL+H6KPSWARdCutp4Nqi6bHfH9fxDiZYutFiHmv4JNHOj85PFkv6LOisFpOn77GfvdbBlqOBUsrNnUI4ulpRnJy9yJC44nUToDS5O5ZQuUZQZis6JvCrtJThhjWSOUCFTGhQQkynRwc0X1q+HysoLE1qdl5cdGD2UWKKNuIrQy3NtIotKSLVwg5MjLbVboYW2nnROS4ihsWo1nBUwcI1yu2+p5InnRYb7lthX4TphshOngemqPDtUvDC1jxEI2suBl71coeMQVmg32x9rzfNa+/OodRafteL2p3rzvPXD0SjVPPSpJJc8rFoNj0e9MJo0MFihsQG7569IaYoskvN24OTcz4viOb4H4Fe8vDBP+ESNIuNSufCl8b0XsJ/AqgUMPPpTBkvHSzyBzWbGLY5Ntt069UOJZg3xZMpgxY3kM1fVZOo6GblAA/FkAz/RYXkZFkBt5J525lnpJ+lwGWzZzqOTpljQb22nldYZ3AxHsJ+t3C9RMPzR/QHzR4gBGGgPgR8Pr9tAxtWi9CsUQkx3fgHsWqf8
+sidebar_class_name: "post api-method"
+info_path: docs/api/v-1-email-proto
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"SendEmail queues an email for sending."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/v1/send"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+SendEmail queues an email for sending.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={undefined}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"content":{"application/json":{"schema":{"type":"object","properties":{"from":{"type":"string"},"to":{"type":"array","items":{"type":"string"}},"cc":{"type":"array","items":{"type":"string"}},"bcc":{"type":"array","items":{"type":"string"}},"subject":{"type":"string"},"body":{"type":"string"},"html":{"type":"string"},"metadata":{"type":"object","additionalProperties":{"type":"string"}},"scheduledAt":{"type":"string","format":"date-time"}}}}},"required":true}}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A successful response.","content":{"application/json":{"schema":{"type":"object","properties":{"id":{"type":"string"},"status":{"type":"string","enum":["EMAIL_STATUS_UNSPECIFIED","EMAIL_STATUS_PENDING","EMAIL_STATUS_SENT","EMAIL_STATUS_DELIVERED","EMAIL_STATUS_FAILED","EMAIL_STATUS_BOUNCED"],"default":"EMAIL_STATUS_UNSPECIFIED","description":"EmailStatus represents the delivery status."}}}}}},"default":{"description":"An unexpected error response.","content":{"application/json":{"schema":{"type":"object","properties":{"code":{"type":"integer","format":"int32"},"message":{"type":"string"},"details":{"type":"array","items":{"type":"object","properties":{"@type":{"type":"string"}},"additionalProperties":{}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

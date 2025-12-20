@@ -1,0 +1,71 @@
+---
+id: user-service-create-user
+title: "CreateUser creates a new user and returns an API key."
+description: "CreateUser creates a new user and returns an API key."
+sidebar_label: "CreateUser creates a new user and returns an API key."
+hide_title: true
+hide_table_of_contents: true
+api: eJzVlVFP20AMgP9K5OeDDvaWpxXopGoDqhaeqgq5idseJHfHnVNaVfnvky+FhpGBNm0Pu5ckZ/tsf2c7O7COPLK2ZphDCreB/IT8Wmd0d+4JmWQHFHgKzppAAdIdnH76JI+cQua1E2NIoZ+EKssohEVVJM/qx6Ags4bJsFigc4XOorvefRCzHYRsRSXKG28dQQp2fk8ZgwLnJTjWjdNKAvlQS+ctncBemyXUCqhEXXRKDJbUKfC26BAoIFOVkE7hdjIY342vvw/ubq8mo8H58OtwcAGqtd+/uBxevdq5HFyeDcYwU5DTAquCBXnnObUCdPobbUeeFnrTGaEO/Yz1uh3l3NqC0Ig0i9eX97kriYX1JYr3HJmOWJckJpXLf8+kfgmzM8CSQsBlF964WhTeFJNJKkMbRxlTnpD31v+Lmsps3o5OG6ZlLPeXZLXhz6fv5yJpMOoitGToPW5BgWYqw8dxfGnEbzEpwDzXkhsWo7ZJ/bykNR8rCnxm822T019B8/91zIGG9pRDyr6iWgHjMkTvh9HWHNeut8OsS5q+CQkmhp4SmToJmjzxxJU3IUGT9EfD5IG2Uocl8crK4HQ2RIbIK0ihtz7piWUABQJ+fLiiwQZL13DaIz6Aasgevhugv54Q2ixsBK45Kq5PevHMY+ctW1CwJh+aBPdvibGcBGKxlpBLjEWxd/ynFF6xfLl/pg33XIE6jqPKx2pqAE1hfQIKGkQzBSuhl05ht5tjoFtf1LVsP1bkt5BOZwrW6DXOJcvprFawIszldzDdwYMMHzhvqv7oRnyLelHFPvy5A2r1bNHPMnL8ru6sdcGj68kNKJjvu6yMkwM8Psk94ROkAApsZBD7J+7toECzrOLcgOZMWT8AD1uHOA==
+sidebar_class_name: "post api-method"
+info_path: docs/api/v-1-email-proto
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"CreateUser creates a new user and returns an API key."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/v1/users"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+CreateUser creates a new user and returns an API key.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={undefined}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"content":{"application/json":{"schema":{"type":"object","properties":{"email":{"type":"string"},"name":{"type":"string"},"role":{"type":"string","enum":["USER_ROLE_UNSPECIFIED","USER_ROLE_ADMIN","USER_ROLE_MEMBER"],"default":"USER_ROLE_UNSPECIFIED"}}}}},"required":true}}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A successful response.","content":{"application/json":{"schema":{"type":"object","properties":{"user":{"type":"object","properties":{"id":{"type":"string"},"email":{"type":"string"},"name":{"type":"string"},"role":{"type":"string","enum":["USER_ROLE_UNSPECIFIED","USER_ROLE_ADMIN","USER_ROLE_MEMBER"],"default":"USER_ROLE_UNSPECIFIED"},"apiKeyPrefix":{"type":"string"},"isActive":{"type":"boolean"},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"}}},"apiKey":{"type":"string"},"message":{"type":"string"}}}}}},"default":{"description":"An unexpected error response.","content":{"application/json":{"schema":{"type":"object","properties":{"code":{"type":"integer","format":"int32"},"message":{"type":"string"},"details":{"type":"array","items":{"type":"object","properties":{"@type":{"type":"string"}},"additionalProperties":{}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

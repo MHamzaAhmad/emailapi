@@ -43,6 +43,16 @@ dev-web:
 lint-proto:
 	cd proto && buf lint
 
+# Docusaurus docs
+docs:
+	cd apps/docs && pnpm docusaurus gen-api-docs all
+
+docs-dev:
+	cd apps/docs && pnpm start
+
+docs-build:
+	cd apps/docs && pnpm build
+
 # Clean generated files
 clean:
 	rm -rf apps/api/gen

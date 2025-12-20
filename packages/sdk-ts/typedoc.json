@@ -1,0 +1,18 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "entryPoints": [
+        "./src/index.ts"
+    ],
+    "out": "../apps/docs/docs/sdks/typescript-reference",
+    "plugin": [
+        "typedoc-plugin-markdown"
+    ],
+    "outputFileStrategy": "modules",
+    "hidePageHeader": true,
+    "hideGroupHeadings": false,
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "excludeExternals": true,
+    "includeVersion": false,
+    "readme": "none"
+}
