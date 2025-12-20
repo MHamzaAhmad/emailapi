@@ -20,13 +20,22 @@ proto:
 gen-sqlc:
 	cd tools && sqlc generate
 
-# Database migrations
+# Database migrations (declarative schema workflow)
 migrate:
-	atlas migrate apply --env local
+	atlas migrate apply --env local --config "file://tools/atlas.hcl"
 
-migrate-new:
+migrate-diff:
 	@read -p "Migration name: " name; \
-	atlas migrate new $$name --env local
+	atlas migrate diff $$name --env local --config "file://tools/atlas.hcl"
+
+migrate-status:
+	atlas migrate status --env local --config "file://tools/atlas.hcl"
+
+migrate-hash:
+	atlas migrate hash --config "file://tools/atlas.hcl"
+
+migrate-down:
+	atlas migrate down --env local --config "file://tools/atlas.hcl"
 
 # Testing
 test:

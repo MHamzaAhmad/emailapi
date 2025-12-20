@@ -1,10 +1,31 @@
+// Atlas configuration for declarative schema management
+// Uses schema files as source of truth and generates migrations via diff
+
 env "local" {
-  src = "../db/migrations"
+  // Source of truth: declarative schema files
+  src = "file://db/postgres/schema"
+  
+  // Target database URL
   url = "postgres://emailapi:emailapi@localhost:5432/emailapi?sslmode=disable"
-  dev = "docker://postgres/16/dev"
+  
+  // Dev database for diffing (spins up ephemeral container)
+  dev = "docker://postgres/18/dev"
+  
+  // Migration directory
+  migration {
+    dir = "file://db/postgres/migrations"
+  }
 }
 
 env "prod" {
-  src = "../db/migrations"
+  // Source of truth: declarative schema files
+  src = "file://db/postgres/schema"
+  
+  // Target database URL from environment
   url = env("DATABASE_URL")
+  
+  // Migration directory
+  migration {
+    dir = "file://db/postgres/migrations"
+  }
 }
