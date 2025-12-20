@@ -1,7 +1,7 @@
 {
     "name": "@email-api/sdk-ts",
     "version": "0.0.1",
-    "description": "TypeScript SDK for Email API",
+    "description": "TypeScript SDK for Email API (gRPC native)",
     "main": "./dist/index.js",
     "module": "./dist/index.mjs",
     "types": "./dist/index.d.ts",
@@ -15,36 +15,21 @@
     "scripts": {
         "build": "tsup",
         "dev": "tsup --watch",
-        "typecheck": "tsc --noEmit",
-        "generate": "openapi-typescript ../shared-spec/openapi.yaml -o ./src/generated/api.ts"
+        "typecheck": "tsc --noEmit"
     },
     "files": [
         "dist"
     ],
+    "dependencies": {
+        "@bufbuild/protobuf": "^2.0.0",
+        "@connectrpc/connect": "^2.0.0",
+        "@connectrpc/connect-web": "^2.0.0"
+    },
     "devDependencies": {
-        "openapi-typescript": "^7.0.0",
         "tsup": "^8.0.0",
         "typescript": "^5.3.0"
     },
     "peerDependencies": {
         "typescript": ">=5.0.0"
-    },
-    "nx": {
-        "targets": {
-            "generate": {
-                "cache": true,
-                "inputs": [
-                    "{workspaceRoot}/packages/shared-spec/openapi.yaml"
-                ],
-                "outputs": [
-                    "{projectRoot}/src/generated"
-                ]
-            },
-            "build": {
-                "dependsOn": [
-                    "generate"
-                ]
-            }
-        }
     }
 }

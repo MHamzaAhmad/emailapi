@@ -1,5 +1,9 @@
-export { EmailApiClient, type EmailApiClientConfig } from './client'
-export * from './types'
+// Email API TypeScript SDK
+// Native gRPC client using Connect v2
 
-// Re-export generated OpenAPI types
-export type * from './generated/api'
+export { createClient, type EmailApiClient, type EmailApiClientConfig } from './client'
+
+// Re-export generated message types
+export * from './generated/v1/email_pb'
+export * from './generated/v1/user_pb'
+export * from './generated/v1/webhook_pb'

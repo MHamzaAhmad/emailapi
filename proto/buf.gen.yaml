@@ -5,25 +5,21 @@ managed:
     - file_option: go_package_prefix
       module: buf.build/emailapi/api
       value: github.com/emailapi/api/gen
+
 plugins:
-  # Go protobuf
+  # Go protobuf messages for API server
   - remote: buf.build/protocolbuffers/go
     out: ../apps/api/gen
     opt: paths=source_relative
 
-  # Go gRPC
+  # Go gRPC service stubs for API server
   - remote: buf.build/grpc/go
     out: ../apps/api/gen
     opt: paths=source_relative
 
-  # gRPC-Gateway (HTTP/REST proxy)
+  # gRPC-Gateway (HTTP/REST proxy) for API server
   - remote: buf.build/grpc-ecosystem/gateway
     out: ../apps/api/gen
     opt:
       - paths=source_relative
       - generate_unbound_methods=true
-
-  # TypeScript/Connect for browser gRPC
-  - remote: buf.build/connectrpc/es
-    out: ../packages/sdk-ts/src/generated
-    opt: target=ts
