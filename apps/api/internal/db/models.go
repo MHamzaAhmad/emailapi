@@ -8,62 +8,43 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Email struct {
-	ID           string             `json:"id"`
-	FromAddress  string             `json:"from_address"`
-	ToAddresses  []string           `json:"to_addresses"`
-	CcAddresses  []string           `json:"cc_addresses"`
-	BccAddresses []string           `json:"bcc_addresses"`
-	Subject      string             `json:"subject"`
-	Body         pgtype.Text        `json:"body"`
-	HtmlBody     pgtype.Text        `json:"html_body"`
-	Status       string             `json:"status"`
-	ProviderID   pgtype.Text        `json:"provider_id"`
-	UserID       string             `json:"user_id"`
-	WebhookID    pgtype.Text        `json:"webhook_id"`
-	Metadata     []byte             `json:"metadata"`
-	ScheduledAt  pgtype.Timestamptz `json:"scheduled_at"`
-	SentAt       pgtype.Timestamptz `json:"sent_at"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-}
-
-type User struct {
-	ID           string             `json:"id"`
-	Email        string             `json:"email"`
-	Name         string             `json:"name"`
-	Role         string             `json:"role"`
-	ApiKeyHash   pgtype.Text        `json:"api_key_hash"`
-	ApiKeyPrefix pgtype.Text        `json:"api_key_prefix"`
-	IsActive     bool               `json:"is_active"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-}
-
-type Webhook struct {
+type ApiKey struct {
 	ID          string             `json:"id"`
 	UserID      string             `json:"user_id"`
 	Name        string             `json:"name"`
-	Url         string             `json:"url"`
-	SecretHash  string             `json:"secret_hash"`
-	Events      []string           `json:"events"`
+	KeyHash     string             `json:"key_hash"`
+	KeyPrefix   string             `json:"key_prefix"`
+	Scopes      []string           `json:"scopes"`
+	Environment string             `json:"environment"`
 	IsActive    bool               `json:"is_active"`
-	RetryCount  int32              `json:"retry_count"`
-	LastSuccess pgtype.Timestamptz `json:"last_success"`
-	LastFailure pgtype.Timestamptz `json:"last_failure"`
+	LastUsedAt  pgtype.Timestamptz `json:"last_used_at"`
+	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
-type WebhookDelivery struct {
-	ID           string             `json:"id"`
-	WebhookID    string             `json:"webhook_id"`
-	EventType    string             `json:"event_type"`
-	Payload      string             `json:"payload"`
-	ResponseCode pgtype.Int4        `json:"response_code"`
-	ResponseBody pgtype.Text        `json:"response_body"`
-	Success      bool               `json:"success"`
-	AttemptCount int32              `json:"attempt_count"`
-	NextRetry    pgtype.Timestamptz `json:"next_retry"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+type Domain struct {
+	ID                 string             `json:"id"`
+	UserID             string             `json:"user_id"`
+	DomainName         string             `json:"domain_name"`
+	Status             string             `json:"status"`
+	VerifiedForSending bool               `json:"verified_for_sending"`
+	DkimTokens         []string           `json:"dkim_tokens"`
+	DkimStatus         string             `json:"dkim_status"`
+	MailFromDomain     pgtype.Text        `json:"mail_from_domain"`
+	MailFromStatus     pgtype.Text        `json:"mail_from_status"`
+	Region             string             `json:"region"`
+	LastVerifiedAt     pgtype.Timestamptz `json:"last_verified_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+type User struct {
+	ID        string             `json:"id"`
+	Email     string             `json:"email"`
+	Name      string             `json:"name"`
+	Role      string             `json:"role"`
+	IsActive  bool               `json:"is_active"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }

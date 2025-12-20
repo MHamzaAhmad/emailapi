@@ -6,37 +6,6 @@ import (
 	"github.com/emailapi/api/internal/domain"
 )
 
-// EmailRepository defines the interface for email data access.
-type EmailRepository interface {
-	// Create stores a new email.
-	Create(ctx context.Context, email *domain.Email) error
-
-	// GetByID retrieves an email by its ID.
-	GetByID(ctx context.Context, id string) (*domain.Email, error)
-
-	// GetByUserID retrieves all emails for a user.
-	GetByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.Email, error)
-
-	// Update updates an existing email.
-	Update(ctx context.Context, email *domain.Email) error
-
-	// UpdateStatus updates only the status of an email.
-	UpdateStatus(ctx context.Context, id string, status domain.EmailStatus) error
-}
-
-// LogRepository defines the interface for log data access.
-// Uses ClickHouse for high-volume analytics.
-type LogRepository interface {
-	// Create stores a new log entry.
-	Create(ctx context.Context, log *domain.Log) error
-
-	// Query retrieves logs based on filters.
-	Query(ctx context.Context, filter domain.LogFilter) ([]*domain.Log, error)
-
-	// CountByEmailID counts logs for a specific email.
-	CountByEmailID(ctx context.Context, emailID string) (int64, error)
-}
-
 // UserRepository defines the interface for user data access.
 type UserRepository interface {
 	// Create stores a new user.
@@ -48,44 +17,47 @@ type UserRepository interface {
 	// GetByEmail retrieves a user by their email.
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
 
-	// GetByAPIKey retrieves a user by their API key.
-	GetByAPIKey(ctx context.Context, apiKey string) (*domain.User, error)
-
 	// Update updates an existing user.
 	Update(ctx context.Context, user *domain.User) error
 
 	// Delete removes a user.
 	Delete(ctx context.Context, id string) error
 
-	// UpdateAPIKey updates a user's API key.
-	UpdateAPIKey(ctx context.Context, id string, hashedKey string, prefix string) error
+	// List retrieves all users with pagination.
+	List(ctx context.Context, limit, offset int) ([]*domain.User, error)
 }
 
-// WebhookRepository defines the interface for webhook data access.
-type WebhookRepository interface {
-	// Create stores a new webhook.
-	Create(ctx context.Context, webhook *domain.Webhook) error
+// APIKeyRepository defines the interface for API key data access.
+type APIKeyRepository interface {
+	// Create stores a new API key.
+	Create(ctx context.Context, apiKey *domain.APIKey) error
 
-	// GetByID retrieves a webhook by its ID.
-	GetByID(ctx context.Context, id string) (*domain.Webhook, error)
+	// GetByID retrieves an API key by its ID.
+	GetByID(ctx context.Context, id string) (*domain.APIKey, error)
 
-	// GetByUserID retrieves all webhooks for a user.
-	GetByUserID(ctx context.Context, userID string) ([]*domain.Webhook, error)
+	// GetByHash retrieves an active API key by its hash.
+	GetByHash(ctx context.Context, keyHash string) (*domain.APIKey, error)
 
-	// GetActiveByEvent retrieves all active webhooks for a specific event type.
-	GetActiveByEvent(ctx context.Context, eventType domain.WebhookEventType) ([]*domain.Webhook, error)
+	// GetByPrefix retrieves an API key by its prefix.
+	GetByPrefix(ctx context.Context, keyPrefix string) (*domain.APIKey, error)
 
-	// Update updates an existing webhook.
-	Update(ctx context.Context, webhook *domain.Webhook) error
+	// ListByUserID retrieves all API keys for a user.
+	ListByUserID(ctx context.Context, userID string) ([]*domain.APIKey, error)
 
-	// Delete removes a webhook.
+	// Update updates an existing API key.
+	Update(ctx context.Context, apiKey *domain.APIKey) error
+
+	// UpdateLastUsed updates the last_used_at timestamp.
+	UpdateLastUsed(ctx context.Context, id string) error
+
+	// Revoke deactivates an API key.
+	Revoke(ctx context.Context, id string) (*domain.APIKey, error)
+
+	// Delete removes an API key.
 	Delete(ctx context.Context, id string) error
 
-	// CreateDelivery stores a webhook delivery attempt.
-	CreateDelivery(ctx context.Context, delivery *domain.WebhookDelivery) error
-
-	// GetDeliveriesByWebhookID retrieves delivery history for a webhook.
-	GetDeliveriesByWebhookID(ctx context.Context, webhookID string, limit int) ([]*domain.WebhookDelivery, error)
+	// CountActiveByUserID counts active API keys for a user.
+	CountActiveByUserID(ctx context.Context, userID string) (int64, error)
 }
 
 // DomainRepository defines the interface for sending domain data access.
@@ -108,3 +80,7 @@ type DomainRepository interface {
 	// Delete removes a domain.
 	Delete(ctx context.Context, id string) error
 }
+
+// TODO: EmailRepository (to be reimplemented later)
+// TODO: WebhookRepository (to be reimplemented later)
+// TODO: LogRepository (to be reimplemented later)

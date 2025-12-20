@@ -9,19 +9,17 @@ import (
 type Service struct {
 	store Store
 
-	Email   *EmailService
-	User    *UserService
-	Webhook *WebhookService
-	Domain  *DomainService
+	User   *UserService
+	APIKey *APIKeyService
+	Domain *DomainService
 }
 
 // New creates a new Service with the given Store.
 // Note: DomainService requires SES client and must be set separately using SetDomainService.
 func New(store Store) *Service {
 	svc := &Service{store: store}
-	svc.Email = NewEmailService(store)
 	svc.User = NewUserService(store)
-	svc.Webhook = NewWebhookService(store)
+	svc.APIKey = NewAPIKeyService(store)
 	return svc
 }
 

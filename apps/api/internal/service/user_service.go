@@ -2,9 +2,6 @@ package service
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -22,18 +19,12 @@ func NewUserService(store Store) *UserService {
 	return &UserService{store: store}
 }
 
-// Create creates a new user with an API key.
-func (s *UserService) Create(ctx context.Context, req *domain.CreateUserRequest) (*domain.User, string, error) {
+// Create creates a new user.
+func (s *UserService) Create(ctx context.Context, req *domain.CreateUserRequest) (*domain.User, error) {
 	// Check if user already exists
 	existing, _ := s.store.Users().GetByEmail(ctx, req.Email)
 	if existing != nil {
-		return nil, "", fmt.Errorf("user with email already exists")
-	}
-
-	// Generate API key
-	apiKey, hashedKey, prefix, err := s.generateAPIKey()
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to generate API key: %w", err)
+		return nil, fmt.Errorf("user with email already exists")
 	}
 
 	// Set default role
@@ -43,20 +34,18 @@ func (s *UserService) Create(ctx context.Context, req *domain.CreateUserRequest)
 	}
 
 	user := &domain.User{
-		ID:           uuid.New().String(),
-		Email:        req.Email,
-		Name:         req.Name,
-		Role:         role,
-		APIKey:       hashedKey,
-		APIKeyPrefix: prefix,
-		IsActive:     true,
+		ID:       uuid.New().String(),
+		Email:    req.Email,
+		Name:     req.Name,
+		Role:     role,
+		IsActive: true,
 	}
 
 	if err := s.store.Users().Create(ctx, user); err != nil {
-		return nil, "", fmt.Errorf("failed to create user: %w", err)
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return user, apiKey, nil
+	return user, nil
 }
 
 // GetByID retrieves a user by ID.
@@ -64,54 +53,50 @@ func (s *UserService) GetByID(ctx context.Context, id string) (*domain.User, err
 	return s.store.Users().GetByID(ctx, id)
 }
 
-// GetByAPIKey retrieves a user by their API key.
-func (s *UserService) GetByAPIKey(ctx context.Context, apiKey string) (*domain.User, error) {
-	hashedKey := s.hashAPIKey(apiKey)
-	return s.store.Users().GetByAPIKey(ctx, hashedKey)
+// GetByEmail retrieves a user by email.
+func (s *UserService) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+	return s.store.Users().GetByEmail(ctx, email)
 }
 
-// RegenerateAPIKey generates a new API key for a user.
-func (s *UserService) RegenerateAPIKey(ctx context.Context, userID string) (*domain.APIKeyResponse, error) {
-	// Verify user exists
-	_, err := s.store.Users().GetByID(ctx, userID)
+// Update updates a user.
+func (s *UserService) Update(ctx context.Context, id string, req *domain.UpdateUserRequest) (*domain.User, error) {
+	user, err := s.store.Users().GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
-	// Generate new API key
-	apiKey, hashedKey, prefix, err := s.generateAPIKey()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate API key: %w", err)
+	if req.Email != nil {
+		user.Email = *req.Email
+	}
+	if req.Name != nil {
+		user.Name = *req.Name
+	}
+	if req.Role != nil {
+		user.Role = *req.Role
+	}
+	if req.IsActive != nil {
+		user.IsActive = *req.IsActive
 	}
 
-	// Update user's API key
-	if err := s.store.Users().UpdateAPIKey(ctx, userID, hashedKey, prefix); err != nil {
-		return nil, fmt.Errorf("failed to update API key: %w", err)
+	if err := s.store.Users().Update(ctx, user); err != nil {
+		return nil, fmt.Errorf("failed to update user: %w", err)
 	}
 
-	return &domain.APIKeyResponse{
-		APIKey: apiKey,
-	}, nil
+	return user, nil
 }
 
-// generateAPIKey generates a new API key and returns the raw key, hashed key, and prefix.
-func (s *UserService) generateAPIKey() (raw, hashed, prefix string, err error) {
-	// Generate 32 random bytes
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", "", "", err
-	}
-
-	// Create API key with prefix
-	raw = "em_" + hex.EncodeToString(bytes)
-	prefix = raw[:10] + "..."
-	hashed = s.hashAPIKey(raw)
-
-	return raw, hashed, prefix, nil
+// Delete deletes a user.
+func (s *UserService) Delete(ctx context.Context, id string) error {
+	return s.store.Users().Delete(ctx, id)
 }
 
-// hashAPIKey creates a SHA-256 hash of an API key.
-func (s *UserService) hashAPIKey(key string) string {
-	hash := sha256.Sum256([]byte(key))
-	return hex.EncodeToString(hash[:])
+// List retrieves users with pagination.
+func (s *UserService) List(ctx context.Context, limit, offset int) ([]*domain.User, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	return s.store.Users().List(ctx, limit, offset)
 }

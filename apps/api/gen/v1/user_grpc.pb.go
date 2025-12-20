@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_CreateUser_FullMethodName       = "/emailapi.v1.UserService/CreateUser"
-	UserService_GetCurrentUser_FullMethodName   = "/emailapi.v1.UserService/GetCurrentUser"
-	UserService_RegenerateAPIKey_FullMethodName = "/emailapi.v1.UserService/RegenerateAPIKey"
+	UserService_CreateUser_FullMethodName     = "/emailapi.v1.UserService/CreateUser"
+	UserService_GetCurrentUser_FullMethodName = "/emailapi.v1.UserService/GetCurrentUser"
+	UserService_UpdateUser_FullMethodName     = "/emailapi.v1.UserService/UpdateUser"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -30,12 +30,12 @@ const (
 //
 // UserService handles user operations.
 type UserServiceClient interface {
-	// CreateUser creates a new user and returns an API key.
+	// CreateUser creates a new user.
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
 	// GetCurrentUser retrieves the authenticated user.
 	GetCurrentUser(ctx context.Context, in *GetCurrentUserRequest, opts ...grpc.CallOption) (*User, error)
-	// RegenerateAPIKey generates a new API key for the user.
-	RegenerateAPIKey(ctx context.Context, in *RegenerateAPIKeyRequest, opts ...grpc.CallOption) (*RegenerateAPIKeyResponse, error)
+	// UpdateUser updates a user.
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*User, error)
 }
 
 type userServiceClient struct {
@@ -66,10 +66,10 @@ func (c *userServiceClient) GetCurrentUser(ctx context.Context, in *GetCurrentUs
 	return out, nil
 }
 
-func (c *userServiceClient) RegenerateAPIKey(ctx context.Context, in *RegenerateAPIKeyRequest, opts ...grpc.CallOption) (*RegenerateAPIKeyResponse, error) {
+func (c *userServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RegenerateAPIKeyResponse)
-	err := c.cc.Invoke(ctx, UserService_RegenerateAPIKey_FullMethodName, in, out, cOpts...)
+	out := new(User)
+	err := c.cc.Invoke(ctx, UserService_UpdateUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,12 +82,12 @@ func (c *userServiceClient) RegenerateAPIKey(ctx context.Context, in *Regenerate
 //
 // UserService handles user operations.
 type UserServiceServer interface {
-	// CreateUser creates a new user and returns an API key.
+	// CreateUser creates a new user.
 	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
 	// GetCurrentUser retrieves the authenticated user.
 	GetCurrentUser(context.Context, *GetCurrentUserRequest) (*User, error)
-	// RegenerateAPIKey generates a new API key for the user.
-	RegenerateAPIKey(context.Context, *RegenerateAPIKeyRequest) (*RegenerateAPIKeyResponse, error)
+	// UpdateUser updates a user.
+	UpdateUser(context.Context, *UpdateUserRequest) (*User, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -104,8 +104,8 @@ func (UnimplementedUserServiceServer) CreateUser(context.Context, *CreateUserReq
 func (UnimplementedUserServiceServer) GetCurrentUser(context.Context, *GetCurrentUserRequest) (*User, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetCurrentUser not implemented")
 }
-func (UnimplementedUserServiceServer) RegenerateAPIKey(context.Context, *RegenerateAPIKeyRequest) (*RegenerateAPIKeyResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RegenerateAPIKey not implemented")
+func (UnimplementedUserServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*User, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateUser not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -164,20 +164,20 @@ func _UserService_GetCurrentUser_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserService_RegenerateAPIKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegenerateAPIKeyRequest)
+func _UserService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServiceServer).RegenerateAPIKey(ctx, in)
+		return srv.(UserServiceServer).UpdateUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: UserService_RegenerateAPIKey_FullMethodName,
+		FullMethod: UserService_UpdateUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).RegenerateAPIKey(ctx, req.(*RegenerateAPIKeyRequest))
+		return srv.(UserServiceServer).UpdateUser(ctx, req.(*UpdateUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -198,8 +198,8 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_GetCurrentUser_Handler,
 		},
 		{
-			MethodName: "RegenerateAPIKey",
-			Handler:    _UserService_RegenerateAPIKey_Handler,
+			MethodName: "UpdateUser",
+			Handler:    _UserService_UpdateUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -14,10 +14,9 @@ import (
 type Store struct {
 	pool *pgxpool.Pool
 
-	email   *EmailRepository
-	user    *UserRepository
-	webhook *WebhookRepository
-	domain  *DomainRepository
+	user   *UserRepository
+	apiKey *APIKeyRepository
+	domain *DomainRepository
 }
 
 // NewStore creates a new PostgreSQL store.
@@ -33,10 +32,9 @@ func NewStore(databaseURL string) (*Store, error) {
 	}
 
 	store := &Store{pool: pool}
-	store.email = &EmailRepository{pool: pool}
-	store.user = &UserRepository{pool: pool}
-	store.webhook = &WebhookRepository{pool: pool}
-	store.domain = &DomainRepository{pool: pool}
+	store.user = NewUserRepository(pool)
+	store.apiKey = NewAPIKeyRepository(pool)
+	store.domain = NewDomainRepository(pool)
 
 	return store, nil
 }
@@ -46,19 +44,14 @@ func (s *Store) Close() {
 	s.pool.Close()
 }
 
-// Emails returns the email repository.
-func (s *Store) Emails() repository.EmailRepository {
-	return s.email
-}
-
 // Users returns the user repository.
 func (s *Store) Users() repository.UserRepository {
 	return s.user
 }
 
-// Webhooks returns the webhook repository.
-func (s *Store) Webhooks() repository.WebhookRepository {
-	return s.webhook
+// APIKeys returns the API key repository.
+func (s *Store) APIKeys() repository.APIKeyRepository {
+	return s.apiKey
 }
 
 // Domains returns the domain repository.

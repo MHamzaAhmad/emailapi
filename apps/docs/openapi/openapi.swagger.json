@@ -1,10 +1,13 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "v1/domain.proto",
+    "title": "v1/apikey.proto",
     "version": "version not set"
   },
   "tags": [
+    {
+      "name": "ApiKeyService"
+    },
     {
       "name": "DomainService"
     },
@@ -25,6 +28,193 @@
     "application/json"
   ],
   "paths": {
+    "/v1/api-keys": {
+      "get": {
+        "summary": "ListApiKeys retrieves all API keys for the authenticated user.",
+        "operationId": "ApiKeyService_ListApiKeys",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListApiKeysResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "ApiKeyService"
+        ]
+      },
+      "post": {
+        "summary": "CreateApiKey creates a new API key for the authenticated user.",
+        "operationId": "ApiKeyService_CreateApiKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateApiKeyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "CreateApiKeyRequest is the request to create a new API key.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateApiKeyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ApiKeyService"
+        ]
+      }
+    },
+    "/v1/api-keys/{id}": {
+      "get": {
+        "summary": "GetApiKey retrieves an API key by ID.",
+        "operationId": "ApiKeyService_GetApiKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ApiKey"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "The ID of the API key.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ApiKeyService"
+        ]
+      },
+      "delete": {
+        "summary": "DeleteApiKey deletes an API key.",
+        "operationId": "ApiKeyService_DeleteApiKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteApiKeyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "The ID of the API key.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ApiKeyService"
+        ]
+      },
+      "patch": {
+        "summary": "UpdateApiKey updates an API key.",
+        "operationId": "ApiKeyService_UpdateApiKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ApiKey"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "The ID of the API key.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ApiKeyServiceUpdateApiKeyBody"
+            }
+          }
+        ],
+        "tags": [
+          "ApiKeyService"
+        ]
+      }
+    },
+    "/v1/api-keys/{id}/revoke": {
+      "post": {
+        "summary": "RevokeApiKey revokes an API key (soft delete).",
+        "operationId": "ApiKeyService_RevokeApiKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ApiKey"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "The ID of the API key.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ApiKeyService"
+        ]
+      }
+    },
     "/v1/domains": {
       "get": {
         "summary": "ListDomains retrieves all domains for the authenticated user.",
@@ -362,7 +552,7 @@
     },
     "/v1/users": {
       "post": {
-        "summary": "CreateUser creates a new user and returns an API key.",
+        "summary": "CreateUser creates a new user.",
         "operationId": "UserService_CreateUser",
         "responses": {
           "200": {
@@ -416,15 +606,15 @@
         ]
       }
     },
-    "/v1/users/me/api-key": {
-      "post": {
-        "summary": "RegenerateAPIKey generates a new API key for the user.",
-        "operationId": "UserService_RegenerateAPIKey",
+    "/v1/users/{id}": {
+      "patch": {
+        "summary": "UpdateUser updates a user.",
+        "operationId": "UserService_UpdateUser",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1RegenerateAPIKeyResponse"
+              "$ref": "#/definitions/v1User"
             }
           },
           "default": {
@@ -434,6 +624,22 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserServiceUpdateUserBody"
+            }
+          }
+        ],
         "tags": [
           "UserService"
         ]
@@ -592,6 +798,32 @@
     }
   },
   "definitions": {
+    "ApiKeyServiceUpdateApiKeyBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable name for the API key."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Scope"
+          },
+          "description": "Scopes to grant to this API key."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the API key is active."
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Optional expiration time."
+        }
+      },
+      "description": "UpdateApiKeyRequest is the request to update an API key."
+    },
     "DomainServiceSetMailFromDomainBody": {
       "type": "object",
       "properties": {
@@ -601,6 +833,23 @@
         }
       },
       "description": "SetMailFromDomainRequest configures a custom MAIL FROM domain."
+    },
+    "UserServiceUpdateUserBody": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/v1UserRole"
+        },
+        "isActive": {
+          "type": "boolean"
+        }
+      }
     },
     "WebhookServiceUpdateWebhookBody": {
       "type": "object",
@@ -678,6 +927,107 @@
       },
       "description": "AddDomainResponse is returned after adding a domain."
     },
+    "v1ApiKey": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the API key."
+        },
+        "userId": {
+          "type": "string",
+          "description": "ID of the user who owns this API key."
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name for the API key."
+        },
+        "keyPrefix": {
+          "type": "string",
+          "description": "Display prefix of the key (e.g., ep_live_abc123...)."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Scope"
+          },
+          "description": "Scopes granted to this API key."
+        },
+        "environment": {
+          "$ref": "#/definitions/v1Environment",
+          "description": "Environment (live or dev)."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the API key is active."
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the API key was last used."
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the API key expires."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the API key was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the API key was last updated."
+        }
+      },
+      "description": "ApiKey represents an API key."
+    },
+    "v1CreateApiKeyRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable name for the API key."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Scope"
+          },
+          "description": "Scopes to grant to this API key."
+        },
+        "environment": {
+          "$ref": "#/definitions/v1Environment",
+          "description": "Environment (live or dev). Defaults to live."
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Optional expiration time."
+        }
+      },
+      "description": "CreateApiKeyRequest is the request to create a new API key."
+    },
+    "v1CreateApiKeyResponse": {
+      "type": "object",
+      "properties": {
+        "apiKey": {
+          "$ref": "#/definitions/v1ApiKey",
+          "description": "The created API key."
+        },
+        "rawKey": {
+          "type": "string",
+          "description": "The raw API key. Store this securely - it will not be shown again."
+        },
+        "message": {
+          "type": "string",
+          "description": "Message for the user."
+        }
+      },
+      "description": "CreateApiKeyResponse is the response for creating an API key."
+    },
     "v1CreateUserRequest": {
       "type": "object",
       "properties": {
@@ -697,9 +1047,6 @@
       "properties": {
         "user": {
           "$ref": "#/definitions/v1User"
-        },
-        "apiKey": {
-          "type": "string"
         },
         "message": {
           "type": "string"
@@ -736,6 +1083,10 @@
           "type": "string"
         }
       }
+    },
+    "v1DeleteApiKeyResponse": {
+      "type": "object",
+      "description": "DeleteApiKeyResponse is the response for deleting an API key."
     },
     "v1DeleteDomainResponse": {
       "type": "object",
@@ -999,6 +1350,30 @@
       "default": "EMAIL_STATUS_UNSPECIFIED",
       "description": "EmailStatus represents the delivery status."
     },
+    "v1Environment": {
+      "type": "string",
+      "enum": [
+        "ENVIRONMENT_UNSPECIFIED",
+        "ENVIRONMENT_LIVE",
+        "ENVIRONMENT_DEV"
+      ],
+      "default": "ENVIRONMENT_UNSPECIFIED",
+      "description": "Environment represents the API key environment."
+    },
+    "v1ListApiKeysResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ApiKey"
+          },
+          "description": "The list of API keys."
+        }
+      },
+      "description": "ListApiKeysResponse is the response for listing API keys."
+    },
     "v1ListDomainsResponse": {
       "type": "object",
       "properties": {
@@ -1074,16 +1449,21 @@
       "default": "RECORD_TYPE_UNSPECIFIED",
       "description": "RecordType identifies the type and purpose of a DNS record.\n\n - RECORD_TYPE_UNSPECIFIED: Default value, should not be used.\n - RECORD_TYPE_DKIM: DKIM record for email signing. There are 3 CNAME records.\n - RECORD_TYPE_SPF: SPF record authorizing SES to send emails.\n - RECORD_TYPE_DMARC: DMARC record for authentication policy.\n - RECORD_TYPE_MX_INBOUND: MX record for receiving inbound emails.\n - RECORD_TYPE_MAIL_FROM_MX: MX record for custom MAIL FROM domain.\n - RECORD_TYPE_MAIL_FROM_SPF: SPF record for custom MAIL FROM domain."
     },
-    "v1RegenerateAPIKeyResponse": {
-      "type": "object",
-      "properties": {
-        "apiKey": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
+    "v1Scope": {
+      "type": "string",
+      "enum": [
+        "SCOPE_UNSPECIFIED",
+        "SCOPE_EMAIL_SEND",
+        "SCOPE_EMAIL_READ",
+        "SCOPE_DOMAIN_READ",
+        "SCOPE_DOMAIN_WRITE",
+        "SCOPE_APIKEY_READ",
+        "SCOPE_APIKEY_WRITE",
+        "SCOPE_USER_READ",
+        "SCOPE_USER_WRITE"
+      ],
+      "default": "SCOPE_UNSPECIFIED",
+      "description": "Scope represents an API key permission scope."
     },
     "v1SendEmailRequest": {
       "type": "object",
@@ -1168,9 +1548,6 @@
         },
         "role": {
           "$ref": "#/definitions/v1UserRole"
-        },
-        "apiKeyPrefix": {
-          "type": "string"
         },
         "isActive": {
           "type": "boolean"

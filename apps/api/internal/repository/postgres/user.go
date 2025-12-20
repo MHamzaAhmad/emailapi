@@ -50,27 +50,16 @@ func (r *UserRepository) GetByID(ctx context.Context, id string) (*domain.User, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
-	return toDomainUserFromRow(row), nil
+	return dbUserToDomain(row), nil
 }
 
 // GetByEmail retrieves a user by their email using sqlc.
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	// row, err := r.queries.GetUserByEmail(ctx, email)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to get user by email: %w", err)
-	// }
-	// return toDomainUserFromRow(row), nil
-	return nil, nil
-}
-
-// GetByAPIKey retrieves a user by their API key hash using sqlc.
-func (r *UserRepository) GetByAPIKey(ctx context.Context, apiKeyHash string) (*domain.User, error) {
-	// row, err := r.queries.GetUserByAPIKey(ctx, apiKeyHash)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to get user by API key: %w", err)
-	// }
-	// return toDomainUserFromRow(row), nil
-	return nil, nil
+	row, err := r.queries.GetUserByEmail(ctx, email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by email: %w", err)
+	}
+	return dbUserToDomain(row), nil
 }
 
 // Update updates an existing user using sqlc.
@@ -100,21 +89,25 @@ func (r *UserRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// UpdateAPIKey updates a user's API key using sqlc.
-func (r *UserRepository) UpdateAPIKey(ctx context.Context, id string, hashedKey string, prefix string) error {
-	err := r.queries.UpdateUserAPIKey(ctx, db.UpdateUserAPIKeyParams{
-		ID:           id,
-		ApiKeyHash:   toPgText(hashedKey),
-		ApiKeyPrefix: toPgText(prefix),
+// List retrieves all users with pagination using sqlc.
+func (r *UserRepository) List(ctx context.Context, limit, offset int) ([]*domain.User, error) {
+	rows, err := r.queries.ListUsers(ctx, db.ListUsersParams{
+		Limit:  int32(limit),
+		Offset: int32(offset),
 	})
 	if err != nil {
-		return fmt.Errorf("failed to update API key: %w", err)
+		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
-	return nil
+
+	users := make([]*domain.User, len(rows))
+	for i, row := range rows {
+		users[i] = dbUserToDomain(row)
+	}
+	return users, nil
 }
 
-// toDomainUserFromRow converts a sqlc GetUserByID/Email/APIKey Row to domain.User.
-func toDomainUserFromRow(row db.GetUserByIDRow) *domain.User {
+// dbUserToDomain converts a sqlc User to domain.User.
+func dbUserToDomain(row db.User) *domain.User {
 	return &domain.User{
 		ID:        row.ID,
 		Email:     row.Email,

@@ -78,9 +78,8 @@ func runGRPCServer(cfg *config.Config, svc *service.Service) error {
 	grpcServer := grpc.NewServer()
 
 	// Register services
-	emailapiv1.RegisterEmailServiceServer(grpcServer, grpctransport.NewEmailServer(svc.Email))
 	emailapiv1.RegisterUserServiceServer(grpcServer, grpctransport.NewUserServer(svc.User))
-	emailapiv1.RegisterWebhookServiceServer(grpcServer, grpctransport.NewWebhookServer(svc.Webhook))
+	emailapiv1.RegisterApiKeyServiceServer(grpcServer, grpctransport.NewApiKeyServer(svc.APIKey))
 	emailapiv1.RegisterDomainServiceServer(grpcServer, grpctransport.NewDomainServer(svc.Domain))
 
 	// Enable reflection for grpcurl
@@ -102,13 +101,10 @@ func runHTTPServer(cfg *config.Config) error {
 	// Register HTTP handlers that proxy to gRPC
 	grpcEndpoint := "localhost:" + cfg.GRPCPort
 
-	if err := emailapiv1.RegisterEmailServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
-		return err
-	}
 	if err := emailapiv1.RegisterUserServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
 		return err
 	}
-	if err := emailapiv1.RegisterWebhookServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
+	if err := emailapiv1.RegisterApiKeyServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
 		return err
 	}
 	if err := emailapiv1.RegisterDomainServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {

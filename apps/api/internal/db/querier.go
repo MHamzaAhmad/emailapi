@@ -6,32 +6,33 @@ package db
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
-	CountEmailsByUserID(ctx context.Context, userID string) (int64, error)
-	CreateEmail(ctx context.Context, arg CreateEmailParams) (Email, error)
+	CountActiveApiKeysByUserID(ctx context.Context, userID string) (int64, error)
+	CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error)
+	CreateDomain(ctx context.Context, arg CreateDomainParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	CreateWebhook(ctx context.Context, arg CreateWebhookParams) (Webhook, error)
-	CreateWebhookDelivery(ctx context.Context, arg CreateWebhookDeliveryParams) (WebhookDelivery, error)
+	DeleteApiKey(ctx context.Context, id string) error
+	DeleteDomain(ctx context.Context, id string) error
 	DeleteUser(ctx context.Context, id string) error
-	DeleteWebhook(ctx context.Context, id string) error
-	GetActiveWebhooksByEvent(ctx context.Context, events []string) ([]GetActiveWebhooksByEventRow, error)
-	GetEmailByID(ctx context.Context, id string) (Email, error)
-	GetEmailsByUserID(ctx context.Context, arg GetEmailsByUserIDParams) ([]Email, error)
-	GetUserByAPIKey(ctx context.Context, apiKeyHash pgtype.Text) (GetUserByAPIKeyRow, error)
-	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
-	GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error)
-	GetWebhookByID(ctx context.Context, id string) (GetWebhookByIDRow, error)
-	GetWebhookDeliveriesByWebhookID(ctx context.Context, arg GetWebhookDeliveriesByWebhookIDParams) ([]WebhookDelivery, error)
-	GetWebhooksByUserID(ctx context.Context, userID string) ([]GetWebhooksByUserIDRow, error)
-	UpdateEmail(ctx context.Context, arg UpdateEmailParams) (Email, error)
-	UpdateEmailStatus(ctx context.Context, arg UpdateEmailStatusParams) error
+	GetApiKeyByHash(ctx context.Context, keyHash string) (ApiKey, error)
+	GetApiKeyByID(ctx context.Context, id string) (ApiKey, error)
+	GetApiKeyByPrefix(ctx context.Context, keyPrefix string) (ApiKey, error)
+	GetDomainByID(ctx context.Context, id string) (Domain, error)
+	GetDomainByName(ctx context.Context, arg GetDomainByNameParams) (Domain, error)
+	GetDomainsByUserID(ctx context.Context, userID string) ([]Domain, error)
+	// Get domains that need verification refresh (never verified or older than threshold)
+	GetStaleDomains(ctx context.Context, limit int32) ([]Domain, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserByID(ctx context.Context, id string) (User, error)
+	ListApiKeysByUserID(ctx context.Context, userID string) ([]ListApiKeysByUserIDRow, error)
+	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	RevokeApiKey(ctx context.Context, id string) (ApiKey, error)
+	UpdateApiKey(ctx context.Context, arg UpdateApiKeyParams) (ApiKey, error)
+	UpdateApiKeyLastUsed(ctx context.Context, id string) error
+	UpdateDomain(ctx context.Context, arg UpdateDomainParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
-	UpdateUserAPIKey(ctx context.Context, arg UpdateUserAPIKeyParams) error
-	UpdateWebhook(ctx context.Context, arg UpdateWebhookParams) (Webhook, error)
 }
 
 var _ Querier = (*Queries)(nil)

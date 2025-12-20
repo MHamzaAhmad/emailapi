@@ -135,8 +135,7 @@ func (x *CreateUserRequest) GetRole() UserRole {
 type CreateUserResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
-	ApiKey        string                 `protobuf:"bytes,2,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"`
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -176,13 +175,6 @@ func (x *CreateUserResponse) GetUser() *User {
 		return x.User
 	}
 	return nil
-}
-
-func (x *CreateUserResponse) GetApiKey() string {
-	if x != nil {
-		return x.ApiKey
-	}
-	return ""
 }
 
 func (x *CreateUserResponse) GetMessage() string {
@@ -234,10 +226,9 @@ type User struct {
 	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Role          UserRole               `protobuf:"varint,4,opt,name=role,proto3,enum=emailapi.v1.UserRole" json:"role,omitempty"`
-	ApiKeyPrefix  string                 `protobuf:"bytes,5,opt,name=api_key_prefix,json=apiKeyPrefix,proto3" json:"api_key_prefix,omitempty"`
-	IsActive      bool                   `protobuf:"varint,6,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	IsActive      bool                   `protobuf:"varint,5,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -300,13 +291,6 @@ func (x *User) GetRole() UserRole {
 	return UserRole_USER_ROLE_UNSPECIFIED
 }
 
-func (x *User) GetApiKeyPrefix() string {
-	if x != nil {
-		return x.ApiKeyPrefix
-	}
-	return ""
-}
-
 func (x *User) GetIsActive() bool {
 	if x != nil {
 		return x.IsActive
@@ -328,26 +312,31 @@ func (x *User) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-type RegenerateAPIKeyRequest struct {
+type UpdateUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email         *string                `protobuf:"bytes,2,opt,name=email,proto3,oneof" json:"email,omitempty"`
+	Name          *string                `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	Role          *UserRole              `protobuf:"varint,4,opt,name=role,proto3,enum=emailapi.v1.UserRole,oneof" json:"role,omitempty"`
+	IsActive      *bool                  `protobuf:"varint,5,opt,name=is_active,json=isActive,proto3,oneof" json:"is_active,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RegenerateAPIKeyRequest) Reset() {
-	*x = RegenerateAPIKeyRequest{}
+func (x *UpdateUserRequest) Reset() {
+	*x = UpdateUserRequest{}
 	mi := &file_v1_user_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RegenerateAPIKeyRequest) String() string {
+func (x *UpdateUserRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RegenerateAPIKeyRequest) ProtoMessage() {}
+func (*UpdateUserRequest) ProtoMessage() {}
 
-func (x *RegenerateAPIKeyRequest) ProtoReflect() protoreflect.Message {
+func (x *UpdateUserRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_v1_user_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -359,61 +348,44 @@ func (x *RegenerateAPIKeyRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RegenerateAPIKeyRequest.ProtoReflect.Descriptor instead.
-func (*RegenerateAPIKeyRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateUserRequest.ProtoReflect.Descriptor instead.
+func (*UpdateUserRequest) Descriptor() ([]byte, []int) {
 	return file_v1_user_proto_rawDescGZIP(), []int{4}
 }
 
-type RegenerateAPIKeyResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ApiKey        string                 `protobuf:"bytes,1,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RegenerateAPIKeyResponse) Reset() {
-	*x = RegenerateAPIKeyResponse{}
-	mi := &file_v1_user_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RegenerateAPIKeyResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegenerateAPIKeyResponse) ProtoMessage() {}
-
-func (x *RegenerateAPIKeyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_user_proto_msgTypes[5]
+func (x *UpdateUserRequest) GetId() string {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegenerateAPIKeyResponse.ProtoReflect.Descriptor instead.
-func (*RegenerateAPIKeyResponse) Descriptor() ([]byte, []int) {
-	return file_v1_user_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *RegenerateAPIKeyResponse) GetApiKey() string {
-	if x != nil {
-		return x.ApiKey
+		return x.Id
 	}
 	return ""
 }
 
-func (x *RegenerateAPIKeyResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
+func (x *UpdateUserRequest) GetEmail() string {
+	if x != nil && x.Email != nil {
+		return *x.Email
 	}
 	return ""
+}
+
+func (x *UpdateUserRequest) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *UpdateUserRequest) GetRole() UserRole {
+	if x != nil && x.Role != nil {
+		return *x.Role
+	}
+	return UserRole_USER_ROLE_UNSPECIFIED
+}
+
+func (x *UpdateUserRequest) GetIsActive() bool {
+	if x != nil && x.IsActive != nil {
+		return *x.IsActive
+	}
+	return false
 }
 
 var File_v1_user_proto protoreflect.FileDescriptor
@@ -424,36 +396,42 @@ const file_v1_user_proto_rawDesc = "" +
 	"\x11CreateUserRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12)\n" +
-	"\x04role\x18\x03 \x01(\x0e2\x15.emailapi.v1.UserRoleR\x04role\"n\n" +
+	"\x04role\x18\x03 \x01(\x0e2\x15.emailapi.v1.UserRoleR\x04role\"U\n" +
 	"\x12CreateUserResponse\x12%\n" +
-	"\x04user\x18\x01 \x01(\v2\x11.emailapi.v1.UserR\x04user\x12\x17\n" +
-	"\aapi_key\x18\x02 \x01(\tR\x06apiKey\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"\x17\n" +
-	"\x15GetCurrentUserRequest\"\xa4\x02\n" +
+	"\x04user\x18\x01 \x01(\v2\x11.emailapi.v1.UserR\x04user\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x17\n" +
+	"\x15GetCurrentUserRequest\"\xfe\x01\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12)\n" +
-	"\x04role\x18\x04 \x01(\x0e2\x15.emailapi.v1.UserRoleR\x04role\x12$\n" +
-	"\x0eapi_key_prefix\x18\x05 \x01(\tR\fapiKeyPrefix\x12\x1b\n" +
-	"\tis_active\x18\x06 \x01(\bR\bisActive\x129\n" +
+	"\x04role\x18\x04 \x01(\x0e2\x15.emailapi.v1.UserRoleR\x04role\x12\x1b\n" +
+	"\tis_active\x18\x05 \x01(\bR\bisActive\x129\n" +
 	"\n" +
-	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x19\n" +
-	"\x17RegenerateAPIKeyRequest\"M\n" +
-	"\x18RegenerateAPIKeyResponse\x12\x17\n" +
-	"\aapi_key\x18\x01 \x01(\tR\x06apiKey\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage*P\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xd3\x01\n" +
+	"\x11UpdateUserRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\x05email\x18\x02 \x01(\tH\x00R\x05email\x88\x01\x01\x12\x17\n" +
+	"\x04name\x18\x03 \x01(\tH\x01R\x04name\x88\x01\x01\x12.\n" +
+	"\x04role\x18\x04 \x01(\x0e2\x15.emailapi.v1.UserRoleH\x02R\x04role\x88\x01\x01\x12 \n" +
+	"\tis_active\x18\x05 \x01(\bH\x03R\bisActive\x88\x01\x01B\b\n" +
+	"\x06_emailB\a\n" +
+	"\x05_nameB\a\n" +
+	"\x05_roleB\f\n" +
+	"\n" +
+	"_is_active*P\n" +
 	"\bUserRole\x12\x19\n" +
 	"\x15USER_ROLE_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fUSER_ROLE_ADMIN\x10\x01\x12\x14\n" +
-	"\x10USER_ROLE_MEMBER\x10\x022\xd0\x02\n" +
+	"\x10USER_ROLE_MEMBER\x10\x022\xad\x02\n" +
 	"\vUserService\x12c\n" +
 	"\n" +
 	"CreateUser\x12\x1e.emailapi.v1.CreateUserRequest\x1a\x1f.emailapi.v1.CreateUserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/users\x12]\n" +
-	"\x0eGetCurrentUser\x12\".emailapi.v1.GetCurrentUserRequest\x1a\x11.emailapi.v1.User\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/users/me\x12}\n" +
-	"\x10RegenerateAPIKey\x12$.emailapi.v1.RegenerateAPIKeyRequest\x1a%.emailapi.v1.RegenerateAPIKeyResponse\"\x1c\x82\xd3\xe4\x93\x02\x16\"\x14/v1/users/me/api-keyB\x94\x01\n" +
+	"\x0eGetCurrentUser\x12\".emailapi.v1.GetCurrentUserRequest\x1a\x11.emailapi.v1.User\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/users/me\x12Z\n" +
+	"\n" +
+	"UpdateUser\x12\x1e.emailapi.v1.UpdateUserRequest\x1a\x11.emailapi.v1.User\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*2\x0e/v1/users/{id}B\x94\x01\n" +
 	"\x0fcom.emailapi.v1B\tUserProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
 var (
@@ -469,34 +447,34 @@ func file_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_v1_user_proto_goTypes = []any{
-	(UserRole)(0),                    // 0: emailapi.v1.UserRole
-	(*CreateUserRequest)(nil),        // 1: emailapi.v1.CreateUserRequest
-	(*CreateUserResponse)(nil),       // 2: emailapi.v1.CreateUserResponse
-	(*GetCurrentUserRequest)(nil),    // 3: emailapi.v1.GetCurrentUserRequest
-	(*User)(nil),                     // 4: emailapi.v1.User
-	(*RegenerateAPIKeyRequest)(nil),  // 5: emailapi.v1.RegenerateAPIKeyRequest
-	(*RegenerateAPIKeyResponse)(nil), // 6: emailapi.v1.RegenerateAPIKeyResponse
-	(*timestamppb.Timestamp)(nil),    // 7: google.protobuf.Timestamp
+	(UserRole)(0),                 // 0: emailapi.v1.UserRole
+	(*CreateUserRequest)(nil),     // 1: emailapi.v1.CreateUserRequest
+	(*CreateUserResponse)(nil),    // 2: emailapi.v1.CreateUserResponse
+	(*GetCurrentUserRequest)(nil), // 3: emailapi.v1.GetCurrentUserRequest
+	(*User)(nil),                  // 4: emailapi.v1.User
+	(*UpdateUserRequest)(nil),     // 5: emailapi.v1.UpdateUserRequest
+	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
 }
 var file_v1_user_proto_depIdxs = []int32{
 	0, // 0: emailapi.v1.CreateUserRequest.role:type_name -> emailapi.v1.UserRole
 	4, // 1: emailapi.v1.CreateUserResponse.user:type_name -> emailapi.v1.User
 	0, // 2: emailapi.v1.User.role:type_name -> emailapi.v1.UserRole
-	7, // 3: emailapi.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	7, // 4: emailapi.v1.User.updated_at:type_name -> google.protobuf.Timestamp
-	1, // 5: emailapi.v1.UserService.CreateUser:input_type -> emailapi.v1.CreateUserRequest
-	3, // 6: emailapi.v1.UserService.GetCurrentUser:input_type -> emailapi.v1.GetCurrentUserRequest
-	5, // 7: emailapi.v1.UserService.RegenerateAPIKey:input_type -> emailapi.v1.RegenerateAPIKeyRequest
-	2, // 8: emailapi.v1.UserService.CreateUser:output_type -> emailapi.v1.CreateUserResponse
-	4, // 9: emailapi.v1.UserService.GetCurrentUser:output_type -> emailapi.v1.User
-	6, // 10: emailapi.v1.UserService.RegenerateAPIKey:output_type -> emailapi.v1.RegenerateAPIKeyResponse
-	8, // [8:11] is the sub-list for method output_type
-	5, // [5:8] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	6, // 3: emailapi.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	6, // 4: emailapi.v1.User.updated_at:type_name -> google.protobuf.Timestamp
+	0, // 5: emailapi.v1.UpdateUserRequest.role:type_name -> emailapi.v1.UserRole
+	1, // 6: emailapi.v1.UserService.CreateUser:input_type -> emailapi.v1.CreateUserRequest
+	3, // 7: emailapi.v1.UserService.GetCurrentUser:input_type -> emailapi.v1.GetCurrentUserRequest
+	5, // 8: emailapi.v1.UserService.UpdateUser:input_type -> emailapi.v1.UpdateUserRequest
+	2, // 9: emailapi.v1.UserService.CreateUser:output_type -> emailapi.v1.CreateUserResponse
+	4, // 10: emailapi.v1.UserService.GetCurrentUser:output_type -> emailapi.v1.User
+	4, // 11: emailapi.v1.UserService.UpdateUser:output_type -> emailapi.v1.User
+	9, // [9:12] is the sub-list for method output_type
+	6, // [6:9] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_v1_user_proto_init() }
@@ -504,13 +482,14 @@ func file_v1_user_proto_init() {
 	if File_v1_user_proto != nil {
 		return
 	}
+	file_v1_user_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_user_proto_rawDesc), len(file_v1_user_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

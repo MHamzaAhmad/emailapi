@@ -5,6 +5,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	emailapiv1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/domain"
@@ -30,15 +31,14 @@ func (s *UserServer) CreateUser(ctx context.Context, req *emailapiv1.CreateUserR
 		Role:  toRole(req.Role),
 	}
 
-	user, apiKey, err := s.svc.Create(ctx, domainReq)
+	user, err := s.svc.Create(ctx, domainReq)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to create user: %v", err)
 	}
 
 	return &emailapiv1.CreateUserResponse{
 		User:    toProtoUser(user),
-		ApiKey:  apiKey,
-		Message: "Store this API key securely. It will not be shown again.",
+		Message: "User created successfully. Create an API key to authenticate.",
 	}, nil
 }
 
@@ -57,22 +57,39 @@ func (s *UserServer) GetCurrentUser(ctx context.Context, req *emailapiv1.GetCurr
 	return toProtoUser(user), nil
 }
 
-// RegenerateAPIKey handles the RegenerateAPIKey RPC.
-func (s *UserServer) RegenerateAPIKey(ctx context.Context, req *emailapiv1.RegenerateAPIKeyRequest) (*emailapiv1.RegenerateAPIKeyResponse, error) {
+// UpdateUser handles the UpdateUser RPC.
+func (s *UserServer) UpdateUser(ctx context.Context, req *emailapiv1.UpdateUserRequest) (*emailapiv1.User, error) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
 	}
 
-	resp, err := s.svc.RegenerateAPIKey(ctx, userID)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to regenerate API key: %v", err)
+	// Only allow users to update their own profile (or admins)
+	if req.Id != userID {
+		return nil, status.Error(codes.PermissionDenied, "cannot update another user")
 	}
 
-	return &emailapiv1.RegenerateAPIKeyResponse{
-		ApiKey:  resp.APIKey,
-		Message: "Store this API key securely. It will not be shown again.",
-	}, nil
+	domainReq := &domain.UpdateUserRequest{}
+	if req.Email != nil {
+		domainReq.Email = req.Email
+	}
+	if req.Name != nil {
+		domainReq.Name = req.Name
+	}
+	if req.Role != nil {
+		role := toRole(*req.Role)
+		domainReq.Role = &role
+	}
+	if req.IsActive != nil {
+		domainReq.IsActive = req.IsActive
+	}
+
+	user, err := s.svc.Update(ctx, req.Id, domainReq)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to update user: %v", err)
+	}
+
+	return toProtoUser(user), nil
 }
 
 func toRole(r emailapiv1.UserRole) domain.UserRole {
@@ -99,11 +116,12 @@ func toProtoUserRole(r domain.UserRole) emailapiv1.UserRole {
 
 func toProtoUser(u *domain.User) *emailapiv1.User {
 	return &emailapiv1.User{
-		Id:           u.ID,
-		Email:        u.Email,
-		Name:         u.Name,
-		Role:         toProtoUserRole(u.Role),
-		ApiKeyPrefix: u.APIKeyPrefix,
-		IsActive:     u.IsActive,
+		Id:        u.ID,
+		Email:     u.Email,
+		Name:      u.Name,
+		Role:      toProtoUserRole(u.Role),
+		IsActive:  u.IsActive,
+		CreatedAt: timestamppb.New(u.CreatedAt),
+		UpdatedAt: timestamppb.New(u.UpdatedAt),
 	}
 }

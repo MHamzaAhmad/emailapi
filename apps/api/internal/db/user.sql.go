@@ -12,21 +12,19 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, email, name, role, api_key_hash, api_key_prefix, is_active, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, email, name, role, api_key_hash, api_key_prefix, is_active, created_at, updated_at
+INSERT INTO users (id, email, name, role, is_active, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, email, name, role, is_active, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	ID           string             `json:"id"`
-	Email        string             `json:"email"`
-	Name         string             `json:"name"`
-	Role         string             `json:"role"`
-	ApiKeyHash   pgtype.Text        `json:"api_key_hash"`
-	ApiKeyPrefix pgtype.Text        `json:"api_key_prefix"`
-	IsActive     bool               `json:"is_active"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	ID        string             `json:"id"`
+	Email     string             `json:"email"`
+	Name      string             `json:"name"`
+	Role      string             `json:"role"`
+	IsActive  bool               `json:"is_active"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -35,8 +33,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Email,
 		arg.Name,
 		arg.Role,
-		arg.ApiKeyHash,
-		arg.ApiKeyPrefix,
 		arg.IsActive,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -47,8 +43,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.Name,
 		&i.Role,
-		&i.ApiKeyHash,
-		&i.ApiKeyPrefix,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -65,63 +59,19 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 	return err
 }
 
-const getUserByAPIKey = `-- name: GetUserByAPIKey :one
-SELECT id, email, name, role, api_key_prefix, is_active, created_at, updated_at
-FROM users WHERE api_key_hash = $1 AND is_active = true
-`
-
-type GetUserByAPIKeyRow struct {
-	ID           string             `json:"id"`
-	Email        string             `json:"email"`
-	Name         string             `json:"name"`
-	Role         string             `json:"role"`
-	ApiKeyPrefix pgtype.Text        `json:"api_key_prefix"`
-	IsActive     bool               `json:"is_active"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) GetUserByAPIKey(ctx context.Context, apiKeyHash pgtype.Text) (GetUserByAPIKeyRow, error) {
-	row := q.db.QueryRow(ctx, getUserByAPIKey, apiKeyHash)
-	var i GetUserByAPIKeyRow
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Name,
-		&i.Role,
-		&i.ApiKeyPrefix,
-		&i.IsActive,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, name, role, api_key_prefix, is_active, created_at, updated_at
+SELECT id, email, name, role, is_active, created_at, updated_at
 FROM users WHERE email = $1
 `
 
-type GetUserByEmailRow struct {
-	ID           string             `json:"id"`
-	Email        string             `json:"email"`
-	Name         string             `json:"name"`
-	Role         string             `json:"role"`
-	ApiKeyPrefix pgtype.Text        `json:"api_key_prefix"`
-	IsActive     bool               `json:"is_active"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
-	var i GetUserByEmailRow
+	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.Name,
 		&i.Role,
-		&i.ApiKeyPrefix,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -130,35 +80,63 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, name, role, api_key_prefix, is_active, created_at, updated_at
+SELECT id, email, name, role, is_active, created_at, updated_at
 FROM users WHERE id = $1
 `
 
-type GetUserByIDRow struct {
-	ID           string             `json:"id"`
-	Email        string             `json:"email"`
-	Name         string             `json:"name"`
-	Role         string             `json:"role"`
-	ApiKeyPrefix pgtype.Text        `json:"api_key_prefix"`
-	IsActive     bool               `json:"is_active"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-}
-
-func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error) {
+func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByID, id)
-	var i GetUserByIDRow
+	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.Name,
 		&i.Role,
-		&i.ApiKeyPrefix,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const listUsers = `-- name: ListUsers :many
+SELECT id, email, name, role, is_active, created_at, updated_at
+FROM users
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListUsersParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.Name,
+			&i.Role,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateUser = `-- name: UpdateUser :one
@@ -169,7 +147,7 @@ UPDATE users SET
     is_active = $5,
     updated_at = $6
 WHERE id = $1
-RETURNING id, email, name, role, api_key_hash, api_key_prefix, is_active, created_at, updated_at
+RETURNING id, email, name, role, is_active, created_at, updated_at
 `
 
 type UpdateUserParams struct {
@@ -196,26 +174,9 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Email,
 		&i.Name,
 		&i.Role,
-		&i.ApiKeyHash,
-		&i.ApiKeyPrefix,
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const updateUserAPIKey = `-- name: UpdateUserAPIKey :exec
-UPDATE users SET api_key_hash = $2, api_key_prefix = $3, updated_at = NOW() WHERE id = $1
-`
-
-type UpdateUserAPIKeyParams struct {
-	ID           string      `json:"id"`
-	ApiKeyHash   pgtype.Text `json:"api_key_hash"`
-	ApiKeyPrefix pgtype.Text `json:"api_key_prefix"`
-}
-
-func (q *Queries) UpdateUserAPIKey(ctx context.Context, arg UpdateUserAPIKeyParams) error {
-	_, err := q.db.Exec(ctx, updateUserAPIKey, arg.ID, arg.ApiKeyHash, arg.ApiKeyPrefix)
-	return err
 }

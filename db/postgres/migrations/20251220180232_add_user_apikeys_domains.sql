@@ -20,6 +20,7 @@ CREATE TABLE "public"."api_keys" (
   "key_hash" text NOT NULL,
   "key_prefix" text NOT NULL,
   "scopes" text[] NULL,
+  "environment" text NOT NULL DEFAULT 'live',
   "is_active" boolean NOT NULL DEFAULT true,
   "last_used_at" timestamptz NULL,
   "expires_at" timestamptz NULL,
@@ -36,6 +37,8 @@ CREATE INDEX "idx_api_keys_key_hash" ON "public"."api_keys" ("key_hash");
 CREATE INDEX "idx_api_keys_key_prefix" ON "public"."api_keys" ("key_prefix");
 -- Create index "idx_api_keys_user_id" to table: "api_keys"
 CREATE INDEX "idx_api_keys_user_id" ON "public"."api_keys" ("user_id");
+-- Create index "idx_api_keys_environment" to table: "api_keys"
+CREATE INDEX "idx_api_keys_environment" ON "public"."api_keys" ("environment");
 -- Create "domains" table
 CREATE TABLE "public"."domains" (
   "id" text NOT NULL,

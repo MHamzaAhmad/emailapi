@@ -1,0 +1,167 @@
+syntax = "proto3";
+
+package emailapi.v1;
+
+option go_package = "github.com/emailapi/api/gen/emailapi/v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// ApiKeyService handles API key operations.
+service ApiKeyService {
+  // CreateApiKey creates a new API key for the authenticated user.
+  rpc CreateApiKey(CreateApiKeyRequest) returns (CreateApiKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/api-keys"
+      body: "*"
+    };
+  }
+
+  // GetApiKey retrieves an API key by ID.
+  rpc GetApiKey(GetApiKeyRequest) returns (ApiKey) {
+    option (google.api.http) = {
+      get: "/v1/api-keys/{id}"
+    };
+  }
+
+  // ListApiKeys retrieves all API keys for the authenticated user.
+  rpc ListApiKeys(ListApiKeysRequest) returns (ListApiKeysResponse) {
+    option (google.api.http) = {
+      get: "/v1/api-keys"
+    };
+  }
+
+  // UpdateApiKey updates an API key.
+  rpc UpdateApiKey(UpdateApiKeyRequest) returns (ApiKey) {
+    option (google.api.http) = {
+      patch: "/v1/api-keys/{id}"
+      body: "*"
+    };
+  }
+
+  // DeleteApiKey deletes an API key.
+  rpc DeleteApiKey(DeleteApiKeyRequest) returns (DeleteApiKeyResponse) {
+    option (google.api.http) = {
+      delete: "/v1/api-keys/{id}"
+    };
+  }
+
+  // RevokeApiKey revokes an API key (soft delete).
+  rpc RevokeApiKey(RevokeApiKeyRequest) returns (ApiKey) {
+    option (google.api.http) = {
+      post: "/v1/api-keys/{id}/revoke"
+    };
+  }
+}
+
+// Environment represents the API key environment.
+enum Environment {
+  ENVIRONMENT_UNSPECIFIED = 0;
+  ENVIRONMENT_LIVE = 1;
+  ENVIRONMENT_DEV = 2;
+}
+
+// Scope represents an API key permission scope.
+enum Scope {
+  SCOPE_UNSPECIFIED = 0;
+  SCOPE_EMAIL_SEND = 1;
+  SCOPE_EMAIL_READ = 2;
+  SCOPE_DOMAIN_READ = 3;
+  SCOPE_DOMAIN_WRITE = 4;
+  SCOPE_APIKEY_READ = 5;
+  SCOPE_APIKEY_WRITE = 6;
+  SCOPE_USER_READ = 7;
+  SCOPE_USER_WRITE = 8;
+}
+
+// ApiKey represents an API key.
+message ApiKey {
+  // Unique identifier for the API key.
+  string id = 1;
+  // ID of the user who owns this API key.
+  string user_id = 2;
+  // Human-readable name for the API key.
+  string name = 3;
+  // Display prefix of the key (e.g., ep_live_abc123...).
+  string key_prefix = 4;
+  // Scopes granted to this API key.
+  repeated Scope scopes = 5;
+  // Environment (live or dev).
+  Environment environment = 6;
+  // Whether the API key is active.
+  bool is_active = 7;
+  // When the API key was last used.
+  google.protobuf.Timestamp last_used_at = 8;
+  // When the API key expires.
+  google.protobuf.Timestamp expires_at = 9;
+  // When the API key was created.
+  google.protobuf.Timestamp created_at = 10;
+  // When the API key was last updated.
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+// CreateApiKeyRequest is the request to create a new API key.
+message CreateApiKeyRequest {
+  // Human-readable name for the API key.
+  string name = 1;
+  // Scopes to grant to this API key.
+  repeated Scope scopes = 2;
+  // Environment (live or dev). Defaults to live.
+  Environment environment = 3;
+  // Optional expiration time.
+  google.protobuf.Timestamp expires_at = 4;
+}
+
+// CreateApiKeyResponse is the response for creating an API key.
+message CreateApiKeyResponse {
+  // The created API key.
+  ApiKey api_key = 1;
+  // The raw API key. Store this securely - it will not be shown again.
+  string raw_key = 2;
+  // Message for the user.
+  string message = 3;
+}
+
+// GetApiKeyRequest is the request to get an API key.
+message GetApiKeyRequest {
+  // The ID of the API key.
+  string id = 1;
+}
+
+// ListApiKeysRequest is the request to list API keys.
+message ListApiKeysRequest {}
+
+// ListApiKeysResponse is the response for listing API keys.
+message ListApiKeysResponse {
+  // The list of API keys.
+  repeated ApiKey data = 1;
+}
+
+// UpdateApiKeyRequest is the request to update an API key.
+message UpdateApiKeyRequest {
+  // The ID of the API key.
+  string id = 1;
+  // Human-readable name for the API key.
+  optional string name = 2;
+  // Scopes to grant to this API key.
+  repeated Scope scopes = 3;
+  // Whether the API key is active.
+  optional bool is_active = 4;
+  // Optional expiration time.
+  google.protobuf.Timestamp expires_at = 5;
+}
+
+// DeleteApiKeyRequest is the request to delete an API key.
+message DeleteApiKeyRequest {
+  // The ID of the API key.
+  string id = 1;
+}
+
+// DeleteApiKeyResponse is the response for deleting an API key.
+message DeleteApiKeyResponse {}
+
+// RevokeApiKeyRequest is the request to revoke an API key.
+message RevokeApiKeyRequest {
+  // The ID of the API key.
+  string id = 1;
+}
