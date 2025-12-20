@@ -1,10 +1,12 @@
+-- +goose Up
 -- ClickHouse schema for high-volume email event logs
 -- This table is optimized for analytics and time-series queries
 
-CREATE TABLE IF NOT EXISTS email_logs
+CREATE TABLE IF NOT EXISTS emails
 (
     id UUID DEFAULT generateUUIDv4(),
     email_id String,
+    message_id String,
     user_id String,
     event_type Enum8(
         'sent' = 1,
@@ -40,7 +42,7 @@ AS SELECT
     toDate(timestamp) as date,
     event_type,
     count() as event_count
-FROM email_logs
+FROM emails
 GROUP BY user_id, date, event_type;
 
 -- Materialized view for daily email statistics
@@ -52,5 +54,10 @@ AS SELECT
     toDate(timestamp) as date,
     event_type,
     count() as event_count
-FROM email_logs
+FROM emails
 GROUP BY date, event_type;
+
+-- +goose Down
+DROP VIEW IF EXISTS daily_email_stats_mv;
+DROP VIEW IF EXISTS email_events_by_user_mv;
+DROP TABLE IF EXISTS emails;

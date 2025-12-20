@@ -67,7 +67,20 @@ message SendEmailRequest {
   map<string, string> metadata = 8;
   // Optional timestamp to schedule the email for future delivery.
   google.protobuf.Timestamp scheduled_at = 9;
+  // List of attachments.
+  repeated Attachment attachments = 10;
 }
+
+// Attachment represents a file to be attached to the email.
+message Attachment {
+  // Filename of the attachment.
+  string filename = 1;
+  // MIME type of the attachment (e.g., application/pdf).
+  string content_type = 2;
+  // Raw content of the attachment.
+  bytes content = 3;
+}
+
 
 // SendEmailResponse contains the ID of the sent email.
 message SendEmailResponse {

@@ -112,3 +112,12 @@ func (c *sesClient) PutEmailIdentityMailFromAttributes(ctx context.Context, doma
 
 	return nil
 }
+
+// SendEmail sends a raw email (with MIME content).
+func (c *sesClient) SendEmail(ctx context.Context, input *sesv2.SendEmailInput) (*sesv2.SendEmailOutput, error) {
+	output, err := c.client.SendEmail(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send email: %w", err)
+	}
+	return output, nil
+}

@@ -1,7 +1,10 @@
 package service
 
 import (
+	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
+	"github.com/emailapi/api/internal/repository/clickhouse"
+	"github.com/riverqueue/river"
 )
 
 // Service aggregates all business logic services.
@@ -12,6 +15,7 @@ type Service struct {
 	User   *UserService
 	APIKey *APIKeyService
 	Domain *DomainService
+	Email  *EmailService
 }
 
 // New creates a new Service with the given Store.
@@ -24,8 +28,17 @@ func New(store Store) *Service {
 }
 
 // NewWithSES creates a new Service with the given Store and SES client.
-func NewWithSES(store Store, sesClient ses.Client, region string) *Service {
+// It also initializes EmailService.
+func NewWithSES(
+	store Store,
+	sesClient ses.Client,
+	region string,
+	riverClient *river.Client[any],
+	s3Client s3.Client,
+	chRepo *clickhouse.EmailRepository,
+) *Service {
 	svc := New(store)
 	svc.Domain = NewDomainService(store, sesClient, region)
+	svc.Email = NewEmailService(riverClient, s3Client, chRepo)
 	return svc
 }

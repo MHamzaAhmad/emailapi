@@ -81,6 +81,11 @@ type DomainRepository interface {
 	Delete(ctx context.Context, id string) error
 }
 
-// TODO: EmailRepository (to be reimplemented later)
+// EmailRepository defines the interface for email data access.
+type EmailRepository interface {
+	// AddEmail stores a new email.
+	AddEmail(ctx context.Context, email *domain.Email, eventType string) error
+}
+
 // TODO: WebhookRepository (to be reimplemented later)
 // TODO: LogRepository (to be reimplemented later)

@@ -17,22 +17,34 @@ proto:
 gen-sqlc:
 	cd tools && sqlc generate
 
-# Database migrations (declarative schema workflow)
-migrate:
-	atlas migrate apply --env local --config "file://tools/atlas.hcl"
+# Database migrations (Goose)
+# Postgres
+migrate-pg-up:
+	goose -dir db/postgres/migrations postgres "$(DATABASE_URL)" up
 
-migrate-diff:
+migrate-pg-down:
+	goose -dir db/postgres/migrations postgres "$(DATABASE_URL)" down
+
+migrate-pg-status:
+	goose -dir db/postgres/migrations postgres "$(DATABASE_URL)" status
+
+migrate-pg-create:
 	@read -p "Migration name: " name; \
-	atlas migrate diff $$name --env local --config "file://tools/atlas.hcl"
+	goose -dir db/postgres/migrations postgres "$(DATABASE_URL)" create $$name sql
 
-migrate-status:
-	atlas migrate status --env local --config "file://tools/atlas.hcl"
+# ClickHouse
+migrate-ch-up:
+	goose -dir db/clickhouse/migrations clickhouse "$(CLICKHOUSE_URL)" up
 
-migrate-hash:
-	atlas migrate hash --env local --config "file://tools/atlas.hcl"
+migrate-ch-down:
+	goose -dir db/clickhouse/migrations clickhouse "$(CLICKHOUSE_URL)" down
 
-migrate-down:
-	atlas migrate down --env local --config "file://tools/atlas.hcl"
+migrate-ch-status:
+	goose -dir db/clickhouse/migrations clickhouse "$(CLICKHOUSE_URL)" status
+
+migrate-ch-create:
+	@read -p "Migration name: " name; \
+	goose -dir db/clickhouse/migrations clickhouse "$(CLICKHOUSE_URL)" create $$name sql
 
 # Testing
 test:

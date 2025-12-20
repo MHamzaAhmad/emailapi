@@ -1028,6 +1028,25 @@
       },
       "description": "ApiKey represents an API key."
     },
+    "v1Attachment": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string",
+          "description": "Filename of the attachment."
+        },
+        "contentType": {
+          "type": "string",
+          "description": "MIME type of the attachment (e.g., application/pdf)."
+        },
+        "content": {
+          "type": "string",
+          "format": "byte",
+          "description": "Raw content of the attachment."
+        }
+      },
+      "description": "Attachment represents a file to be attached to the email."
+    },
     "v1CreateApiKeyRequest": {
       "type": "object",
       "properties": {
@@ -1582,6 +1601,14 @@
           "type": "string",
           "format": "date-time",
           "description": "Optional timestamp to schedule the email for future delivery."
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Attachment"
+          },
+          "description": "List of attachments."
         }
       },
       "description": "SendEmailRequest is the payload for sending an email."

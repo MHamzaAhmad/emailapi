@@ -2,6 +2,8 @@ package ses
 
 import (
 	"context"
+
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 )
 
 // IdentityResult contains the result of an email identity operation.
@@ -38,4 +40,7 @@ type Client interface {
 	// PutEmailIdentityMailFromAttributes configures custom MAIL FROM domain.
 	// The mailFromDomain should be a subdomain of the identity domain.
 	PutEmailIdentityMailFromAttributes(ctx context.Context, domain, mailFromDomain string) error
+
+	// SendEmail sends a raw email (with MIME content).
+	SendEmail(ctx context.Context, input *sesv2.SendEmailInput) (*sesv2.SendEmailOutput, error)
 }

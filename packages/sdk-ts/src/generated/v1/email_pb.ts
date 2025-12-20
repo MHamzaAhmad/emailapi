@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/email.proto.
  */
 export const file_v1_email: GenFile = /*@__PURE__*/
-  fileDesc("Cg52MS9lbWFpbC5wcm90bxILZW1haWxhcGkudjEilAIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSPQoIbWV0YWRhdGEYCCADKAsyKy5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiSQoRU2VuZEVtYWlsUmVzcG9uc2USCgoCaWQYASABKAkSKAoGc3RhdHVzGAIgASgOMhguZW1haWxhcGkudjEuRW1haWxTdGF0dXMiHQoPR2V0RW1haWxSZXF1ZXN0EgoKAmlkGAEgASgJIucDCgVFbWFpbBIKCgJpZBgBIAEoCRIMCgRmcm9tGAIgASgJEgoKAnRvGAMgAygJEgoKAmNjGAQgAygJEgsKA2JjYxgFIAMoCRIPCgdzdWJqZWN0GAYgASgJEgwKBGJvZHkYByABKAkSDAoEaHRtbBgIIAEoCRIoCgZzdGF0dXMYCSABKA4yGC5lbWFpbGFwaS52MS5FbWFpbFN0YXR1cxITCgtwcm92aWRlcl9pZBgKIAEoCRIPCgd1c2VyX2lkGAsgASgJEjIKCG1ldGFkYXRhGAwgAygLMiAuZW1haWxhcGkudjEuRW1haWwuTWV0YWRhdGFFbnRyeRIwCgxzY2hlZHVsZWRfYXQYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEisKB3NlbnRfYXQYDiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNyZWF0ZWRfYXQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wGi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASIyChFMaXN0RW1haWxzUmVxdWVzdBINCgVsaW1pdBgBIAEoBRIOCgZvZmZzZXQYAiABKAUiVQoSTGlzdEVtYWlsc1Jlc3BvbnNlEiAKBGRhdGEYASADKAsyEi5lbWFpbGFwaS52MS5FbWFpbBINCgVsaW1pdBgCIAEoBRIOCgZvZmZzZXQYAyABKAUqqwEKC0VtYWlsU3RhdHVzEhwKGEVNQUlMX1NUQVRVU19VTlNQRUNJRklFRBAAEhgKFEVNQUlMX1NUQVRVU19QRU5ESU5HEAESFQoRRU1BSUxfU1RBVFVTX1NFTlQQAhIaChZFTUFJTF9TVEFUVVNfREVMSVZFUkVEEAMSFwoTRU1BSUxfU1RBVFVTX0ZBSUxFRBAEEhgKFEVNQUlMX1NUQVRVU19CT1VOQ0VEEAUyqQIKDEVtYWlsU2VydmljZRJfCglTZW5kRW1haWwSHS5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXF1ZXN0Gh4uZW1haWxhcGkudjEuU2VuZEVtYWlsUmVzcG9uc2UiE4LT5JMCDToBKiIIL3YxL3NlbmQSVQoIR2V0RW1haWwSHC5lbWFpbGFwaS52MS5HZXRFbWFpbFJlcXVlc3QaEi5lbWFpbGFwaS52MS5FbWFpbCIXgtPkkwIREg8vdjEvZW1haWxzL3tpZH0SYQoKTGlzdEVtYWlscxIeLmVtYWlsYXBpLnYxLkxpc3RFbWFpbHNSZXF1ZXN0Gh8uZW1haWxhcGkudjEuTGlzdEVtYWlsc1Jlc3BvbnNlIhKC0+STAgwSCi92MS9lbWFpbHNCmAEKD2NvbS5lbWFpbGFwaS52MUIKRW1haWxQcm90b1ABWixnaXRodWIuY29tL2VtYWlsYXBpL3Nkay1nby9nZW4vdjE7ZW1haWxhcGl2MaICA0VYWKoCC0VtYWlsYXBpLlYxygILRW1haWxhcGlcVjHiAhdFbWFpbGFwaVxWMVxHUEJNZXRhZGF0YeoCDEVtYWlsYXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations, file_google_protobuf_timestamp]);
+  fileDesc("Cg52MS9lbWFpbC5wcm90bxILZW1haWxhcGkudjEiwgIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSPQoIbWV0YWRhdGEYCCADKAsyKy5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCgthdHRhY2htZW50cxgKIAMoCzIXLmVtYWlsYXBpLnYxLkF0dGFjaG1lbnQaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIkUKCkF0dGFjaG1lbnQSEAoIZmlsZW5hbWUYASABKAkSFAoMY29udGVudF90eXBlGAIgASgJEg8KB2NvbnRlbnQYAyABKAwiSQoRU2VuZEVtYWlsUmVzcG9uc2USCgoCaWQYASABKAkSKAoGc3RhdHVzGAIgASgOMhguZW1haWxhcGkudjEuRW1haWxTdGF0dXMiHQoPR2V0RW1haWxSZXF1ZXN0EgoKAmlkGAEgASgJIucDCgVFbWFpbBIKCgJpZBgBIAEoCRIMCgRmcm9tGAIgASgJEgoKAnRvGAMgAygJEgoKAmNjGAQgAygJEgsKA2JjYxgFIAMoCRIPCgdzdWJqZWN0GAYgASgJEgwKBGJvZHkYByABKAkSDAoEaHRtbBgIIAEoCRIoCgZzdGF0dXMYCSABKA4yGC5lbWFpbGFwaS52MS5FbWFpbFN0YXR1cxITCgtwcm92aWRlcl9pZBgKIAEoCRIPCgd1c2VyX2lkGAsgASgJEjIKCG1ldGFkYXRhGAwgAygLMiAuZW1haWxhcGkudjEuRW1haWwuTWV0YWRhdGFFbnRyeRIwCgxzY2hlZHVsZWRfYXQYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEisKB3NlbnRfYXQYDiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNyZWF0ZWRfYXQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYECABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wGi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASIyChFMaXN0RW1haWxzUmVxdWVzdBINCgVsaW1pdBgBIAEoBRIOCgZvZmZzZXQYAiABKAUiVQoSTGlzdEVtYWlsc1Jlc3BvbnNlEiAKBGRhdGEYASADKAsyEi5lbWFpbGFwaS52MS5FbWFpbBINCgVsaW1pdBgCIAEoBRIOCgZvZmZzZXQYAyABKAUqqwEKC0VtYWlsU3RhdHVzEhwKGEVNQUlMX1NUQVRVU19VTlNQRUNJRklFRBAAEhgKFEVNQUlMX1NUQVRVU19QRU5ESU5HEAESFQoRRU1BSUxfU1RBVFVTX1NFTlQQAhIaChZFTUFJTF9TVEFUVVNfREVMSVZFUkVEEAMSFwoTRU1BSUxfU1RBVFVTX0ZBSUxFRBAEEhgKFEVNQUlMX1NUQVRVU19CT1VOQ0VEEAUyqQIKDEVtYWlsU2VydmljZRJfCglTZW5kRW1haWwSHS5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXF1ZXN0Gh4uZW1haWxhcGkudjEuU2VuZEVtYWlsUmVzcG9uc2UiE4LT5JMCDToBKiIIL3YxL3NlbmQSVQoIR2V0RW1haWwSHC5lbWFpbGFwaS52MS5HZXRFbWFpbFJlcXVlc3QaEi5lbWFpbGFwaS52MS5FbWFpbCIXgtPkkwIREg8vdjEvZW1haWxzL3tpZH0SYQoKTGlzdEVtYWlscxIeLmVtYWlsYXBpLnYxLkxpc3RFbWFpbHNSZXF1ZXN0Gh8uZW1haWxhcGkudjEuTGlzdEVtYWlsc1Jlc3BvbnNlIhKC0+STAgwSCi92MS9lbWFpbHNCmAEKD2NvbS5lbWFpbGFwaS52MUIKRW1haWxQcm90b1ABWixnaXRodWIuY29tL2VtYWlsYXBpL3Nkay1nby9nZW4vdjE7ZW1haWxhcGl2MaICA0VYWKoCC0VtYWlsYXBpLlYxygILRW1haWxhcGlcVjHiAhdFbWFpbGFwaVxWMVxHUEJNZXRhZGF0YeoCDEVtYWlsYXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations, file_google_protobuf_timestamp]);
 
 /**
  * SendEmailRequest is the payload for sending an email.
@@ -83,6 +83,13 @@ export type SendEmailRequest = Message<"emailapi.v1.SendEmailRequest"> & {
    * @generated from field: google.protobuf.Timestamp scheduled_at = 9;
    */
   scheduledAt?: Timestamp;
+
+  /**
+   * List of attachments.
+   *
+   * @generated from field: repeated emailapi.v1.Attachment attachments = 10;
+   */
+  attachments: Attachment[];
 };
 
 /**
@@ -91,6 +98,41 @@ export type SendEmailRequest = Message<"emailapi.v1.SendEmailRequest"> & {
  */
 export const SendEmailRequestSchema: GenMessage<SendEmailRequest> = /*@__PURE__*/
   messageDesc(file_v1_email, 0);
+
+/**
+ * Attachment represents a file to be attached to the email.
+ *
+ * @generated from message emailapi.v1.Attachment
+ */
+export type Attachment = Message<"emailapi.v1.Attachment"> & {
+  /**
+   * Filename of the attachment.
+   *
+   * @generated from field: string filename = 1;
+   */
+  filename: string;
+
+  /**
+   * MIME type of the attachment (e.g., application/pdf).
+   *
+   * @generated from field: string content_type = 2;
+   */
+  contentType: string;
+
+  /**
+   * Raw content of the attachment.
+   *
+   * @generated from field: bytes content = 3;
+   */
+  content: Uint8Array;
+};
+
+/**
+ * Describes the message emailapi.v1.Attachment.
+ * Use `create(AttachmentSchema)` to create a new message.
+ */
+export const AttachmentSchema: GenMessage<Attachment> = /*@__PURE__*/
+  messageDesc(file_v1_email, 1);
 
 /**
  * SendEmailResponse contains the ID of the sent email.
@@ -118,7 +160,7 @@ export type SendEmailResponse = Message<"emailapi.v1.SendEmailResponse"> & {
  * Use `create(SendEmailResponseSchema)` to create a new message.
  */
 export const SendEmailResponseSchema: GenMessage<SendEmailResponse> = /*@__PURE__*/
-  messageDesc(file_v1_email, 1);
+  messageDesc(file_v1_email, 2);
 
 /**
  * GetEmailRequest identifies the email to retrieve.
@@ -139,7 +181,7 @@ export type GetEmailRequest = Message<"emailapi.v1.GetEmailRequest"> & {
  * Use `create(GetEmailRequestSchema)` to create a new message.
  */
 export const GetEmailRequestSchema: GenMessage<GetEmailRequest> = /*@__PURE__*/
-  messageDesc(file_v1_email, 2);
+  messageDesc(file_v1_email, 3);
 
 /**
  * Email represents a single email message and its status.
@@ -265,7 +307,7 @@ export type Email = Message<"emailapi.v1.Email"> & {
  * Use `create(EmailSchema)` to create a new message.
  */
 export const EmailSchema: GenMessage<Email> = /*@__PURE__*/
-  messageDesc(file_v1_email, 3);
+  messageDesc(file_v1_email, 4);
 
 /**
  * ListEmailsRequest filters and pagination for listing emails.
@@ -293,7 +335,7 @@ export type ListEmailsRequest = Message<"emailapi.v1.ListEmailsRequest"> & {
  * Use `create(ListEmailsRequestSchema)` to create a new message.
  */
 export const ListEmailsRequestSchema: GenMessage<ListEmailsRequest> = /*@__PURE__*/
-  messageDesc(file_v1_email, 4);
+  messageDesc(file_v1_email, 5);
 
 /**
  * ListEmailsResponse returns a page of emails.
@@ -328,7 +370,7 @@ export type ListEmailsResponse = Message<"emailapi.v1.ListEmailsResponse"> & {
  * Use `create(ListEmailsResponseSchema)` to create a new message.
  */
 export const ListEmailsResponseSchema: GenMessage<ListEmailsResponse> = /*@__PURE__*/
-  messageDesc(file_v1_email, 5);
+  messageDesc(file_v1_email, 6);
 
 /**
  * EmailStatus represents the delivery status.

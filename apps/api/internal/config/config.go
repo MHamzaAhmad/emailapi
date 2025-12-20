@@ -25,6 +25,12 @@ type Config struct {
 
 	// Rate limiting
 	RateLimitPerMinute int `envconfig:"RATE_LIMIT_PER_MINUTE" default:"100"`
+
+	// AWS/S3 Configuration
+	AWSRegion          string `envconfig:"AWS_REGION" required:"true"`
+	AWSAccessKeyID     string `envconfig:"AWS_ACCESS_KEY_ID" required:"true"`
+	AWSSecretAccessKey string `envconfig:"AWS_SECRET_ACCESS_KEY" required:"true"`
+	S3Bucket           string `envconfig:"S3_BUCKET" required:"true"`
 }
 
 // Load reads configuration from environment variables.

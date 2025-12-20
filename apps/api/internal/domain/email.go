@@ -18,6 +18,7 @@ const (
 // Email represents an email entity in the system.
 type Email struct {
 	ID          string      `json:"id"`
+	MessageID   string      `json:"message_id,omitempty"`
 	From        string      `json:"from"`
 	To          []string    `json:"to"`
 	Cc          []string    `json:"cc,omitempty"`

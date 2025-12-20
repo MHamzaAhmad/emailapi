@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/user.proto.
  */
 export const file_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("Cg12MS91c2VyLnByb3RvEgtlbWFpbGFwaS52MSJVChFDcmVhdGVVc2VyUmVxdWVzdBINCgVlbWFpbBgBIAEoCRIMCgRuYW1lGAIgASgJEiMKBHJvbGUYAyABKA4yFS5lbWFpbGFwaS52MS5Vc2VyUm9sZSJXChJDcmVhdGVVc2VyUmVzcG9uc2USHwoEdXNlchgBIAEoCzIRLmVtYWlsYXBpLnYxLlVzZXISDwoHYXBpX2tleRgCIAEoCRIPCgdtZXNzYWdlGAMgASgJIhcKFUdldEN1cnJlbnRVc2VyUmVxdWVzdCLfAQoEVXNlchIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIMCgRuYW1lGAMgASgJEiMKBHJvbGUYBCABKA4yFS5lbWFpbGFwaS52MS5Vc2VyUm9sZRIWCg5hcGlfa2V5X3ByZWZpeBgFIAEoCRIRCglpc19hY3RpdmUYBiABKAgSLgoKY3JlYXRlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiGQoXUmVnZW5lcmF0ZUFQSUtleVJlcXVlc3QiPAoYUmVnZW5lcmF0ZUFQSUtleVJlc3BvbnNlEg8KB2FwaV9rZXkYASABKAkSDwoHbWVzc2FnZRgCIAEoCSpQCghVc2VyUm9sZRIZChVVU0VSX1JPTEVfVU5TUEVDSUZJRUQQABITCg9VU0VSX1JPTEVfQURNSU4QARIUChBVU0VSX1JPTEVfTUVNQkVSEAIy0AIKC1VzZXJTZXJ2aWNlEmMKCkNyZWF0ZVVzZXISHi5lbWFpbGFwaS52MS5DcmVhdGVVc2VyUmVxdWVzdBofLmVtYWlsYXBpLnYxLkNyZWF0ZVVzZXJSZXNwb25zZSIUgtPkkwIOOgEqIgkvdjEvdXNlcnMSXQoOR2V0Q3VycmVudFVzZXISIi5lbWFpbGFwaS52MS5HZXRDdXJyZW50VXNlclJlcXVlc3QaES5lbWFpbGFwaS52MS5Vc2VyIhSC0+STAg4SDC92MS91c2Vycy9tZRJ9ChBSZWdlbmVyYXRlQVBJS2V5EiQuZW1haWxhcGkudjEuUmVnZW5lcmF0ZUFQSUtleVJlcXVlc3QaJS5lbWFpbGFwaS52MS5SZWdlbmVyYXRlQVBJS2V5UmVzcG9uc2UiHILT5JMCFiIUL3YxL3VzZXJzL21lL2FwaS1rZXlClwEKD2NvbS5lbWFpbGFwaS52MUIJVXNlclByb3RvUAFaLGdpdGh1Yi5jb20vZW1haWxhcGkvc2RrLWdvL2dlbi92MTtlbWFpbGFwaXYxogIDRVhYqgILRW1haWxhcGkuVjHKAgtFbWFpbGFwaVxWMeICF0VtYWlsYXBpXFYxXEdQQk1ldGFkYXRh6gIMRW1haWxhcGk6OlYxYgZwcm90bzM", [file_google_api_annotations, file_google_protobuf_timestamp]);
+  fileDesc("Cg12MS91c2VyLnByb3RvEgtlbWFpbGFwaS52MSJVChFDcmVhdGVVc2VyUmVxdWVzdBINCgVlbWFpbBgBIAEoCRIMCgRuYW1lGAIgASgJEiMKBHJvbGUYAyABKA4yFS5lbWFpbGFwaS52MS5Vc2VyUm9sZSJXChJDcmVhdGVVc2VyUmVzcG9uc2USHwoEdXNlchgBIAEoCzIRLmVtYWlsYXBpLnYxLlVzZXISDwoHbWVzc2FnZRgCIAEoCRIPCgdhcGlfa2V5GAMgASgJIhcKFUdldEN1cnJlbnRVc2VyUmVxdWVzdCLHAQoEVXNlchIKCgJpZBgBIAEoCRINCgVlbWFpbBgCIAEoCRIMCgRuYW1lGAMgASgJEiMKBHJvbGUYBCABKA4yFS5lbWFpbGFwaS52MS5Vc2VyUm9sZRIRCglpc19hY3RpdmUYBSABKAgSLgoKY3JlYXRlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAisgEKEVVwZGF0ZVVzZXJSZXF1ZXN0EgoKAmlkGAEgASgJEhIKBWVtYWlsGAIgASgJSACIAQESEQoEbmFtZRgDIAEoCUgBiAEBEigKBHJvbGUYBCABKA4yFS5lbWFpbGFwaS52MS5Vc2VyUm9sZUgCiAEBEhYKCWlzX2FjdGl2ZRgFIAEoCEgDiAEBQggKBl9lbWFpbEIHCgVfbmFtZUIHCgVfcm9sZUIMCgpfaXNfYWN0aXZlIkkKEExpc3RVc2Vyc1JlcXVlc3QSEQoJcGFnZV9zaXplGAEgASgFEhIKCnBhZ2VfdG9rZW4YAiABKAkSDgoGb2Zmc2V0GAMgASgFImMKEUxpc3RVc2Vyc1Jlc3BvbnNlEiAKBXVzZXJzGAEgAygLMhEuZW1haWxhcGkudjEuVXNlchITCgt0b3RhbF9jb3VudBgCIAEoBRIXCg9uZXh0X3BhZ2VfdG9rZW4YAyABKAkqUAoIVXNlclJvbGUSGQoVVVNFUl9ST0xFX1VOU1BFQ0lGSUVEEAASEwoPVVNFUl9ST0xFX0FETUlOEAESFAoQVVNFUl9ST0xFX01FTUJFUhACMowDCgtVc2VyU2VydmljZRJjCgpDcmVhdGVVc2VyEh4uZW1haWxhcGkudjEuQ3JlYXRlVXNlclJlcXVlc3QaHy5lbWFpbGFwaS52MS5DcmVhdGVVc2VyUmVzcG9uc2UiFILT5JMCDjoBKiIJL3YxL3VzZXJzEl0KDkdldEN1cnJlbnRVc2VyEiIuZW1haWxhcGkudjEuR2V0Q3VycmVudFVzZXJSZXF1ZXN0GhEuZW1haWxhcGkudjEuVXNlciIUgtPkkwIOEgwvdjEvdXNlcnMvbWUSWgoKVXBkYXRlVXNlchIeLmVtYWlsYXBpLnYxLlVwZGF0ZVVzZXJSZXF1ZXN0GhEuZW1haWxhcGkudjEuVXNlciIZgtPkkwITOgEqMg4vdjEvdXNlcnMve2lkfRJdCglMaXN0VXNlcnMSHS5lbWFpbGFwaS52MS5MaXN0VXNlcnNSZXF1ZXN0Gh4uZW1haWxhcGkudjEuTGlzdFVzZXJzUmVzcG9uc2UiEYLT5JMCCxIJL3YxL3VzZXJzQpcBCg9jb20uZW1haWxhcGkudjFCCVVzZXJQcm90b1ABWixnaXRodWIuY29tL2VtYWlsYXBpL3Nkay1nby9nZW4vdjE7ZW1haWxhcGl2MaICA0VYWKoCC0VtYWlsYXBpLlYxygILRW1haWxhcGlcVjHiAhdFbWFpbGFwaVxWMVxHUEJNZXRhZGF0YeoCDEVtYWlsYXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message emailapi.v1.CreateUserRequest
@@ -52,14 +52,14 @@ export type CreateUserResponse = Message<"emailapi.v1.CreateUserResponse"> & {
   user?: User;
 
   /**
-   * @generated from field: string api_key = 2;
-   */
-  apiKey: string;
-
-  /**
-   * @generated from field: string message = 3;
+   * @generated from field: string message = 2;
    */
   message: string;
+
+  /**
+   * @generated from field: string api_key = 3;
+   */
+  apiKey: string;
 };
 
 /**
@@ -107,22 +107,17 @@ export type User = Message<"emailapi.v1.User"> & {
   role: UserRole;
 
   /**
-   * @generated from field: string api_key_prefix = 5;
-   */
-  apiKeyPrefix: string;
-
-  /**
-   * @generated from field: bool is_active = 6;
+   * @generated from field: bool is_active = 5;
    */
   isActive: boolean;
 
   /**
-   * @generated from field: google.protobuf.Timestamp created_at = 7;
+   * @generated from field: google.protobuf.Timestamp created_at = 6;
    */
   createdAt?: Timestamp;
 
   /**
-   * @generated from field: google.protobuf.Timestamp updated_at = 8;
+   * @generated from field: google.protobuf.Timestamp updated_at = 7;
    */
   updatedAt?: Timestamp;
 };
@@ -135,39 +130,97 @@ export const UserSchema: GenMessage<User> = /*@__PURE__*/
   messageDesc(file_v1_user, 3);
 
 /**
- * @generated from message emailapi.v1.RegenerateAPIKeyRequest
+ * @generated from message emailapi.v1.UpdateUserRequest
  */
-export type RegenerateAPIKeyRequest = Message<"emailapi.v1.RegenerateAPIKeyRequest"> & {
+export type UpdateUserRequest = Message<"emailapi.v1.UpdateUserRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: optional string email = 2;
+   */
+  email?: string;
+
+  /**
+   * @generated from field: optional string name = 3;
+   */
+  name?: string;
+
+  /**
+   * @generated from field: optional emailapi.v1.UserRole role = 4;
+   */
+  role?: UserRole;
+
+  /**
+   * @generated from field: optional bool is_active = 5;
+   */
+  isActive?: boolean;
 };
 
 /**
- * Describes the message emailapi.v1.RegenerateAPIKeyRequest.
- * Use `create(RegenerateAPIKeyRequestSchema)` to create a new message.
+ * Describes the message emailapi.v1.UpdateUserRequest.
+ * Use `create(UpdateUserRequestSchema)` to create a new message.
  */
-export const RegenerateAPIKeyRequestSchema: GenMessage<RegenerateAPIKeyRequest> = /*@__PURE__*/
+export const UpdateUserRequestSchema: GenMessage<UpdateUserRequest> = /*@__PURE__*/
   messageDesc(file_v1_user, 4);
 
 /**
- * @generated from message emailapi.v1.RegenerateAPIKeyResponse
+ * @generated from message emailapi.v1.ListUsersRequest
  */
-export type RegenerateAPIKeyResponse = Message<"emailapi.v1.RegenerateAPIKeyResponse"> & {
+export type ListUsersRequest = Message<"emailapi.v1.ListUsersRequest"> & {
   /**
-   * @generated from field: string api_key = 1;
+   * @generated from field: int32 page_size = 1;
    */
-  apiKey: string;
+  pageSize: number;
 
   /**
-   * @generated from field: string message = 2;
+   * Not used yet based on internal service, but standard proto practice
+   *
+   * @generated from field: string page_token = 2;
    */
-  message: string;
+  pageToken: string;
+
+  /**
+   * @generated from field: int32 offset = 3;
+   */
+  offset: number;
 };
 
 /**
- * Describes the message emailapi.v1.RegenerateAPIKeyResponse.
- * Use `create(RegenerateAPIKeyResponseSchema)` to create a new message.
+ * Describes the message emailapi.v1.ListUsersRequest.
+ * Use `create(ListUsersRequestSchema)` to create a new message.
  */
-export const RegenerateAPIKeyResponseSchema: GenMessage<RegenerateAPIKeyResponse> = /*@__PURE__*/
+export const ListUsersRequestSchema: GenMessage<ListUsersRequest> = /*@__PURE__*/
   messageDesc(file_v1_user, 5);
+
+/**
+ * @generated from message emailapi.v1.ListUsersResponse
+ */
+export type ListUsersResponse = Message<"emailapi.v1.ListUsersResponse"> & {
+  /**
+   * @generated from field: repeated emailapi.v1.User users = 1;
+   */
+  users: User[];
+
+  /**
+   * @generated from field: int32 total_count = 2;
+   */
+  totalCount: number;
+
+  /**
+   * @generated from field: string next_page_token = 3;
+   */
+  nextPageToken: string;
+};
+
+/**
+ * Describes the message emailapi.v1.ListUsersResponse.
+ * Use `create(ListUsersResponseSchema)` to create a new message.
+ */
+export const ListUsersResponseSchema: GenMessage<ListUsersResponse> = /*@__PURE__*/
+  messageDesc(file_v1_user, 6);
 
 /**
  * @generated from enum emailapi.v1.UserRole
@@ -202,7 +255,7 @@ export const UserRoleSchema: GenEnum<UserRole> = /*@__PURE__*/
  */
 export const UserService: GenService<{
   /**
-   * CreateUser creates a new user and returns an API key.
+   * CreateUser creates a new user.
    *
    * @generated from rpc emailapi.v1.UserService.CreateUser
    */
@@ -222,14 +275,24 @@ export const UserService: GenService<{
     output: typeof UserSchema;
   },
   /**
-   * RegenerateAPIKey generates a new API key for the user.
+   * UpdateUser updates a user.
    *
-   * @generated from rpc emailapi.v1.UserService.RegenerateAPIKey
+   * @generated from rpc emailapi.v1.UserService.UpdateUser
    */
-  regenerateAPIKey: {
+  updateUser: {
     methodKind: "unary";
-    input: typeof RegenerateAPIKeyRequestSchema;
-    output: typeof RegenerateAPIKeyResponseSchema;
+    input: typeof UpdateUserRequestSchema;
+    output: typeof UserSchema;
+  },
+  /**
+   * ListUsers lists all users.
+   *
+   * @generated from rpc emailapi.v1.UserService.ListUsers
+   */
+  listUsers: {
+    methodKind: "unary";
+    input: typeof ListUsersRequestSchema;
+    output: typeof ListUsersResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_v1_user, 0);

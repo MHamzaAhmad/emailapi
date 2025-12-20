@@ -38,19 +38,22 @@ const (
 	// UserServiceGetCurrentUserProcedure is the fully-qualified name of the UserService's
 	// GetCurrentUser RPC.
 	UserServiceGetCurrentUserProcedure = "/emailapi.v1.UserService/GetCurrentUser"
-	// UserServiceRegenerateAPIKeyProcedure is the fully-qualified name of the UserService's
-	// RegenerateAPIKey RPC.
-	UserServiceRegenerateAPIKeyProcedure = "/emailapi.v1.UserService/RegenerateAPIKey"
+	// UserServiceUpdateUserProcedure is the fully-qualified name of the UserService's UpdateUser RPC.
+	UserServiceUpdateUserProcedure = "/emailapi.v1.UserService/UpdateUser"
+	// UserServiceListUsersProcedure is the fully-qualified name of the UserService's ListUsers RPC.
+	UserServiceListUsersProcedure = "/emailapi.v1.UserService/ListUsers"
 )
 
 // UserServiceClient is a client for the emailapi.v1.UserService service.
 type UserServiceClient interface {
-	// CreateUser creates a new user and returns an API key.
+	// CreateUser creates a new user.
 	CreateUser(context.Context, *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error)
 	// GetCurrentUser retrieves the authenticated user.
 	GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.User], error)
-	// RegenerateAPIKey generates a new API key for the user.
-	RegenerateAPIKey(context.Context, *connect.Request[v1.RegenerateAPIKeyRequest]) (*connect.Response[v1.RegenerateAPIKeyResponse], error)
+	// UpdateUser updates a user.
+	UpdateUser(context.Context, *connect.Request[v1.UpdateUserRequest]) (*connect.Response[v1.User], error)
+	// ListUsers lists all users.
+	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the emailapi.v1.UserService service. By default, it
@@ -76,10 +79,16 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(userServiceMethods.ByName("GetCurrentUser")),
 			connect.WithClientOptions(opts...),
 		),
-		regenerateAPIKey: connect.NewClient[v1.RegenerateAPIKeyRequest, v1.RegenerateAPIKeyResponse](
+		updateUser: connect.NewClient[v1.UpdateUserRequest, v1.User](
 			httpClient,
-			baseURL+UserServiceRegenerateAPIKeyProcedure,
-			connect.WithSchema(userServiceMethods.ByName("RegenerateAPIKey")),
+			baseURL+UserServiceUpdateUserProcedure,
+			connect.WithSchema(userServiceMethods.ByName("UpdateUser")),
+			connect.WithClientOptions(opts...),
+		),
+		listUsers: connect.NewClient[v1.ListUsersRequest, v1.ListUsersResponse](
+			httpClient,
+			baseURL+UserServiceListUsersProcedure,
+			connect.WithSchema(userServiceMethods.ByName("ListUsers")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -87,9 +96,10 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	createUser       *connect.Client[v1.CreateUserRequest, v1.CreateUserResponse]
-	getCurrentUser   *connect.Client[v1.GetCurrentUserRequest, v1.User]
-	regenerateAPIKey *connect.Client[v1.RegenerateAPIKeyRequest, v1.RegenerateAPIKeyResponse]
+	createUser     *connect.Client[v1.CreateUserRequest, v1.CreateUserResponse]
+	getCurrentUser *connect.Client[v1.GetCurrentUserRequest, v1.User]
+	updateUser     *connect.Client[v1.UpdateUserRequest, v1.User]
+	listUsers      *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
 }
 
 // CreateUser calls emailapi.v1.UserService.CreateUser.
@@ -102,19 +112,26 @@ func (c *userServiceClient) GetCurrentUser(ctx context.Context, req *connect.Req
 	return c.getCurrentUser.CallUnary(ctx, req)
 }
 
-// RegenerateAPIKey calls emailapi.v1.UserService.RegenerateAPIKey.
-func (c *userServiceClient) RegenerateAPIKey(ctx context.Context, req *connect.Request[v1.RegenerateAPIKeyRequest]) (*connect.Response[v1.RegenerateAPIKeyResponse], error) {
-	return c.regenerateAPIKey.CallUnary(ctx, req)
+// UpdateUser calls emailapi.v1.UserService.UpdateUser.
+func (c *userServiceClient) UpdateUser(ctx context.Context, req *connect.Request[v1.UpdateUserRequest]) (*connect.Response[v1.User], error) {
+	return c.updateUser.CallUnary(ctx, req)
+}
+
+// ListUsers calls emailapi.v1.UserService.ListUsers.
+func (c *userServiceClient) ListUsers(ctx context.Context, req *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error) {
+	return c.listUsers.CallUnary(ctx, req)
 }
 
 // UserServiceHandler is an implementation of the emailapi.v1.UserService service.
 type UserServiceHandler interface {
-	// CreateUser creates a new user and returns an API key.
+	// CreateUser creates a new user.
 	CreateUser(context.Context, *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error)
 	// GetCurrentUser retrieves the authenticated user.
 	GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.User], error)
-	// RegenerateAPIKey generates a new API key for the user.
-	RegenerateAPIKey(context.Context, *connect.Request[v1.RegenerateAPIKeyRequest]) (*connect.Response[v1.RegenerateAPIKeyResponse], error)
+	// UpdateUser updates a user.
+	UpdateUser(context.Context, *connect.Request[v1.UpdateUserRequest]) (*connect.Response[v1.User], error)
+	// ListUsers lists all users.
+	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -136,10 +153,16 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceMethods.ByName("GetCurrentUser")),
 		connect.WithHandlerOptions(opts...),
 	)
-	userServiceRegenerateAPIKeyHandler := connect.NewUnaryHandler(
-		UserServiceRegenerateAPIKeyProcedure,
-		svc.RegenerateAPIKey,
-		connect.WithSchema(userServiceMethods.ByName("RegenerateAPIKey")),
+	userServiceUpdateUserHandler := connect.NewUnaryHandler(
+		UserServiceUpdateUserProcedure,
+		svc.UpdateUser,
+		connect.WithSchema(userServiceMethods.ByName("UpdateUser")),
+		connect.WithHandlerOptions(opts...),
+	)
+	userServiceListUsersHandler := connect.NewUnaryHandler(
+		UserServiceListUsersProcedure,
+		svc.ListUsers,
+		connect.WithSchema(userServiceMethods.ByName("ListUsers")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/emailapi.v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -148,8 +171,10 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 			userServiceCreateUserHandler.ServeHTTP(w, r)
 		case UserServiceGetCurrentUserProcedure:
 			userServiceGetCurrentUserHandler.ServeHTTP(w, r)
-		case UserServiceRegenerateAPIKeyProcedure:
-			userServiceRegenerateAPIKeyHandler.ServeHTTP(w, r)
+		case UserServiceUpdateUserProcedure:
+			userServiceUpdateUserHandler.ServeHTTP(w, r)
+		case UserServiceListUsersProcedure:
+			userServiceListUsersHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -167,6 +192,10 @@ func (UnimplementedUserServiceHandler) GetCurrentUser(context.Context, *connect.
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.UserService.GetCurrentUser is not implemented"))
 }
 
-func (UnimplementedUserServiceHandler) RegenerateAPIKey(context.Context, *connect.Request[v1.RegenerateAPIKeyRequest]) (*connect.Response[v1.RegenerateAPIKeyResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.UserService.RegenerateAPIKey is not implemented"))
+func (UnimplementedUserServiceHandler) UpdateUser(context.Context, *connect.Request[v1.UpdateUserRequest]) (*connect.Response[v1.User], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.UserService.UpdateUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.UserService.ListUsers is not implemented"))
 }

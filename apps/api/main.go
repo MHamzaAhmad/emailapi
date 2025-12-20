@@ -20,9 +20,16 @@ import (
 	"github.com/emailapi/api/internal/config"
 	"github.com/emailapi/api/internal/external/ses"
 	middleware "github.com/emailapi/api/internal/middleware"
+	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/repository/postgres"
 	"github.com/emailapi/api/internal/service"
 	grpctransport "github.com/emailapi/api/internal/transport/grpc"
+	worker "github.com/emailapi/api/internal/worker"
+
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 )
 
 func main() {
@@ -58,14 +65,76 @@ func main() {
 	logger.Info().Msg("✓ Connected to database")
 
 	// Initialize SES client
-	sesClient, err := ses.NewClient(context.Background(), "us-east-1") // TODO: Make region configurable
+	sesClient, err := ses.NewClient(context.Background(), cfg.AWSRegion)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create SES client")
 	}
 	logger.Info().Msg("✓ Initialized SES client")
 
+	// Initialize S3 client
+	s3Client, err := s3.NewClient(context.Background(), cfg.AWSRegion, cfg.AWSAccessKeyID, cfg.AWSSecretAccessKey, cfg.S3Bucket)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create S3 client")
+	}
+	logger.Info().Msg("✓ Initialized S3 client")
+
+	// Initialize ClickHouse
+	// Use native interface for better performance (async insert, etc.)
+	chConn, err := clickhouse.Open(&clickhouse.Options{
+		Addr: []string{cfg.ClickHouseURL},
+		Auth: clickhouse.Auth{
+			Database: "default",
+		},
+		ClientInfo: clickhouse.ClientInfo{
+			Products: []struct {
+				Name, Version string
+			}{
+				{Name: "email-api", Version: "0.1.0"},
+			},
+		},
+	})
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to connect to ClickHouse")
+	}
+	if err := chConn.Ping(context.Background()); err != nil {
+		logger.Fatal().Err(err).Msg("Failed to ping ClickHouse")
+	}
+	logger.Info().Msg("✓ Connected to ClickHouse")
+	chRepo := chrepo.NewEmailRepository(chConn)
+
+	// Initialize River
+	// Create a new pgxpool for River (recommended to separate from application pool)
+	riverPool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create River connection pool")
+	}
+	defer riverPool.Close()
+
+	workers := river.NewWorkers()
+	// Register EmailWorker
+	emailWorker := worker.NewEmailWorker(sesClient, s3Client, chRepo)
+	river.AddWorker(workers, emailWorker)
+
+	riverClient, err := river.NewClient(riverpgxv5.New(riverPool), &river.Config{
+		Queues: map[string]river.QueueConfig{
+			river.QueueDefault: {MaxWorkers: 100},
+		},
+		Workers: workers,
+	})
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create River client")
+	}
+
+	// Start River client
+	if err := riverClient.Start(context.Background()); err != nil {
+		logger.Fatal().Err(err).Msg("Failed to start River client")
+	}
+	defer riverClient.Stop(context.Background())
+	logger.Info().Msg("✓ Started River client")
+
 	// Initialize service layer
-	svc := service.NewWithSES(store, sesClient, "us-east-1")
+	// NewWithSES now includes EmailService dependencies
+	svc := service.NewWithSES(store, sesClient, cfg.AWSRegion, riverClient, s3Client, chRepo)
 
 	// Start gRPC server
 	go func() {
@@ -121,6 +190,7 @@ func runGRPCServer(cfg *config.Config, svc *service.Service, logger zerolog.Logg
 	emailapiv1.RegisterUserServiceServer(grpcServer, grpctransport.NewUserServer(svc.User))
 	emailapiv1.RegisterApiKeyServiceServer(grpcServer, grpctransport.NewApiKeyServer(svc.APIKey))
 	emailapiv1.RegisterDomainServiceServer(grpcServer, grpctransport.NewDomainServer(svc.Domain))
+	emailapiv1.RegisterEmailServiceServer(grpcServer, grpctransport.NewEmailServer(svc.Email))
 
 	// Enable reflection for grpcurl
 	reflection.Register(grpcServer)
@@ -148,6 +218,9 @@ func runHTTPServer(cfg *config.Config, logger zerolog.Logger) error {
 		return err
 	}
 	if err := emailapiv1.RegisterDomainServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
+		return err
+	}
+	if err := emailapiv1.RegisterEmailServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
 		return err
 	}
 
