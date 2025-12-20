@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -25,39 +26,58 @@ import (
 )
 
 func main() {
+	// Setup logger with pretty console output
+	logger := zerolog.New(zerolog.ConsoleWriter{
+		Out:        os.Stdout,
+		TimeFormat: time.RFC3339,
+	}).With().Timestamp().Caller().Logger()
+
+	// Set global logger
+	log.Logger = logger
+
+	logger.Info().Msg("🚀 Starting Email API server")
+
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		logger.Fatal().Err(err).Msg("Failed to load config")
 	}
+
+	logger.Info().
+		Str("port", cfg.Port).
+		Str("grpc_port", cfg.GRPCPort).
+		Str("env", cfg.Env).
+		Msg("Configuration loaded")
 
 	// Initialize repository layer
 	store, err := postgres.NewStore(cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+		logger.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 	defer store.Close()
+	logger.Info().Msg("✓ Connected to database")
 
 	// Initialize SES client
 	sesClient, err := ses.NewClient(context.Background(), "us-east-1") // TODO: Make region configurable
 	if err != nil {
-		log.Fatalf("failed to create SES client: %v", err)
+		logger.Fatal().Err(err).Msg("Failed to create SES client")
 	}
+	logger.Info().Msg("✓ Initialized SES client")
 
 	// Initialize service layer
 	svc := service.NewWithSES(store, sesClient, "us-east-1")
 
 	// Start gRPC server
 	go func() {
-		if err := runGRPCServer(cfg, svc); err != nil {
-			log.Fatalf("gRPC server error: %v", err)
+		if err := runGRPCServer(cfg, svc, logger); err != nil {
+			logger.Fatal().Err(err).Msg("gRPC server error")
 		}
 	}()
 
 	// Start HTTP gateway server
 	go func() {
-		if err := runHTTPServer(cfg); err != nil {
-			log.Fatalf("HTTP server error: %v", err)
+		if err := runHTTPServer(cfg, logger); err != nil {
+			logger.Fatal().Err(err).Msg("HTTP server error")
 		}
 	}()
 
@@ -66,22 +86,35 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down servers...")
+	logger.Info().Msg("Shutting down servers...")
 }
 
 // runGRPCServer starts the gRPC server on port 9090.
-func runGRPCServer(cfg *config.Config, svc *service.Service) error {
+func runGRPCServer(cfg *config.Config, svc *service.Service, logger zerolog.Logger) error {
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
 	if err != nil {
 		return err
 	}
 
-	// Create auth interceptor
+	// Create interceptors
+	loggingInterceptor := middleware.NewLoggingInterceptor(logger)
 	authInterceptor := middleware.NewAuthInterceptor(svc.APIKey)
 
-	// Create gRPC server with auth interceptor
+	// Chain interceptors: logging first, then auth
+	chainedInterceptor := func(
+		ctx context.Context,
+		req interface{},
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (interface{}, error) {
+		return loggingInterceptor.Unary()(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
+			return authInterceptor.Unary()(ctx, req, info, handler)
+		})
+	}
+
+	// Create gRPC server with chained interceptors
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(authInterceptor.Unary()),
+		grpc.UnaryInterceptor(chainedInterceptor),
 	)
 
 	// Register services
@@ -92,12 +125,12 @@ func runGRPCServer(cfg *config.Config, svc *service.Service) error {
 	// Enable reflection for grpcurl
 	reflection.Register(grpcServer)
 
-	log.Printf("gRPC server listening on :%s", cfg.GRPCPort)
+	logger.Info().Str("port", cfg.GRPCPort).Msg("📡 gRPC server listening")
 	return grpcServer.Serve(lis)
 }
 
 // runHTTPServer starts the gRPC-Gateway HTTP server on port 8080.
-func runHTTPServer(cfg *config.Config) error {
+func runHTTPServer(cfg *config.Config, logger zerolog.Logger) error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -118,15 +151,52 @@ func runHTTPServer(cfg *config.Config) error {
 		return err
 	}
 
+	// Chain middlewares: CORS -> Logging -> gRPC-Gateway
+	handler := corsMiddleware(httpLoggingMiddleware(mux, logger))
+
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      corsMiddleware(mux),
+		Handler:      handler,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 	}
 
-	log.Printf("HTTP server listening on :%s (gRPC-Gateway)", cfg.Port)
+	logger.Info().Str("port", cfg.Port).Msg("🌐 HTTP server listening (gRPC-Gateway)")
 	return srv.ListenAndServe()
+}
+
+// httpLoggingMiddleware logs HTTP requests.
+func httpLoggingMiddleware(next http.Handler, logger zerolog.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		// Wrap response writer to capture status code
+		ww := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+		// Call next handler
+		next.ServeHTTP(ww, r)
+
+		// Log the request
+		duration := time.Since(start)
+		logger.Info().
+			Str("method", r.Method).
+			Str("path", r.URL.Path).
+			Int("status", ww.statusCode).
+			Dur("duration", duration).
+			Str("remote_addr", r.RemoteAddr).
+			Msg("HTTP request")
+	})
+}
+
+// responseWriter wraps http.ResponseWriter to capture status code.
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
 }
 
 // corsMiddleware adds CORS headers to allow cross-origin requests from the frontend.
