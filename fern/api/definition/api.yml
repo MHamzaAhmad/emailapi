@@ -1,0 +1,20 @@
+name: api
+imports:
+  commons: commons.yml
+
+auth: BearerAuth
+auth-schemes:
+  BearerAuth:
+    scheme: bearer
+    token:
+      name: apiKey
+      env: EMAIL_API_KEY
+
+error-discrimination:
+  strategy: status-code
+
+environments:
+  Production: https://api.emailapi.dev/v1
+  Local: http://localhost:8080/v1
+
+default-environment: Production

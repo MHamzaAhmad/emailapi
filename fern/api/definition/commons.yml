@@ -1,0 +1,62 @@
+types:
+  EmailId:
+    type: string
+    docs: Unique identifier for an email
+
+  UserId:
+    type: string
+    docs: Unique identifier for a user
+
+  WebhookId:
+    type: string
+    docs: Unique identifier for a webhook
+
+  EmailStatus:
+    enum:
+      - pending
+      - sent
+      - delivered
+      - failed
+      - bounced
+
+  WebhookEventType:
+    enum:
+      - value: email.sent
+        name: EMAIL_SENT
+      - value: email.delivered
+        name: EMAIL_DELIVERED
+      - value: email.failed
+        name: EMAIL_FAILED
+      - value: email.bounced
+        name: EMAIL_BOUNCED
+      - value: email.opened
+        name: EMAIL_OPENED
+      - value: email.clicked
+        name: EMAIL_CLICKED
+
+  UserRole:
+    enum:
+      - admin
+      - member
+
+errors:
+  BadRequestError:
+    status-code: 400
+    type: ErrorBody
+
+  UnauthorizedError:
+    status-code: 401
+    type: ErrorBody
+
+  NotFoundError:
+    status-code: 404
+    type: ErrorBody
+
+  RateLimitError:
+    status-code: 429
+    type: ErrorBody
+
+  ErrorBody:
+    properties:
+      error: string
+      details: optional<string>
