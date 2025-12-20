@@ -7,8 +7,9 @@ import (
 // Config holds all configuration for the application.
 type Config struct {
 	// Server configuration
-	Port string `envconfig:"PORT" default:"8080"`
-	Env  string `envconfig:"ENV" default:"development"`
+	Port     string `envconfig:"PORT" default:"8080"`
+	GRPCPort string `envconfig:"GRPC_PORT" default:"9090"`
+	Env      string `envconfig:"ENV" default:"development"`
 
 	// Database configuration
 	DatabaseURL   string `envconfig:"DATABASE_URL" required:"true"`

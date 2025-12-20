@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package emailapi.v1;
+
+option go_package = "github.com/emailapi/api/gen/emailapi/v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// WebhookService handles webhook operations.
+service WebhookService {
+  // CreateWebhook creates a new webhook.
+  rpc CreateWebhook(CreateWebhookRequest) returns (CreateWebhookResponse) {
+    option (google.api.http) = {
+      post: "/v1/webhooks"
+      body: "*"
+    };
+  }
+
+  // GetWebhook retrieves a webhook by ID.
+  rpc GetWebhook(GetWebhookRequest) returns (Webhook) {
+    option (google.api.http) = {
+      get: "/v1/webhooks/{id}"
+    };
+  }
+
+  // ListWebhooks retrieves all webhooks.
+  rpc ListWebhooks(ListWebhooksRequest) returns (ListWebhooksResponse) {
+    option (google.api.http) = {
+      get: "/v1/webhooks"
+    };
+  }
+
+  // UpdateWebhook updates a webhook.
+  rpc UpdateWebhook(UpdateWebhookRequest) returns (Webhook) {
+    option (google.api.http) = {
+      patch: "/v1/webhooks/{id}"
+      body: "*"
+    };
+  }
+
+  // DeleteWebhook deletes a webhook.
+  rpc DeleteWebhook(DeleteWebhookRequest) returns (DeleteWebhookResponse) {
+    option (google.api.http) = {
+      delete: "/v1/webhooks/{id}"
+    };
+  }
+}
+
+enum WebhookEventType {
+  WEBHOOK_EVENT_TYPE_UNSPECIFIED = 0;
+  WEBHOOK_EVENT_TYPE_EMAIL_SENT = 1;
+  WEBHOOK_EVENT_TYPE_EMAIL_DELIVERED = 2;
+  WEBHOOK_EVENT_TYPE_EMAIL_FAILED = 3;
+  WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED = 4;
+  WEBHOOK_EVENT_TYPE_EMAIL_OPENED = 5;
+  WEBHOOK_EVENT_TYPE_EMAIL_CLICKED = 6;
+}
+
+message CreateWebhookRequest {
+  string name = 1;
+  string url = 2;
+  repeated WebhookEventType events = 3;
+}
+
+message CreateWebhookResponse {
+  Webhook webhook = 1;
+  string secret = 2;
+  string message = 3;
+}
+
+message GetWebhookRequest {
+  string id = 1;
+}
+
+message Webhook {
+  string id = 1;
+  string user_id = 2;
+  string name = 3;
+  string url = 4;
+  repeated WebhookEventType events = 5;
+  bool is_active = 6;
+  int32 retry_count = 7;
+  google.protobuf.Timestamp last_success = 8;
+  google.protobuf.Timestamp last_failure = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message ListWebhooksRequest {}
+
+message ListWebhooksResponse {
+  repeated Webhook data = 1;
+}
+
+message UpdateWebhookRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string url = 3;
+  repeated WebhookEventType events = 4;
+  optional bool is_active = 5;
+}
+
+message DeleteWebhookRequest {
+  string id = 1;
+}
+
+message DeleteWebhookResponse {}

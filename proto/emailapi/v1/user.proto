@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package emailapi.v1;
+
+option go_package = "github.com/emailapi/api/gen/emailapi/v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// UserService handles user operations.
+service UserService {
+  // CreateUser creates a new user and returns an API key.
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users"
+      body: "*"
+    };
+  }
+
+  // GetCurrentUser retrieves the authenticated user.
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (User) {
+    option (google.api.http) = {
+      get: "/v1/users/me"
+    };
+  }
+
+  // RegenerateAPIKey generates a new API key for the user.
+  rpc RegenerateAPIKey(RegenerateAPIKeyRequest) returns (RegenerateAPIKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/api-key"
+    };
+  }
+}
+
+enum UserRole {
+  USER_ROLE_UNSPECIFIED = 0;
+  USER_ROLE_ADMIN = 1;
+  USER_ROLE_MEMBER = 2;
+}
+
+message CreateUserRequest {
+  string email = 1;
+  string name = 2;
+  UserRole role = 3;
+}
+
+message CreateUserResponse {
+  User user = 1;
+  string api_key = 2;
+  string message = 3;
+}
+
+message GetCurrentUserRequest {}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  UserRole role = 4;
+  string api_key_prefix = 5;
+  bool is_active = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message RegenerateAPIKeyRequest {}
+
+message RegenerateAPIKeyResponse {
+  string api_key = 1;
+  string message = 2;
+}

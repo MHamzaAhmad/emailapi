@@ -6,18 +6,29 @@
             "{projectRoot}/**/*",
             "sharedGlobals"
         ],
-        "sharedGlobals": []
+        "sharedGlobals": [],
+        "openapi": [
+            "{workspaceRoot}/packages/shared-spec/openapi.yaml"
+        ]
     },
     "targetDefaults": {
         "build": {
             "dependsOn": [
-                "^build"
+                "^build",
+                "generate"
             ],
             "inputs": [
                 "default",
                 "^default"
             ],
             "cache": true
+        },
+        "generate": {
+            "cache": true,
+            "inputs": [
+                "openapi"
+            ],
+            "dependsOn": []
         },
         "test": {
             "inputs": [
@@ -33,19 +44,5 @@
             ],
             "cache": true
         }
-    },
-    "plugins": [
-        {
-            "plugin": "@nx/js/typescript",
-            "options": {
-                "typecheck": {
-                    "targetName": "typecheck"
-                },
-                "build": {
-                    "targetName": "build",
-                    "configName": "tsconfig.json"
-                }
-            }
-        }
-    ]
+    }
 }

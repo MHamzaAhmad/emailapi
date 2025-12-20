@@ -1,0 +1,15 @@
+version: v2
+modules:
+  - path: emailapi
+    name: buf.build/emailapi/api
+lint:
+  use:
+    - STANDARD
+  except:
+    - PACKAGE_VERSION_SUFFIX
+breaking:
+  use:
+    - FILE
+deps:
+  - buf.build/googleapis/googleapis
+  - buf.build/grpc-ecosystem/grpc-gateway

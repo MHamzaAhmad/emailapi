@@ -1,0 +1,768 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Email API",
+    "description": "High-performance transactional email API",
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "EmailService"
+    },
+    {
+      "name": "UserService"
+    },
+    {
+      "name": "WebhookService"
+    }
+  ],
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/emails": {
+      "get": {
+        "summary": "ListEmails retrieves a list of emails.",
+        "operationId": "EmailService_ListEmails",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListEmailsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "EmailService"
+        ]
+      }
+    },
+    "/v1/emails/{id}": {
+      "get": {
+        "summary": "GetEmail retrieves an email by ID.",
+        "operationId": "EmailService_GetEmail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Email"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "EmailService"
+        ]
+      }
+    },
+    "/v1/send": {
+      "post": {
+        "summary": "SendEmail queues an email for sending.",
+        "operationId": "EmailService_SendEmail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SendEmailResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1SendEmailRequest"
+            }
+          }
+        ],
+        "tags": [
+          "EmailService"
+        ]
+      }
+    },
+    "/v1/users": {
+      "post": {
+        "summary": "CreateUser creates a new user and returns an API key.",
+        "operationId": "UserService_CreateUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateUserRequest"
+            }
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
+    "/v1/users/me": {
+      "get": {
+        "summary": "GetCurrentUser retrieves the authenticated user.",
+        "operationId": "UserService_GetCurrentUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1User"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
+    "/v1/users/me/api-key": {
+      "post": {
+        "summary": "RegenerateAPIKey generates a new API key for the user.",
+        "operationId": "UserService_RegenerateAPIKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RegenerateAPIKeyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
+    "/v1/webhooks": {
+      "get": {
+        "summary": "ListWebhooks retrieves all webhooks.",
+        "operationId": "WebhookService_ListWebhooks",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListWebhooksResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "WebhookService"
+        ]
+      },
+      "post": {
+        "summary": "CreateWebhook creates a new webhook.",
+        "operationId": "WebhookService_CreateWebhook",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateWebhookResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateWebhookRequest"
+            }
+          }
+        ],
+        "tags": [
+          "WebhookService"
+        ]
+      }
+    },
+    "/v1/webhooks/{id}": {
+      "get": {
+        "summary": "GetWebhook retrieves a webhook by ID.",
+        "operationId": "WebhookService_GetWebhook",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Webhook"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "WebhookService"
+        ]
+      },
+      "delete": {
+        "summary": "DeleteWebhook deletes a webhook.",
+        "operationId": "WebhookService_DeleteWebhook",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteWebhookResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "WebhookService"
+        ]
+      },
+      "patch": {
+        "summary": "UpdateWebhook updates a webhook.",
+        "operationId": "WebhookService_UpdateWebhook",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Webhook"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/WebhookServiceUpdateWebhookBody"
+            }
+          }
+        ],
+        "tags": [
+          "WebhookService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "WebhookServiceUpdateWebhookBody": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1WebhookEventType"
+          }
+        },
+        "isActive": {
+          "type": "boolean"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1CreateUserRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/v1UserRole"
+        }
+      }
+    },
+    "v1CreateUserResponse": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/v1User"
+        },
+        "apiKey": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "v1CreateWebhookRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1WebhookEventType"
+          }
+        }
+      }
+    },
+    "v1CreateWebhookResponse": {
+      "type": "object",
+      "properties": {
+        "webhook": {
+          "$ref": "#/definitions/v1Webhook"
+        },
+        "secret": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DeleteWebhookResponse": {
+      "type": "object"
+    },
+    "v1Email": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cc": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "bcc": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "subject": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "html": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/v1EmailStatus"
+        },
+        "providerId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "scheduledAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sentAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1EmailStatus": {
+      "type": "string",
+      "enum": [
+        "EMAIL_STATUS_UNSPECIFIED",
+        "EMAIL_STATUS_PENDING",
+        "EMAIL_STATUS_SENT",
+        "EMAIL_STATUS_DELIVERED",
+        "EMAIL_STATUS_FAILED",
+        "EMAIL_STATUS_BOUNCED"
+      ],
+      "default": "EMAIL_STATUS_UNSPECIFIED",
+      "description": "EmailStatus represents the delivery status."
+    },
+    "v1ListEmailsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Email"
+          }
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1ListWebhooksResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Webhook"
+          }
+        }
+      }
+    },
+    "v1RegenerateAPIKeyResponse": {
+      "type": "object",
+      "properties": {
+        "apiKey": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "v1SendEmailRequest": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cc": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "bcc": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "subject": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "html": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "scheduledAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1SendEmailResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/v1EmailStatus"
+        }
+      }
+    },
+    "v1User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/v1UserRole"
+        },
+        "apiKeyPrefix": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1UserRole": {
+      "type": "string",
+      "enum": [
+        "USER_ROLE_UNSPECIFIED",
+        "USER_ROLE_ADMIN",
+        "USER_ROLE_MEMBER"
+      ],
+      "default": "USER_ROLE_UNSPECIFIED"
+    },
+    "v1Webhook": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1WebhookEventType"
+          }
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "retryCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "lastSuccess": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastFailure": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "v1WebhookEventType": {
+      "type": "string",
+      "enum": [
+        "WEBHOOK_EVENT_TYPE_UNSPECIFIED",
+        "WEBHOOK_EVENT_TYPE_EMAIL_SENT",
+        "WEBHOOK_EVENT_TYPE_EMAIL_DELIVERED",
+        "WEBHOOK_EVENT_TYPE_EMAIL_FAILED",
+        "WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED",
+        "WEBHOOK_EVENT_TYPE_EMAIL_OPENED",
+        "WEBHOOK_EVENT_TYPE_EMAIL_CLICKED"
+      ],
+      "default": "WEBHOOK_EVENT_TYPE_UNSPECIFIED"
+    }
+  },
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "description": "API key in format: Bearer em_...",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "Bearer": []
+    }
+  ]
+}

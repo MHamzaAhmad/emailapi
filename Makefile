@@ -1,4 +1,4 @@
-.PHONY: up down gen migrate test docs clean
+.PHONY: up down gen proto migrate test docs clean
 
 # Docker Compose commands
 up:
@@ -7,14 +7,14 @@ up:
 down:
 	docker compose -f tools/docker-compose.yaml down
 
-# Code generation
-gen: gen-sqlc gen-fern
+# Code generation (proto-first)
+gen: proto gen-sqlc
+
+proto:
+	cd proto && buf dep update && buf generate
 
 gen-sqlc:
 	cd tools && sqlc generate
-
-gen-fern:
-	fern generate
 
 # Database migrations
 migrate:
@@ -31,10 +31,6 @@ test:
 test-all:
 	cd apps/api && go test ./... -v
 
-# Documentation
-docs:
-	fern docs dev
-
 # Development
 dev-api:
 	cd apps/api && go run main.go
@@ -42,11 +38,16 @@ dev-api:
 dev-web:
 	cd apps/web && pnpm dev
 
+# Lint protos
+lint-proto:
+	cd proto && buf lint
+
 # Clean generated files
 clean:
-	rm -rf db/gen
+	rm -rf apps/api/gen
 	rm -rf packages/sdk-ts/src/generated
 	rm -rf packages/sdk-go/generated
+	rm -rf db/gen
 	rm -rf .nx
 
 # Install dependencies
@@ -61,6 +62,6 @@ fmt:
 	pnpm exec prettier --write .
 
 # Lint
-lint:
+lint: lint-proto
 	cd apps/api && go vet ./...
 	pnpm lint

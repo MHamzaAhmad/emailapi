@@ -1,0 +1,36 @@
+{
+    "name": "@email-api/shared-spec",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "generate": "pnpm generate:ts && pnpm generate:go",
+        "generate:ts": "openapi-typescript openapi.yaml -o ../sdk-ts/src/generated/api.ts",
+        "generate:go": "oapi-codegen -package api -generate types,client -o ../sdk-go/generated/api.gen.go openapi.yaml"
+    },
+    "devDependencies": {
+        "openapi-typescript": "^7.0.0"
+    },
+    "nx": {
+        "targets": {
+            "generate": {
+                "cache": true,
+                "inputs": [
+                    "{projectRoot}/openapi.yaml"
+                ],
+                "outputs": [
+                    "{workspaceRoot}/packages/sdk-ts/src/generated",
+                    "{workspaceRoot}/packages/sdk-go/generated"
+                ]
+            },
+            "generate:ts": {
+                "cache": true,
+                "inputs": [
+                    "{projectRoot}/openapi.yaml"
+                ],
+                "outputs": [
+                    "{workspaceRoot}/packages/sdk-ts/src/generated"
+                ]
+            }
+        }
+    }
+}

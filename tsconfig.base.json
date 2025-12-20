@@ -1,0 +1,35 @@
+{
+    "compileOnSave": false,
+    "compilerOptions": {
+        "rootDir": ".",
+        "sourceMap": true,
+        "declaration": false,
+        "moduleResolution": "bundler",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "importHelpers": true,
+        "target": "ES2020",
+        "module": "ESNext",
+        "lib": [
+            "ES2020"
+        ],
+        "skipLibCheck": true,
+        "skipDefaultLibCheck": true,
+        "strict": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "baseUrl": ".",
+        "paths": {
+            "@email-api/sdk-ts": [
+                "packages/sdk-ts/src/index.ts"
+            ],
+            "@email-api/shared-spec": [
+                "packages/shared-spec"
+            ]
+        }
+    },
+    "exclude": [
+        "node_modules",
+        "tmp"
+    ]
+}

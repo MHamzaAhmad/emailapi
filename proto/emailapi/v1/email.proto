@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package emailapi.v1;
+
+option go_package = "github.com/emailapi/api/gen/emailapi/v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// EmailService handles email operations.
+service EmailService {
+  // SendEmail queues an email for sending.
+  rpc SendEmail(SendEmailRequest) returns (SendEmailResponse) {
+    option (google.api.http) = {
+      post: "/v1/send"
+      body: "*"
+    };
+  }
+
+  // GetEmail retrieves an email by ID.
+  rpc GetEmail(GetEmailRequest) returns (Email) {
+    option (google.api.http) = {
+      get: "/v1/emails/{id}"
+    };
+  }
+
+  // ListEmails retrieves a list of emails.
+  rpc ListEmails(ListEmailsRequest) returns (ListEmailsResponse) {
+    option (google.api.http) = {
+      get: "/v1/emails"
+    };
+  }
+}
+
+// EmailStatus represents the delivery status.
+enum EmailStatus {
+  EMAIL_STATUS_UNSPECIFIED = 0;
+  EMAIL_STATUS_PENDING = 1;
+  EMAIL_STATUS_SENT = 2;
+  EMAIL_STATUS_DELIVERED = 3;
+  EMAIL_STATUS_FAILED = 4;
+  EMAIL_STATUS_BOUNCED = 5;
+}
+
+message SendEmailRequest {
+  string from = 1;
+  repeated string to = 2;
+  repeated string cc = 3;
+  repeated string bcc = 4;
+  string subject = 5;
+  string body = 6;
+  string html = 7;
+  map<string, string> metadata = 8;
+  google.protobuf.Timestamp scheduled_at = 9;
+}
+
+message SendEmailResponse {
+  string id = 1;
+  EmailStatus status = 2;
+}
+
+message GetEmailRequest {
+  string id = 1;
+}
+
+message Email {
+  string id = 1;
+  string from = 2;
+  repeated string to = 3;
+  repeated string cc = 4;
+  repeated string bcc = 5;
+  string subject = 6;
+  string body = 7;
+  string html = 8;
+  EmailStatus status = 9;
+  string provider_id = 10;
+  string user_id = 11;
+  map<string, string> metadata = 12;
+  google.protobuf.Timestamp scheduled_at = 13;
+  google.protobuf.Timestamp sent_at = 14;
+  google.protobuf.Timestamp created_at = 15;
+  google.protobuf.Timestamp updated_at = 16;
+}
+
+message ListEmailsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message ListEmailsResponse {
+  repeated Email data = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
