@@ -54,6 +54,10 @@ type SendingDomain struct {
 	// AWS region where the domain is registered
 	Region string `json:"region"`
 
+	// LastVerifiedAt tracks when SES was last queried for this domain's status.
+	// Used for rate limiting verification requests.
+	LastVerifiedAt *time.Time `json:"last_verified_at,omitempty"`
+
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -105,6 +109,27 @@ type DomainRecords struct {
 	IsReadyToSend     bool `json:"is_ready_to_send"`
 	IsReadyToReceive  bool `json:"is_ready_to_receive"`
 	IsFullyConfigured bool `json:"is_fully_configured"`
+}
+
+// DomainWithRecords combines domain info with DNS records for a single API response.
+type DomainWithRecords struct {
+	Domain  *SendingDomain `json:"domain"`
+	Records *DomainRecords `json:"records"`
+}
+
+// VerifyResult contains the outcome of a verification attempt.
+type VerifyResult struct {
+	// Domain contains the current domain state
+	Domain *SendingDomain `json:"domain"`
+
+	// WasRefreshed indicates if SES was actually queried (true) or cached data returned (false)
+	WasRefreshed bool `json:"was_refreshed"`
+
+	// NextRetryAt indicates when the next verification attempt is allowed (if rate limited)
+	NextRetryAt *time.Time `json:"next_retry_at,omitempty"`
+
+	// Message provides human-readable context about the verification result
+	Message string `json:"message,omitempty"`
 }
 
 // AddDomainRequest represents a request to add a new domain.

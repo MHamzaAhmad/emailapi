@@ -15,6 +15,14 @@ import (
 const (
 	// defaultRegion is the default AWS region for SES.
 	defaultRegion = "us-east-1"
+
+	// VerifyCooldown is the minimum time between SES verification calls per domain.
+	// This prevents abuse and rate limiting from AWS SES.
+	VerifyCooldown = 30 * time.Second
+
+	// StaleThreshold is how old verification data can be before auto-refresh is allowed.
+	// Used for smart refresh on read operations.
+	StaleThreshold = 5 * time.Minute
 )
 
 // DomainService handles domain business logic.
@@ -34,6 +42,27 @@ func NewDomainService(store Store, sesClient ses.Client, region string) *DomainS
 		ses:    sesClient,
 		region: region,
 	}
+}
+
+// canVerify checks if enough time has passed since the last verification.
+// Returns true if verification is allowed, false otherwise with the next allowed time.
+func (s *DomainService) canVerify(d *domain.SendingDomain) (bool, time.Time) {
+	if d.LastVerifiedAt == nil {
+		return true, time.Time{}
+	}
+	nextAllowed := d.LastVerifiedAt.Add(VerifyCooldown)
+	if time.Now().After(nextAllowed) {
+		return true, time.Time{}
+	}
+	return false, nextAllowed
+}
+
+// isStale checks if the domain verification data is outdated.
+func (s *DomainService) isStale(d *domain.SendingDomain) bool {
+	if d.LastVerifiedAt == nil {
+		return true
+	}
+	return time.Now().After(d.LastVerifiedAt.Add(StaleThreshold))
 }
 
 // Add registers a new sending domain with AWS SES.
@@ -124,12 +153,24 @@ func (s *DomainService) Delete(ctx context.Context, userID, domainID string) err
 	return nil
 }
 
-// Verify refreshes the verification status from AWS SES.
-func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*domain.SendingDomain, error) {
+// Verify refreshes the verification status from AWS SES with rate limiting.
+// Returns a VerifyResult indicating whether the refresh actually occurred or was rate-limited.
+func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*domain.VerifyResult, error) {
 	// Get domain with authorization check
 	d, err := s.Get(ctx, userID, domainID)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check cooldown to prevent SES rate limiting
+	canVerify, nextRetry := s.canVerify(d)
+	if !canVerify {
+		return &domain.VerifyResult{
+			Domain:       d,
+			WasRefreshed: false,
+			NextRetryAt:  &nextRetry,
+			Message:      fmt.Sprintf("Rate limited. Next verification allowed at %s", nextRetry.Format(time.RFC3339)),
+		}, nil
 	}
 
 	// Get current status from SES
@@ -138,7 +179,8 @@ func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*d
 		return nil, fmt.Errorf("failed to get email identity: %w", err)
 	}
 
-	// Update domain status
+	// Update domain status from SES response
+	now := time.Now()
 	d.VerifiedForSending = result.VerifiedForSendingStatus
 	d.DkimStatus = toDomainStatus(result.DkimStatus)
 	if result.MailFromDomain != "" {
@@ -157,14 +199,19 @@ func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*d
 		d.Status = domain.DomainStatusPending
 	}
 
-	d.UpdatedAt = time.Now()
+	d.UpdatedAt = now
+	d.LastVerifiedAt = &now
 
 	// Save updated status
 	if err := s.store.Domains().Update(ctx, d); err != nil {
 		return nil, fmt.Errorf("failed to update domain: %w", err)
 	}
 
-	return d, nil
+	return &domain.VerifyResult{
+		Domain:       d,
+		WasRefreshed: true,
+		Message:      "Verification status refreshed from SES",
+	}, nil
 }
 
 // GetRecords returns all DNS records needed for the domain.
@@ -176,6 +223,30 @@ func (s *DomainService) GetRecords(ctx context.Context, userID, domainID string)
 	}
 
 	return s.buildDomainRecords(d), nil
+}
+
+// GetWithRecords retrieves a domain with its DNS records in a single call.
+// If autoRefresh is true, it will automatically refresh stale verification data from SES.
+func (s *DomainService) GetWithRecords(ctx context.Context, userID, domainID string, autoRefresh bool) (*domain.DomainWithRecords, error) {
+	d, err := s.Get(ctx, userID, domainID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Auto-refresh if stale and requested
+	if autoRefresh && s.isStale(d) {
+		if canVerify, _ := s.canVerify(d); canVerify {
+			result, err := s.Verify(ctx, userID, domainID)
+			if err == nil && result.WasRefreshed {
+				d = result.Domain
+			}
+		}
+	}
+
+	return &domain.DomainWithRecords{
+		Domain:  d,
+		Records: s.buildDomainRecords(d),
+	}, nil
 }
 
 // SetMailFrom configures a custom MAIL FROM subdomain.

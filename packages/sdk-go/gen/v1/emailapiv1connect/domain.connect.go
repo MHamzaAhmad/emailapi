@@ -74,7 +74,9 @@ type DomainServiceClient interface {
 	//
 	// Call this after configuring your DNS records to check if they have
 	// propagated and been verified by AWS. DNS propagation can take up to 72 hours.
-	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.Domain], error)
+	// This endpoint is rate-limited to prevent SES API abuse. If called too
+	// frequently, it will return cached data with was_refreshed=false.
+	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error)
 	// GetDomainRecords returns all DNS records needed for full email deliverability.
 	//
 	// This includes:
@@ -131,7 +133,7 @@ func NewDomainServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(domainServiceMethods.ByName("DeleteDomain")),
 			connect.WithClientOptions(opts...),
 		),
-		verifyDomain: connect.NewClient[v1.VerifyDomainRequest, v1.Domain](
+		verifyDomain: connect.NewClient[v1.VerifyDomainRequest, v1.VerifyDomainResponse](
 			httpClient,
 			baseURL+DomainServiceVerifyDomainProcedure,
 			connect.WithSchema(domainServiceMethods.ByName("VerifyDomain")),
@@ -158,7 +160,7 @@ type domainServiceClient struct {
 	getDomain         *connect.Client[v1.GetDomainRequest, v1.Domain]
 	listDomains       *connect.Client[v1.ListDomainsRequest, v1.ListDomainsResponse]
 	deleteDomain      *connect.Client[v1.DeleteDomainRequest, v1.DeleteDomainResponse]
-	verifyDomain      *connect.Client[v1.VerifyDomainRequest, v1.Domain]
+	verifyDomain      *connect.Client[v1.VerifyDomainRequest, v1.VerifyDomainResponse]
 	getDomainRecords  *connect.Client[v1.GetDomainRecordsRequest, v1.DomainRecords]
 	setMailFromDomain *connect.Client[v1.SetMailFromDomainRequest, v1.Domain]
 }
@@ -184,7 +186,7 @@ func (c *domainServiceClient) DeleteDomain(ctx context.Context, req *connect.Req
 }
 
 // VerifyDomain calls emailapi.v1.DomainService.VerifyDomain.
-func (c *domainServiceClient) VerifyDomain(ctx context.Context, req *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.Domain], error) {
+func (c *domainServiceClient) VerifyDomain(ctx context.Context, req *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error) {
 	return c.verifyDomain.CallUnary(ctx, req)
 }
 
@@ -218,7 +220,9 @@ type DomainServiceHandler interface {
 	//
 	// Call this after configuring your DNS records to check if they have
 	// propagated and been verified by AWS. DNS propagation can take up to 72 hours.
-	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.Domain], error)
+	// This endpoint is rate-limited to prevent SES API abuse. If called too
+	// frequently, it will return cached data with was_refreshed=false.
+	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error)
 	// GetDomainRecords returns all DNS records needed for full email deliverability.
 	//
 	// This includes:
@@ -330,7 +334,7 @@ func (UnimplementedDomainServiceHandler) DeleteDomain(context.Context, *connect.
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.DomainService.DeleteDomain is not implemented"))
 }
 
-func (UnimplementedDomainServiceHandler) VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.Domain], error) {
+func (UnimplementedDomainServiceHandler) VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.DomainService.VerifyDomain is not implemented"))
 }
 

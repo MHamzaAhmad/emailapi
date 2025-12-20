@@ -231,9 +231,11 @@ type Domain struct {
 	// Time when the domain was added.
 	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	// Time when the domain was last updated.
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// Time when verification status was last refreshed from SES.
+	LastVerifiedAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=last_verified_at,json=lastVerifiedAt,proto3" json:"last_verified_at,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Domain) Reset() {
@@ -325,6 +327,13 @@ func (x *Domain) GetCreatedAt() *timestamppb.Timestamp {
 func (x *Domain) GetUpdatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *Domain) GetLastVerifiedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastVerifiedAt
 	}
 	return nil
 }
@@ -926,6 +935,79 @@ func (x *VerifyDomainRequest) GetId() string {
 	return ""
 }
 
+// VerifyDomainResponse contains the verification result.
+type VerifyDomainResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The domain with updated verification status.
+	Domain *Domain `protobuf:"bytes,1,opt,name=domain,proto3" json:"domain,omitempty"`
+	// True if the status was actually refreshed from SES, false if cached data was returned.
+	WasRefreshed bool `protobuf:"varint,2,opt,name=was_refreshed,json=wasRefreshed,proto3" json:"was_refreshed,omitempty"`
+	// If rate-limited, when the next verification attempt is allowed.
+	NextRetryAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=next_retry_at,json=nextRetryAt,proto3" json:"next_retry_at,omitempty"`
+	// Human-readable message about the verification result.
+	Message       string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifyDomainResponse) Reset() {
+	*x = VerifyDomainResponse{}
+	mi := &file_v1_domain_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifyDomainResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifyDomainResponse) ProtoMessage() {}
+
+func (x *VerifyDomainResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_domain_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifyDomainResponse.ProtoReflect.Descriptor instead.
+func (*VerifyDomainResponse) Descriptor() ([]byte, []int) {
+	return file_v1_domain_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *VerifyDomainResponse) GetDomain() *Domain {
+	if x != nil {
+		return x.Domain
+	}
+	return nil
+}
+
+func (x *VerifyDomainResponse) GetWasRefreshed() bool {
+	if x != nil {
+		return x.WasRefreshed
+	}
+	return false
+}
+
+func (x *VerifyDomainResponse) GetNextRetryAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.NextRetryAt
+	}
+	return nil
+}
+
+func (x *VerifyDomainResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 // GetDomainRecordsRequest identifies the domain to get records for.
 type GetDomainRecordsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -937,7 +1019,7 @@ type GetDomainRecordsRequest struct {
 
 func (x *GetDomainRecordsRequest) Reset() {
 	*x = GetDomainRecordsRequest{}
-	mi := &file_v1_domain_proto_msgTypes[11]
+	mi := &file_v1_domain_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -949,7 +1031,7 @@ func (x *GetDomainRecordsRequest) String() string {
 func (*GetDomainRecordsRequest) ProtoMessage() {}
 
 func (x *GetDomainRecordsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_domain_proto_msgTypes[11]
+	mi := &file_v1_domain_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -962,7 +1044,7 @@ func (x *GetDomainRecordsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDomainRecordsRequest.ProtoReflect.Descriptor instead.
 func (*GetDomainRecordsRequest) Descriptor() ([]byte, []int) {
-	return file_v1_domain_proto_rawDescGZIP(), []int{11}
+	return file_v1_domain_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetDomainRecordsRequest) GetId() string {
@@ -986,7 +1068,7 @@ type SetMailFromDomainRequest struct {
 
 func (x *SetMailFromDomainRequest) Reset() {
 	*x = SetMailFromDomainRequest{}
-	mi := &file_v1_domain_proto_msgTypes[12]
+	mi := &file_v1_domain_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -998,7 +1080,7 @@ func (x *SetMailFromDomainRequest) String() string {
 func (*SetMailFromDomainRequest) ProtoMessage() {}
 
 func (x *SetMailFromDomainRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_domain_proto_msgTypes[12]
+	mi := &file_v1_domain_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1011,7 +1093,7 @@ func (x *SetMailFromDomainRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetMailFromDomainRequest.ProtoReflect.Descriptor instead.
 func (*SetMailFromDomainRequest) Descriptor() ([]byte, []int) {
-	return file_v1_domain_proto_rawDescGZIP(), []int{12}
+	return file_v1_domain_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SetMailFromDomainRequest) GetId() string {
@@ -1032,7 +1114,7 @@ var File_v1_domain_proto protoreflect.FileDescriptor
 
 const file_v1_domain_proto_rawDesc = "" +
 	"\n" +
-	"\x0fv1/domain.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x92\x03\n" +
+	"\x0fv1/domain.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd8\x03\n" +
 	"\x06Domain\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06domain\x18\x02 \x01(\tR\x06domain\x121\n" +
@@ -1044,7 +1126,9 @@ const file_v1_domain_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xfd\x01\n" +
+	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12D\n" +
+	"\x10last_verified_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\x0elastVerifiedAt\"\xfd\x01\n" +
 	"\tDnsRecord\x12\x19\n" +
 	"\bdns_type\x18\x01 \x01(\tR\adnsType\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -1082,7 +1166,12 @@ const file_v1_domain_proto_rawDesc = "" +
 	"\x14DeleteDomainResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"%\n" +
 	"\x13VerifyDomainRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\")\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xc2\x01\n" +
+	"\x14VerifyDomainResponse\x12+\n" +
+	"\x06domain\x18\x01 \x01(\v2\x13.emailapi.v1.DomainR\x06domain\x12#\n" +
+	"\rwas_refreshed\x18\x02 \x01(\bR\fwasRefreshed\x12>\n" +
+	"\rnext_retry_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\vnextRetryAt\x12\x18\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage\")\n" +
 	"\x17GetDomainRecordsRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"Z\n" +
 	"\x18SetMailFromDomainRequest\x12\x0e\n" +
@@ -1107,13 +1196,13 @@ const file_v1_domain_proto_rawDesc = "" +
 	"\x11RECORD_TYPE_DMARC\x10\x03\x12\x1a\n" +
 	"\x16RECORD_TYPE_MX_INBOUND\x10\x04\x12\x1c\n" +
 	"\x18RECORD_TYPE_MAIL_FROM_MX\x10\x05\x12\x1d\n" +
-	"\x19RECORD_TYPE_MAIL_FROM_SPF\x10\x062\xfc\x05\n" +
+	"\x19RECORD_TYPE_MAIL_FROM_SPF\x10\x062\x8a\x06\n" +
 	"\rDomainService\x12b\n" +
 	"\tAddDomain\x12\x1d.emailapi.v1.AddDomainRequest\x1a\x1e.emailapi.v1.AddDomainResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/v1/domains\x12Y\n" +
 	"\tGetDomain\x12\x1d.emailapi.v1.GetDomainRequest\x1a\x13.emailapi.v1.Domain\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/domains/{id}\x12e\n" +
 	"\vListDomains\x12\x1f.emailapi.v1.ListDomainsRequest\x1a .emailapi.v1.ListDomainsResponse\"\x13\x82\xd3\xe4\x93\x02\r\x12\v/v1/domains\x12m\n" +
-	"\fDeleteDomain\x12 .emailapi.v1.DeleteDomainRequest\x1a!.emailapi.v1.DeleteDomainResponse\"\x18\x82\xd3\xe4\x93\x02\x12*\x10/v1/domains/{id}\x12f\n" +
-	"\fVerifyDomain\x12 .emailapi.v1.VerifyDomainRequest\x1a\x13.emailapi.v1.Domain\"\x1f\x82\xd3\xe4\x93\x02\x19\"\x17/v1/domains/{id}/verify\x12v\n" +
+	"\fDeleteDomain\x12 .emailapi.v1.DeleteDomainRequest\x1a!.emailapi.v1.DeleteDomainResponse\"\x18\x82\xd3\xe4\x93\x02\x12*\x10/v1/domains/{id}\x12t\n" +
+	"\fVerifyDomain\x12 .emailapi.v1.VerifyDomainRequest\x1a!.emailapi.v1.VerifyDomainResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\"\x17/v1/domains/{id}/verify\x12v\n" +
 	"\x10GetDomainRecords\x12$.emailapi.v1.GetDomainRecordsRequest\x1a\x1a.emailapi.v1.DomainRecords\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/v1/domains/{id}/records\x12v\n" +
 	"\x11SetMailFromDomain\x12%.emailapi.v1.SetMailFromDomainRequest\x1a\x13.emailapi.v1.Domain\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/v1/domains/{id}/mail-fromB\x99\x01\n" +
 	"\x0fcom.emailapi.v1B\vDomainProtoP\x01Z,github.com/emailapi/sdk-go/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
@@ -1131,7 +1220,7 @@ func file_v1_domain_proto_rawDescGZIP() []byte {
 }
 
 var file_v1_domain_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_v1_domain_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_v1_domain_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_v1_domain_proto_goTypes = []any{
 	(DomainStatus)(0),                // 0: emailapi.v1.DomainStatus
 	(RecordStatus)(0),                // 1: emailapi.v1.RecordStatus
@@ -1147,44 +1236,48 @@ var file_v1_domain_proto_goTypes = []any{
 	(*DeleteDomainRequest)(nil),      // 11: emailapi.v1.DeleteDomainRequest
 	(*DeleteDomainResponse)(nil),     // 12: emailapi.v1.DeleteDomainResponse
 	(*VerifyDomainRequest)(nil),      // 13: emailapi.v1.VerifyDomainRequest
-	(*GetDomainRecordsRequest)(nil),  // 14: emailapi.v1.GetDomainRecordsRequest
-	(*SetMailFromDomainRequest)(nil), // 15: emailapi.v1.SetMailFromDomainRequest
-	(*timestamppb.Timestamp)(nil),    // 16: google.protobuf.Timestamp
+	(*VerifyDomainResponse)(nil),     // 14: emailapi.v1.VerifyDomainResponse
+	(*GetDomainRecordsRequest)(nil),  // 15: emailapi.v1.GetDomainRecordsRequest
+	(*SetMailFromDomainRequest)(nil), // 16: emailapi.v1.SetMailFromDomainRequest
+	(*timestamppb.Timestamp)(nil),    // 17: google.protobuf.Timestamp
 }
 var file_v1_domain_proto_depIdxs = []int32{
 	0,  // 0: emailapi.v1.Domain.status:type_name -> emailapi.v1.DomainStatus
 	0,  // 1: emailapi.v1.Domain.mail_from_status:type_name -> emailapi.v1.DomainStatus
-	16, // 2: emailapi.v1.Domain.created_at:type_name -> google.protobuf.Timestamp
-	16, // 3: emailapi.v1.Domain.updated_at:type_name -> google.protobuf.Timestamp
-	2,  // 4: emailapi.v1.DnsRecord.record_type:type_name -> emailapi.v1.RecordType
-	1,  // 5: emailapi.v1.DnsRecord.status:type_name -> emailapi.v1.RecordStatus
-	4,  // 6: emailapi.v1.DomainRecords.dkim_records:type_name -> emailapi.v1.DnsRecord
-	4,  // 7: emailapi.v1.DomainRecords.spf_record:type_name -> emailapi.v1.DnsRecord
-	4,  // 8: emailapi.v1.DomainRecords.dmarc_record:type_name -> emailapi.v1.DnsRecord
-	4,  // 9: emailapi.v1.DomainRecords.mx_records:type_name -> emailapi.v1.DnsRecord
-	4,  // 10: emailapi.v1.DomainRecords.mail_from_records:type_name -> emailapi.v1.DnsRecord
-	3,  // 11: emailapi.v1.AddDomainResponse.domain:type_name -> emailapi.v1.Domain
-	5,  // 12: emailapi.v1.AddDomainResponse.records:type_name -> emailapi.v1.DomainRecords
-	3,  // 13: emailapi.v1.ListDomainsResponse.data:type_name -> emailapi.v1.Domain
-	6,  // 14: emailapi.v1.DomainService.AddDomain:input_type -> emailapi.v1.AddDomainRequest
-	8,  // 15: emailapi.v1.DomainService.GetDomain:input_type -> emailapi.v1.GetDomainRequest
-	9,  // 16: emailapi.v1.DomainService.ListDomains:input_type -> emailapi.v1.ListDomainsRequest
-	11, // 17: emailapi.v1.DomainService.DeleteDomain:input_type -> emailapi.v1.DeleteDomainRequest
-	13, // 18: emailapi.v1.DomainService.VerifyDomain:input_type -> emailapi.v1.VerifyDomainRequest
-	14, // 19: emailapi.v1.DomainService.GetDomainRecords:input_type -> emailapi.v1.GetDomainRecordsRequest
-	15, // 20: emailapi.v1.DomainService.SetMailFromDomain:input_type -> emailapi.v1.SetMailFromDomainRequest
-	7,  // 21: emailapi.v1.DomainService.AddDomain:output_type -> emailapi.v1.AddDomainResponse
-	3,  // 22: emailapi.v1.DomainService.GetDomain:output_type -> emailapi.v1.Domain
-	10, // 23: emailapi.v1.DomainService.ListDomains:output_type -> emailapi.v1.ListDomainsResponse
-	12, // 24: emailapi.v1.DomainService.DeleteDomain:output_type -> emailapi.v1.DeleteDomainResponse
-	3,  // 25: emailapi.v1.DomainService.VerifyDomain:output_type -> emailapi.v1.Domain
-	5,  // 26: emailapi.v1.DomainService.GetDomainRecords:output_type -> emailapi.v1.DomainRecords
-	3,  // 27: emailapi.v1.DomainService.SetMailFromDomain:output_type -> emailapi.v1.Domain
-	21, // [21:28] is the sub-list for method output_type
-	14, // [14:21] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	17, // 2: emailapi.v1.Domain.created_at:type_name -> google.protobuf.Timestamp
+	17, // 3: emailapi.v1.Domain.updated_at:type_name -> google.protobuf.Timestamp
+	17, // 4: emailapi.v1.Domain.last_verified_at:type_name -> google.protobuf.Timestamp
+	2,  // 5: emailapi.v1.DnsRecord.record_type:type_name -> emailapi.v1.RecordType
+	1,  // 6: emailapi.v1.DnsRecord.status:type_name -> emailapi.v1.RecordStatus
+	4,  // 7: emailapi.v1.DomainRecords.dkim_records:type_name -> emailapi.v1.DnsRecord
+	4,  // 8: emailapi.v1.DomainRecords.spf_record:type_name -> emailapi.v1.DnsRecord
+	4,  // 9: emailapi.v1.DomainRecords.dmarc_record:type_name -> emailapi.v1.DnsRecord
+	4,  // 10: emailapi.v1.DomainRecords.mx_records:type_name -> emailapi.v1.DnsRecord
+	4,  // 11: emailapi.v1.DomainRecords.mail_from_records:type_name -> emailapi.v1.DnsRecord
+	3,  // 12: emailapi.v1.AddDomainResponse.domain:type_name -> emailapi.v1.Domain
+	5,  // 13: emailapi.v1.AddDomainResponse.records:type_name -> emailapi.v1.DomainRecords
+	3,  // 14: emailapi.v1.ListDomainsResponse.data:type_name -> emailapi.v1.Domain
+	3,  // 15: emailapi.v1.VerifyDomainResponse.domain:type_name -> emailapi.v1.Domain
+	17, // 16: emailapi.v1.VerifyDomainResponse.next_retry_at:type_name -> google.protobuf.Timestamp
+	6,  // 17: emailapi.v1.DomainService.AddDomain:input_type -> emailapi.v1.AddDomainRequest
+	8,  // 18: emailapi.v1.DomainService.GetDomain:input_type -> emailapi.v1.GetDomainRequest
+	9,  // 19: emailapi.v1.DomainService.ListDomains:input_type -> emailapi.v1.ListDomainsRequest
+	11, // 20: emailapi.v1.DomainService.DeleteDomain:input_type -> emailapi.v1.DeleteDomainRequest
+	13, // 21: emailapi.v1.DomainService.VerifyDomain:input_type -> emailapi.v1.VerifyDomainRequest
+	15, // 22: emailapi.v1.DomainService.GetDomainRecords:input_type -> emailapi.v1.GetDomainRecordsRequest
+	16, // 23: emailapi.v1.DomainService.SetMailFromDomain:input_type -> emailapi.v1.SetMailFromDomainRequest
+	7,  // 24: emailapi.v1.DomainService.AddDomain:output_type -> emailapi.v1.AddDomainResponse
+	3,  // 25: emailapi.v1.DomainService.GetDomain:output_type -> emailapi.v1.Domain
+	10, // 26: emailapi.v1.DomainService.ListDomains:output_type -> emailapi.v1.ListDomainsResponse
+	12, // 27: emailapi.v1.DomainService.DeleteDomain:output_type -> emailapi.v1.DeleteDomainResponse
+	14, // 28: emailapi.v1.DomainService.VerifyDomain:output_type -> emailapi.v1.VerifyDomainResponse
+	5,  // 29: emailapi.v1.DomainService.GetDomainRecords:output_type -> emailapi.v1.DomainRecords
+	3,  // 30: emailapi.v1.DomainService.SetMailFromDomain:output_type -> emailapi.v1.Domain
+	24, // [24:31] is the sub-list for method output_type
+	17, // [17:24] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_v1_domain_proto_init() }
@@ -1198,7 +1291,7 @@ func file_v1_domain_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_domain_proto_rawDesc), len(file_v1_domain_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

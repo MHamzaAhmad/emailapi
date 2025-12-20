@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -27,8 +28,8 @@ func (r *DomainRepository) Create(ctx context.Context, d *domain.SendingDomain) 
 		INSERT INTO domains (
 			id, user_id, domain_name, status, verified_for_sending,
 			dkim_tokens, dkim_status, mail_from_domain, mail_from_status,
-			region, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			region, created_at, updated_at, last_verified_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	`
 
 	_, err := r.pool.Exec(ctx, query,
@@ -44,6 +45,7 @@ func (r *DomainRepository) Create(ctx context.Context, d *domain.SendingDomain) 
 		d.Region,
 		toPgTimestampFromTime(d.CreatedAt),
 		toPgTimestampFromTime(d.UpdatedAt),
+		toPgTimestampFromTimePtr(d.LastVerifiedAt),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create domain: %w", err)
@@ -57,7 +59,7 @@ func (r *DomainRepository) GetByID(ctx context.Context, id string) (*domain.Send
 	query := `
 		SELECT id, user_id, domain_name, status, verified_for_sending,
 			   dkim_tokens, dkim_status, mail_from_domain, mail_from_status,
-			   region, created_at, updated_at
+			   region, created_at, updated_at, last_verified_at
 		FROM domains WHERE id = $1
 	`
 
@@ -70,7 +72,7 @@ func (r *DomainRepository) GetByDomainName(ctx context.Context, userID, domainNa
 	query := `
 		SELECT id, user_id, domain_name, status, verified_for_sending,
 			   dkim_tokens, dkim_status, mail_from_domain, mail_from_status,
-			   region, created_at, updated_at
+			   region, created_at, updated_at, last_verified_at
 		FROM domains WHERE user_id = $1 AND domain_name = $2
 	`
 
@@ -83,7 +85,7 @@ func (r *DomainRepository) GetByUserID(ctx context.Context, userID string) ([]*d
 	query := `
 		SELECT id, user_id, domain_name, status, verified_for_sending,
 			   dkim_tokens, dkim_status, mail_from_domain, mail_from_status,
-			   region, created_at, updated_at
+			   region, created_at, updated_at, last_verified_at
 		FROM domains WHERE user_id = $1 ORDER BY created_at DESC
 	`
 
@@ -115,7 +117,8 @@ func (r *DomainRepository) Update(ctx context.Context, d *domain.SendingDomain) 
 			dkim_status = $5,
 			mail_from_domain = $6,
 			mail_from_status = $7,
-			updated_at = NOW()
+			updated_at = NOW(),
+			last_verified_at = $8
 		WHERE id = $1
 	`
 
@@ -127,6 +130,7 @@ func (r *DomainRepository) Update(ctx context.Context, d *domain.SendingDomain) 
 		string(d.DkimStatus),
 		toPgText(d.MailFromDomain),
 		toPgTextFromStatus(d.MailFromStatus),
+		toPgTimestampFromTimePtr(d.LastVerifiedAt),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update domain: %w", err)
@@ -152,7 +156,7 @@ func (r *DomainRepository) scanDomain(row pgx.Row) (*domain.SendingDomain, error
 	var d domain.SendingDomain
 	var status, dkimStatus string
 	var mailFromDomain, mailFromStatus pgtype.Text
-	var createdAt, updatedAt pgtype.Timestamptz
+	var createdAt, updatedAt, lastVerifiedAt pgtype.Timestamptz
 
 	err := row.Scan(
 		&d.ID,
@@ -167,6 +171,7 @@ func (r *DomainRepository) scanDomain(row pgx.Row) (*domain.SendingDomain, error
 		&d.Region,
 		&createdAt,
 		&updatedAt,
+		&lastVerifiedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan domain: %w", err)
@@ -186,6 +191,9 @@ func (r *DomainRepository) scanDomain(row pgx.Row) (*domain.SendingDomain, error
 	if updatedAt.Valid {
 		d.UpdatedAt = updatedAt.Time
 	}
+	if lastVerifiedAt.Valid {
+		d.LastVerifiedAt = &lastVerifiedAt.Time
+	}
 
 	return &d, nil
 }
@@ -195,7 +203,7 @@ func (r *DomainRepository) scanDomainRow(rows pgx.Rows) (*domain.SendingDomain, 
 	var d domain.SendingDomain
 	var status, dkimStatus string
 	var mailFromDomain, mailFromStatus pgtype.Text
-	var createdAt, updatedAt pgtype.Timestamptz
+	var createdAt, updatedAt, lastVerifiedAt pgtype.Timestamptz
 
 	err := rows.Scan(
 		&d.ID,
@@ -210,6 +218,7 @@ func (r *DomainRepository) scanDomainRow(rows pgx.Rows) (*domain.SendingDomain, 
 		&d.Region,
 		&createdAt,
 		&updatedAt,
+		&lastVerifiedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan domain: %w", err)
@@ -229,6 +238,9 @@ func (r *DomainRepository) scanDomainRow(rows pgx.Rows) (*domain.SendingDomain, 
 	if updatedAt.Valid {
 		d.UpdatedAt = updatedAt.Time
 	}
+	if lastVerifiedAt.Valid {
+		d.LastVerifiedAt = &lastVerifiedAt.Time
+	}
 
 	return &d, nil
 }
@@ -239,4 +251,12 @@ func toPgTextFromStatus(s domain.DomainStatus) pgtype.Text {
 		return pgtype.Text{Valid: false}
 	}
 	return pgtype.Text{String: string(s), Valid: true}
+}
+
+// toPgTimestampFromTimePtr converts a *time.Time to pgtype.Timestamptz.
+func toPgTimestampFromTimePtr(t *time.Time) pgtype.Timestamptz {
+	if t == nil {
+		return pgtype.Timestamptz{Valid: false}
+	}
+	return pgtype.Timestamptz{Time: *t, Valid: true}
 }

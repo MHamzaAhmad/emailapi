@@ -58,7 +58,9 @@ service DomainService {
   //
   // Call this after configuring your DNS records to check if they have
   // propagated and been verified by AWS. DNS propagation can take up to 72 hours.
-  rpc VerifyDomain(VerifyDomainRequest) returns (Domain) {
+  // This endpoint is rate-limited to prevent SES API abuse. If called too
+  // frequently, it will return cached data with was_refreshed=false.
+  rpc VerifyDomain(VerifyDomainRequest) returns (VerifyDomainResponse) {
     option (google.api.http) = {
       post: "/v1/domains/{id}/verify"
     };
@@ -189,6 +191,9 @@ message Domain {
 
   // Time when the domain was last updated.
   google.protobuf.Timestamp updated_at = 9;
+
+  // Time when verification status was last refreshed from SES.
+  google.protobuf.Timestamp last_verified_at = 10;
 }
 
 // DnsRecord represents a single DNS record that needs to be configured.
@@ -300,6 +305,21 @@ message DeleteDomainResponse {
 message VerifyDomainRequest {
   // ID of the domain to verify.
   string id = 1;
+}
+
+// VerifyDomainResponse contains the verification result.
+message VerifyDomainResponse {
+  // The domain with updated verification status.
+  Domain domain = 1;
+
+  // True if the status was actually refreshed from SES, false if cached data was returned.
+  bool was_refreshed = 2;
+
+  // If rate-limited, when the next verification attempt is allowed.
+  google.protobuf.Timestamp next_retry_at = 3;
+
+  // Human-readable message about the verification result.
+  string message = 4;
 }
 
 // GetDomainRecordsRequest identifies the domain to get records for.

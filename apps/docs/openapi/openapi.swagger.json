@@ -221,13 +221,13 @@
     "/v1/domains/{id}/verify": {
       "post": {
         "summary": "VerifyDomain refreshes verification status from AWS SES.",
-        "description": "Call this after configuring your DNS records to check if they have\npropagated and been verified by AWS. DNS propagation can take up to 72 hours.",
+        "description": "Call this after configuring your DNS records to check if they have\npropagated and been verified by AWS. DNS propagation can take up to 72 hours.\nThis endpoint is rate-limited to prevent SES API abuse. If called too\nfrequently, it will return cached data with was_refreshed=false.",
         "operationId": "DomainService_VerifyDomain",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1Domain"
+              "$ref": "#/definitions/v1VerifyDomainResponse"
             }
           },
           "default": {
@@ -825,6 +825,11 @@
           "type": "string",
           "format": "date-time",
           "description": "Time when the domain was last updated."
+        },
+        "lastVerifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Time when verification status was last refreshed from SES."
         }
       },
       "description": "Domain represents a verified sending domain."
@@ -1188,6 +1193,29 @@
         "USER_ROLE_MEMBER"
       ],
       "default": "USER_ROLE_UNSPECIFIED"
+    },
+    "v1VerifyDomainResponse": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "$ref": "#/definitions/v1Domain",
+          "description": "The domain with updated verification status."
+        },
+        "wasRefreshed": {
+          "type": "boolean",
+          "description": "True if the status was actually refreshed from SES, false if cached data was returned."
+        },
+        "nextRetryAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "If rate-limited, when the next verification attempt is allowed."
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable message about the verification result."
+        }
+      },
+      "description": "VerifyDomainResponse contains the verification result."
     },
     "v1Webhook": {
       "type": "object",

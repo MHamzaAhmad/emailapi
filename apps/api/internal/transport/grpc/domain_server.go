@@ -5,6 +5,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	emailapiv1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/domain"
@@ -94,19 +95,27 @@ func (s *DomainServer) DeleteDomain(ctx context.Context, req *emailapiv1.DeleteD
 	}, nil
 }
 
-// VerifyDomain handles verifying a domain status.
-func (s *DomainServer) VerifyDomain(ctx context.Context, req *emailapiv1.VerifyDomainRequest) (*emailapiv1.Domain, error) {
+// VerifyDomain handles verifying a domain status with rate limiting.
+func (s *DomainServer) VerifyDomain(ctx context.Context, req *emailapiv1.VerifyDomainRequest) (*emailapiv1.VerifyDomainResponse, error) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
 	}
 
-	d, err := s.svc.Verify(ctx, userID, req.Id)
+	result, err := s.svc.Verify(ctx, userID, req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to verify domain: %v", err)
 	}
 
-	return toProtoDomain(d), nil
+	resp := &emailapiv1.VerifyDomainResponse{
+		Domain:       toProtoDomain(result.Domain),
+		WasRefreshed: result.WasRefreshed,
+		Message:      result.Message,
+	}
+	if result.NextRetryAt != nil {
+		resp.NextRetryAt = timestamppb.New(*result.NextRetryAt)
+	}
+	return resp, nil
 }
 
 // GetDomainRecords handles retrieving DNS records for a domain.
@@ -142,7 +151,7 @@ func (s *DomainServer) SetMailFromDomain(ctx context.Context, req *emailapiv1.Se
 // Helper functions for conversions
 
 func toProtoDomain(d *domain.SendingDomain) *emailapiv1.Domain {
-	return &emailapiv1.Domain{
+	pb := &emailapiv1.Domain{
 		Id:                 d.ID,
 		Domain:             d.Domain,
 		Status:             toProtoDomainStatus(d.Status),
@@ -150,8 +159,13 @@ func toProtoDomain(d *domain.SendingDomain) *emailapiv1.Domain {
 		MailFromDomain:     d.MailFromDomain,
 		MailFromStatus:     toProtoDomainStatus(d.MailFromStatus),
 		Region:             d.Region,
-		// Timestamps conversion not implemented here for brevity, usually needs helper
+		CreatedAt:          timestamppb.New(d.CreatedAt),
+		UpdatedAt:          timestamppb.New(d.UpdatedAt),
 	}
+	if d.LastVerifiedAt != nil {
+		pb.LastVerifiedAt = timestamppb.New(*d.LastVerifiedAt)
+	}
+	return pb
 }
 
 func toProtoDomainStatus(s domain.DomainStatus) emailapiv1.DomainStatus {

@@ -62,7 +62,9 @@ type DomainServiceClient interface {
 	//
 	// Call this after configuring your DNS records to check if they have
 	// propagated and been verified by AWS. DNS propagation can take up to 72 hours.
-	VerifyDomain(ctx context.Context, in *VerifyDomainRequest, opts ...grpc.CallOption) (*Domain, error)
+	// This endpoint is rate-limited to prevent SES API abuse. If called too
+	// frequently, it will return cached data with was_refreshed=false.
+	VerifyDomain(ctx context.Context, in *VerifyDomainRequest, opts ...grpc.CallOption) (*VerifyDomainResponse, error)
 	// GetDomainRecords returns all DNS records needed for full email deliverability.
 	//
 	// This includes:
@@ -132,9 +134,9 @@ func (c *domainServiceClient) DeleteDomain(ctx context.Context, in *DeleteDomain
 	return out, nil
 }
 
-func (c *domainServiceClient) VerifyDomain(ctx context.Context, in *VerifyDomainRequest, opts ...grpc.CallOption) (*Domain, error) {
+func (c *domainServiceClient) VerifyDomain(ctx context.Context, in *VerifyDomainRequest, opts ...grpc.CallOption) (*VerifyDomainResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Domain)
+	out := new(VerifyDomainResponse)
 	err := c.cc.Invoke(ctx, DomainService_VerifyDomain_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -196,7 +198,9 @@ type DomainServiceServer interface {
 	//
 	// Call this after configuring your DNS records to check if they have
 	// propagated and been verified by AWS. DNS propagation can take up to 72 hours.
-	VerifyDomain(context.Context, *VerifyDomainRequest) (*Domain, error)
+	// This endpoint is rate-limited to prevent SES API abuse. If called too
+	// frequently, it will return cached data with was_refreshed=false.
+	VerifyDomain(context.Context, *VerifyDomainRequest) (*VerifyDomainResponse, error)
 	// GetDomainRecords returns all DNS records needed for full email deliverability.
 	//
 	// This includes:
@@ -238,7 +242,7 @@ func (UnimplementedDomainServiceServer) ListDomains(context.Context, *ListDomain
 func (UnimplementedDomainServiceServer) DeleteDomain(context.Context, *DeleteDomainRequest) (*DeleteDomainResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteDomain not implemented")
 }
-func (UnimplementedDomainServiceServer) VerifyDomain(context.Context, *VerifyDomainRequest) (*Domain, error) {
+func (UnimplementedDomainServiceServer) VerifyDomain(context.Context, *VerifyDomainRequest) (*VerifyDomainResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method VerifyDomain not implemented")
 }
 func (UnimplementedDomainServiceServer) GetDomainRecords(context.Context, *GetDomainRecordsRequest) (*DomainRecords, error) {
