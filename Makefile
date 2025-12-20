@@ -29,7 +29,7 @@ migrate-status:
 	atlas migrate status --env local --config "file://tools/atlas.hcl"
 
 migrate-hash:
-	atlas migrate hash --config "file://tools/atlas.hcl"
+	atlas migrate hash --env local --config "file://tools/atlas.hcl"
 
 migrate-down:
 	atlas migrate down --env local --config "file://tools/atlas.hcl"

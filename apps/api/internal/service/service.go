@@ -18,8 +18,8 @@ type Service struct {
 // Note: DomainService requires SES client and must be set separately using SetDomainService.
 func New(store Store) *Service {
 	svc := &Service{store: store}
-	svc.User = NewUserService(store)
 	svc.APIKey = NewAPIKeyService(store)
+	svc.User = NewUserService(store, svc.APIKey)
 	return svc
 }
 

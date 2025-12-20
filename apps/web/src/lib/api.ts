@@ -98,5 +98,10 @@ export const getAuthToken = (): string | null => {
     return localStorage.getItem('api_key');
 };
 
+// Clear auth token helper
+export const clearAuthToken = () => {
+    localStorage.removeItem('api_key');
+};
+
 export { axiosInstance };
 export default api;

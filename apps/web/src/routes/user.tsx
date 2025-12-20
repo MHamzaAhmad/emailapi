@@ -1,417 +1,278 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
     User as UserIcon,
     Mail,
     Shield,
-    Plus,
-    Search,
     CheckCircle,
     AlertCircle,
     Loader2,
-    X,
-    Edit2,
-    Clock,
+    LogOut,
+    Key,
+    Terminal,
+    Copy,
 } from 'lucide-react'
-import { useState, type FormEvent, useEffect } from 'react'
-import { useUsers, useCreateUser, useUpdateUser } from '@/hooks'
-import { useCreateApiKey } from '@/hooks'
-import type { CreateUserRequest, User, UserRole } from '@/types'
-import { setAuthToken } from '@/lib/api'
+import { useState, type FormEvent } from 'react'
+import { useCreateUser, useCurrentUser } from '@/hooks'
+import type { CreateUserRequest } from '@/types'
+import { setAuthToken, getAuthToken, clearAuthToken } from '@/lib/api'
 
 export const Route = createFileRoute('/user')({
-    component: UserManagementPage,
+    component: UserTestPage,
 })
 
-function UserModal({
-    isOpen,
-    onClose,
-    user,
-}: {
-    isOpen: boolean
-    onClose: () => void
-    user?: User
-}) {
-    const createUser = useCreateUser()
-    const updateUser = useUpdateUser()
-    const createApiKey = useCreateApiKey()
+function UserTestPage() {
+    const [token, setToken] = useState(getAuthToken())
+    const navigate = useNavigate()
+    const { data: user, isLoading: isLoadingUser, refetch } = useCurrentUser()
 
-    const [formData, setFormData] = useState<CreateUserRequest & { isActive?: boolean }>({
-        name: '',
-        email: '',
-        role: 'member',
-        isActive: true,
-    })
-    const [createdApiKey, setCreatedApiKey] = useState<string | null>(null)
-
-    useEffect(() => {
-        if (user) {
-            setFormData({
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                isActive: user.isActive,
-            })
-        } else {
-            setFormData({
-                name: '',
-                email: '',
-                role: 'member',
-                isActive: true, // Default active for new users
-            })
-            setCreatedApiKey(null)
-        }
-    }, [user, isOpen])
-
-    if (!isOpen) return null
-
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault()
-        try {
-            if (user) {
-                await updateUser.mutateAsync({
-                    id: user.id,
-                    data: formData,
-                })
-                onClose()
-            } else {
-                // Create user
-                const result = await createUser.mutateAsync(formData)
-
-                // Auto-create API key for the new user
-                const apiKeyResult = await createApiKey.mutateAsync({
-                    name: `${formData.name}'s API Key`,
-                    scopes: ['email:send', 'email:read', 'domain:read', 'domain:write', 'apikey:read', 'apikey:write', 'user:read', 'user:write'],
-                    environment: 'live',
-                })
-
-                // Store API key in localStorage
-                setAuthToken(apiKeyResult.rawKey)
-                setCreatedApiKey(apiKeyResult.rawKey)
-            }
-        } catch (err) {
-            console.error('Failed to save user:', err)
-        }
+    const handleLogout = () => {
+        clearAuthToken()
+        setToken(null)
+        navigate({ to: '/user' })
     }
 
-    const isPending = createUser.isPending || updateUser.isPending || createApiKey.isPending
+    const handleLoginSuccess = () => {
+        setToken(getAuthToken())
+        refetch()
+    }
 
-    // If API key was just created, show it
-    if (createdApiKey) {
+    if (isLoadingUser && token) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                <div className="bg-slate-800 border border-slate-700 rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
-                    <div className="flex items-center justify-between p-6 border-b border-slate-700 bg-green-500/10">
-                        <div className="flex items-center gap-3">
-                            <CheckCircle className="w-6 h-6 text-green-400" />
-                            <h2 className="text-xl font-bold text-white">User Created Successfully!</h2>
-                        </div>
-                    </div>
-
-                    <div className="p-6 space-y-4">
-                        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                            <div className="flex items-start gap-3">
-                                <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5" />
-                                <div>
-                                    <p className="text-yellow-400 font-semibold mb-2">Save this API key!</p>
-                                    <p className="text-yellow-300 text-sm">
-                                        This is the only time you'll see this key. It has been automatically saved for this session.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-400 text-sm font-medium mb-2">
-                                Your API Key
-                            </label>
-                            <div className="p-3 bg-slate-900 border border-slate-600 rounded-lg font-mono text-cyan-400 text-sm break-all">
-                                {createdApiKey}
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={() => {
-                                setCreatedApiKey(null)
-                                onClose()
-                                // Reload to show authenticated state
-                                window.location.reload()
-                            }}
-                            className="w-full py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors"
-                        >
-                            Continue to Dashboard
-                        </button>
-                    </div>
-                </div>
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
             </div>
         )
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-slate-800 border border-slate-700 rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
-                <div className="flex items-center justify-between p-6 border-b border-slate-700">
-                    <h2 className="text-xl font-bold text-white">
-                        {user ? 'Edit User' : 'Create New User'}
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-slate-700 rounded-lg text-gray-400 transition-colors"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+        <div className="min-h-screen bg-slate-950 p-6 md:p-12 font-sans text-slate-200">
+            <div className="max-w-2xl mx-auto space-y-8">
+
+                {/* Header */}
+                <div className="text-center space-y-2">
+                    <h1 className="text-3xl font-bold text-white tracking-tight">
+                        Test Session Manager
+                    </h1>
+                    <p className="text-slate-400">
+                        Create a temporary user to test the Email API
+                    </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-gray-400 text-sm font-medium mb-2">
-                            Full Name
-                        </label>
-                        <input
-                            type="text"
-                            required
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
-                            placeholder="John Doe"
-                        />
-                    </div>
+                {!token ? (
+                    <CreateUserForm onSuccess={handleLoginSuccess} />
+                ) : (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {/* User Profile Card */}
+                        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-400">
+                                        <UserIcon className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-semibold text-white">Active Session</h2>
+                                        <p className="text-sm text-cyan-400 flex items-center gap-1.5">
+                                            <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+                                            Connected
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    End Session
+                                </button>
+                            </div>
 
-                    <div>
-                        <label className="block text-gray-400 text-sm font-medium mb-2">
-                            Email Address
-                        </label>
-                        <input
-                            type="email"
-                            required
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-cyan-500 focus:outline-none disabled:opacity-50"
-                            placeholder="john@example.com"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-gray-400 text-sm font-medium mb-2">
-                            Role
-                        </label>
-                        <select
-                            value={formData.role}
-                            onChange={(e) =>
-                                setFormData({ ...formData, role: e.target.value as UserRole })
-                            }
-                            className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
-                        >
-                            <option value="member">Member</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
-
-                    {user && (
-                        <div className="flex items-center gap-3 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
-                            <input
-                                type="checkbox"
-                                id="isActive"
-                                checked={formData.isActive}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, isActive: e.target.checked })
-                                }
-                                className="w-4 h-4 rounded border-slate-600 text-cyan-500 focus:ring-cyan-500 bg-slate-800"
-                            />
-                            <label htmlFor="isActive" className="text-sm font-medium text-gray-300">
-                                Active Account
-                            </label>
+                            {user && (
+                                <div className="grid gap-4 p-4 bg-slate-950/50 rounded-xl border border-slate-800/50">
+                                    <div className="flex items-center justify-between group">
+                                        <div className="flex items-center gap-3 text-slate-400">
+                                            <UserIcon className="w-4 h-4" />
+                                            <span className="text-sm font-medium">Name</span>
+                                        </div>
+                                        <span className="text-slate-200 font-medium font-mono">{user.name}</span>
+                                    </div>
+                                    <div className="h-px bg-slate-800/50" />
+                                    <div className="flex items-center justify-between group">
+                                        <div className="flex items-center gap-3 text-slate-400">
+                                            <Mail className="w-4 h-4" />
+                                            <span className="text-sm font-medium">Email</span>
+                                        </div>
+                                        <span className="text-slate-200 font-medium font-mono">{user.email}</span>
+                                    </div>
+                                    <div className="h-px bg-slate-800/50" />
+                                    <div className="flex items-center justify-between group">
+                                        <div className="flex items-center gap-3 text-slate-400">
+                                            <Shield className="w-4 h-4" />
+                                            <span className="text-sm font-medium">Role</span>
+                                        </div>
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 capitalize">
+                                            {user.role}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    )}
 
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="submit"
-                            disabled={isPending}
-                            className="flex-1 py-2.5 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
-                        >
-                            {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                            {user ? 'Save Changes' : 'Create User'}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-gray-300 font-semibold rounded-lg transition-colors"
-                        >
-                            Cancel
-                        </button>
+                        {/* API Key Section */}
+                        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm">
+                            <div className="flex items-start gap-4 mb-4">
+                                <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-500">
+                                    <Key className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-white">Authentication Token</h3>
+                                    <p className="text-slate-400 text-sm mt-1">
+                                        This token is automatically saved in your browser's local storage and used for all API requests.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-950 rounded-lg border border-slate-800 p-4 relative group">
+                                <code className="text-sm text-slate-300 font-mono break-all pr-12 block">
+                                    {token}
+                                </code>
+                                <button
+                                    onClick={() => navigator.clipboard.writeText(token || '')}
+                                    className="absolute top-3 right-3 p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-md transition-colors"
+                                    title="Copy Token"
+                                >
+                                    <Copy className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Quick Actions */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <button
+                                onClick={() => navigate({ to: '/domains' })}
+                                className="p-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 rounded-xl transition-all group text-left"
+                            >
+                                <div className="mb-2 p-2 w-fit rounded-lg bg-cyan-500/10 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-white transition-colors">
+                                    <Terminal className="w-5 h-5" />
+                                </div>
+                                <h3 className="font-semibold text-slate-200">Test Domains</h3>
+                                <p className="text-sm text-slate-500 mt-1">Verify and manage sending domains</p>
+                            </button>
+
+                            <button
+                                onClick={() => navigate({ to: '/api-keys' })}
+                                className="p-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 hover:border-purple-500/50 rounded-xl transition-all group text-left"
+                            >
+                                <div className="mb-2 p-2 w-fit rounded-lg bg-purple-500/10 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                                    <Key className="w-5 h-5" />
+                                </div>
+                                <h3 className="font-semibold text-slate-200">Manage Keys</h3>
+                                <p className="text-sm text-slate-500 mt-1">Create additional API keys</p>
+                            </button>
+                        </div>
+
                     </div>
-                </form>
+                )}
             </div>
         </div>
     )
 }
 
-function UserManagementPage() {
-    const { data: userData, isLoading } = useUsers()
-    const [searchQuery, setSearchQuery] = useState('')
-    const [modalOpen, setModalOpen] = useState(false)
-    const [editingUser, setEditingUser] = useState<User | undefined>(undefined)
+function CreateUserForm({ onSuccess }: { onSuccess: () => void }) {
+    const createUser = useCreateUser()
+    const [formData, setFormData] = useState<CreateUserRequest>({
+        name: '',
+        email: '',
+        role: 'admin', // Default to admin for testing power
+    })
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const users = userData?.users || []
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault()
+        setIsSubmitting(true)
+        try {
+            // 1. Create User (returns API key now)
+            const response = await createUser.mutateAsync(formData)
 
-    // Simple client-side filtering
-    const filteredUsers = users.filter(
-        (u) =>
-            u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            u.email.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+            if (response.apiKey) {
+                // 2. Set Token
+                setAuthToken(response.apiKey)
 
-    const handleEdit = (user: User) => {
-        setEditingUser(user)
-        setModalOpen(true)
-    }
+                // 3. Update UI
+                onSuccess()
+            } else {
+                console.error('No API key returned from user creation')
+                setIsSubmitting(false)
+            }
 
-    const handleCreate = () => {
-        setEditingUser(undefined)
-        setModalOpen(true)
-    }
-
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-                <div className="flex items-center gap-3 text-cyan-400">
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                    <span>Loading users...</span>
-                </div>
-            </div>
-        )
+        } catch (err) {
+            console.error('Failed to create test session:', err)
+            setIsSubmitting(false)
+        }
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-6">
-            <div className="max-w-6xl mx-auto">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-cyan-500/10 rounded-xl">
-                            <UserIcon className="w-8 h-8 text-cyan-400" />
-                        </div>
-                        <div>
-                            <h1 className="text-3xl font-bold text-white">Users</h1>
-                            <p className="text-gray-400">Manage team members and permissions</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={handleCreate}
-                        className="flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/20"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Add User
-                    </button>
-                </div>
-
-                {/* Filters */}
-                <div className="mb-6">
-                    <div className="relative max-w-md">
-                        <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-500" />
-                        <input
-                            type="text"
-                            placeholder="Search by name or email..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-gray-500 focus:border-cyan-500 focus:outline-none transition-colors"
-                        />
-                    </div>
-                </div>
-
-                {/* Users Table */}
-                <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden backdrop-blur-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="bg-slate-900/50 border-b border-slate-700">
-                                    <th className="px-6 py-4 text-gray-400 font-medium text-sm">User</th>
-                                    <th className="px-6 py-4 text-gray-400 font-medium text-sm">Role</th>
-                                    <th className="px-6 py-4 text-gray-400 font-medium text-sm">Status</th>
-                                    <th className="px-6 py-4 text-gray-400 font-medium text-sm">Joined</th>
-                                    <th className="px-6 py-4 text-gray-400 font-medium text-sm text-right">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-700">
-                                {filteredUsers.length > 0 ? (
-                                    filteredUsers.map((user) => (
-                                        <tr
-                                            key={user.id}
-                                            className="group hover:bg-slate-800/50 transition-colors"
-                                        >
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-cyan-400 font-bold">
-                                                        {user.name.charAt(0).toUpperCase()}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-white font-medium">{user.name}</p>
-                                                        <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                                                            <Mail className="w-3 h-3" />
-                                                            {user.email}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Shield className="w-4 h-4 text-slate-500" />
-                                                    <span className="text-gray-300 capitalize">{user.role}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {user.isActive ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
-                                                        <CheckCircle className="w-3 h-3" />
-                                                        Active
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
-                                                        <AlertCircle className="w-3 h-3" />
-                                                        Inactive
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-1.5 text-gray-400 text-sm">
-                                                    <Clock className="w-4 h-4 text-slate-500" />
-                                                    {new Date(user.createdAt).toLocaleDateString()}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() => handleEdit(user)}
-                                                    className="p-2 hover:bg-slate-700 rounded-lg text-gray-400 hover:text-white transition-colors"
-                                                    title="Edit User"
-                                                >
-                                                    <Edit2 className="w-4 h-4" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                                            No users found matching your search.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div className="px-6 py-4 border-t border-slate-700 bg-slate-900/30 text-sm text-gray-500">
-                        Showing {filteredUsers.length} users
-                    </div>
-                </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl">
+            <div className="mb-6">
+                <h2 className="text-xl font-bold text-white mb-2">Create Test User</h2>
+                <p className="text-slate-400 text-sm">
+                    This will create a new user and automatically generate an API key for this session.
+                </p>
             </div>
 
-            <UserModal
-                isOpen={modalOpen}
-                onClose={() => setModalOpen(false)}
-                user={editingUser}
-            />
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                    <label className="block text-slate-400 text-sm font-medium mb-1.5">
+                        Full Name
+                    </label>
+                    <input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 focus:outline-none transition-all"
+                        placeholder="Jane Tester"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-slate-400 text-sm font-medium mb-1.5">
+                        Email Address
+                    </label>
+                    <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 focus:outline-none transition-all"
+                        placeholder="jane@example.com"
+                    />
+                </div>
+
+                <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg transition-all shadow-lg shadow-cyan-900/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+                >
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Setting up session...
+                        </>
+                    ) : (
+                        <>
+                            Start Test Session
+                            <CheckCircle className="w-5 h-5" />
+                        </>
+                    )}
+                </button>
+            </form>
+
+            <div className="mt-6 p-4 bg-slate-950 rounded-lg border border-slate-800 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-slate-400">
+                    <strong>Tip:</strong> The API key generated will have full <code>admin</code> privileges for testing all endpoints.
+                </p>
+            </div>
         </div>
     )
 }

@@ -30,6 +30,7 @@ export interface UpdateUserRequest {
 export interface CreateUserResponse {
     user: User;
     message: string;
+    apiKey?: string;
 }
 
 export interface ListUsersRequest {

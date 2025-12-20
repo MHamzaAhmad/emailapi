@@ -31,14 +31,15 @@ func (s *UserServer) CreateUser(ctx context.Context, req *emailapiv1.CreateUserR
 		Role:  toRole(req.Role),
 	}
 
-	user, err := s.svc.Create(ctx, domainReq)
+	user, apiKey, err := s.svc.Create(ctx, domainReq)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to create user: %v", err)
 	}
 
 	return &emailapiv1.CreateUserResponse{
 		User:    toProtoUser(user),
-		Message: "User created successfully. Create an API key to authenticate.",
+		Message: "User created successfully.",
+		ApiKey:  apiKey,
 	}, nil
 }
 

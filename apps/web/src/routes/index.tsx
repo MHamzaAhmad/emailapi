@@ -1,92 +1,132 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { Key, Globe, User, ArrowRight } from 'lucide-react'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { Key, Globe, User, ArrowRight, Zap, CheckCircle2 } from 'lucide-react'
+import { useEffect } from 'react'
+import { getAuthToken } from '@/lib/api'
+import { useCurrentUser } from '@/hooks'
 
 export const Route = createFileRoute('/')({
   component: Dashboard,
 })
 
 function Dashboard() {
+  const navigate = useNavigate()
+  const token = getAuthToken()
+  const { data: user } = useCurrentUser()
+
+  useEffect(() => {
+    if (!token) {
+      navigate({ to: '/user' })
+    }
+  }, [token, navigate])
+
+  if (!token) return null
+
   const quickActions = [
-    {
-      icon: <User className="w-8 h-8 text-cyan-400" />,
-      title: 'User Management',
-      description: 'Create and manage your user account',
-      href: '/user',
-    },
-    {
-      icon: <Key className="w-8 h-8 text-cyan-400" />,
-      title: 'API Keys',
-      description: 'Create and manage API keys for authentication',
-      href: '/api-keys',
-    },
     {
       icon: <Globe className="w-8 h-8 text-cyan-400" />,
       title: 'Domains',
-      description: 'Configure sending domains and DNS records',
+      description: 'Configure and verify sending domains',
       href: '/domains',
+      color: 'cyan',
+    },
+    {
+      icon: <Key className="w-8 h-8 text-purple-400" />,
+      title: 'API Keys',
+      description: 'Manage authentication tokens',
+      href: '/api-keys',
+      color: 'purple',
+    },
+    {
+      icon: <User className="w-8 h-8 text-indigo-400" />,
+      title: 'Session',
+      description: `Logged in as ${user?.name || 'User'}`,
+      href: '/user',
+      color: 'indigo',
     },
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <section className="relative py-20 px-6 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10" />
-        <div className="relative max-w-5xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-black text-white mb-4">
-            <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-              Email API
-            </span>{' '}
-            <span className="text-gray-300">Dashboard</span>
+    <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12">
+      <div className="max-w-5xl mx-auto space-y-12">
+        {/* Header */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 text-cyan-400 mb-2">
+            <Zap className="w-6 h-6" />
+            <span className="font-mono text-sm tracking-wide uppercase">Email API Test Console</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            Ready to Build.
           </h1>
-          <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-8">
-            Manage your sending domains, API keys, and email delivery
+          <p className="text-xl text-slate-400 max-w-2xl">
+            You are authenticated and connected to the local API environment.
           </p>
-        </div>
-      </section>
 
-      <section className="py-12 px-6 max-w-5xl mx-auto">
-        <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm font-medium border border-green-500/20">
+            <CheckCircle2 className="w-4 h-4" />
+            System Operational
+          </div>
+        </div>
+
+        {/* Quick Actions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {quickActions.map((action) => (
             <Link
               key={action.href}
               to={action.href}
-              className="group bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10"
+              className="group relative bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-slate-700 transition-all hover:-translate-y-1 hover:shadow-xl"
             >
-              <div className="mb-4">{action.icon}</div>
-              <h3 className="text-xl font-semibold text-white mb-2 flex items-center gap-2">
+              <div className={`mb-4 p-3 rounded-xl bg-${action.color}-500/10 w-fit`}>
+                {action.icon}
+              </div>
+              <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
                 {action.title}
-                <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-slate-400" />
               </h3>
-              <p className="text-gray-400">{action.description}</p>
+              <p className="text-slate-400 leading-relaxed">
+                {action.description}
+              </p>
             </Link>
           ))}
         </div>
-      </section>
 
-      <section className="py-12 px-6 max-w-5xl mx-auto">
-        <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-8">
-          <h2 className="text-xl font-bold text-white mb-4">Getting Started</h2>
-          <div className="space-y-4 text-gray-400">
-            <p>
-              <span className="text-cyan-400 font-mono">1.</span> Create a user
-              account to get started
-            </p>
-            <p>
-              <span className="text-cyan-400 font-mono">2.</span> Generate an API
-              key to authenticate your requests
-            </p>
-            <p>
-              <span className="text-cyan-400 font-mono">3.</span> Add and verify
-              your sending domain
-            </p>
-            <p>
-              <span className="text-cyan-400 font-mono">4.</span> Start sending
-              emails using the API
-            </p>
+        {/* Status Section */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+            <h3 className="font-semibold text-slate-200 mb-4">Environment</h3>
+            <div className="space-y-3 font-mono text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-500">API Endpoint</span>
+                <span className="text-cyan-400">http://localhost:8080</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Gateway</span>
+                <span className="text-purple-400">gRPC-Gateway</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Version</span>
+                <span className="text-slate-200">v1.0.0-dev</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+            <h3 className="font-semibold text-slate-200 mb-4">Current Session</h3>
+            <div className="space-y-3 font-mono text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-500">User ID</span>
+                <span className="text-slate-200" title={user?.id}>{user?.id?.slice(0, 12)}...</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Email</span>
+                <span className="text-slate-200">{user?.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Role</span>
+                <span className="text-indigo-400">{user?.role}</span>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   )
 }
