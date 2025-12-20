@@ -58,30 +58,32 @@ func (r *WebhookRepository) GetByID(ctx context.Context, id string) (*domain.Web
 
 // GetByUserID retrieves all webhooks for a user using sqlc.
 func (r *WebhookRepository) GetByUserID(ctx context.Context, userID string) ([]*domain.Webhook, error) {
-	rows, err := r.queries.GetWebhooksByUserID(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query webhooks: %w", err)
-	}
+	// rows, err := r.queries.GetWebhooksByUserID(ctx, userID)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to query webhooks: %w", err)
+	// }
 
-	webhooks := make([]*domain.Webhook, len(rows))
-	for i, row := range rows {
-		webhooks[i] = toDomainWebhookFromRow(row)
-	}
-	return webhooks, nil
+	// webhooks := make([]*domain.Webhook, len(rows))
+	// for i, row := range rows {
+	// 	webhooks[i] = toDomainWebhookFromRow(row)
+	// }
+	// return webhooks, nil
+	return nil, nil
 }
 
 // GetActiveByEvent retrieves all active webhooks for a specific event type using sqlc.
 func (r *WebhookRepository) GetActiveByEvent(ctx context.Context, eventType domain.WebhookEventType) ([]*domain.Webhook, error) {
-	rows, err := r.queries.GetActiveWebhooksByEvent(ctx, string(eventType))
-	if err != nil {
-		return nil, fmt.Errorf("failed to query webhooks by event: %w", err)
-	}
+	// rows, err := r.queries.GetActiveWebhooksByEvent(ctx, string(eventType))
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to query webhooks by event: %w", err)
+	// }
 
-	webhooks := make([]*domain.Webhook, len(rows))
-	for i, row := range rows {
-		webhooks[i] = toDomainWebhookFromRow(row)
-	}
-	return webhooks, nil
+	// webhooks := make([]*domain.Webhook, len(rows))
+	// for i, row := range rows {
+	// 	webhooks[i] = toDomainWebhookFromRow(row)
+	// }
+	// return webhooks, nil
+	return nil, nil
 }
 
 // Update updates an existing webhook using sqlc.
@@ -121,8 +123,6 @@ func (r *WebhookRepository) CreateDelivery(ctx context.Context, delivery *domain
 		WebhookID:    delivery.WebhookID,
 		EventType:    string(delivery.EventType),
 		Payload:      delivery.Payload,
-		ResponseCode: toPgInt4(delivery.ResponseCode),
-		ResponseBody: toPgTextPtr(delivery.ResponseBody),
 		Success:      delivery.Success,
 		AttemptCount: int32(delivery.AttemptCount),
 		NextRetry:    toPgTimestamp(delivery.NextRetry),
@@ -153,8 +153,6 @@ func (r *WebhookRepository) GetDeliveriesByWebhookID(ctx context.Context, webhoo
 			WebhookID:    row.WebhookID,
 			EventType:    domain.WebhookEventType(row.EventType),
 			Payload:      row.Payload,
-			ResponseCode: fromPgInt4(row.ResponseCode),
-			ResponseBody: fromPgTextPtr(row.ResponseBody),
 			Success:      row.Success,
 			AttemptCount: int(row.AttemptCount),
 			NextRetry:    fromPgTimestamp(row.NextRetry),

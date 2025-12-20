@@ -104,8 +104,6 @@ func (r *EmailRepository) Update(ctx context.Context, email *domain.Email) error
 		Body:         toPgText(email.Body),
 		HtmlBody:     toPgText(email.HTML),
 		Status:       string(email.Status),
-		ProviderID:   toPgTextPtr(email.ProviderID),
-		WebhookID:    toPgTextPtr(email.WebhookID),
 		Metadata:     metadata,
 		ScheduledAt:  toPgTimestamp(email.ScheduledAt),
 		SentAt:       toPgTimestamp(email.SentAt),

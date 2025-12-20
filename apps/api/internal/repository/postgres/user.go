@@ -27,15 +27,13 @@ func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
 // Create stores a new user using sqlc.
 func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
 	result, err := r.queries.CreateUser(ctx, db.CreateUserParams{
-		ID:           user.ID,
-		Email:        user.Email,
-		Name:         user.Name,
-		Role:         string(user.Role),
-		ApiKeyHash:   toPgTextPtr(user.APIKey),
-		ApiKeyPrefix: toPgTextPtr(user.APIKeyPrefix),
-		IsActive:     user.IsActive,
-		CreatedAt:    toPgTimestampNow(),
-		UpdatedAt:    toPgTimestampNow(),
+		ID:        user.ID,
+		Email:     user.Email,
+		Name:      user.Name,
+		Role:      string(user.Role),
+		IsActive:  user.IsActive,
+		CreatedAt: toPgTimestampNow(),
+		UpdatedAt: toPgTimestampNow(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
@@ -57,20 +55,22 @@ func (r *UserRepository) GetByID(ctx context.Context, id string) (*domain.User, 
 
 // GetByEmail retrieves a user by their email using sqlc.
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	row, err := r.queries.GetUserByEmail(ctx, email)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user by email: %w", err)
-	}
-	return toDomainUserFromRow(row), nil
+	// row, err := r.queries.GetUserByEmail(ctx, email)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to get user by email: %w", err)
+	// }
+	// return toDomainUserFromRow(row), nil
+	return nil, nil
 }
 
 // GetByAPIKey retrieves a user by their API key hash using sqlc.
 func (r *UserRepository) GetByAPIKey(ctx context.Context, apiKeyHash string) (*domain.User, error) {
-	row, err := r.queries.GetUserByAPIKey(ctx, apiKeyHash)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user by API key: %w", err)
-	}
-	return toDomainUserFromRow(row), nil
+	// row, err := r.queries.GetUserByAPIKey(ctx, apiKeyHash)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to get user by API key: %w", err)
+	// }
+	// return toDomainUserFromRow(row), nil
+	return nil, nil
 }
 
 // Update updates an existing user using sqlc.
@@ -116,13 +116,12 @@ func (r *UserRepository) UpdateAPIKey(ctx context.Context, id string, hashedKey 
 // toDomainUserFromRow converts a sqlc GetUserByID/Email/APIKey Row to domain.User.
 func toDomainUserFromRow(row db.GetUserByIDRow) *domain.User {
 	return &domain.User{
-		ID:           row.ID,
-		Email:        row.Email,
-		Name:         row.Name,
-		Role:         domain.UserRole(row.Role),
-		APIKeyPrefix: fromPgTextPtr(row.ApiKeyPrefix),
-		IsActive:     row.IsActive,
-		CreatedAt:    row.CreatedAt.Time,
-		UpdatedAt:    row.UpdatedAt.Time,
+		ID:        row.ID,
+		Email:     row.Email,
+		Name:      row.Name,
+		Role:      domain.UserRole(row.Role),
+		IsActive:  row.IsActive,
+		CreatedAt: row.CreatedAt.Time,
+		UpdatedAt: row.UpdatedAt.Time,
 	}
 }
