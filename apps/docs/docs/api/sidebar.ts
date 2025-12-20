@@ -4,7 +4,55 @@ const sidebar: SidebarsConfig = {
   apisidebar: [
     {
       type: "doc",
-      id: "api/v-1-email-proto",
+      id: "api/v-1-domain-proto",
+    },
+    {
+      type: "category",
+      label: "DomainService",
+      items: [
+        {
+          type: "doc",
+          id: "api/domain-service-list-domains",
+          label: "ListDomains retrieves all domains for the authenticated user.",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/domain-service-add-domain",
+          label: "AddDomain registers a new sending domain with AWS SES.",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/domain-service-get-domain",
+          label: "GetDomain retrieves a domain by its ID.",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/domain-service-delete-domain",
+          label: "DeleteDomain removes a domain from your account and AWS SES.",
+          className: "api-method delete",
+        },
+        {
+          type: "doc",
+          id: "api/domain-service-set-mail-from-domain",
+          label: "SetMailFromDomain configures a custom MAIL FROM subdomain.",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/domain-service-get-domain-records",
+          label: "GetDomainRecords returns all DNS records needed for full email deliverability.",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/domain-service-verify-domain",
+          label: "VerifyDomain refreshes verification status from AWS SES.",
+          className: "api-method post",
+        },
+      ],
     },
     {
       type: "category",
@@ -13,13 +61,13 @@ const sidebar: SidebarsConfig = {
         {
           type: "doc",
           id: "api/email-service-list-emails",
-          label: "ListEmails retrieves a list of emails.",
+          label: "ListEmails retrieves a paginated list of emails sent by the authenticated user.",
           className: "api-method get",
         },
         {
           type: "doc",
           id: "api/email-service-get-email",
-          label: "GetEmail retrieves an email by ID.",
+          label: "GetEmail retrieves the details of a specific email by its ID.",
           className: "api-method get",
         },
         {

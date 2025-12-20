@@ -1,0 +1,63 @@
+---
+id: domain-service-list-domains
+title: "ListDomains retrieves all domains for the authenticated user."
+description: "ListDomains retrieves all domains for the authenticated user."
+sidebar_label: "ListDomains retrieves all domains for the authenticated user."
+hide_title: true
+hide_table_of_contents: true
+api: eJzdVUuP2zYQ/ivEnFpA9SbpzacafgQG9gXLRlF4FwtaHFlMJVKZGTlrGPrvBSXZq7V3kaBoLtVFxHCe3zecOYAvkbRY7+YGhjDxhbYuRtrZBJ+uLUsrYYiAkEvvGBmGB/j04UP4GeSEbBnsYQgjxVWSIHNa5eqoPoAIEu8EnQQLXZa5TZqIV184mB2AkwwLHU6yLxGG4DdfMBGIoKSQn9g2qNHS19JEeg8RWMGCv29tTU+HhazbQnRWwcrZrxUqa9CJTS2SSj0pyVCZBocB1BG0x+87W57MlNMFql9wsB1E6gHwWRdljoPEFw/wa+OTRUvFl5COKyJ0onZINu1wU61yAPY8AXRVAcM1TO5uRvPbp3g5Wq7ip9VtfD8dz2fz6QSis7v76e1kfvv5Qh6vxuNpHF/IZ6P59RtultOb+7vFaPFXo7BaTOExwJHqKpfQV+/mU0fQ1oZm5ilGZ0IlL9huvM9Ruwtw/8xQMuxzoyyroyulnVGE2uyVeMXojMJC25wbsMNpRr6Y/CCR44rFF+pmNL9Ws8XdjeJq08U8cRp8Ds6IfXDTopS9sqlyXlTiXWq3FaF5lUX8DvUv4Y6G/0v2CbfW/wAJi0ZPfcuQ8Iz14IIFCY2yTsXTuME3IdSCZiRv+U49FTrkZrTgb2ILvHy+tsAQzvWjfdOstDEdhVVpfk6IXLOozvsA6vrcsO1cRVgSMjphpV96n9tH9GpkvbIOc135tFPgtwL0Rv+iG+ShDSUIlM7zo+1pPlaMFBy1rjrmLxaEU5XD5xITQaOQyNPP2BOJN9jTsk5wi9SnxDr5/VPzCJFZb/GSv6YMCSPj32+cP9rrC9d1BNoYG2rT+X3fpD5+EYjecvOY+yu5fVfvEKUIhSzu8G2GdCVZWGtJaKqOrwCAZD6s/i02BWjJYAhXu49X5rT5rUt9U4aVPNRxuhyU5MVDM8K5zac7NQOPUQKOpWcpdMNg2IP/QdKvIDjBK/gsV2UeRnp4m5SHu7agNew+wnFzc0Ax8yxBfjhsNOOK8roO4q8V0h6G68cIdpqs3oSC1491BBlqgwTD9QH+xn1o5iTBMmC203nVdMd5y9aPPXw/T5dQ1/8A8hU3Hg==
+sidebar_class_name: "get api-method"
+info_path: docs/api/v-1-domain-proto
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"ListDomains retrieves all domains for the authenticated user."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/domains"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+ListDomains retrieves all domains for the authenticated user.
+
+<ParamsDetails
+  parameters={undefined}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A successful response.","content":{"application/json":{"schema":{"type":"object","properties":{"data":{"type":"array","items":{"type":"object","properties":{"id":{"type":"string","description":"Unique identifier for the domain."},"domain":{"type":"string","description":"The domain name (e.g., \"example.com\")."},"status":{"description":"Current verification status.","type":"string","enum":["DOMAIN_STATUS_UNSPECIFIED","DOMAIN_STATUS_PENDING","DOMAIN_STATUS_SUCCESS","DOMAIN_STATUS_FAILED","DOMAIN_STATUS_TEMPORARY_FAILURE"],"default":"DOMAIN_STATUS_UNSPECIFIED"},"verifiedForSending":{"type":"boolean","description":"Whether the domain is verified and ready to send emails."},"mailFromDomain":{"type":"string","description":"Custom MAIL FROM subdomain (e.g., \"mail.example.com\").\nEmpty if not configured."},"mailFromStatus":{"description":"MAIL FROM configuration status.","type":"string","enum":["DOMAIN_STATUS_UNSPECIFIED","DOMAIN_STATUS_PENDING","DOMAIN_STATUS_SUCCESS","DOMAIN_STATUS_FAILED","DOMAIN_STATUS_TEMPORARY_FAILURE"],"default":"DOMAIN_STATUS_UNSPECIFIED"},"region":{"type":"string","description":"Region where the domain is registered in SES."},"createdAt":{"type":"string","format":"date-time","description":"Time when the domain was added."},"updatedAt":{"type":"string","format":"date-time","description":"Time when the domain was last updated."}},"description":"Domain represents a verified sending domain."},"description":"List of domains."}},"description":"ListDomainsResponse contains all domains for the user."}}}},"default":{"description":"An unexpected error response.","content":{"application/json":{"schema":{"type":"object","properties":{"code":{"type":"integer","format":"int32"},"message":{"type":"string"},"details":{"type":"array","items":{"type":"object","properties":{"@type":{"type":"string"}},"additionalProperties":{}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

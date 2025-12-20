@@ -4,6 +4,9 @@
 up:
 	docker compose -f tools/docker-compose.yaml up -d
 
+dev: 
+	docker compose -f tools/docker-compose.yaml up --build
+
 down:
 	docker compose -f tools/docker-compose.yaml down
 

@@ -57,3 +57,5 @@ fern/.preview/
 # Misc
 *.pem
 *.key
+
+tmp
