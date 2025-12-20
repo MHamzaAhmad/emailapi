@@ -15,7 +15,7 @@ import { useState } from 'react'
 import { useDomains, useAddDomain, useDeleteDomain, useVerifyDomain } from '@/hooks'
 import type { Domain, DomainStatus } from '@/types'
 
-export const Route = createFileRoute('/domains')({
+export const Route = createFileRoute('/domains/')({
     component: DomainsPage,
 })
 
@@ -166,10 +166,10 @@ function DomainsPage() {
                                                 {getStatusIcon(domain.status)}
                                                 <span
                                                     className={`text-sm ${domain.status === 'success'
-                                                            ? 'text-green-400'
-                                                            : domain.status === 'pending'
-                                                                ? 'text-yellow-400'
-                                                                : 'text-red-400'
+                                                        ? 'text-green-400'
+                                                        : domain.status === 'pending'
+                                                            ? 'text-yellow-400'
+                                                            : 'text-red-400'
                                                         }`}
                                                 >
                                                     {getStatusLabel(domain.status)}
@@ -199,7 +199,8 @@ function DomainsPage() {
 
                                     <div className="flex items-center gap-2">
                                         <Link
-                                            to={`/domains/${domain.id}`}
+                                            to="/domains/$domainId"
+                                            params={{ domainId: domain.id }}
                                             className="p-2 hover:bg-slate-700 rounded text-cyan-400 transition-colors"
                                             title="View DNS Records"
                                         >

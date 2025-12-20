@@ -10,19 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UserRouteImport } from './routes/user'
-import { Route as DomainsRouteImport } from './routes/domains'
 import { Route as ApiKeysRouteImport } from './routes/api-keys'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DomainsDomainIdRouteImport } from './routes/domains.$domainId'
+import { Route as DomainsIndexRouteImport } from './routes/domains/index'
+import { Route as DomainsDomainIdRouteImport } from './routes/domains/$domainId'
 
 const UserRoute = UserRouteImport.update({
   id: '/user',
   path: '/user',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DomainsRoute = DomainsRouteImport.update({
-  id: '/domains',
-  path: '/domains',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiKeysRoute = ApiKeysRouteImport.update({
@@ -35,53 +30,59 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DomainsIndexRoute = DomainsIndexRouteImport.update({
+  id: '/domains/',
+  path: '/domains/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DomainsDomainIdRoute = DomainsDomainIdRouteImport.update({
-  id: '/$domainId',
-  path: '/$domainId',
-  getParentRoute: () => DomainsRoute,
+  id: '/domains/$domainId',
+  path: '/domains/$domainId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
-  '/domains': typeof DomainsRouteWithChildren
   '/user': typeof UserRoute
   '/domains/$domainId': typeof DomainsDomainIdRoute
+  '/domains': typeof DomainsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
-  '/domains': typeof DomainsRouteWithChildren
   '/user': typeof UserRoute
   '/domains/$domainId': typeof DomainsDomainIdRoute
+  '/domains': typeof DomainsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
-  '/domains': typeof DomainsRouteWithChildren
   '/user': typeof UserRoute
   '/domains/$domainId': typeof DomainsDomainIdRoute
+  '/domains/': typeof DomainsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api-keys' | '/domains' | '/user' | '/domains/$domainId'
+  fullPaths: '/' | '/api-keys' | '/user' | '/domains/$domainId' | '/domains'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api-keys' | '/domains' | '/user' | '/domains/$domainId'
+  to: '/' | '/api-keys' | '/user' | '/domains/$domainId' | '/domains'
   id:
     | '__root__'
     | '/'
     | '/api-keys'
-    | '/domains'
     | '/user'
     | '/domains/$domainId'
+    | '/domains/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiKeysRoute: typeof ApiKeysRoute
-  DomainsRoute: typeof DomainsRouteWithChildren
   UserRoute: typeof UserRoute
+  DomainsDomainIdRoute: typeof DomainsDomainIdRoute
+  DomainsIndexRoute: typeof DomainsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -91,13 +92,6 @@ declare module '@tanstack/react-router' {
       path: '/user'
       fullPath: '/user'
       preLoaderRoute: typeof UserRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/domains': {
-      id: '/domains'
-      path: '/domains'
-      fullPath: '/domains'
-      preLoaderRoute: typeof DomainsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api-keys': {
@@ -114,32 +108,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/domains/': {
+      id: '/domains/'
+      path: '/domains'
+      fullPath: '/domains'
+      preLoaderRoute: typeof DomainsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/domains/$domainId': {
       id: '/domains/$domainId'
-      path: '/$domainId'
+      path: '/domains/$domainId'
       fullPath: '/domains/$domainId'
       preLoaderRoute: typeof DomainsDomainIdRouteImport
-      parentRoute: typeof DomainsRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface DomainsRouteChildren {
-  DomainsDomainIdRoute: typeof DomainsDomainIdRoute
-}
-
-const DomainsRouteChildren: DomainsRouteChildren = {
-  DomainsDomainIdRoute: DomainsDomainIdRoute,
-}
-
-const DomainsRouteWithChildren =
-  DomainsRoute._addFileChildren(DomainsRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiKeysRoute: ApiKeysRoute,
-  DomainsRoute: DomainsRouteWithChildren,
   UserRoute: UserRoute,
+  DomainsDomainIdRoute: DomainsDomainIdRoute,
+  DomainsIndexRoute: DomainsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
