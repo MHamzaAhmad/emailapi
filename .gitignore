@@ -20,7 +20,7 @@ go.work
 
 # Generated code
 db/gen/
-packages/sdk-ts/src/generated/
+
 packages/sdk-go/generated/
 
 # IDE
