@@ -16,6 +16,9 @@ type Store interface {
 	// Webhooks returns the webhook repository.
 	Webhooks() repository.WebhookRepository
 
+	// Domains returns the domain repository.
+	Domains() repository.DomainRepository
+
 	// Close closes any underlying connections.
 	Close()
 }

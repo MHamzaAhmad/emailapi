@@ -14,6 +14,7 @@ type MockStore struct {
 	emails   *MockEmailRepository
 	users    *MockUserRepository
 	webhooks *MockWebhookRepository
+	domains  *MockDomainRepository
 }
 
 func NewMockStore() *MockStore {
@@ -21,13 +22,15 @@ func NewMockStore() *MockStore {
 		emails:   &MockEmailRepository{},
 		users:    &MockUserRepository{},
 		webhooks: &MockWebhookRepository{},
+		domains:  &MockDomainRepository{},
 	}
 }
 
-func (m *MockStore) Emails() repository.EmailRepository   { return m.emails }
-func (m *MockStore) Users() repository.UserRepository     { return m.users }
+func (m *MockStore) Emails() repository.EmailRepository     { return m.emails }
+func (m *MockStore) Users() repository.UserRepository       { return m.users }
 func (m *MockStore) Webhooks() repository.WebhookRepository { return m.webhooks }
-func (m *MockStore) Close()                               {}
+func (m *MockStore) Domains() repository.DomainRepository   { return m.domains }
+func (m *MockStore) Close()                                 {}
 
 // MockEmailRepository implements repository.EmailRepository for testing.
 type MockEmailRepository struct {
@@ -125,14 +128,80 @@ func (m *MockUserRepository) UpdateAPIKey(ctx context.Context, id, hashedKey, pr
 // MockWebhookRepository implements repository.WebhookRepository for testing.
 type MockWebhookRepository struct{}
 
-func (m *MockWebhookRepository) Create(ctx context.Context, webhook *domain.Webhook) error     { return nil }
-func (m *MockWebhookRepository) GetByID(ctx context.Context, id string) (*domain.Webhook, error) { return nil, nil }
-func (m *MockWebhookRepository) GetByUserID(ctx context.Context, userID string) ([]*domain.Webhook, error) { return nil, nil }
-func (m *MockWebhookRepository) GetActiveByEvent(ctx context.Context, eventType domain.WebhookEventType) ([]*domain.Webhook, error) { return nil, nil }
-func (m *MockWebhookRepository) Update(ctx context.Context, webhook *domain.Webhook) error     { return nil }
-func (m *MockWebhookRepository) Delete(ctx context.Context, id string) error                   { return nil }
-func (m *MockWebhookRepository) CreateDelivery(ctx context.Context, delivery *domain.WebhookDelivery) error { return nil }
-func (m *MockWebhookRepository) GetDeliveriesByWebhookID(ctx context.Context, webhookID string, limit int) ([]*domain.WebhookDelivery, error) { return nil, nil }
+func (m *MockWebhookRepository) Create(ctx context.Context, webhook *domain.Webhook) error {
+	return nil
+}
+func (m *MockWebhookRepository) GetByID(ctx context.Context, id string) (*domain.Webhook, error) {
+	return nil, nil
+}
+func (m *MockWebhookRepository) GetByUserID(ctx context.Context, userID string) ([]*domain.Webhook, error) {
+	return nil, nil
+}
+func (m *MockWebhookRepository) GetActiveByEvent(ctx context.Context, eventType domain.WebhookEventType) ([]*domain.Webhook, error) {
+	return nil, nil
+}
+func (m *MockWebhookRepository) Update(ctx context.Context, webhook *domain.Webhook) error {
+	return nil
+}
+func (m *MockWebhookRepository) Delete(ctx context.Context, id string) error { return nil }
+func (m *MockWebhookRepository) CreateDelivery(ctx context.Context, delivery *domain.WebhookDelivery) error {
+	return nil
+}
+func (m *MockWebhookRepository) GetDeliveriesByWebhookID(ctx context.Context, webhookID string, limit int) ([]*domain.WebhookDelivery, error) {
+	return nil, nil
+}
+
+// MockDomainRepository implements repository.DomainRepository for testing.
+type MockDomainRepository struct {
+	domains []*domain.SendingDomain
+}
+
+func (m *MockDomainRepository) Create(ctx context.Context, d *domain.SendingDomain) error {
+	m.domains = append(m.domains, d)
+	return nil
+}
+
+func (m *MockDomainRepository) GetByID(ctx context.Context, id string) (*domain.SendingDomain, error) {
+	for _, d := range m.domains {
+		if d.ID == id {
+			return d, nil
+		}
+	}
+	return nil, nil
+}
+
+func (m *MockDomainRepository) GetByDomainName(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error) {
+	for _, d := range m.domains {
+		if d.UserID == userID && d.Domain == domainName {
+			return d, nil
+		}
+	}
+	return nil, nil
+}
+
+func (m *MockDomainRepository) GetByUserID(ctx context.Context, userID string) ([]*domain.SendingDomain, error) {
+	var result []*domain.SendingDomain
+	for _, d := range m.domains {
+		if d.UserID == userID {
+			result = append(result, d)
+		}
+	}
+	return result, nil
+}
+
+func (m *MockDomainRepository) Update(ctx context.Context, d *domain.SendingDomain) error {
+	for i, existing := range m.domains {
+		if existing.ID == d.ID {
+			m.domains[i] = d
+			return nil
+		}
+	}
+	return nil
+}
+
+func (m *MockDomainRepository) Delete(ctx context.Context, id string) error {
+	return nil
+}
 
 func TestEmailService_Send(t *testing.T) {
 	store := NewMockStore()

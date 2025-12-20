@@ -110,3 +110,8 @@ func toMetadata(m map[string]string) domain.Metadata {
 	}
 	return result
 }
+
+// toPgTimestampFromTime converts time.Time to pgtype.Timestamptz.
+func toPgTimestampFromTime(t time.Time) pgtype.Timestamptz {
+	return pgtype.Timestamptz{Time: t, Valid: true}
+}

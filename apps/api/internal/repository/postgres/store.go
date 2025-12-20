@@ -17,6 +17,7 @@ type Store struct {
 	email   *EmailRepository
 	user    *UserRepository
 	webhook *WebhookRepository
+	domain  *DomainRepository
 }
 
 // NewStore creates a new PostgreSQL store.
@@ -35,6 +36,7 @@ func NewStore(databaseURL string) (*Store, error) {
 	store.email = &EmailRepository{pool: pool}
 	store.user = &UserRepository{pool: pool}
 	store.webhook = &WebhookRepository{pool: pool}
+	store.domain = &DomainRepository{pool: pool}
 
 	return store, nil
 }
@@ -57,4 +59,9 @@ func (s *Store) Users() repository.UserRepository {
 // Webhooks returns the webhook repository.
 func (s *Store) Webhooks() repository.WebhookRepository {
 	return s.webhook
+}
+
+// Domains returns the domain repository.
+func (s *Store) Domains() repository.DomainRepository {
+	return s.domain
 }

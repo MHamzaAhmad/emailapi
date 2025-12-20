@@ -87,3 +87,24 @@ type WebhookRepository interface {
 	// GetDeliveriesByWebhookID retrieves delivery history for a webhook.
 	GetDeliveriesByWebhookID(ctx context.Context, webhookID string, limit int) ([]*domain.WebhookDelivery, error)
 }
+
+// DomainRepository defines the interface for sending domain data access.
+type DomainRepository interface {
+	// Create stores a new sending domain.
+	Create(ctx context.Context, d *domain.SendingDomain) error
+
+	// GetByID retrieves a domain by its ID.
+	GetByID(ctx context.Context, id string) (*domain.SendingDomain, error)
+
+	// GetByDomainName retrieves a domain by its name for a specific user.
+	GetByDomainName(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error)
+
+	// GetByUserID retrieves all domains for a user.
+	GetByUserID(ctx context.Context, userID string) ([]*domain.SendingDomain, error)
+
+	// Update updates an existing domain.
+	Update(ctx context.Context, d *domain.SendingDomain) error
+
+	// Delete removes a domain.
+	Delete(ctx context.Context, id string) error
+}

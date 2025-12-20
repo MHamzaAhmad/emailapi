@@ -17,6 +17,7 @@ import (
 
 	emailapiv1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/config"
+	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/repository/postgres"
 	"github.com/emailapi/api/internal/service"
 	grpctransport "github.com/emailapi/api/internal/transport/grpc"
@@ -36,8 +37,14 @@ func main() {
 	}
 	defer store.Close()
 
+	// Initialize SES client
+	sesClient, err := ses.NewClient(context.Background(), "us-east-1") // TODO: Make region configurable
+	if err != nil {
+		log.Fatalf("failed to create SES client: %v", err)
+	}
+
 	// Initialize service layer
-	svc := service.New(store)
+	svc := service.NewWithSES(store, sesClient, "us-east-1")
 
 	// Start gRPC server
 	go func() {
@@ -74,6 +81,7 @@ func runGRPCServer(cfg *config.Config, svc *service.Service) error {
 	emailapiv1.RegisterEmailServiceServer(grpcServer, grpctransport.NewEmailServer(svc.Email))
 	emailapiv1.RegisterUserServiceServer(grpcServer, grpctransport.NewUserServer(svc.User))
 	emailapiv1.RegisterWebhookServiceServer(grpcServer, grpctransport.NewWebhookServer(svc.Webhook))
+	emailapiv1.RegisterDomainServiceServer(grpcServer, grpctransport.NewDomainServer(svc.Domain))
 
 	// Enable reflection for grpcurl
 	reflection.Register(grpcServer)
@@ -101,6 +109,9 @@ func runHTTPServer(cfg *config.Config) error {
 		return err
 	}
 	if err := emailapiv1.RegisterWebhookServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
+		return err
+	}
+	if err := emailapiv1.RegisterDomainServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
 		return err
 	}
 
