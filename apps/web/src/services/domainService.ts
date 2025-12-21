@@ -1,13 +1,12 @@
 import api from '@/lib/api';
 import type {
     Domain,
-    DomainRecords,
+    GetDomainResponse,
     AddDomainRequest,
     AddDomainResponse,
     VerifyDomainResponse,
     ListDomainsResponse,
     DeleteDomainResponse,
-    SetMailFromRequest,
 } from '@/types';
 
 /**
@@ -23,10 +22,11 @@ export const domainService = {
     },
 
     /**
-     * Get a domain by ID
+     * Get a single domain
      */
     get: async (id: string): Promise<Domain> => {
-        return api.get<Domain>(`/v1/domains/${id}`);
+        const response = await api.get<GetDomainResponse>(`/v1/domains/${id}`);
+        return response.domain;
     },
 
     /**
@@ -48,20 +48,6 @@ export const domainService = {
      */
     verify: async (id: string): Promise<VerifyDomainResponse> => {
         return api.post<VerifyDomainResponse>(`/v1/domains/${id}/verify`);
-    },
-
-    /**
-     * Get DNS records for a domain
-     */
-    getRecords: async (id: string): Promise<DomainRecords> => {
-        return api.get<DomainRecords>(`/v1/domains/${id}/records`);
-    },
-
-    /**
-     * Set custom MAIL FROM domain
-     */
-    setMailFrom: async (id: string, data: SetMailFromRequest): Promise<Domain> => {
-        return api.post<Domain>(`/v1/domains/${id}/mail-from`, data);
     },
 };
 

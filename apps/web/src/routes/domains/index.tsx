@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useParams } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import {
     Globe,
     Plus,
@@ -7,13 +7,12 @@ import {
     CheckCircle,
     AlertCircle,
     Clock,
-    Copy,
-    Check,
     ChevronRight,
+    Loader2,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useDomains, useAddDomain, useDeleteDomain, useVerifyDomain } from '@/hooks'
-import type { Domain, DomainStatus } from '@/types'
+import type { DomainStatus } from '@/types'
 
 export const Route = createFileRoute('/domains/')({
     component: DomainsPage,
@@ -21,13 +20,15 @@ export const Route = createFileRoute('/domains/')({
 
 function getStatusIcon(status: DomainStatus) {
     switch (status) {
-        case 'success':
+        case 'ready':
             return <CheckCircle className="w-5 h-5 text-green-400" />
+        case 'verifying':
+            return <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
         case 'pending':
             return <Clock className="w-5 h-5 text-yellow-400" />
         case 'failed':
             return <AlertCircle className="w-5 h-5 text-red-400" />
-        case 'temporary_failure':
+        case 'degraded':
             return <AlertCircle className="w-5 h-5 text-orange-400" />
         default:
             return <Clock className="w-5 h-5 text-gray-400" />
@@ -36,14 +37,16 @@ function getStatusIcon(status: DomainStatus) {
 
 function getStatusLabel(status: DomainStatus) {
     switch (status) {
-        case 'success':
-            return 'Verified'
+        case 'ready':
+            return 'Ready'
+        case 'verifying':
+            return 'Verifying'
         case 'pending':
             return 'Pending'
         case 'failed':
             return 'Failed'
-        case 'temporary_failure':
-            return 'Temporary Failure'
+        case 'degraded':
+            return 'Degraded'
         default:
             return status
     }
@@ -165,11 +168,13 @@ function DomainsPage() {
                                             <div className="flex items-center gap-2">
                                                 {getStatusIcon(domain.status)}
                                                 <span
-                                                    className={`text-sm ${domain.status === 'success'
+                                                    className={`text-sm ${domain.status === 'ready'
                                                         ? 'text-green-400'
-                                                        : domain.status === 'pending'
-                                                            ? 'text-yellow-400'
-                                                            : 'text-red-400'
+                                                        : domain.status === 'verifying'
+                                                            ? 'text-blue-400'
+                                                            : domain.status === 'failed'
+                                                                ? 'text-red-400'
+                                                                : 'text-yellow-400'
                                                         }`}
                                                 >
                                                     {getStatusLabel(domain.status)}
@@ -179,20 +184,16 @@ function DomainsPage() {
 
                                         <div className="flex items-center gap-4 text-sm text-gray-400">
                                             <span>Region: {domain.region}</span>
-                                            {domain.verifiedForSending && (
-                                                <span className="flex items-center gap-1 text-green-400">
-                                                    <CheckCircle className="w-4 h-4" />
-                                                    Ready to send
+                                            {domain.summary && (
+                                                <span className={`${domain.summary.canSend ? 'text-green-400' : 'text-gray-500'}`}>
+                                                    {domain.summary.message}
                                                 </span>
-                                            )}
-                                            {domain.mailFromDomain && (
-                                                <span>MAIL FROM: {domain.mailFromDomain}</span>
                                             )}
                                         </div>
 
-                                        {domain.lastVerifiedAt && (
+                                        {domain.lastCheckedAt && (
                                             <p className="text-gray-500 text-sm mt-2">
-                                                Last verified: {new Date(domain.lastVerifiedAt).toLocaleString()}
+                                                Mask checked: {new Date(domain.lastCheckedAt).toLocaleString()}
                                             </p>
                                         )}
                                     </div>

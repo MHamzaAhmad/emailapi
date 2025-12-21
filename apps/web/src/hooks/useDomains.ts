@@ -4,7 +4,6 @@ import { queryKeys } from '@/lib/queryClient';
 import type {
     Domain,
     AddDomainRequest,
-    SetMailFromRequest,
     ListDomainsResponse,
 } from '@/types';
 
@@ -26,17 +25,6 @@ export const useDomain = (id: string) => {
     return useQuery({
         queryKey: queryKeys.domains.detail(id),
         queryFn: () => domainService.get(id),
-        enabled: !!id,
-    });
-};
-
-/**
- * Hook to get DNS records for a domain
- */
-export const useDomainRecords = (id: string) => {
-    return useQuery({
-        queryKey: queryKeys.domains.records(id),
-        queryFn: () => domainService.getRecords(id),
         enabled: !!id,
     });
 };
@@ -72,7 +60,6 @@ export const useDeleteDomain = () => {
         onSuccess: (_, id) => {
             // Remove from cache
             queryClient.removeQueries({ queryKey: queryKeys.domains.detail(id) });
-            queryClient.removeQueries({ queryKey: queryKeys.domains.records(id) });
             // Invalidate the list
             queryClient.invalidateQueries({ queryKey: queryKeys.domains.list() });
         },
@@ -94,33 +81,6 @@ export const useVerifyDomain = () => {
                 response.domain
             );
             // Invalidate the list to reflect status changes
-            queryClient.invalidateQueries({ queryKey: queryKeys.domains.list() });
-            // Also invalidate records as they might have updated statuses
-            queryClient.invalidateQueries({ queryKey: queryKeys.domains.records(id) });
-        },
-    });
-};
-
-/**
- * Hook to set custom MAIL FROM domain
- */
-export const useSetMailFrom = () => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: SetMailFromRequest }) =>
-            domainService.setMailFrom(id, data),
-        onSuccess: (updatedDomain, variables) => {
-            // Update the domain cache
-            queryClient.setQueryData<Domain>(
-                queryKeys.domains.detail(variables.id),
-                updatedDomain
-            );
-            // Invalidate records as new MAIL FROM records will be needed
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.domains.records(variables.id),
-            });
-            // Invalidate the list
             queryClient.invalidateQueries({ queryKey: queryKeys.domains.list() });
         },
     });
