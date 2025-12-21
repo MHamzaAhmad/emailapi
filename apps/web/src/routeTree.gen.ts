@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UserRouteImport } from './routes/user'
+import { Route as TestEmailRouteImport } from './routes/test-email'
 import { Route as ApiKeysRouteImport } from './routes/api-keys'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DomainsIndexRouteImport } from './routes/domains/index'
@@ -18,6 +19,11 @@ import { Route as DomainsDomainIdRouteImport } from './routes/domains/$domainId'
 const UserRoute = UserRouteImport.update({
   id: '/user',
   path: '/user',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TestEmailRoute = TestEmailRouteImport.update({
+  id: '/test-email',
+  path: '/test-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiKeysRoute = ApiKeysRouteImport.update({
@@ -44,6 +50,7 @@ const DomainsDomainIdRoute = DomainsDomainIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
+  '/test-email': typeof TestEmailRoute
   '/user': typeof UserRoute
   '/domains/$domainId': typeof DomainsDomainIdRoute
   '/domains': typeof DomainsIndexRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
+  '/test-email': typeof TestEmailRoute
   '/user': typeof UserRoute
   '/domains/$domainId': typeof DomainsDomainIdRoute
   '/domains': typeof DomainsIndexRoute
@@ -59,19 +67,33 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
+  '/test-email': typeof TestEmailRoute
   '/user': typeof UserRoute
   '/domains/$domainId': typeof DomainsDomainIdRoute
   '/domains/': typeof DomainsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api-keys' | '/user' | '/domains/$domainId' | '/domains'
+  fullPaths:
+    | '/'
+    | '/api-keys'
+    | '/test-email'
+    | '/user'
+    | '/domains/$domainId'
+    | '/domains'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api-keys' | '/user' | '/domains/$domainId' | '/domains'
+  to:
+    | '/'
+    | '/api-keys'
+    | '/test-email'
+    | '/user'
+    | '/domains/$domainId'
+    | '/domains'
   id:
     | '__root__'
     | '/'
     | '/api-keys'
+    | '/test-email'
     | '/user'
     | '/domains/$domainId'
     | '/domains/'
@@ -80,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiKeysRoute: typeof ApiKeysRoute
+  TestEmailRoute: typeof TestEmailRoute
   UserRoute: typeof UserRoute
   DomainsDomainIdRoute: typeof DomainsDomainIdRoute
   DomainsIndexRoute: typeof DomainsIndexRoute
@@ -92,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/user'
       fullPath: '/user'
       preLoaderRoute: typeof UserRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/test-email': {
+      id: '/test-email'
+      path: '/test-email'
+      fullPath: '/test-email'
+      preLoaderRoute: typeof TestEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api-keys': {
@@ -128,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiKeysRoute: ApiKeysRoute,
+  TestEmailRoute: TestEmailRoute,
   UserRoute: UserRoute,
   DomainsDomainIdRoute: DomainsDomainIdRoute,
   DomainsIndexRoute: DomainsIndexRoute,
