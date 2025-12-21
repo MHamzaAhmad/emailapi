@@ -15,6 +15,7 @@ import (
 	"github.com/emailapi/api/internal/domain"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	pgrepo "github.com/emailapi/api/internal/repository/postgres"
+	"github.com/emailapi/api/internal/validation"
 	"github.com/emailapi/api/internal/worker"
 )
 
@@ -24,6 +25,7 @@ type EmailService struct {
 	riverClient *river.Client[pgx.Tx]
 	pgRepo      *pgrepo.EmailRepository
 	chRepo      *chrepo.EmailRepository
+	validator   *validation.EmailValidator
 }
 
 // NewEmailService creates a new EmailService.
@@ -31,26 +33,36 @@ func NewEmailService(
 	riverClient *river.Client[pgx.Tx],
 	pgRepo *pgrepo.EmailRepository,
 	chRepo *chrepo.EmailRepository,
+	validator *validation.EmailValidator,
 ) *EmailService {
 	return &EmailService{
 		riverClient: riverClient,
 		pgRepo:      pgRepo,
 		chRepo:      chRepo,
+		validator:   validator,
 	}
 }
 
 // SendEmail handles sending an email request.
-// 1. Saves email to PostgreSQL with pending status
-// 2. Enqueues attachment processing job (if attachments) or send job (if no attachments)
-// 3. Returns immediately with email ID
+// 1. Validates all email addresses (FROM domain ownership, TO/CC/BCC validity)
+// 2. Saves email to PostgreSQL with pending status
+// 3. Enqueues attachment processing job (if attachments) or send job (if no attachments)
+// 4. Returns immediately with email ID
 func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailRequest) (*emailapi.SendEmailResponse, error) {
-	emailID := uuid.New().String()
-
 	// Get user ID from context (set by auth interceptor)
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok || userID == "" {
 		return nil, fmt.Errorf("user_id not found in context")
 	}
+
+	// Validate all email addresses before processing
+	if s.validator != nil {
+		if err := s.validator.ValidateSendEmail(ctx, userID, req.From, req.To, req.Cc, req.Bcc); err != nil {
+			return nil, fmt.Errorf("email validation failed: %w", err)
+		}
+	}
+
+	emailID := uuid.New().String()
 
 	// Convert metadata
 	metadata := make(domain.Metadata)

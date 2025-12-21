@@ -132,6 +132,16 @@ func (s *DomainService) List(ctx context.Context, userID string) ([]*domain.Send
 	return s.store.Domains().GetByUserID(ctx, userID)
 }
 
+// GetVerifiedDomainForSending retrieves a domain by name for sender validation.
+// Returns the domain if it exists and belongs to the user, nil otherwise.
+func (s *DomainService) GetVerifiedDomainForSending(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error) {
+	d, err := s.store.Domains().GetByDomainName(ctx, userID, domainName)
+	if err != nil {
+		return nil, fmt.Errorf("domain not found: %w", err)
+	}
+	return d, nil
+}
+
 // Delete removes a domain from the account and SES.
 func (s *DomainService) Delete(ctx context.Context, userID, domainID string) error {
 	// Get domain with authorization check

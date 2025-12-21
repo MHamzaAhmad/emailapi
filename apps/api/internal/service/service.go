@@ -5,6 +5,7 @@ import (
 	"github.com/emailapi/api/internal/external/ses"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	pgrepo "github.com/emailapi/api/internal/repository/postgres"
+	"github.com/emailapi/api/internal/validation"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
@@ -46,7 +47,11 @@ type ServiceDeps struct {
 func NewWithDeps(deps ServiceDeps) *Service {
 	svc := New(deps.Store)
 	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.Region)
-	svc.Email = NewEmailService(deps.RiverClient, deps.PGEmailRepo, deps.CHEmailRepo)
+
+	// Create email validator with domain checker
+	emailValidator := validation.NewEmailValidator(svc.Domain)
+
+	svc.Email = NewEmailService(deps.RiverClient, deps.PGEmailRepo, deps.CHEmailRepo, emailValidator)
 	svc.Internal = NewInternalService(deps.PGEmailRepo, deps.RiverClient)
 	return svc
 }
