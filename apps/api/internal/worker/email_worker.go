@@ -3,15 +3,13 @@ package worker
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"fmt"
-	"mime/multipart"
-	"net/textproto"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
+	"github.com/jordan-wright/email"
 	"github.com/riverqueue/river"
 
 	"github.com/emailapi/api/internal/domain"
@@ -129,69 +127,22 @@ type attachmentContent struct {
 	Data        []byte
 }
 
-// sendEmail sends the email via SES with attachments.
-func (w *EmailWorker) sendEmail(ctx context.Context, email *domain.Email, attachments []attachmentContent) (string, error) {
-	// Build MIME message if we have attachments
-	var rawMessage []byte
-	var err error
-
-	if len(attachments) > 0 {
-		rawMessage, err = buildMIMEMessage(email, attachments)
-		if err != nil {
-			return "", fmt.Errorf("failed to build MIME message: %w", err)
-		}
+// sendEmail sends the email via SES using raw MIME message.
+// Uses jordan-wright/email library to build proper MIME with attachments.
+func (w *EmailWorker) sendEmail(ctx context.Context, domainEmail *domain.Email, attachments []attachmentContent) (string, error) {
+	// Build MIME message using jordan-wright/email
+	rawMessage, err := buildMIMEMessage(domainEmail, attachments)
+	if err != nil {
+		return "", fmt.Errorf("failed to build MIME message: %w", err)
 	}
 
-	// Build recipient list
-	var toAddresses []string
-	toAddresses = append(toAddresses, email.To...)
-	if len(email.Cc) > 0 {
-		toAddresses = append(toAddresses, email.Cc...)
-	}
-	if len(email.Bcc) > 0 {
-		toAddresses = append(toAddresses, email.Bcc...)
-	}
-
-	var input *sesv2.SendEmailInput
-
-	if len(attachments) > 0 {
-		// Send raw MIME message for attachments
-		input = &sesv2.SendEmailInput{
-			Content: &types.EmailContent{
-				Raw: &types.RawMessage{
-					Data: rawMessage,
-				},
+	// Always send as raw email for consistency
+	input := &sesv2.SendEmailInput{
+		Content: &types.EmailContent{
+			Raw: &types.RawMessage{
+				Data: rawMessage,
 			},
-		}
-	} else {
-		// Simple email without attachments
-		input = &sesv2.SendEmailInput{
-			FromEmailAddress: aws.String(email.From),
-			Destination: &types.Destination{
-				ToAddresses:  email.To,
-				CcAddresses:  email.Cc,
-				BccAddresses: email.Bcc,
-			},
-			Content: &types.EmailContent{
-				Simple: &types.Message{
-					Subject: &types.Content{
-						Data: aws.String(email.Subject),
-					},
-					Body: &types.Body{},
-				},
-			},
-		}
-
-		if email.HTML != "" {
-			input.Content.Simple.Body.Html = &types.Content{
-				Data: aws.String(email.HTML),
-			}
-		}
-		if email.Body != "" {
-			input.Content.Simple.Body.Text = &types.Content{
-				Data: aws.String(email.Body),
-			}
-		}
+		},
 	}
 
 	resp, err := w.sesClient.SendEmail(ctx, input)
@@ -202,57 +153,33 @@ func (w *EmailWorker) sendEmail(ctx context.Context, email *domain.Email, attach
 	return aws.ToString(resp.MessageId), nil
 }
 
-// buildMIMEMessage constructs a MIME message with attachments.
-func buildMIMEMessage(email *domain.Email, attachments []attachmentContent) ([]byte, error) {
-	var buf bytes.Buffer
-	writer := multipart.NewWriter(&buf)
+// buildMIMEMessage constructs a MIME message using jordan-wright/email library.
+func buildMIMEMessage(domainEmail *domain.Email, attachments []attachmentContent) ([]byte, error) {
+	e := email.NewEmail()
 
-	// Write headers
-	fmt.Fprintf(&buf, "From: %s\r\n", email.From)
-	fmt.Fprintf(&buf, "To: %s\r\n", joinAddresses(email.To))
-	if len(email.Cc) > 0 {
-		fmt.Fprintf(&buf, "Cc: %s\r\n", joinAddresses(email.Cc))
+	// Set sender and recipients
+	e.From = domainEmail.From
+	e.To = domainEmail.To
+	e.Cc = domainEmail.Cc
+	e.Bcc = domainEmail.Bcc
+	e.Subject = domainEmail.Subject
+
+	// Set body content
+	if domainEmail.Body != "" {
+		e.Text = []byte(domainEmail.Body)
 	}
-	fmt.Fprintf(&buf, "Subject: %s\r\n", email.Subject)
-	fmt.Fprintf(&buf, "MIME-Version: 1.0\r\n")
-	fmt.Fprintf(&buf, "Content-Type: multipart/mixed; boundary=%s\r\n\r\n", writer.Boundary())
-
-	// Write text/html body
-	if email.HTML != "" {
-		h := make(textproto.MIMEHeader)
-		h.Set("Content-Type", "text/html; charset=UTF-8")
-		part, _ := writer.CreatePart(h)
-		part.Write([]byte(email.HTML))
-	} else if email.Body != "" {
-		h := make(textproto.MIMEHeader)
-		h.Set("Content-Type", "text/plain; charset=UTF-8")
-		part, _ := writer.CreatePart(h)
-		part.Write([]byte(email.Body))
+	if domainEmail.HTML != "" {
+		e.HTML = []byte(domainEmail.HTML)
 	}
 
-	// Write attachments
+	// Add attachments
 	for _, att := range attachments {
-		h := make(textproto.MIMEHeader)
-		h.Set("Content-Type", att.ContentType)
-		h.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", att.Filename))
-		h.Set("Content-Transfer-Encoding", "base64")
-		part, _ := writer.CreatePart(h)
-		// Write base64 encoded content
-		encoded := base64.StdEncoding.EncodeToString(att.Data)
-		part.Write([]byte(encoded))
+		_, err := e.Attach(bytes.NewReader(att.Data), att.Filename, att.ContentType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to attach file %s: %w", att.Filename, err)
+		}
 	}
 
-	writer.Close()
-	return buf.Bytes(), nil
-}
-
-func joinAddresses(addrs []string) string {
-	if len(addrs) == 0 {
-		return ""
-	}
-	result := addrs[0]
-	for i := 1; i < len(addrs); i++ {
-		result += ", " + addrs[i]
-	}
-	return result
+	// Build the raw MIME message
+	return e.Bytes()
 }
