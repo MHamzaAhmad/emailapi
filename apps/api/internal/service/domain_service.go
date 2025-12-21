@@ -223,9 +223,18 @@ func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*d
 		return nil, fmt.Errorf("failed to refresh from SES: %w", err)
 	}
 
+	// Build domain with records (without summary yet)
+	records := s.buildDomainRecords(d)
+	details := &domain.DomainWithDetails{
+		SendingDomain: d,
+		Records:       records,
+	}
+
 	// Perform live DNS validation
-	details := s.buildDomainWithDetails(d)
 	s.validateDNS(ctx, details)
+
+	// Build summary AFTER DNS validation so it has correct statuses
+	details.Summary = s.buildSummary(d, records)
 
 	// Update domain status based on DNS results
 	s.updateStatusFromRecords(d, details)
@@ -432,7 +441,14 @@ func (s *DomainService) buildSummary(d *domain.SendingDomain, records *domain.Do
 	}
 
 	canSend := d.VerifiedForSending
-	canReceive := false // TODO: Check MX records
+	// Check if inbound MX records are configured for receiving emails
+	canReceive := false
+	for _, mx := range records.MxRecords {
+		if mx.RecordType == domain.RecordTypeMXInbound && mx.Status == domain.RecordStatusFound {
+			canReceive = true
+			break
+		}
+	}
 
 	var message, nextAction string
 	if canSend && pending == 0 {
