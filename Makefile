@@ -46,6 +46,9 @@ migrate-ch-create:
 	@read -p "Migration name: " name; \
 	goose -dir db/clickhouse/migrations clickhouse "$(CLICKHOUSE_URL)" create $$name sql
 
+# River
+migrate-river:
+	river migrate-up --database-url "$(DATABASE_URL)"
 # Testing
 test:
 	cd apps/api && go test ./internal/service/... -v

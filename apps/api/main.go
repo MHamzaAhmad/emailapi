@@ -83,9 +83,11 @@ func main() {
 	// Initialize ClickHouse
 	// Use native interface for better performance (async insert, etc.)
 	chConn, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{cfg.ClickHouseURL},
+		Addr: []string{cfg.ClickHouseHost},
 		Auth: clickhouse.Auth{
-			Database: "default",
+			Database: cfg.ClickHouseDatabase,
+			Username: cfg.ClickHouseUsername,
+			Password: cfg.ClickHousePassword,
 		},
 		ClientInfo: clickhouse.ClientInfo{
 			Products: []struct {
