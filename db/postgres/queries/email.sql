@@ -65,3 +65,7 @@ WHERE email_id = $1;
 
 -- name: DeleteAttachmentsByEmailID :exec
 DELETE FROM email_attachments WHERE email_id = $1;
+
+-- name: CountEmailsByUserID :one
+SELECT COUNT(*) FROM emails WHERE user_id = $1;
+

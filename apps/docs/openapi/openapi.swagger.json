@@ -465,6 +465,19 @@
         },
         "parameters": [
           {
+            "name": "category",
+            "description": "Category to query: ACTIVE (in-progress) or ARCHIVED (completed).\nDefault: ACTIVE\n\n - EMAIL_CATEGORY_ACTIVE: Active emails in PostgreSQL (pending, processing, scanning, queued).\n - EMAIL_CATEGORY_ARCHIVED: Archived emails in ClickHouse (sent, delivered, bounced, failed).",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "EMAIL_CATEGORY_UNSPECIFIED",
+              "EMAIL_CATEGORY_ACTIVE",
+              "EMAIL_CATEGORY_ARCHIVED"
+            ],
+            "default": "EMAIL_CATEGORY_UNSPECIFIED"
+          },
+          {
             "name": "limit",
             "description": "Maximum number of emails to return (default: 20, max: 100).",
             "in": "query",
@@ -1482,6 +1495,16 @@
       },
       "description": "EmailAttachment represents an attachment's metadata."
     },
+    "v1EmailCategory": {
+      "type": "string",
+      "enum": [
+        "EMAIL_CATEGORY_UNSPECIFIED",
+        "EMAIL_CATEGORY_ACTIVE",
+        "EMAIL_CATEGORY_ARCHIVED"
+      ],
+      "default": "EMAIL_CATEGORY_UNSPECIFIED",
+      "description": "EmailCategory represents where emails are stored.\n\n - EMAIL_CATEGORY_ACTIVE: Active emails in PostgreSQL (pending, processing, scanning, queued).\n - EMAIL_CATEGORY_ARCHIVED: Archived emails in ClickHouse (sent, delivered, bounced, failed)."
+    },
     "v1EmailStatus": {
       "type": "string",
       "enum": [
@@ -1593,6 +1616,15 @@
           "type": "integer",
           "format": "int32",
           "description": "The offset applied to the request."
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Total count of emails in this category."
+        },
+        "category": {
+          "$ref": "#/definitions/v1EmailCategory",
+          "description": "The category that was queried."
         }
       },
       "description": "ListEmailsResponse returns a page of emails."

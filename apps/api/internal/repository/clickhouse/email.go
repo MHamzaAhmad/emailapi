@@ -178,6 +178,124 @@ func (r *EmailRepository) Ping(ctx context.Context) error {
 	return r.conn.Ping(ctx)
 }
 
+// GetArchivedEmail retrieves a single archived email by ID.
+func (r *EmailRepository) GetArchivedEmail(ctx context.Context, id string) (*domain.Email, error) {
+	query := `
+		SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
+		       subject, body, html, status, provider_id, attachment_count, metadata,
+		       error_message, scheduled_at, sent_at, created_at, archived_at
+		FROM email_archive
+		WHERE id = ?
+		LIMIT 1
+	`
+
+	row := r.conn.QueryRow(ctx, query, id)
+
+	var email domain.Email
+	var toAddrs, ccAddrs, bccAddrs []string
+	var metadataJSON string
+	var attachmentCount uint8
+	var scheduledAt, sentAt, archivedAt *time.Time
+
+	if err := row.Scan(
+		&email.ID,
+		&email.UserID,
+		&email.From,
+		&toAddrs,
+		&ccAddrs,
+		&bccAddrs,
+		&email.Subject,
+		&email.Body,
+		&email.HTML,
+		&email.Status,
+		&email.ProviderID,
+		&attachmentCount,
+		&metadataJSON,
+		&email.ErrorMessage,
+		&scheduledAt,
+		&sentAt,
+		&email.CreatedAt,
+		&archivedAt,
+	); err != nil {
+		return nil, fmt.Errorf("failed to get archived email: %w", err)
+	}
+
+	email.To = toAddrs
+	email.Cc = ccAddrs
+	email.Bcc = bccAddrs
+	email.ScheduledAt = scheduledAt
+	email.SentAt = sentAt
+
+	if metadataJSON != "" && metadataJSON != "{}" {
+		_ = json.Unmarshal([]byte(metadataJSON), &email.Metadata)
+	}
+
+	return &email, nil
+}
+
+// ListArchivedEmails retrieves archived emails for a user with pagination.
+func (r *EmailRepository) ListArchivedEmails(ctx context.Context, userID string, limit, offset int) ([]*domain.Email, error) {
+	query := `
+		SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
+		       subject, status, provider_id, error_message, sent_at, created_at
+		FROM email_archive
+		WHERE user_id = ?
+		ORDER BY created_at DESC
+		LIMIT ? OFFSET ?
+	`
+
+	rows, err := r.conn.Query(ctx, query, userID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query archived emails: %w", err)
+	}
+	defer rows.Close()
+
+	var emails []*domain.Email
+	for rows.Next() {
+		var email domain.Email
+		var toAddrs, ccAddrs, bccAddrs []string
+		var sentAt *time.Time
+
+		if err := rows.Scan(
+			&email.ID,
+			&email.UserID,
+			&email.From,
+			&toAddrs,
+			&ccAddrs,
+			&bccAddrs,
+			&email.Subject,
+			&email.Status,
+			&email.ProviderID,
+			&email.ErrorMessage,
+			&sentAt,
+			&email.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan archived email: %w", err)
+		}
+
+		email.To = toAddrs
+		email.Cc = ccAddrs
+		email.Bcc = bccAddrs
+		email.SentAt = sentAt
+		emails = append(emails, &email)
+	}
+
+	return emails, nil
+}
+
+// CountArchivedEmails counts the total archived emails for a user.
+func (r *EmailRepository) CountArchivedEmails(ctx context.Context, userID string) (int, error) {
+	query := `SELECT count() FROM email_archive WHERE user_id = ?`
+	row := r.conn.QueryRow(ctx, query, userID)
+
+	var count uint64
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("failed to count archived emails: %w", err)
+	}
+
+	return int(count), nil
+}
+
 // nullableStringSlice converts a slice to a format suitable for ClickHouse Array.
 func nullableStringSlice(s []string) []string {
 	if s == nil {

@@ -159,12 +159,24 @@ message EmailAttachment {
   string scan_status = 5;
 }
 
+// EmailCategory represents where emails are stored.
+enum EmailCategory {
+  EMAIL_CATEGORY_UNSPECIFIED = 0;
+  // Active emails in PostgreSQL (pending, processing, scanning, queued).
+  EMAIL_CATEGORY_ACTIVE = 1;
+  // Archived emails in ClickHouse (sent, delivered, bounced, failed).
+  EMAIL_CATEGORY_ARCHIVED = 2;
+}
+
 // ListEmailsRequest filters and pagination for listing emails.
 message ListEmailsRequest {
+  // Category to query: ACTIVE (in-progress) or ARCHIVED (completed).
+  // Default: ACTIVE
+  EmailCategory category = 1;
   // Maximum number of emails to return (default: 20, max: 100).
-  int32 limit = 1;
+  int32 limit = 2;
   // Number of emails to skip.
-  int32 offset = 2;
+  int32 offset = 3;
 }
 
 // ListEmailsResponse returns a page of emails.
@@ -175,4 +187,9 @@ message ListEmailsResponse {
   int32 limit = 2;
   // The offset applied to the request.
   int32 offset = 3;
+  // Total count of emails in this category.
+  int32 total_count = 4;
+  // The category that was queried.
+  EmailCategory category = 5;
 }
+

@@ -94,6 +94,58 @@ func (EmailStatus) EnumDescriptor() ([]byte, []int) {
 	return file_v1_email_proto_rawDescGZIP(), []int{0}
 }
 
+// EmailCategory represents where emails are stored.
+type EmailCategory int32
+
+const (
+	EmailCategory_EMAIL_CATEGORY_UNSPECIFIED EmailCategory = 0
+	// Active emails in PostgreSQL (pending, processing, scanning, queued).
+	EmailCategory_EMAIL_CATEGORY_ACTIVE EmailCategory = 1
+	// Archived emails in ClickHouse (sent, delivered, bounced, failed).
+	EmailCategory_EMAIL_CATEGORY_ARCHIVED EmailCategory = 2
+)
+
+// Enum value maps for EmailCategory.
+var (
+	EmailCategory_name = map[int32]string{
+		0: "EMAIL_CATEGORY_UNSPECIFIED",
+		1: "EMAIL_CATEGORY_ACTIVE",
+		2: "EMAIL_CATEGORY_ARCHIVED",
+	}
+	EmailCategory_value = map[string]int32{
+		"EMAIL_CATEGORY_UNSPECIFIED": 0,
+		"EMAIL_CATEGORY_ACTIVE":      1,
+		"EMAIL_CATEGORY_ARCHIVED":    2,
+	}
+)
+
+func (x EmailCategory) Enum() *EmailCategory {
+	p := new(EmailCategory)
+	*p = x
+	return p
+}
+
+func (x EmailCategory) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (EmailCategory) Descriptor() protoreflect.EnumDescriptor {
+	return file_v1_email_proto_enumTypes[1].Descriptor()
+}
+
+func (EmailCategory) Type() protoreflect.EnumType {
+	return &file_v1_email_proto_enumTypes[1]
+}
+
+func (x EmailCategory) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use EmailCategory.Descriptor instead.
+func (EmailCategory) EnumDescriptor() ([]byte, []int) {
+	return file_v1_email_proto_rawDescGZIP(), []int{1}
+}
+
 // SendEmailRequest is the payload for sending an email.
 type SendEmailRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -711,10 +763,13 @@ func (x *EmailAttachment) GetScanStatus() string {
 // ListEmailsRequest filters and pagination for listing emails.
 type ListEmailsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// Category to query: ACTIVE (in-progress) or ARCHIVED (completed).
+	// Default: ACTIVE
+	Category EmailCategory `protobuf:"varint,1,opt,name=category,proto3,enum=emailapi.v1.EmailCategory" json:"category,omitempty"`
 	// Maximum number of emails to return (default: 20, max: 100).
-	Limit int32 `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
 	// Number of emails to skip.
-	Offset        int32 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	Offset        int32 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -749,6 +804,13 @@ func (*ListEmailsRequest) Descriptor() ([]byte, []int) {
 	return file_v1_email_proto_rawDescGZIP(), []int{6}
 }
 
+func (x *ListEmailsRequest) GetCategory() EmailCategory {
+	if x != nil {
+		return x.Category
+	}
+	return EmailCategory_EMAIL_CATEGORY_UNSPECIFIED
+}
+
 func (x *ListEmailsRequest) GetLimit() int32 {
 	if x != nil {
 		return x.Limit
@@ -771,7 +833,11 @@ type ListEmailsResponse struct {
 	// The limit applied to the request.
 	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
 	// The offset applied to the request.
-	Offset        int32 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+	Offset int32 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+	// Total count of emails in this category.
+	TotalCount int32 `protobuf:"varint,4,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	// The category that was queried.
+	Category      EmailCategory `protobuf:"varint,5,opt,name=category,proto3,enum=emailapi.v1.EmailCategory" json:"category,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -825,6 +891,20 @@ func (x *ListEmailsResponse) GetOffset() int32 {
 		return x.Offset
 	}
 	return 0
+}
+
+func (x *ListEmailsResponse) GetTotalCount() int32 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
+}
+
+func (x *ListEmailsResponse) GetCategory() EmailCategory {
+	if x != nil {
+		return x.Category
+	}
+	return EmailCategory_EMAIL_CATEGORY_UNSPECIFIED
 }
 
 var File_v1_email_proto protoreflect.FileDescriptor
@@ -892,14 +972,18 @@ const file_v1_email_proto_rawDesc = "" +
 	"\n" +
 	"size_bytes\x18\x04 \x01(\x03R\tsizeBytes\x12\x1f\n" +
 	"\vscan_status\x18\x05 \x01(\tR\n" +
-	"scanStatus\"A\n" +
-	"\x11ListEmailsRequest\x12\x14\n" +
-	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x02 \x01(\x05R\x06offset\"j\n" +
+	"scanStatus\"y\n" +
+	"\x11ListEmailsRequest\x126\n" +
+	"\bcategory\x18\x01 \x01(\x0e2\x1a.emailapi.v1.EmailCategoryR\bcategory\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x05R\x06offset\"\xc3\x01\n" +
 	"\x12ListEmailsResponse\x12&\n" +
 	"\x04data\x18\x01 \x03(\v2\x12.emailapi.v1.EmailR\x04data\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x03 \x01(\x05R\x06offset*\xb2\x02\n" +
+	"\x06offset\x18\x03 \x01(\x05R\x06offset\x12\x1f\n" +
+	"\vtotal_count\x18\x04 \x01(\x05R\n" +
+	"totalCount\x126\n" +
+	"\bcategory\x18\x05 \x01(\x0e2\x1a.emailapi.v1.EmailCategoryR\bcategory*\xb2\x02\n" +
 	"\vEmailStatus\x12\x1c\n" +
 	"\x18EMAIL_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14EMAIL_STATUS_PENDING\x10\x01\x12'\n" +
@@ -910,7 +994,11 @@ const file_v1_email_proto_rawDesc = "" +
 	"\x11EMAIL_STATUS_SENT\x10\x06\x12\x1a\n" +
 	"\x16EMAIL_STATUS_DELIVERED\x10\a\x12\x17\n" +
 	"\x13EMAIL_STATUS_FAILED\x10\b\x12\x18\n" +
-	"\x14EMAIL_STATUS_BOUNCED\x10\t2\xa9\x02\n" +
+	"\x14EMAIL_STATUS_BOUNCED\x10\t*g\n" +
+	"\rEmailCategory\x12\x1e\n" +
+	"\x1aEMAIL_CATEGORY_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15EMAIL_CATEGORY_ACTIVE\x10\x01\x12\x1b\n" +
+	"\x17EMAIL_CATEGORY_ARCHIVED\x10\x022\xa9\x02\n" +
 	"\fEmailService\x12_\n" +
 	"\tSendEmail\x12\x1d.emailapi.v1.SendEmailRequest\x1a\x1e.emailapi.v1.SendEmailResponse\"\x13\x82\xd3\xe4\x93\x02\r:\x01*\"\b/v1/send\x12U\n" +
 	"\bGetEmail\x12\x1c.emailapi.v1.GetEmailRequest\x1a\x12.emailapi.v1.Email\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/v1/emails/{id}\x12a\n" +
@@ -932,46 +1020,49 @@ func file_v1_email_proto_rawDescGZIP() []byte {
 	return file_v1_email_proto_rawDescData
 }
 
-var file_v1_email_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_v1_email_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_v1_email_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_v1_email_proto_goTypes = []any{
 	(EmailStatus)(0),              // 0: emailapi.v1.EmailStatus
-	(*SendEmailRequest)(nil),      // 1: emailapi.v1.SendEmailRequest
-	(*Attachment)(nil),            // 2: emailapi.v1.Attachment
-	(*SendEmailResponse)(nil),     // 3: emailapi.v1.SendEmailResponse
-	(*GetEmailRequest)(nil),       // 4: emailapi.v1.GetEmailRequest
-	(*Email)(nil),                 // 5: emailapi.v1.Email
-	(*EmailAttachment)(nil),       // 6: emailapi.v1.EmailAttachment
-	(*ListEmailsRequest)(nil),     // 7: emailapi.v1.ListEmailsRequest
-	(*ListEmailsResponse)(nil),    // 8: emailapi.v1.ListEmailsResponse
-	nil,                           // 9: emailapi.v1.SendEmailRequest.MetadataEntry
-	nil,                           // 10: emailapi.v1.Email.MetadataEntry
-	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
+	(EmailCategory)(0),            // 1: emailapi.v1.EmailCategory
+	(*SendEmailRequest)(nil),      // 2: emailapi.v1.SendEmailRequest
+	(*Attachment)(nil),            // 3: emailapi.v1.Attachment
+	(*SendEmailResponse)(nil),     // 4: emailapi.v1.SendEmailResponse
+	(*GetEmailRequest)(nil),       // 5: emailapi.v1.GetEmailRequest
+	(*Email)(nil),                 // 6: emailapi.v1.Email
+	(*EmailAttachment)(nil),       // 7: emailapi.v1.EmailAttachment
+	(*ListEmailsRequest)(nil),     // 8: emailapi.v1.ListEmailsRequest
+	(*ListEmailsResponse)(nil),    // 9: emailapi.v1.ListEmailsResponse
+	nil,                           // 10: emailapi.v1.SendEmailRequest.MetadataEntry
+	nil,                           // 11: emailapi.v1.Email.MetadataEntry
+	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
 }
 var file_v1_email_proto_depIdxs = []int32{
-	9,  // 0: emailapi.v1.SendEmailRequest.metadata:type_name -> emailapi.v1.SendEmailRequest.MetadataEntry
-	11, // 1: emailapi.v1.SendEmailRequest.scheduled_at:type_name -> google.protobuf.Timestamp
-	2,  // 2: emailapi.v1.SendEmailRequest.attachments:type_name -> emailapi.v1.Attachment
+	10, // 0: emailapi.v1.SendEmailRequest.metadata:type_name -> emailapi.v1.SendEmailRequest.MetadataEntry
+	12, // 1: emailapi.v1.SendEmailRequest.scheduled_at:type_name -> google.protobuf.Timestamp
+	3,  // 2: emailapi.v1.SendEmailRequest.attachments:type_name -> emailapi.v1.Attachment
 	0,  // 3: emailapi.v1.SendEmailResponse.status:type_name -> emailapi.v1.EmailStatus
 	0,  // 4: emailapi.v1.Email.status:type_name -> emailapi.v1.EmailStatus
-	10, // 5: emailapi.v1.Email.metadata:type_name -> emailapi.v1.Email.MetadataEntry
-	11, // 6: emailapi.v1.Email.scheduled_at:type_name -> google.protobuf.Timestamp
-	11, // 7: emailapi.v1.Email.sent_at:type_name -> google.protobuf.Timestamp
-	11, // 8: emailapi.v1.Email.created_at:type_name -> google.protobuf.Timestamp
-	11, // 9: emailapi.v1.Email.updated_at:type_name -> google.protobuf.Timestamp
-	6,  // 10: emailapi.v1.Email.attachments:type_name -> emailapi.v1.EmailAttachment
-	5,  // 11: emailapi.v1.ListEmailsResponse.data:type_name -> emailapi.v1.Email
-	1,  // 12: emailapi.v1.EmailService.SendEmail:input_type -> emailapi.v1.SendEmailRequest
-	4,  // 13: emailapi.v1.EmailService.GetEmail:input_type -> emailapi.v1.GetEmailRequest
-	7,  // 14: emailapi.v1.EmailService.ListEmails:input_type -> emailapi.v1.ListEmailsRequest
-	3,  // 15: emailapi.v1.EmailService.SendEmail:output_type -> emailapi.v1.SendEmailResponse
-	5,  // 16: emailapi.v1.EmailService.GetEmail:output_type -> emailapi.v1.Email
-	8,  // 17: emailapi.v1.EmailService.ListEmails:output_type -> emailapi.v1.ListEmailsResponse
-	15, // [15:18] is the sub-list for method output_type
-	12, // [12:15] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	11, // 5: emailapi.v1.Email.metadata:type_name -> emailapi.v1.Email.MetadataEntry
+	12, // 6: emailapi.v1.Email.scheduled_at:type_name -> google.protobuf.Timestamp
+	12, // 7: emailapi.v1.Email.sent_at:type_name -> google.protobuf.Timestamp
+	12, // 8: emailapi.v1.Email.created_at:type_name -> google.protobuf.Timestamp
+	12, // 9: emailapi.v1.Email.updated_at:type_name -> google.protobuf.Timestamp
+	7,  // 10: emailapi.v1.Email.attachments:type_name -> emailapi.v1.EmailAttachment
+	1,  // 11: emailapi.v1.ListEmailsRequest.category:type_name -> emailapi.v1.EmailCategory
+	6,  // 12: emailapi.v1.ListEmailsResponse.data:type_name -> emailapi.v1.Email
+	1,  // 13: emailapi.v1.ListEmailsResponse.category:type_name -> emailapi.v1.EmailCategory
+	2,  // 14: emailapi.v1.EmailService.SendEmail:input_type -> emailapi.v1.SendEmailRequest
+	5,  // 15: emailapi.v1.EmailService.GetEmail:input_type -> emailapi.v1.GetEmailRequest
+	8,  // 16: emailapi.v1.EmailService.ListEmails:input_type -> emailapi.v1.ListEmailsRequest
+	4,  // 17: emailapi.v1.EmailService.SendEmail:output_type -> emailapi.v1.SendEmailResponse
+	6,  // 18: emailapi.v1.EmailService.GetEmail:output_type -> emailapi.v1.Email
+	9,  // 19: emailapi.v1.EmailService.ListEmails:output_type -> emailapi.v1.ListEmailsResponse
+	17, // [17:20] is the sub-list for method output_type
+	14, // [14:17] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_v1_email_proto_init() }
@@ -988,7 +1079,7 @@ func file_v1_email_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_email_proto_rawDesc), len(file_v1_email_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,

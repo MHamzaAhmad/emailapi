@@ -46,7 +46,7 @@ type ServiceDeps struct {
 func NewWithDeps(deps ServiceDeps) *Service {
 	svc := New(deps.Store)
 	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.Region)
-	svc.Email = NewEmailService(deps.RiverClient, deps.PGEmailRepo)
+	svc.Email = NewEmailService(deps.RiverClient, deps.PGEmailRepo, deps.CHEmailRepo)
 	svc.Internal = NewInternalService(deps.PGEmailRepo, deps.RiverClient)
 	return svc
 }

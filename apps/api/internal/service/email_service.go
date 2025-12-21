@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ import (
 
 	emailapi "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/domain"
+	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	pgrepo "github.com/emailapi/api/internal/repository/postgres"
 	"github.com/emailapi/api/internal/worker"
 )
@@ -21,13 +23,19 @@ type EmailService struct {
 	emailapi.UnimplementedEmailServiceServer
 	riverClient *river.Client[pgx.Tx]
 	pgRepo      *pgrepo.EmailRepository
+	chRepo      *chrepo.EmailRepository
 }
 
 // NewEmailService creates a new EmailService.
-func NewEmailService(riverClient *river.Client[pgx.Tx], pgRepo *pgrepo.EmailRepository) *EmailService {
+func NewEmailService(
+	riverClient *river.Client[pgx.Tx],
+	pgRepo *pgrepo.EmailRepository,
+	chRepo *chrepo.EmailRepository,
+) *EmailService {
 	return &EmailService{
 		riverClient: riverClient,
 		pgRepo:      pgRepo,
+		chRepo:      chRepo,
 	}
 }
 
@@ -129,23 +137,27 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 	}, nil
 }
 
-// GetEmail retrieves an email by ID.
+// GetEmail retrieves an email by ID using cascading lookup (PG → CH → 404).
 func (s *EmailService) GetEmail(ctx context.Context, req *emailapi.GetEmailRequest) (*emailapi.Email, error) {
+	// 1. Try PostgreSQL first (active emails, faster for point lookups)
 	email, err := s.pgRepo.GetByID(ctx, req.Id)
-	if err != nil {
-		return nil, fmt.Errorf("email not found: %w", err)
+	if err == nil {
+		// Get attachments
+		attachments, _ := s.pgRepo.GetAttachmentsByEmailID(ctx, req.Id)
+		return domainEmailToProto(email, attachments), nil
 	}
 
-	// Get attachments
-	attachments, err := s.pgRepo.GetAttachmentsByEmailID(ctx, req.Id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get attachments: %w", err)
+	// 2. Fallback to ClickHouse (archived emails)
+	archivedEmail, err := s.chRepo.GetArchivedEmail(ctx, req.Id)
+	if err == nil {
+		return domainEmailToProto(archivedEmail, nil), nil
 	}
 
-	return domainEmailToProto(email, attachments), nil
+	// 3. Not found in either store
+	return nil, errors.New("email not found")
 }
 
-// ListEmails retrieves a paginated list of emails for the authenticated user.
+// ListEmails retrieves emails by category: ACTIVE (PostgreSQL) or ARCHIVED (ClickHouse).
 func (s *EmailService) ListEmails(ctx context.Context, req *emailapi.ListEmailsRequest) (*emailapi.ListEmailsResponse, error) {
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok || userID == "" {
@@ -161,20 +173,54 @@ func (s *EmailService) ListEmails(ctx context.Context, req *emailapi.ListEmailsR
 	}
 	offset := int(req.Offset)
 
-	emails, err := s.pgRepo.GetByUserID(ctx, userID, limit, offset)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get emails: %w", err)
+	// Default to ACTIVE if not specified
+	category := req.Category
+	if category == emailapi.EmailCategory_EMAIL_CATEGORY_UNSPECIFIED {
+		category = emailapi.EmailCategory_EMAIL_CATEGORY_ACTIVE
 	}
 
 	var protoEmails []*emailapi.Email
-	for _, email := range emails {
-		protoEmails = append(protoEmails, domainEmailToProto(email, nil))
+	var totalCount int
+	var err error
+
+	switch category {
+	case emailapi.EmailCategory_EMAIL_CATEGORY_ACTIVE:
+		// Query PostgreSQL for active emails
+		emails, qErr := s.pgRepo.GetByUserID(ctx, userID, limit, offset)
+		if qErr != nil {
+			return nil, fmt.Errorf("failed to get active emails: %w", qErr)
+		}
+		for _, email := range emails {
+			protoEmails = append(protoEmails, domainEmailToProto(email, nil))
+		}
+		totalCount, err = s.pgRepo.CountByUserID(ctx, userID)
+
+	case emailapi.EmailCategory_EMAIL_CATEGORY_ARCHIVED:
+		// Query ClickHouse for archived emails
+		emails, qErr := s.chRepo.ListArchivedEmails(ctx, userID, limit, offset)
+		if qErr != nil {
+			return nil, fmt.Errorf("failed to get archived emails: %w", qErr)
+		}
+		for _, email := range emails {
+			protoEmails = append(protoEmails, domainEmailToProto(email, nil))
+		}
+		totalCount, err = s.chRepo.CountArchivedEmails(ctx, userID)
+
+	default:
+		return nil, fmt.Errorf("invalid category: %v", category)
+	}
+
+	if err != nil {
+		// Non-fatal, just log and continue
+		totalCount = len(protoEmails)
 	}
 
 	return &emailapi.ListEmailsResponse{
-		Data:   protoEmails,
-		Limit:  int32(limit),
-		Offset: int32(offset),
+		Data:       protoEmails,
+		Limit:      int32(limit),
+		Offset:     int32(offset),
+		TotalCount: int32(totalCount),
+		Category:   category,
 	}, nil
 }
 

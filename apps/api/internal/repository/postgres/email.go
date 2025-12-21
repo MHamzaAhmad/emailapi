@@ -179,6 +179,15 @@ func (r *EmailRepository) CheckAllAttachmentsScanned(ctx context.Context, emailI
 	return result.AllScanned, result.AllClean, result.HasThreats, nil
 }
 
+// CountByUserID counts the total active emails for a user.
+func (r *EmailRepository) CountByUserID(ctx context.Context, userID string) (int, error) {
+	count, err := r.queries.CountEmailsByUserID(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count emails: %w", err)
+	}
+	return int(count), nil
+}
+
 // dbEmailToDomain converts a sqlc Email to domain.Email.
 func dbEmailToDomain(row db.Email) *domain.Email {
 	var metadata domain.Metadata

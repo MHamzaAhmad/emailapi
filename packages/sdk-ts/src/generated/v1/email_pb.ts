@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/email.proto.
  */
 export const file_v1_email: GenFile = /*@__PURE__*/
-  fileDesc("Cg52MS9lbWFpbC5wcm90bxILZW1haWxhcGkudjEiwgIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSPQoIbWV0YWRhdGEYCCADKAsyKy5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCgthdHRhY2htZW50cxgKIAMoCzIXLmVtYWlsYXBpLnYxLkF0dGFjaG1lbnQaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBImcKCkF0dGFjaG1lbnQSEAoIZmlsZW5hbWUYASABKAkSFAoMY29udGVudF90eXBlGAIgASgJEg0KA3VybBgDIAEoCUgAEhgKDmJhc2U2NF9jb250ZW50GAQgASgJSABCCAoGc291cmNlIkkKEVNlbmRFbWFpbFJlc3BvbnNlEgoKAmlkGAEgASgJEigKBnN0YXR1cxgCIAEoDjIYLmVtYWlsYXBpLnYxLkVtYWlsU3RhdHVzIh0KD0dldEVtYWlsUmVxdWVzdBIKCgJpZBgBIAEoCSKxBAoFRW1haWwSCgoCaWQYASABKAkSDAoEZnJvbRgCIAEoCRIKCgJ0bxgDIAMoCRIKCgJjYxgEIAMoCRILCgNiY2MYBSADKAkSDwoHc3ViamVjdBgGIAEoCRIMCgRib2R5GAcgASgJEgwKBGh0bWwYCCABKAkSKAoGc3RhdHVzGAkgASgOMhguZW1haWxhcGkudjEuRW1haWxTdGF0dXMSEwoLcHJvdmlkZXJfaWQYCiABKAkSDwoHdXNlcl9pZBgLIAEoCRIyCghtZXRhZGF0YRgMIAMoCzIgLmVtYWlsYXBpLnYxLkVtYWlsLk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GA0gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCgdzZW50X2F0GA4gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX2F0GA8gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GBAgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIxCgthdHRhY2htZW50cxgRIAMoCzIcLmVtYWlsYXBpLnYxLkVtYWlsQXR0YWNobWVudBIVCg1lcnJvcl9tZXNzYWdlGBIgASgJGi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJuCg9FbWFpbEF0dGFjaG1lbnQSCgoCaWQYASABKAkSEAoIZmlsZW5hbWUYAiABKAkSFAoMY29udGVudF90eXBlGAMgASgJEhIKCnNpemVfYnl0ZXMYBCABKAMSEwoLc2Nhbl9zdGF0dXMYBSABKAkiMgoRTGlzdEVtYWlsc1JlcXVlc3QSDQoFbGltaXQYASABKAUSDgoGb2Zmc2V0GAIgASgFIlUKEkxpc3RFbWFpbHNSZXNwb25zZRIgCgRkYXRhGAEgAygLMhIuZW1haWxhcGkudjEuRW1haWwSDQoFbGltaXQYAiABKAUSDgoGb2Zmc2V0GAMgASgFKrICCgtFbWFpbFN0YXR1cxIcChhFTUFJTF9TVEFUVVNfVU5TUEVDSUZJRUQQABIYChRFTUFJTF9TVEFUVVNfUEVORElORxABEicKI0VNQUlMX1NUQVRVU19QUk9DRVNTSU5HX0FUVEFDSE1FTlRTEAISJQohRU1BSUxfU1RBVFVTX1NDQU5OSU5HX0FUVEFDSE1FTlRTEAMSHAoYRU1BSUxfU1RBVFVTX1NDQU5fRkFJTEVEEAQSFwoTRU1BSUxfU1RBVFVTX1FVRVVFRBAFEhUKEUVNQUlMX1NUQVRVU19TRU5UEAYSGgoWRU1BSUxfU1RBVFVTX0RFTElWRVJFRBAHEhcKE0VNQUlMX1NUQVRVU19GQUlMRUQQCBIYChRFTUFJTF9TVEFUVVNfQk9VTkNFRBAJMqkCCgxFbWFpbFNlcnZpY2USXwoJU2VuZEVtYWlsEh0uZW1haWxhcGkudjEuU2VuZEVtYWlsUmVxdWVzdBoeLmVtYWlsYXBpLnYxLlNlbmRFbWFpbFJlc3BvbnNlIhOC0+STAg06ASoiCC92MS9zZW5kElUKCEdldEVtYWlsEhwuZW1haWxhcGkudjEuR2V0RW1haWxSZXF1ZXN0GhIuZW1haWxhcGkudjEuRW1haWwiF4LT5JMCERIPL3YxL2VtYWlscy97aWR9EmEKCkxpc3RFbWFpbHMSHi5lbWFpbGFwaS52MS5MaXN0RW1haWxzUmVxdWVzdBofLmVtYWlsYXBpLnYxLkxpc3RFbWFpbHNSZXNwb25zZSISgtPkkwIMEgovdjEvZW1haWxzQpgBCg9jb20uZW1haWxhcGkudjFCCkVtYWlsUHJvdG9QAVosZ2l0aHViLmNvbS9lbWFpbGFwaS9zZGstZ28vZ2VuL3YxO2VtYWlsYXBpdjGiAgNFWFiqAgtFbWFpbGFwaS5WMcoCC0VtYWlsYXBpXFYx4gIXRW1haWxhcGlcVjFcR1BCTWV0YWRhdGHqAgxFbWFpbGFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations, file_google_protobuf_timestamp]);
+  fileDesc("Cg52MS9lbWFpbC5wcm90bxILZW1haWxhcGkudjEiwgIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSPQoIbWV0YWRhdGEYCCADKAsyKy5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCgthdHRhY2htZW50cxgKIAMoCzIXLmVtYWlsYXBpLnYxLkF0dGFjaG1lbnQaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBImcKCkF0dGFjaG1lbnQSEAoIZmlsZW5hbWUYASABKAkSFAoMY29udGVudF90eXBlGAIgASgJEg0KA3VybBgDIAEoCUgAEhgKDmJhc2U2NF9jb250ZW50GAQgASgJSABCCAoGc291cmNlIkkKEVNlbmRFbWFpbFJlc3BvbnNlEgoKAmlkGAEgASgJEigKBnN0YXR1cxgCIAEoDjIYLmVtYWlsYXBpLnYxLkVtYWlsU3RhdHVzIh0KD0dldEVtYWlsUmVxdWVzdBIKCgJpZBgBIAEoCSKxBAoFRW1haWwSCgoCaWQYASABKAkSDAoEZnJvbRgCIAEoCRIKCgJ0bxgDIAMoCRIKCgJjYxgEIAMoCRILCgNiY2MYBSADKAkSDwoHc3ViamVjdBgGIAEoCRIMCgRib2R5GAcgASgJEgwKBGh0bWwYCCABKAkSKAoGc3RhdHVzGAkgASgOMhguZW1haWxhcGkudjEuRW1haWxTdGF0dXMSEwoLcHJvdmlkZXJfaWQYCiABKAkSDwoHdXNlcl9pZBgLIAEoCRIyCghtZXRhZGF0YRgMIAMoCzIgLmVtYWlsYXBpLnYxLkVtYWlsLk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GA0gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCgdzZW50X2F0GA4gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX2F0GA8gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GBAgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIxCgthdHRhY2htZW50cxgRIAMoCzIcLmVtYWlsYXBpLnYxLkVtYWlsQXR0YWNobWVudBIVCg1lcnJvcl9tZXNzYWdlGBIgASgJGi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJuCg9FbWFpbEF0dGFjaG1lbnQSCgoCaWQYASABKAkSEAoIZmlsZW5hbWUYAiABKAkSFAoMY29udGVudF90eXBlGAMgASgJEhIKCnNpemVfYnl0ZXMYBCABKAMSEwoLc2Nhbl9zdGF0dXMYBSABKAkiYAoRTGlzdEVtYWlsc1JlcXVlc3QSLAoIY2F0ZWdvcnkYASABKA4yGi5lbWFpbGFwaS52MS5FbWFpbENhdGVnb3J5Eg0KBWxpbWl0GAIgASgFEg4KBm9mZnNldBgDIAEoBSKYAQoSTGlzdEVtYWlsc1Jlc3BvbnNlEiAKBGRhdGEYASADKAsyEi5lbWFpbGFwaS52MS5FbWFpbBINCgVsaW1pdBgCIAEoBRIOCgZvZmZzZXQYAyABKAUSEwoLdG90YWxfY291bnQYBCABKAUSLAoIY2F0ZWdvcnkYBSABKA4yGi5lbWFpbGFwaS52MS5FbWFpbENhdGVnb3J5KrICCgtFbWFpbFN0YXR1cxIcChhFTUFJTF9TVEFUVVNfVU5TUEVDSUZJRUQQABIYChRFTUFJTF9TVEFUVVNfUEVORElORxABEicKI0VNQUlMX1NUQVRVU19QUk9DRVNTSU5HX0FUVEFDSE1FTlRTEAISJQohRU1BSUxfU1RBVFVTX1NDQU5OSU5HX0FUVEFDSE1FTlRTEAMSHAoYRU1BSUxfU1RBVFVTX1NDQU5fRkFJTEVEEAQSFwoTRU1BSUxfU1RBVFVTX1FVRVVFRBAFEhUKEUVNQUlMX1NUQVRVU19TRU5UEAYSGgoWRU1BSUxfU1RBVFVTX0RFTElWRVJFRBAHEhcKE0VNQUlMX1NUQVRVU19GQUlMRUQQCBIYChRFTUFJTF9TVEFUVVNfQk9VTkNFRBAJKmcKDUVtYWlsQ2F0ZWdvcnkSHgoaRU1BSUxfQ0FURUdPUllfVU5TUEVDSUZJRUQQABIZChVFTUFJTF9DQVRFR09SWV9BQ1RJVkUQARIbChdFTUFJTF9DQVRFR09SWV9BUkNISVZFRBACMqkCCgxFbWFpbFNlcnZpY2USXwoJU2VuZEVtYWlsEh0uZW1haWxhcGkudjEuU2VuZEVtYWlsUmVxdWVzdBoeLmVtYWlsYXBpLnYxLlNlbmRFbWFpbFJlc3BvbnNlIhOC0+STAg06ASoiCC92MS9zZW5kElUKCEdldEVtYWlsEhwuZW1haWxhcGkudjEuR2V0RW1haWxSZXF1ZXN0GhIuZW1haWxhcGkudjEuRW1haWwiF4LT5JMCERIPL3YxL2VtYWlscy97aWR9EmEKCkxpc3RFbWFpbHMSHi5lbWFpbGFwaS52MS5MaXN0RW1haWxzUmVxdWVzdBofLmVtYWlsYXBpLnYxLkxpc3RFbWFpbHNSZXNwb25zZSISgtPkkwIMEgovdjEvZW1haWxzQpgBCg9jb20uZW1haWxhcGkudjFCCkVtYWlsUHJvdG9QAVosZ2l0aHViLmNvbS9lbWFpbGFwaS9zZGstZ28vZ2VuL3YxO2VtYWlsYXBpdjGiAgNFWFiqAgtFbWFpbGFwaS5WMcoCC0VtYWlsYXBpXFYx4gIXRW1haWxhcGlcVjFcR1BCTWV0YWRhdGHqAgxFbWFpbGFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations, file_google_protobuf_timestamp]);
 
 /**
  * SendEmailRequest is the payload for sending an email.
@@ -395,16 +395,24 @@ export const EmailAttachmentSchema: GenMessage<EmailAttachment> = /*@__PURE__*/
  */
 export type ListEmailsRequest = Message<"emailapi.v1.ListEmailsRequest"> & {
   /**
+   * Category to query: ACTIVE (in-progress) or ARCHIVED (completed).
+   * Default: ACTIVE
+   *
+   * @generated from field: emailapi.v1.EmailCategory category = 1;
+   */
+  category: EmailCategory;
+
+  /**
    * Maximum number of emails to return (default: 20, max: 100).
    *
-   * @generated from field: int32 limit = 1;
+   * @generated from field: int32 limit = 2;
    */
   limit: number;
 
   /**
    * Number of emails to skip.
    *
-   * @generated from field: int32 offset = 2;
+   * @generated from field: int32 offset = 3;
    */
   offset: number;
 };
@@ -442,6 +450,20 @@ export type ListEmailsResponse = Message<"emailapi.v1.ListEmailsResponse"> & {
    * @generated from field: int32 offset = 3;
    */
   offset: number;
+
+  /**
+   * Total count of emails in this category.
+   *
+   * @generated from field: int32 total_count = 4;
+   */
+  totalCount: number;
+
+  /**
+   * The category that was queried.
+   *
+   * @generated from field: emailapi.v1.EmailCategory category = 5;
+   */
+  category: EmailCategory;
 };
 
 /**
@@ -513,6 +535,38 @@ export enum EmailStatus {
  */
 export const EmailStatusSchema: GenEnum<EmailStatus> = /*@__PURE__*/
   enumDesc(file_v1_email, 0);
+
+/**
+ * EmailCategory represents where emails are stored.
+ *
+ * @generated from enum emailapi.v1.EmailCategory
+ */
+export enum EmailCategory {
+  /**
+   * @generated from enum value: EMAIL_CATEGORY_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Active emails in PostgreSQL (pending, processing, scanning, queued).
+   *
+   * @generated from enum value: EMAIL_CATEGORY_ACTIVE = 1;
+   */
+  ACTIVE = 1,
+
+  /**
+   * Archived emails in ClickHouse (sent, delivered, bounced, failed).
+   *
+   * @generated from enum value: EMAIL_CATEGORY_ARCHIVED = 2;
+   */
+  ARCHIVED = 2,
+}
+
+/**
+ * Describes the enum emailapi.v1.EmailCategory.
+ */
+export const EmailCategorySchema: GenEnum<EmailCategory> = /*@__PURE__*/
+  enumDesc(file_v1_email, 1);
 
 /**
  * EmailService handles all email-related operations including sending, retrieving, and listing emails.

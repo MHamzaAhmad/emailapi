@@ -11,6 +11,7 @@ import (
 type Querier interface {
 	CheckAllAttachmentsScanned(ctx context.Context, emailID string) (CheckAllAttachmentsScannedRow, error)
 	CountActiveApiKeysByUserID(ctx context.Context, userID string) (int64, error)
+	CountEmailsByUserID(ctx context.Context, userID string) (int64, error)
 	CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error)
 	CreateDomain(ctx context.Context, arg CreateDomainParams) error
 	CreateEmail(ctx context.Context, arg CreateEmailParams) (Email, error)

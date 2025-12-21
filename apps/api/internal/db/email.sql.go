@@ -33,6 +33,17 @@ func (q *Queries) CheckAllAttachmentsScanned(ctx context.Context, emailID string
 	return i, err
 }
 
+const countEmailsByUserID = `-- name: CountEmailsByUserID :one
+SELECT COUNT(*) FROM emails WHERE user_id = $1
+`
+
+func (q *Queries) CountEmailsByUserID(ctx context.Context, userID string) (int64, error) {
+	row := q.db.QueryRow(ctx, countEmailsByUserID, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createEmail = `-- name: CreateEmail :one
 INSERT INTO emails (
     id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
