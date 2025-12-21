@@ -46,56 +46,24 @@ const (
 	// DomainServiceVerifyDomainProcedure is the fully-qualified name of the DomainService's
 	// VerifyDomain RPC.
 	DomainServiceVerifyDomainProcedure = "/emailapi.v1.DomainService/VerifyDomain"
-	// DomainServiceGetDomainRecordsProcedure is the fully-qualified name of the DomainService's
-	// GetDomainRecords RPC.
-	DomainServiceGetDomainRecordsProcedure = "/emailapi.v1.DomainService/GetDomainRecords"
-	// DomainServiceSetMailFromDomainProcedure is the fully-qualified name of the DomainService's
-	// SetMailFromDomain RPC.
-	DomainServiceSetMailFromDomainProcedure = "/emailapi.v1.DomainService/SetMailFromDomain"
 )
 
 // DomainServiceClient is a client for the emailapi.v1.DomainService service.
 type DomainServiceClient interface {
-	// AddDomain registers a new sending domain with AWS SES.
-	//
-	// After adding, use GetDomainRecords to retrieve DNS records you need to
-	// configure. The domain starts in PENDING status until DNS is verified.
+	// AddDomain registers a new sending domain.
+	// Returns everything you need: domain info, DNS records, and next steps.
+	// MAIL FROM (mail.yourdomain.com) is auto-configured.
 	AddDomain(context.Context, *connect.Request[v1.AddDomainRequest]) (*connect.Response[v1.AddDomainResponse], error)
-	// GetDomain retrieves a domain by its ID.
-	GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.Domain], error)
-	// ListDomains retrieves all domains for the authenticated user.
+	// GetDomain retrieves a domain with its configuration and status.
+	// Automatically refreshes from SES if data is stale (>5 min).
+	GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.GetDomainResponse], error)
+	// ListDomains retrieves all domains with their status.
 	ListDomains(context.Context, *connect.Request[v1.ListDomainsRequest]) (*connect.Response[v1.ListDomainsResponse], error)
-	// DeleteDomain removes a domain from your account and AWS SES.
-	//
-	// This action is irreversible. You will need to re-add and re-verify the
-	// domain if you want to use it again.
+	// DeleteDomain removes a domain from your account.
 	DeleteDomain(context.Context, *connect.Request[v1.DeleteDomainRequest]) (*connect.Response[v1.DeleteDomainResponse], error)
-	// VerifyDomain refreshes verification status from AWS SES.
-	//
-	// Call this after configuring your DNS records to check if they have
-	// propagated and been verified by AWS. DNS propagation can take up to 72 hours.
-	// This endpoint is rate-limited to prevent SES API abuse. If called too
-	// frequently, it will return cached data with was_refreshed=false.
+	// VerifyDomain forces a fresh check of DNS records and SES status.
+	// Rate-limited to 30s between calls. Use after configuring DNS.
 	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error)
-	// GetDomainRecords returns all DNS records needed for full email deliverability.
-	//
-	// This includes:
-	//   - DKIM records (3 CNAMEs) - Required for email signing/authentication
-	//   - SPF record (TXT) - Authorizes SES to send on your behalf
-	//   - DMARC record (TXT) - Policy for handling authentication failures
-	//   - MX record - Required for receiving inbound emails
-	//   - MAIL FROM records (MX + TXT) - Improves deliverability and bounce handling
-	//
-	// Each record includes its current verification status and instructions.
-	GetDomainRecords(context.Context, *connect.Request[v1.GetDomainRecordsRequest]) (*connect.Response[v1.DomainRecords], error)
-	// SetMailFromDomain configures a custom MAIL FROM subdomain.
-	//
-	// This improves email deliverability by letting you control the Return-Path
-	// header used for bounce handling. The subdomain must be part of your
-	// verified domain.
-	//
-	// Example: If your domain is "example.com", set mail_from to "mail.example.com"
-	SetMailFromDomain(context.Context, *connect.Request[v1.SetMailFromDomainRequest]) (*connect.Response[v1.Domain], error)
 }
 
 // NewDomainServiceClient constructs a client for the emailapi.v1.DomainService service. By default,
@@ -115,7 +83,7 @@ func NewDomainServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(domainServiceMethods.ByName("AddDomain")),
 			connect.WithClientOptions(opts...),
 		),
-		getDomain: connect.NewClient[v1.GetDomainRequest, v1.Domain](
+		getDomain: connect.NewClient[v1.GetDomainRequest, v1.GetDomainResponse](
 			httpClient,
 			baseURL+DomainServiceGetDomainProcedure,
 			connect.WithSchema(domainServiceMethods.ByName("GetDomain")),
@@ -139,30 +107,16 @@ func NewDomainServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(domainServiceMethods.ByName("VerifyDomain")),
 			connect.WithClientOptions(opts...),
 		),
-		getDomainRecords: connect.NewClient[v1.GetDomainRecordsRequest, v1.DomainRecords](
-			httpClient,
-			baseURL+DomainServiceGetDomainRecordsProcedure,
-			connect.WithSchema(domainServiceMethods.ByName("GetDomainRecords")),
-			connect.WithClientOptions(opts...),
-		),
-		setMailFromDomain: connect.NewClient[v1.SetMailFromDomainRequest, v1.Domain](
-			httpClient,
-			baseURL+DomainServiceSetMailFromDomainProcedure,
-			connect.WithSchema(domainServiceMethods.ByName("SetMailFromDomain")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
 // domainServiceClient implements DomainServiceClient.
 type domainServiceClient struct {
-	addDomain         *connect.Client[v1.AddDomainRequest, v1.AddDomainResponse]
-	getDomain         *connect.Client[v1.GetDomainRequest, v1.Domain]
-	listDomains       *connect.Client[v1.ListDomainsRequest, v1.ListDomainsResponse]
-	deleteDomain      *connect.Client[v1.DeleteDomainRequest, v1.DeleteDomainResponse]
-	verifyDomain      *connect.Client[v1.VerifyDomainRequest, v1.VerifyDomainResponse]
-	getDomainRecords  *connect.Client[v1.GetDomainRecordsRequest, v1.DomainRecords]
-	setMailFromDomain *connect.Client[v1.SetMailFromDomainRequest, v1.Domain]
+	addDomain    *connect.Client[v1.AddDomainRequest, v1.AddDomainResponse]
+	getDomain    *connect.Client[v1.GetDomainRequest, v1.GetDomainResponse]
+	listDomains  *connect.Client[v1.ListDomainsRequest, v1.ListDomainsResponse]
+	deleteDomain *connect.Client[v1.DeleteDomainRequest, v1.DeleteDomainResponse]
+	verifyDomain *connect.Client[v1.VerifyDomainRequest, v1.VerifyDomainResponse]
 }
 
 // AddDomain calls emailapi.v1.DomainService.AddDomain.
@@ -171,7 +125,7 @@ func (c *domainServiceClient) AddDomain(ctx context.Context, req *connect.Reques
 }
 
 // GetDomain calls emailapi.v1.DomainService.GetDomain.
-func (c *domainServiceClient) GetDomain(ctx context.Context, req *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.Domain], error) {
+func (c *domainServiceClient) GetDomain(ctx context.Context, req *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.GetDomainResponse], error) {
 	return c.getDomain.CallUnary(ctx, req)
 }
 
@@ -190,58 +144,22 @@ func (c *domainServiceClient) VerifyDomain(ctx context.Context, req *connect.Req
 	return c.verifyDomain.CallUnary(ctx, req)
 }
 
-// GetDomainRecords calls emailapi.v1.DomainService.GetDomainRecords.
-func (c *domainServiceClient) GetDomainRecords(ctx context.Context, req *connect.Request[v1.GetDomainRecordsRequest]) (*connect.Response[v1.DomainRecords], error) {
-	return c.getDomainRecords.CallUnary(ctx, req)
-}
-
-// SetMailFromDomain calls emailapi.v1.DomainService.SetMailFromDomain.
-func (c *domainServiceClient) SetMailFromDomain(ctx context.Context, req *connect.Request[v1.SetMailFromDomainRequest]) (*connect.Response[v1.Domain], error) {
-	return c.setMailFromDomain.CallUnary(ctx, req)
-}
-
 // DomainServiceHandler is an implementation of the emailapi.v1.DomainService service.
 type DomainServiceHandler interface {
-	// AddDomain registers a new sending domain with AWS SES.
-	//
-	// After adding, use GetDomainRecords to retrieve DNS records you need to
-	// configure. The domain starts in PENDING status until DNS is verified.
+	// AddDomain registers a new sending domain.
+	// Returns everything you need: domain info, DNS records, and next steps.
+	// MAIL FROM (mail.yourdomain.com) is auto-configured.
 	AddDomain(context.Context, *connect.Request[v1.AddDomainRequest]) (*connect.Response[v1.AddDomainResponse], error)
-	// GetDomain retrieves a domain by its ID.
-	GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.Domain], error)
-	// ListDomains retrieves all domains for the authenticated user.
+	// GetDomain retrieves a domain with its configuration and status.
+	// Automatically refreshes from SES if data is stale (>5 min).
+	GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.GetDomainResponse], error)
+	// ListDomains retrieves all domains with their status.
 	ListDomains(context.Context, *connect.Request[v1.ListDomainsRequest]) (*connect.Response[v1.ListDomainsResponse], error)
-	// DeleteDomain removes a domain from your account and AWS SES.
-	//
-	// This action is irreversible. You will need to re-add and re-verify the
-	// domain if you want to use it again.
+	// DeleteDomain removes a domain from your account.
 	DeleteDomain(context.Context, *connect.Request[v1.DeleteDomainRequest]) (*connect.Response[v1.DeleteDomainResponse], error)
-	// VerifyDomain refreshes verification status from AWS SES.
-	//
-	// Call this after configuring your DNS records to check if they have
-	// propagated and been verified by AWS. DNS propagation can take up to 72 hours.
-	// This endpoint is rate-limited to prevent SES API abuse. If called too
-	// frequently, it will return cached data with was_refreshed=false.
+	// VerifyDomain forces a fresh check of DNS records and SES status.
+	// Rate-limited to 30s between calls. Use after configuring DNS.
 	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error)
-	// GetDomainRecords returns all DNS records needed for full email deliverability.
-	//
-	// This includes:
-	//   - DKIM records (3 CNAMEs) - Required for email signing/authentication
-	//   - SPF record (TXT) - Authorizes SES to send on your behalf
-	//   - DMARC record (TXT) - Policy for handling authentication failures
-	//   - MX record - Required for receiving inbound emails
-	//   - MAIL FROM records (MX + TXT) - Improves deliverability and bounce handling
-	//
-	// Each record includes its current verification status and instructions.
-	GetDomainRecords(context.Context, *connect.Request[v1.GetDomainRecordsRequest]) (*connect.Response[v1.DomainRecords], error)
-	// SetMailFromDomain configures a custom MAIL FROM subdomain.
-	//
-	// This improves email deliverability by letting you control the Return-Path
-	// header used for bounce handling. The subdomain must be part of your
-	// verified domain.
-	//
-	// Example: If your domain is "example.com", set mail_from to "mail.example.com"
-	SetMailFromDomain(context.Context, *connect.Request[v1.SetMailFromDomainRequest]) (*connect.Response[v1.Domain], error)
 }
 
 // NewDomainServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -281,18 +199,6 @@ func NewDomainServiceHandler(svc DomainServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(domainServiceMethods.ByName("VerifyDomain")),
 		connect.WithHandlerOptions(opts...),
 	)
-	domainServiceGetDomainRecordsHandler := connect.NewUnaryHandler(
-		DomainServiceGetDomainRecordsProcedure,
-		svc.GetDomainRecords,
-		connect.WithSchema(domainServiceMethods.ByName("GetDomainRecords")),
-		connect.WithHandlerOptions(opts...),
-	)
-	domainServiceSetMailFromDomainHandler := connect.NewUnaryHandler(
-		DomainServiceSetMailFromDomainProcedure,
-		svc.SetMailFromDomain,
-		connect.WithSchema(domainServiceMethods.ByName("SetMailFromDomain")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/emailapi.v1.DomainService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DomainServiceAddDomainProcedure:
@@ -305,10 +211,6 @@ func NewDomainServiceHandler(svc DomainServiceHandler, opts ...connect.HandlerOp
 			domainServiceDeleteDomainHandler.ServeHTTP(w, r)
 		case DomainServiceVerifyDomainProcedure:
 			domainServiceVerifyDomainHandler.ServeHTTP(w, r)
-		case DomainServiceGetDomainRecordsProcedure:
-			domainServiceGetDomainRecordsHandler.ServeHTTP(w, r)
-		case DomainServiceSetMailFromDomainProcedure:
-			domainServiceSetMailFromDomainHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -322,7 +224,7 @@ func (UnimplementedDomainServiceHandler) AddDomain(context.Context, *connect.Req
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.DomainService.AddDomain is not implemented"))
 }
 
-func (UnimplementedDomainServiceHandler) GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.Domain], error) {
+func (UnimplementedDomainServiceHandler) GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.GetDomainResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.DomainService.GetDomain is not implemented"))
 }
 
@@ -336,12 +238,4 @@ func (UnimplementedDomainServiceHandler) DeleteDomain(context.Context, *connect.
 
 func (UnimplementedDomainServiceHandler) VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.DomainService.VerifyDomain is not implemented"))
-}
-
-func (UnimplementedDomainServiceHandler) GetDomainRecords(context.Context, *connect.Request[v1.GetDomainRecordsRequest]) (*connect.Response[v1.DomainRecords], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.DomainService.GetDomainRecords is not implemented"))
-}
-
-func (UnimplementedDomainServiceHandler) SetMailFromDomain(context.Context, *connect.Request[v1.SetMailFromDomainRequest]) (*connect.Response[v1.Domain], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.DomainService.SetMailFromDomain is not implemented"))
 }

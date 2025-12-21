@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 
+	internaldns "github.com/emailapi/api/internal/dns"
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/external/ses"
 )
@@ -16,12 +18,10 @@ const (
 	// defaultRegion is the default AWS region for SES.
 	defaultRegion = "us-east-1"
 
-	// VerifyCooldown is the minimum time between SES verification calls per domain.
-	// This prevents abuse and rate limiting from AWS SES.
+	// VerifyCooldown is the minimum time between verification calls per domain.
 	VerifyCooldown = 30 * time.Second
 
-	// StaleThreshold is how old verification data can be before auto-refresh is allowed.
-	// Used for smart refresh on read operations.
+	// StaleThreshold is how old data can be before auto-refresh on read.
 	StaleThreshold = 5 * time.Minute
 )
 
@@ -29,6 +29,7 @@ const (
 type DomainService struct {
 	store  Store
 	ses    ses.Client
+	dns    *internaldns.Validator
 	region string
 }
 
@@ -40,49 +41,58 @@ func NewDomainService(store Store, sesClient ses.Client, region string) *DomainS
 	return &DomainService{
 		store:  store,
 		ses:    sesClient,
+		dns:    internaldns.NewValidator(),
 		region: region,
 	}
 }
 
 // canVerify checks if enough time has passed since the last verification.
-// Returns true if verification is allowed, false otherwise with the next allowed time.
 func (s *DomainService) canVerify(d *domain.SendingDomain) (bool, time.Time) {
-	if d.LastVerifiedAt == nil {
+	if d.LastCheckedAt == nil {
 		return true, time.Time{}
 	}
-	nextAllowed := d.LastVerifiedAt.Add(VerifyCooldown)
+	nextAllowed := d.LastCheckedAt.Add(VerifyCooldown)
 	if time.Now().After(nextAllowed) {
 		return true, time.Time{}
 	}
 	return false, nextAllowed
 }
 
-// isStale checks if the domain verification data is outdated.
+// isStale checks if domain data is outdated.
 func (s *DomainService) isStale(d *domain.SendingDomain) bool {
-	if d.LastVerifiedAt == nil {
+	if d.LastCheckedAt == nil {
 		return true
 	}
-	return time.Now().After(d.LastVerifiedAt.Add(StaleThreshold))
+	return time.Now().After(d.LastCheckedAt.Add(StaleThreshold))
 }
 
 // Add registers a new sending domain with AWS SES.
-func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*domain.SendingDomain, *domain.DomainRecords, error) {
+// MAIL FROM is auto-configured as mail.{domain}.
+func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*domain.DomainWithDetails, error) {
 	// Validate domain name
 	domainName = strings.TrimSpace(strings.ToLower(domainName))
 	if domainName == "" {
-		return nil, nil, fmt.Errorf("domain name is required")
+		return nil, fmt.Errorf("domain name is required")
 	}
 
 	// Check if domain already exists
 	existing, _ := s.store.Domains().GetByDomainName(ctx, userID, domainName)
 	if existing != nil {
-		return nil, nil, fmt.Errorf("domain %s already exists", domainName)
+		return nil, fmt.Errorf("domain %s already exists", domainName)
 	}
 
 	// Create identity in SES
 	result, err := s.ses.CreateEmailIdentity(ctx, domainName)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create email identity: %w", err)
+		return nil, fmt.Errorf("failed to create email identity: %w", err)
+	}
+
+	// Auto-configure MAIL FROM domain
+	mailFromDomain := "mail." + domainName
+	if err := s.ses.PutEmailIdentityMailFromAttributes(ctx, domainName, mailFromDomain); err != nil {
+		// Log warning but don't fail - MAIL FROM is optional for basic sending
+		log.Warn().Err(err).Str("domain", domainName).Msg("failed to set MAIL FROM, continuing without it")
+		mailFromDomain = ""
 	}
 
 	// Create domain entity
@@ -95,6 +105,8 @@ func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*do
 		VerifiedForSending: result.VerifiedForSendingStatus,
 		DkimTokens:         result.DkimTokens,
 		DkimStatus:         toDomainStatus(result.DkimStatus),
+		MailFromDomain:     mailFromDomain,
+		MailFromStatus:     domain.DomainStatusPending,
 		Region:             s.region,
 		CreatedAt:          now,
 		UpdatedAt:          now,
@@ -104,17 +116,15 @@ func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*do
 	if err := s.store.Domains().Create(ctx, d); err != nil {
 		// Try to clean up the SES identity if DB storage fails
 		_ = s.ses.DeleteEmailIdentity(ctx, domainName)
-		return nil, nil, fmt.Errorf("failed to store domain: %w", err)
+		return nil, fmt.Errorf("failed to store domain: %w", err)
 	}
 
-	// Build DNS records
-	records := s.buildDomainRecords(d)
-
-	return d, records, nil
+	return s.buildDomainWithDetails(d), nil
 }
 
 // Get retrieves a domain by ID with authorization check.
-func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*domain.SendingDomain, error) {
+// Auto-refreshes if data is stale (>5 min).
+func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*domain.DomainWithDetails, error) {
 	d, err := s.store.Domains().GetByID(ctx, domainID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get domain: %w", err)
@@ -124,16 +134,35 @@ func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*doma
 		return nil, fmt.Errorf("domain not found")
 	}
 
-	return d, nil
+	// Auto-refresh if stale and cooldown allows
+	if s.isStale(d) {
+		if canVerify, _ := s.canVerify(d); canVerify {
+			refreshed, err := s.refreshFromSES(ctx, d)
+			if err == nil {
+				d = refreshed
+			}
+		}
+	}
+
+	return s.buildDomainWithDetails(d), nil
 }
 
 // List retrieves all domains for a user.
-func (s *DomainService) List(ctx context.Context, userID string) ([]*domain.SendingDomain, error) {
-	return s.store.Domains().GetByUserID(ctx, userID)
+func (s *DomainService) List(ctx context.Context, userID string) ([]*domain.DomainWithDetails, error) {
+	domains, err := s.store.Domains().GetByUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list domains: %w", err)
+	}
+
+	result := make([]*domain.DomainWithDetails, len(domains))
+	for i, d := range domains {
+		result[i] = s.buildDomainWithDetails(d)
+	}
+
+	return result, nil
 }
 
 // GetVerifiedDomainForSending retrieves a domain by name for sender validation.
-// Returns the domain if it exists and belongs to the user, nil otherwise.
 func (s *DomainService) GetVerifiedDomainForSending(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error) {
 	d, err := s.store.Domains().GetByDomainName(ctx, userID, domainName)
 	if err != nil {
@@ -144,10 +173,13 @@ func (s *DomainService) GetVerifiedDomainForSending(ctx context.Context, userID,
 
 // Delete removes a domain from the account and SES.
 func (s *DomainService) Delete(ctx context.Context, userID, domainID string) error {
-	// Get domain with authorization check
-	d, err := s.Get(ctx, userID, domainID)
+	d, err := s.store.Domains().GetByID(ctx, domainID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get domain: %w", err)
+	}
+
+	if d.UserID != userID {
+		return fmt.Errorf("domain not found")
 	}
 
 	// Delete from SES
@@ -163,54 +195,40 @@ func (s *DomainService) Delete(ctx context.Context, userID, domainID string) err
 	return nil
 }
 
-// Verify refreshes the verification status from AWS SES with rate limiting.
-// Returns a VerifyResult indicating whether the refresh actually occurred or was rate-limited.
+// Verify forces a fresh check of DNS records and SES status.
 func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*domain.VerifyResult, error) {
-	// Get domain with authorization check
-	d, err := s.Get(ctx, userID, domainID)
+	d, err := s.store.Domains().GetByID(ctx, domainID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get domain: %w", err)
+	}
+
+	if d.UserID != userID {
+		return nil, fmt.Errorf("domain not found")
 	}
 
 	// Check cooldown to prevent SES rate limiting
 	canVerify, nextRetry := s.canVerify(d)
 	if !canVerify {
 		return &domain.VerifyResult{
-			Domain:       d,
+			Domain:       s.buildDomainWithDetails(d),
 			WasRefreshed: false,
 			NextRetryAt:  &nextRetry,
-			Message:      fmt.Sprintf("Rate limited. Next verification allowed at %s", nextRetry.Format(time.RFC3339)),
+			Message:      fmt.Sprintf("Rate limited. Next check allowed in %s", time.Until(nextRetry).Round(time.Second)),
 		}, nil
 	}
 
-	// Get current status from SES
-	result, err := s.ses.GetEmailIdentity(ctx, d.Domain)
+	// Refresh from SES
+	d, err = s.refreshFromSES(ctx, d)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get email identity: %w", err)
+		return nil, fmt.Errorf("failed to refresh from SES: %w", err)
 	}
 
-	// Update domain status from SES response
-	now := time.Now()
-	d.VerifiedForSending = result.VerifiedForSendingStatus
-	d.DkimStatus = toDomainStatus(result.DkimStatus)
-	if result.MailFromDomain != "" {
-		d.MailFromDomain = result.MailFromDomain
-		d.MailFromStatus = toDomainStatus(result.MailFromStatus)
-	}
+	// Perform live DNS validation
+	details := s.buildDomainWithDetails(d)
+	s.validateDNS(ctx, details)
 
-	// Determine overall status
-	if result.VerifiedForSendingStatus {
-		d.Status = domain.DomainStatusSuccess
-	} else if result.DkimStatus == "FAILED" {
-		d.Status = domain.DomainStatusFailed
-	} else if result.DkimStatus == "TEMPORARY_FAILURE" {
-		d.Status = domain.DomainStatusTemporaryFailure
-	} else {
-		d.Status = domain.DomainStatusPending
-	}
-
-	d.UpdatedAt = now
-	d.LastVerifiedAt = &now
+	// Update domain status based on DNS results
+	s.updateStatusFromRecords(d, details)
 
 	// Save updated status
 	if err := s.store.Domains().Update(ctx, d); err != nil {
@@ -218,67 +236,28 @@ func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*d
 	}
 
 	return &domain.VerifyResult{
-		Domain:       d,
+		Domain:       details,
 		WasRefreshed: true,
-		Message:      "Verification status refreshed from SES",
+		Message:      s.getVerifyMessage(details),
 	}, nil
 }
 
-// GetRecords returns all DNS records needed for the domain.
-func (s *DomainService) GetRecords(ctx context.Context, userID, domainID string) (*domain.DomainRecords, error) {
-	// Get domain with authorization check
-	d, err := s.Get(ctx, userID, domainID)
+// refreshFromSES fetches current status from AWS SES.
+func (s *DomainService) refreshFromSES(ctx context.Context, d *domain.SendingDomain) (*domain.SendingDomain, error) {
+	result, err := s.ses.GetEmailIdentity(ctx, d.Domain)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get email identity: %w", err)
 	}
 
-	return s.buildDomainRecords(d), nil
-}
-
-// GetWithRecords retrieves a domain with its DNS records in a single call.
-// If autoRefresh is true, it will automatically refresh stale verification data from SES.
-func (s *DomainService) GetWithRecords(ctx context.Context, userID, domainID string, autoRefresh bool) (*domain.DomainWithRecords, error) {
-	d, err := s.Get(ctx, userID, domainID)
-	if err != nil {
-		return nil, err
+	now := time.Now()
+	d.VerifiedForSending = result.VerifiedForSendingStatus
+	d.DkimStatus = toDomainStatus(result.DkimStatus)
+	if result.MailFromDomain != "" {
+		d.MailFromDomain = result.MailFromDomain
+		d.MailFromStatus = toDomainStatus(result.MailFromStatus)
 	}
-
-	// Auto-refresh if stale and requested
-	if autoRefresh && s.isStale(d) {
-		if canVerify, _ := s.canVerify(d); canVerify {
-			result, err := s.Verify(ctx, userID, domainID)
-			if err == nil && result.WasRefreshed {
-				d = result.Domain
-			}
-		}
-	}
-
-	return &domain.DomainWithRecords{
-		Domain:  d,
-		Records: s.buildDomainRecords(d),
-	}, nil
-}
-
-// SetMailFrom configures a custom MAIL FROM subdomain.
-func (s *DomainService) SetMailFrom(ctx context.Context, userID, domainID, mailFromSubdomain string) (*domain.SendingDomain, error) {
-	// Get domain with authorization check
-	d, err := s.Get(ctx, userID, domainID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Build full MAIL FROM domain
-	mailFromDomain := mailFromSubdomain + "." + d.Domain
-
-	// Configure in SES
-	if err := s.ses.PutEmailIdentityMailFromAttributes(ctx, d.Domain, mailFromDomain); err != nil {
-		return nil, fmt.Errorf("failed to set mail from attributes: %w", err)
-	}
-
-	// Update domain
-	d.MailFromDomain = mailFromDomain
-	d.MailFromStatus = domain.DomainStatusPending
-	d.UpdatedAt = time.Now()
+	d.UpdatedAt = now
+	d.LastCheckedAt = &now
 
 	if err := s.store.Domains().Update(ctx, d); err != nil {
 		return nil, fmt.Errorf("failed to update domain: %w", err)
@@ -287,27 +266,208 @@ func (s *DomainService) SetMailFrom(ctx context.Context, userID, domainID, mailF
 	return d, nil
 }
 
-// buildDomainRecords creates the full DNS records structure.
+// validateDNS performs live DNS lookups and updates record statuses.
+func (s *DomainService) validateDNS(ctx context.Context, details *domain.DomainWithDetails) {
+	if details.Records == nil {
+		return
+	}
+
+	// Build expected records list
+	var expected []internaldns.ExpectedRecord
+
+	for _, rec := range details.Records.DkimRecords {
+		expected = append(expected, internaldns.ExpectedRecord{
+			Type:  rec.Type,
+			Name:  rec.Name,
+			Value: rec.Value,
+		})
+	}
+
+	if details.Records.SpfRecord != nil {
+		expected = append(expected, internaldns.ExpectedRecord{
+			Type:  details.Records.SpfRecord.Type,
+			Name:  details.Records.SpfRecord.Name,
+			Value: details.Records.SpfRecord.Value,
+		})
+	}
+
+	if details.Records.DmarcRecord != nil {
+		expected = append(expected, internaldns.ExpectedRecord{
+			Type:  details.Records.DmarcRecord.Type,
+			Name:  details.Records.DmarcRecord.Name,
+			Value: details.Records.DmarcRecord.Value,
+		})
+	}
+
+	for _, rec := range details.Records.MxRecords {
+		expected = append(expected, internaldns.ExpectedRecord{
+			Type:     rec.Type,
+			Name:     rec.Name,
+			Value:    rec.Value,
+			Priority: rec.Priority,
+		})
+	}
+
+	for _, rec := range details.Records.MailFromRecords {
+		expected = append(expected, internaldns.ExpectedRecord{
+			Type:     rec.Type,
+			Name:     rec.Name,
+			Value:    rec.Value,
+			Priority: rec.Priority,
+		})
+	}
+
+	// Perform DNS validation
+	result := s.dns.ValidateRecords(ctx, expected)
+
+	// Update record statuses
+	resultIdx := 0
+	for i := range details.Records.DkimRecords {
+		if resultIdx < len(result.Records) {
+			details.Records.DkimRecords[i].Status = toRecordStatus(result.Records[resultIdx].Status)
+			details.Records.DkimRecords[i].DiscoveredValue = result.Records[resultIdx].DiscoveredValue
+			resultIdx++
+		}
+	}
+
+	if details.Records.SpfRecord != nil && resultIdx < len(result.Records) {
+		details.Records.SpfRecord.Status = toRecordStatus(result.Records[resultIdx].Status)
+		details.Records.SpfRecord.DiscoveredValue = result.Records[resultIdx].DiscoveredValue
+		resultIdx++
+	}
+
+	if details.Records.DmarcRecord != nil && resultIdx < len(result.Records) {
+		details.Records.DmarcRecord.Status = toRecordStatus(result.Records[resultIdx].Status)
+		details.Records.DmarcRecord.DiscoveredValue = result.Records[resultIdx].DiscoveredValue
+		resultIdx++
+	}
+
+	for i := range details.Records.MxRecords {
+		if resultIdx < len(result.Records) {
+			details.Records.MxRecords[i].Status = toRecordStatus(result.Records[resultIdx].Status)
+			details.Records.MxRecords[i].DiscoveredValue = result.Records[resultIdx].DiscoveredValue
+			resultIdx++
+		}
+	}
+
+	for i := range details.Records.MailFromRecords {
+		if resultIdx < len(result.Records) {
+			details.Records.MailFromRecords[i].Status = toRecordStatus(result.Records[resultIdx].Status)
+			details.Records.MailFromRecords[i].DiscoveredValue = result.Records[resultIdx].DiscoveredValue
+			resultIdx++
+		}
+	}
+}
+
+// updateStatusFromRecords updates domain status based on record verification.
+func (s *DomainService) updateStatusFromRecords(d *domain.SendingDomain, details *domain.DomainWithDetails) {
+	if details.Summary.CanSend {
+		if details.Summary.RecordsPending == 0 {
+			d.Status = domain.DomainStatusReady
+		} else {
+			d.Status = domain.DomainStatusDegraded
+		}
+	} else if details.Summary.RecordsConfigured > 0 {
+		d.Status = domain.DomainStatusVerifying
+	} else {
+		d.Status = domain.DomainStatusPending
+	}
+}
+
+// getVerifyMessage returns a human-readable verification result message.
+func (s *DomainService) getVerifyMessage(details *domain.DomainWithDetails) string {
+	if details.Summary.CanSend && details.Summary.RecordsPending == 0 {
+		return "All records verified! Your domain is ready to send emails."
+	}
+	if details.Summary.CanSend {
+		return fmt.Sprintf("Domain verified for sending. %d optional records still pending.", details.Summary.RecordsPending)
+	}
+	if details.Summary.RecordsConfigured > 0 {
+		return fmt.Sprintf("%d of %d records configured. Waiting for remaining records.",
+			details.Summary.RecordsConfigured,
+			details.Summary.RecordsConfigured+details.Summary.RecordsPending)
+	}
+	return "No records configured yet. Add the DNS records below to verify your domain."
+}
+
+// buildDomainWithDetails creates a complete domain response.
+func (s *DomainService) buildDomainWithDetails(d *domain.SendingDomain) *domain.DomainWithDetails {
+	records := s.buildDomainRecords(d)
+	summary := s.buildSummary(d, records)
+
+	return &domain.DomainWithDetails{
+		SendingDomain: d,
+		Summary:       summary,
+		Records:       records,
+	}
+}
+
+// buildSummary creates a human-readable summary.
+func (s *DomainService) buildSummary(d *domain.SendingDomain, records *domain.DomainRecords) *domain.DomainSummary {
+	// Count records
+	pending := 0
+	configured := 0
+
+	countRecord := func(r *domain.DnsRecord) {
+		if r == nil {
+			return
+		}
+		if r.Status == domain.RecordStatusFound {
+			configured++
+		} else {
+			pending++
+		}
+	}
+
+	for _, r := range records.DkimRecords {
+		countRecord(&r)
+	}
+	countRecord(records.SpfRecord)
+	countRecord(records.DmarcRecord)
+	for _, r := range records.MxRecords {
+		countRecord(&r)
+	}
+	for _, r := range records.MailFromRecords {
+		countRecord(&r)
+	}
+
+	canSend := d.VerifiedForSending
+	canReceive := false // TODO: Check MX records
+
+	var message, nextAction string
+	if canSend && pending == 0 {
+		message = "Ready to send emails!"
+		nextAction = "NONE"
+	} else if canSend {
+		message = fmt.Sprintf("Can send emails. %d optional records pending.", pending)
+		nextAction = "NONE"
+	} else if configured > 0 {
+		message = fmt.Sprintf("Waiting for DNS propagation. %d of %d records found.", configured, configured+pending)
+		nextAction = "WAIT"
+	} else {
+		message = fmt.Sprintf("Add %d DNS records to start sending emails.", pending)
+		nextAction = "CONFIGURE_DNS"
+	}
+
+	return &domain.DomainSummary{
+		Message:           message,
+		NextAction:        nextAction,
+		RecordsPending:    pending,
+		RecordsConfigured: configured,
+		CanSend:           canSend,
+		CanReceive:        canReceive,
+	}
+}
+
+// buildDomainRecords creates the DNS records structure.
 func (s *DomainService) buildDomainRecords(d *domain.SendingDomain) *domain.DomainRecords {
 	records := &domain.DomainRecords{
-		Domain:      d.Domain,
-		DkimRecords: s.buildDkimRecords(d),
-		SpfRecord:   s.buildSpfRecord(d),
-		DmarcRecord: s.buildDmarcRecord(d),
-		MxRecords:   s.buildMxInboundRecords(d),
+		DkimRecords:     s.buildDkimRecords(d),
+		SpfRecord:       s.buildSpfRecord(d),
+		DmarcRecord:     s.buildDmarcRecord(d),
+		MxRecords:       s.buildMxInboundRecords(d),
+		MailFromRecords: s.buildMailFromRecords(d),
 	}
-
-	// Add MAIL FROM records if configured
-	if d.MailFromDomain != "" {
-		records.MailFromRecords = s.buildMailFromRecords(d)
-	}
-
-	// Determine status flags
-	records.IsReadyToSend = d.VerifiedForSending
-	records.IsReadyToReceive = len(records.MxRecords) > 0
-	records.IsFullyConfigured = records.IsReadyToSend &&
-		d.DkimStatus == domain.DomainStatusSuccess &&
-		(d.MailFromDomain == "" || d.MailFromStatus == domain.DomainStatusSuccess)
 
 	return records
 }
@@ -319,16 +479,18 @@ func (s *DomainService) buildDkimRecords(d *domain.SendingDomain) []domain.DnsRe
 	}
 
 	records := make([]domain.DnsRecord, len(d.DkimTokens))
-	status := toRecordStatus(d.DkimStatus)
+	status := toRecordStatusFromDomainStatus(d.DkimStatus)
 
 	for i, token := range d.DkimTokens {
+		fullName := fmt.Sprintf("%s._domainkey.%s", token, d.Domain)
 		records[i] = domain.DnsRecord{
-			DnsType:      "CNAME",
-			Name:         fmt.Sprintf("%s._domainkey.%s", token, d.Domain),
+			Type:         "CNAME",
+			Name:         fullName,
 			Value:        fmt.Sprintf("%s.dkim.amazonses.com", token),
 			RecordType:   domain.RecordTypeDKIM,
 			Status:       status,
-			Instructions: "Add this CNAME record to enable DKIM email signing.",
+			NameShort:    fmt.Sprintf("%s._domainkey", token),
+			Instructions: "Add this CNAME record for DKIM email signing.",
 		}
 	}
 
@@ -338,24 +500,26 @@ func (s *DomainService) buildDkimRecords(d *domain.SendingDomain) []domain.DnsRe
 // buildSpfRecord creates the SPF TXT record.
 func (s *DomainService) buildSpfRecord(d *domain.SendingDomain) *domain.DnsRecord {
 	return &domain.DnsRecord{
-		DnsType:      "TXT",
+		Type:         "TXT",
 		Name:         d.Domain,
 		Value:        "v=spf1 include:amazonses.com ~all",
 		RecordType:   domain.RecordTypeSPF,
 		Status:       domain.RecordStatusPending,
-		Instructions: "Add this TXT record to authorize Amazon SES to send emails on your behalf.",
+		NameShort:    "@",
+		Instructions: "Add this TXT record to authorize Amazon SES to send emails.",
 	}
 }
 
-// buildDmarcRecord creates the recommended DMARC TXT record.
+// buildDmarcRecord creates the DMARC TXT record.
 func (s *DomainService) buildDmarcRecord(d *domain.SendingDomain) *domain.DnsRecord {
 	return &domain.DnsRecord{
-		DnsType:      "TXT",
+		Type:         "TXT",
 		Name:         fmt.Sprintf("_dmarc.%s", d.Domain),
 		Value:        fmt.Sprintf("v=DMARC1; p=none; rua=mailto:dmarc@%s", d.Domain),
 		RecordType:   domain.RecordTypeDMARC,
 		Status:       domain.RecordStatusPending,
-		Instructions: "Add this TXT record to enable DMARC policy. Start with p=none for monitoring, then gradually increase to p=quarantine or p=reject.",
+		NameShort:    "_dmarc",
+		Instructions: "Add this TXT record for DMARC policy. Start with p=none, then increase to p=quarantine or p=reject.",
 	}
 }
 
@@ -363,12 +527,13 @@ func (s *DomainService) buildDmarcRecord(d *domain.SendingDomain) *domain.DnsRec
 func (s *DomainService) buildMxInboundRecords(d *domain.SendingDomain) []domain.DnsRecord {
 	return []domain.DnsRecord{
 		{
-			DnsType:      "MX",
+			Type:         "MX",
 			Name:         d.Domain,
 			Value:        fmt.Sprintf("inbound-smtp.%s.amazonaws.com", s.region),
 			Priority:     10,
 			RecordType:   domain.RecordTypeMXInbound,
 			Status:       domain.RecordStatusPending,
+			NameShort:    "@",
 			Instructions: "Add this MX record to receive inbound emails via Amazon SES.",
 		},
 	}
@@ -376,25 +541,34 @@ func (s *DomainService) buildMxInboundRecords(d *domain.SendingDomain) []domain.
 
 // buildMailFromRecords creates MX and SPF records for custom MAIL FROM.
 func (s *DomainService) buildMailFromRecords(d *domain.SendingDomain) []domain.DnsRecord {
-	status := toRecordStatus(d.MailFromStatus)
+	if d.MailFromDomain == "" {
+		return nil
+	}
+
+	status := toRecordStatusFromDomainStatus(d.MailFromStatus)
+
+	// Extract short name (e.g., "mail" from "mail.example.com")
+	shortName := strings.TrimSuffix(d.MailFromDomain, "."+d.Domain)
 
 	return []domain.DnsRecord{
 		{
-			DnsType:      "MX",
+			Type:         "MX",
 			Name:         d.MailFromDomain,
 			Value:        fmt.Sprintf("feedback-smtp.%s.amazonses.com", s.region),
 			Priority:     10,
 			RecordType:   domain.RecordTypeMailFromMX,
 			Status:       status,
-			Instructions: "Add this MX record to your MAIL FROM subdomain for bounce handling.",
+			NameShort:    shortName,
+			Instructions: "Add this MX record for bounce handling.",
 		},
 		{
-			DnsType:      "TXT",
+			Type:         "TXT",
 			Name:         d.MailFromDomain,
 			Value:        "v=spf1 include:amazonses.com ~all",
 			RecordType:   domain.RecordTypeMailFromSPF,
 			Status:       status,
-			Instructions: "Add this SPF record to your MAIL FROM subdomain.",
+			NameShort:    shortName,
+			Instructions: "Add this SPF record for MAIL FROM authentication.",
 		},
 	}
 }
@@ -403,23 +577,37 @@ func (s *DomainService) buildMailFromRecords(d *domain.SendingDomain) []domain.D
 func toDomainStatus(status string) domain.DomainStatus {
 	switch strings.ToUpper(status) {
 	case "SUCCESS":
-		return domain.DomainStatusSuccess
+		return domain.DomainStatusReady
 	case "FAILED":
 		return domain.DomainStatusFailed
 	case "TEMPORARY_FAILURE":
-		return domain.DomainStatusTemporaryFailure
+		return domain.DomainStatusDegraded
 	default:
 		return domain.DomainStatusPending
 	}
 }
 
-// toRecordStatus converts DomainStatus to RecordStatus.
-func toRecordStatus(status domain.DomainStatus) domain.RecordStatus {
+// toRecordStatus converts DNS validation status to RecordStatus.
+func toRecordStatus(status internaldns.RecordStatus) domain.RecordStatus {
 	switch status {
-	case domain.DomainStatusSuccess:
-		return domain.RecordStatusVerified
+	case internaldns.RecordStatusFound:
+		return domain.RecordStatusFound
+	case internaldns.RecordStatusMismatch:
+		return domain.RecordStatusMismatch
+	case internaldns.RecordStatusMissing:
+		return domain.RecordStatusMissing
+	default:
+		return domain.RecordStatusPending
+	}
+}
+
+// toRecordStatusFromDomainStatus converts DomainStatus to RecordStatus.
+func toRecordStatusFromDomainStatus(status domain.DomainStatus) domain.RecordStatus {
+	switch status {
+	case domain.DomainStatusReady:
+		return domain.RecordStatusFound
 	case domain.DomainStatusFailed:
-		return domain.RecordStatusFailed
+		return domain.RecordStatusMissing
 	default:
 		return domain.RecordStatusPending
 	}

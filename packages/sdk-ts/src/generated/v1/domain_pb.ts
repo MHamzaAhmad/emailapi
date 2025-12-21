@@ -13,84 +13,62 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/domain.proto.
  */
 export const file_v1_domain: GenFile = /*@__PURE__*/
-  fileDesc("Cg92MS9kb21haW4ucHJvdG8SC2VtYWlsYXBpLnYxIuICCgZEb21haW4SCgoCaWQYASABKAkSDgoGZG9tYWluGAIgASgJEikKBnN0YXR1cxgDIAEoDjIZLmVtYWlsYXBpLnYxLkRvbWFpblN0YXR1cxIcChR2ZXJpZmllZF9mb3Jfc2VuZGluZxgEIAEoCBIYChBtYWlsX2Zyb21fZG9tYWluGAUgASgJEjMKEG1haWxfZnJvbV9zdGF0dXMYBiABKA4yGS5lbWFpbGFwaS52MS5Eb21haW5TdGF0dXMSDgoGcmVnaW9uGAcgASgJEi4KCmNyZWF0ZWRfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjQKEGxhc3RfdmVyaWZpZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIrsBCglEbnNSZWNvcmQSEAoIZG5zX3R5cGUYASABKAkSDAoEbmFtZRgCIAEoCRINCgV2YWx1ZRgDIAEoCRIQCghwcmlvcml0eRgEIAEoBRIsCgtyZWNvcmRfdHlwZRgFIAEoDjIXLmVtYWlsYXBpLnYxLlJlY29yZFR5cGUSKQoGc3RhdHVzGAYgASgOMhkuZW1haWxhcGkudjEuUmVjb3JkU3RhdHVzEhQKDGluc3RydWN0aW9ucxgHIAEoCSLaAgoNRG9tYWluUmVjb3JkcxIOCgZkb21haW4YASABKAkSLAoMZGtpbV9yZWNvcmRzGAIgAygLMhYuZW1haWxhcGkudjEuRG5zUmVjb3JkEioKCnNwZl9yZWNvcmQYAyABKAsyFi5lbWFpbGFwaS52MS5EbnNSZWNvcmQSLAoMZG1hcmNfcmVjb3JkGAQgASgLMhYuZW1haWxhcGkudjEuRG5zUmVjb3JkEioKCm14X3JlY29yZHMYBSADKAsyFi5lbWFpbGFwaS52MS5EbnNSZWNvcmQSMQoRbWFpbF9mcm9tX3JlY29yZHMYBiADKAsyFi5lbWFpbGFwaS52MS5EbnNSZWNvcmQSGAoQaXNfcmVhZHlfdG9fc2VuZBgHIAEoCBIbChNpc19yZWFkeV90b19yZWNlaXZlGAggASgIEhsKE2lzX2Z1bGx5X2NvbmZpZ3VyZWQYCSABKAgiIgoQQWRkRG9tYWluUmVxdWVzdBIOCgZkb21haW4YASABKAkidgoRQWRkRG9tYWluUmVzcG9uc2USIwoGZG9tYWluGAEgASgLMhMuZW1haWxhcGkudjEuRG9tYWluEisKB3JlY29yZHMYAiABKAsyGi5lbWFpbGFwaS52MS5Eb21haW5SZWNvcmRzEg8KB21lc3NhZ2UYAyABKAkiHgoQR2V0RG9tYWluUmVxdWVzdBIKCgJpZBgBIAEoCSIUChJMaXN0RG9tYWluc1JlcXVlc3QiOAoTTGlzdERvbWFpbnNSZXNwb25zZRIhCgRkYXRhGAEgAygLMhMuZW1haWxhcGkudjEuRG9tYWluIiEKE0RlbGV0ZURvbWFpblJlcXVlc3QSCgoCaWQYASABKAkiJwoURGVsZXRlRG9tYWluUmVzcG9uc2USDwoHbWVzc2FnZRgBIAEoCSIhChNWZXJpZnlEb21haW5SZXF1ZXN0EgoKAmlkGAEgASgJIpYBChRWZXJpZnlEb21haW5SZXNwb25zZRIjCgZkb21haW4YASABKAsyEy5lbWFpbGFwaS52MS5Eb21haW4SFQoNd2FzX3JlZnJlc2hlZBgCIAEoCBIxCg1uZXh0X3JldHJ5X2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIPCgdtZXNzYWdlGAQgASgJIiUKF0dldERvbWFpblJlY29yZHNSZXF1ZXN0EgoKAmlkGAEgASgJIkMKGFNldE1haWxGcm9tRG9tYWluUmVxdWVzdBIKCgJpZBgBIAEoCRIbChNtYWlsX2Zyb21fc3ViZG9tYWluGAIgASgJKqIBCgxEb21haW5TdGF0dXMSHQoZRE9NQUlOX1NUQVRVU19VTlNQRUNJRklFRBAAEhkKFURPTUFJTl9TVEFUVVNfUEVORElORxABEhkKFURPTUFJTl9TVEFUVVNfU1VDQ0VTUxACEhgKFERPTUFJTl9TVEFUVVNfRkFJTEVEEAMSIwofRE9NQUlOX1NUQVRVU19URU1QT1JBUllfRkFJTFVSRRAEKn4KDFJlY29yZFN0YXR1cxIdChlSRUNPUkRfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGQoVUkVDT1JEX1NUQVRVU19QRU5ESU5HEAESGgoWUkVDT1JEX1NUQVRVU19WRVJJRklFRBACEhgKFFJFQ09SRF9TVEFUVVNfRkFJTEVEEAMqxAEKClJlY29yZFR5cGUSGwoXUkVDT1JEX1RZUEVfVU5TUEVDSUZJRUQQABIUChBSRUNPUkRfVFlQRV9ES0lNEAESEwoPUkVDT1JEX1RZUEVfU1BGEAISFQoRUkVDT1JEX1RZUEVfRE1BUkMQAxIaChZSRUNPUkRfVFlQRV9NWF9JTkJPVU5EEAQSHAoYUkVDT1JEX1RZUEVfTUFJTF9GUk9NX01YEAUSHQoZUkVDT1JEX1RZUEVfTUFJTF9GUk9NX1NQRhAGMooGCg1Eb21haW5TZXJ2aWNlEmIKCUFkZERvbWFpbhIdLmVtYWlsYXBpLnYxLkFkZERvbWFpblJlcXVlc3QaHi5lbWFpbGFwaS52MS5BZGREb21haW5SZXNwb25zZSIWgtPkkwIQOgEqIgsvdjEvZG9tYWlucxJZCglHZXREb21haW4SHS5lbWFpbGFwaS52MS5HZXREb21haW5SZXF1ZXN0GhMuZW1haWxhcGkudjEuRG9tYWluIhiC0+STAhISEC92MS9kb21haW5zL3tpZH0SZQoLTGlzdERvbWFpbnMSHy5lbWFpbGFwaS52MS5MaXN0RG9tYWluc1JlcXVlc3QaIC5lbWFpbGFwaS52MS5MaXN0RG9tYWluc1Jlc3BvbnNlIhOC0+STAg0SCy92MS9kb21haW5zEm0KDERlbGV0ZURvbWFpbhIgLmVtYWlsYXBpLnYxLkRlbGV0ZURvbWFpblJlcXVlc3QaIS5lbWFpbGFwaS52MS5EZWxldGVEb21haW5SZXNwb25zZSIYgtPkkwISKhAvdjEvZG9tYWlucy97aWR9EnQKDFZlcmlmeURvbWFpbhIgLmVtYWlsYXBpLnYxLlZlcmlmeURvbWFpblJlcXVlc3QaIS5lbWFpbGFwaS52MS5WZXJpZnlEb21haW5SZXNwb25zZSIfgtPkkwIZIhcvdjEvZG9tYWlucy97aWR9L3ZlcmlmeRJ2ChBHZXREb21haW5SZWNvcmRzEiQuZW1haWxhcGkudjEuR2V0RG9tYWluUmVjb3Jkc1JlcXVlc3QaGi5lbWFpbGFwaS52MS5Eb21haW5SZWNvcmRzIiCC0+STAhoSGC92MS9kb21haW5zL3tpZH0vcmVjb3JkcxJ2ChFTZXRNYWlsRnJvbURvbWFpbhIlLmVtYWlsYXBpLnYxLlNldE1haWxGcm9tRG9tYWluUmVxdWVzdBoTLmVtYWlsYXBpLnYxLkRvbWFpbiIlgtPkkwIfOgEqIhovdjEvZG9tYWlucy97aWR9L21haWwtZnJvbUKZAQoPY29tLmVtYWlsYXBpLnYxQgtEb21haW5Qcm90b1ABWixnaXRodWIuY29tL2VtYWlsYXBpL3Nkay1nby9nZW4vdjE7ZW1haWxhcGl2MaICA0VYWKoCC0VtYWlsYXBpLlYxygILRW1haWxhcGlcVjHiAhdFbWFpbGFwaVxWMVxHUEJNZXRhZGF0YeoCDEVtYWlsYXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations, file_google_protobuf_timestamp]);
+  fileDesc("Cg92MS9kb21haW4ucHJvdG8SC2VtYWlsYXBpLnYxIs4CCgZEb21haW4SCgoCaWQYASABKAkSDgoGZG9tYWluGAIgASgJEikKBnN0YXR1cxgDIAEoDjIZLmVtYWlsYXBpLnYxLkRvbWFpblN0YXR1cxIOCgZyZWdpb24YBCABKAkSLgoKY3JlYXRlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMwoPbGFzdF9jaGVja2VkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCgdzdW1tYXJ5GAggASgLMhouZW1haWxhcGkudjEuRG9tYWluU3VtbWFyeRIrCgdyZWNvcmRzGAkgASgLMhouZW1haWxhcGkudjEuRG9tYWluUmVjb3JkcyKRAQoNRG9tYWluU3VtbWFyeRIPCgdtZXNzYWdlGAEgASgJEhMKC25leHRfYWN0aW9uGAIgASgJEhcKD3JlY29yZHNfcGVuZGluZxgDIAEoBRIaChJyZWNvcmRzX2NvbmZpZ3VyZWQYBCABKAUSEAoIY2FuX3NlbmQYBSABKAgSEwoLY2FuX3JlY2VpdmUYBiABKAgi9gEKDURvbWFpblJlY29yZHMSLAoMZGtpbV9yZWNvcmRzGAEgAygLMhYuZW1haWxhcGkudjEuRG5zUmVjb3JkEioKCnNwZl9yZWNvcmQYAiABKAsyFi5lbWFpbGFwaS52MS5EbnNSZWNvcmQSLAoMZG1hcmNfcmVjb3JkGAMgASgLMhYuZW1haWxhcGkudjEuRG5zUmVjb3JkEioKCm14X3JlY29yZHMYBCADKAsyFi5lbWFpbGFwaS52MS5EbnNSZWNvcmQSMQoRbWFpbF9mcm9tX3JlY29yZHMYBSADKAsyFi5lbWFpbGFwaS52MS5EbnNSZWNvcmQi5QEKCURuc1JlY29yZBIMCgR0eXBlGAEgASgJEgwKBG5hbWUYAiABKAkSDQoFdmFsdWUYAyABKAkSEAoIcHJpb3JpdHkYBCABKAUSLAoLcmVjb3JkX3R5cGUYBSABKA4yFy5lbWFpbGFwaS52MS5SZWNvcmRUeXBlEikKBnN0YXR1cxgGIAEoDjIZLmVtYWlsYXBpLnYxLlJlY29yZFN0YXR1cxISCgpuYW1lX3Nob3J0GAcgASgJEhgKEGRpc2NvdmVyZWRfdmFsdWUYCCABKAkSFAoMaW5zdHJ1Y3Rpb25zGAkgASgJIiIKEEFkZERvbWFpblJlcXVlc3QSDgoGZG9tYWluGAEgASgJIkkKEUFkZERvbWFpblJlc3BvbnNlEiMKBmRvbWFpbhgBIAEoCzITLmVtYWlsYXBpLnYxLkRvbWFpbhIPCgdtZXNzYWdlGAIgASgJIh4KEEdldERvbWFpblJlcXVlc3QSCgoCaWQYASABKAkiOAoRR2V0RG9tYWluUmVzcG9uc2USIwoGZG9tYWluGAEgASgLMhMuZW1haWxhcGkudjEuRG9tYWluIhQKEkxpc3REb21haW5zUmVxdWVzdCI4ChNMaXN0RG9tYWluc1Jlc3BvbnNlEiEKBGRhdGEYASADKAsyEy5lbWFpbGFwaS52MS5Eb21haW4iIQoTRGVsZXRlRG9tYWluUmVxdWVzdBIKCgJpZBgBIAEoCSInChREZWxldGVEb21haW5SZXNwb25zZRIPCgdtZXNzYWdlGAEgASgJIiEKE1ZlcmlmeURvbWFpblJlcXVlc3QSCgoCaWQYASABKAkilgEKFFZlcmlmeURvbWFpblJlc3BvbnNlEiMKBmRvbWFpbhgBIAEoCzITLmVtYWlsYXBpLnYxLkRvbWFpbhIVCg13YXNfcmVmcmVzaGVkGAIgASgIEjEKDW5leHRfcmV0cnlfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg8KB21lc3NhZ2UYBCABKAkqtAEKDERvbWFpblN0YXR1cxIdChlET01BSU5fU1RBVFVTX1VOU1BFQ0lGSUVEEAASGQoVRE9NQUlOX1NUQVRVU19QRU5ESU5HEAESGwoXRE9NQUlOX1NUQVRVU19WRVJJRllJTkcQAhIXChNET01BSU5fU1RBVFVTX1JFQURZEAMSGgoWRE9NQUlOX1NUQVRVU19ERUdSQURFRBAEEhgKFERPTUFJTl9TVEFUVVNfRkFJTEVEEAUqmAEKDFJlY29yZFN0YXR1cxIdChlSRUNPUkRfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGQoVUkVDT1JEX1NUQVRVU19QRU5ESU5HEAESFwoTUkVDT1JEX1NUQVRVU19GT1VORBACEhoKFlJFQ09SRF9TVEFUVVNfTUlTTUFUQ0gQAxIZChVSRUNPUkRfU1RBVFVTX01JU1NJTkcQBCrEAQoKUmVjb3JkVHlwZRIbChdSRUNPUkRfVFlQRV9VTlNQRUNJRklFRBAAEhQKEFJFQ09SRF9UWVBFX0RLSU0QARITCg9SRUNPUkRfVFlQRV9TUEYQAhIVChFSRUNPUkRfVFlQRV9ETUFSQxADEhoKFlJFQ09SRF9UWVBFX01YX0lOQk9VTkQQBBIcChhSRUNPUkRfVFlQRV9NQUlMX0ZST01fTVgQBRIdChlSRUNPUkRfVFlQRV9NQUlMX0ZST01fU1BGEAYypQQKDURvbWFpblNlcnZpY2USYgoJQWRkRG9tYWluEh0uZW1haWxhcGkudjEuQWRkRG9tYWluUmVxdWVzdBoeLmVtYWlsYXBpLnYxLkFkZERvbWFpblJlc3BvbnNlIhaC0+STAhA6ASoiCy92MS9kb21haW5zEmQKCUdldERvbWFpbhIdLmVtYWlsYXBpLnYxLkdldERvbWFpblJlcXVlc3QaHi5lbWFpbGFwaS52MS5HZXREb21haW5SZXNwb25zZSIYgtPkkwISEhAvdjEvZG9tYWlucy97aWR9EmUKC0xpc3REb21haW5zEh8uZW1haWxhcGkudjEuTGlzdERvbWFpbnNSZXF1ZXN0GiAuZW1haWxhcGkudjEuTGlzdERvbWFpbnNSZXNwb25zZSITgtPkkwINEgsvdjEvZG9tYWlucxJtCgxEZWxldGVEb21haW4SIC5lbWFpbGFwaS52MS5EZWxldGVEb21haW5SZXF1ZXN0GiEuZW1haWxhcGkudjEuRGVsZXRlRG9tYWluUmVzcG9uc2UiGILT5JMCEioQL3YxL2RvbWFpbnMve2lkfRJ0CgxWZXJpZnlEb21haW4SIC5lbWFpbGFwaS52MS5WZXJpZnlEb21haW5SZXF1ZXN0GiEuZW1haWxhcGkudjEuVmVyaWZ5RG9tYWluUmVzcG9uc2UiH4LT5JMCGSIXL3YxL2RvbWFpbnMve2lkfS92ZXJpZnlCmQEKD2NvbS5lbWFpbGFwaS52MUILRG9tYWluUHJvdG9QAVosZ2l0aHViLmNvbS9lbWFpbGFwaS9zZGstZ28vZ2VuL3YxO2VtYWlsYXBpdjGiAgNFWFiqAgtFbWFpbGFwaS5WMcoCC0VtYWlsYXBpXFYx4gIXRW1haWxhcGlcVjFcR1BCTWV0YWRhdGHqAgxFbWFpbGFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations, file_google_protobuf_timestamp]);
 
 /**
- * Domain represents a verified sending domain.
+ * Domain represents a sending domain with all its configuration.
  *
  * @generated from message emailapi.v1.Domain
  */
 export type Domain = Message<"emailapi.v1.Domain"> & {
   /**
-   * Unique identifier for the domain.
-   *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
-   * The domain name (e.g., "example.com").
-   *
    * @generated from field: string domain = 2;
    */
   domain: string;
 
   /**
-   * Current verification status.
-   *
    * @generated from field: emailapi.v1.DomainStatus status = 3;
    */
   status: DomainStatus;
 
   /**
-   * Whether the domain is verified and ready to send emails.
-   *
-   * @generated from field: bool verified_for_sending = 4;
-   */
-  verifiedForSending: boolean;
-
-  /**
-   * Custom MAIL FROM subdomain (e.g., "mail.example.com").
-   * Empty if not configured.
-   *
-   * @generated from field: string mail_from_domain = 5;
-   */
-  mailFromDomain: string;
-
-  /**
-   * MAIL FROM configuration status.
-   *
-   * @generated from field: emailapi.v1.DomainStatus mail_from_status = 6;
-   */
-  mailFromStatus: DomainStatus;
-
-  /**
-   * Region where the domain is registered in SES.
-   *
-   * @generated from field: string region = 7;
+   * @generated from field: string region = 4;
    */
   region: string;
 
   /**
-   * Time when the domain was added.
-   *
-   * @generated from field: google.protobuf.Timestamp created_at = 8;
+   * @generated from field: google.protobuf.Timestamp created_at = 5;
    */
   createdAt?: Timestamp;
 
   /**
-   * Time when the domain was last updated.
-   *
-   * @generated from field: google.protobuf.Timestamp updated_at = 9;
+   * @generated from field: google.protobuf.Timestamp updated_at = 6;
    */
   updatedAt?: Timestamp;
 
   /**
-   * Time when verification status was last refreshed from SES.
-   *
-   * @generated from field: google.protobuf.Timestamp last_verified_at = 10;
+   * @generated from field: google.protobuf.Timestamp last_checked_at = 7;
    */
-  lastVerifiedAt?: Timestamp;
+  lastCheckedAt?: Timestamp;
+
+  /**
+   * Human-readable summary for lazy users
+   *
+   * @generated from field: emailapi.v1.DomainSummary summary = 8;
+   */
+  summary?: DomainSummary;
+
+  /**
+   * All DNS records needed
+   *
+   * @generated from field: emailapi.v1.DomainRecords records = 9;
+   */
+  records?: DomainRecords;
 };
 
 /**
@@ -101,137 +79,85 @@ export const DomainSchema: GenMessage<Domain> = /*@__PURE__*/
   messageDesc(file_v1_domain, 0);
 
 /**
- * DnsRecord represents a single DNS record that needs to be configured.
+ * DomainSummary provides human-readable status for lazy users.
  *
- * @generated from message emailapi.v1.DnsRecord
+ * @generated from message emailapi.v1.DomainSummary
  */
-export type DnsRecord = Message<"emailapi.v1.DnsRecord"> & {
+export type DomainSummary = Message<"emailapi.v1.DomainSummary"> & {
   /**
-   * Type of DNS record (e.g., CNAME, TXT, MX).
+   * e.g., "Add 3 DNS records to start sending" or "Ready to send emails!"
    *
-   * @generated from field: string dns_type = 1;
+   * @generated from field: string message = 1;
    */
-  dnsType: string;
+  message: string;
 
   /**
-   * Record name/host (e.g., "selector1._domainkey.example.com").
+   * What the user should do next: CONFIGURE_DNS, WAIT, NONE
    *
-   * @generated from field: string name = 2;
+   * @generated from field: string next_action = 2;
    */
-  name: string;
+  nextAction: string;
 
   /**
-   * Record value to set.
+   * Quick stats
    *
-   * @generated from field: string value = 3;
+   * @generated from field: int32 records_pending = 3;
    */
-  value: string;
+  recordsPending: number;
 
   /**
-   * Priority for MX records. Ignored for other record types.
-   *
-   * @generated from field: int32 priority = 4;
+   * @generated from field: int32 records_configured = 4;
    */
-  priority: number;
+  recordsConfigured: number;
 
   /**
-   * Purpose of this record.
-   *
-   * @generated from field: emailapi.v1.RecordType record_type = 5;
+   * @generated from field: bool can_send = 5;
    */
-  recordType: RecordType;
+  canSend: boolean;
 
   /**
-   * Current verification status of this record.
-   *
-   * @generated from field: emailapi.v1.RecordStatus status = 6;
+   * @generated from field: bool can_receive = 6;
    */
-  status: RecordStatus;
-
-  /**
-   * Human-readable instructions for configuring this record.
-   *
-   * @generated from field: string instructions = 7;
-   */
-  instructions: string;
+  canReceive: boolean;
 };
 
 /**
- * Describes the message emailapi.v1.DnsRecord.
- * Use `create(DnsRecordSchema)` to create a new message.
+ * Describes the message emailapi.v1.DomainSummary.
+ * Use `create(DomainSummarySchema)` to create a new message.
  */
-export const DnsRecordSchema: GenMessage<DnsRecord> = /*@__PURE__*/
+export const DomainSummarySchema: GenMessage<DomainSummary> = /*@__PURE__*/
   messageDesc(file_v1_domain, 1);
 
 /**
- * DomainRecords contains all DNS records needed for email deliverability.
+ * DomainRecords contains all DNS records needed for email.
  *
  * @generated from message emailapi.v1.DomainRecords
  */
 export type DomainRecords = Message<"emailapi.v1.DomainRecords"> & {
   /**
-   * The domain these records belong to.
-   *
-   * @generated from field: string domain = 1;
-   */
-  domain: string;
-
-  /**
-   * DKIM records (3 CNAME records for email signing).
-   *
-   * @generated from field: repeated emailapi.v1.DnsRecord dkim_records = 2;
+   * @generated from field: repeated emailapi.v1.DnsRecord dkim_records = 1;
    */
   dkimRecords: DnsRecord[];
 
   /**
-   * SPF record (TXT record authorizing SES).
-   *
-   * @generated from field: emailapi.v1.DnsRecord spf_record = 3;
+   * @generated from field: emailapi.v1.DnsRecord spf_record = 2;
    */
   spfRecord?: DnsRecord;
 
   /**
-   * DMARC record (TXT record for authentication policy).
-   *
-   * @generated from field: emailapi.v1.DnsRecord dmarc_record = 4;
+   * @generated from field: emailapi.v1.DnsRecord dmarc_record = 3;
    */
   dmarcRecord?: DnsRecord;
 
   /**
-   * MX records for inbound email.
-   *
-   * @generated from field: repeated emailapi.v1.DnsRecord mx_records = 5;
+   * @generated from field: repeated emailapi.v1.DnsRecord mx_records = 4;
    */
   mxRecords: DnsRecord[];
 
   /**
-   * MAIL FROM records (MX + SPF for custom return path).
-   * Empty if MAIL FROM is not configured.
-   *
-   * @generated from field: repeated emailapi.v1.DnsRecord mail_from_records = 6;
+   * @generated from field: repeated emailapi.v1.DnsRecord mail_from_records = 5;
    */
   mailFromRecords: DnsRecord[];
-
-  /**
-   * True when DKIM is verified and domain can send emails.
-   *
-   * @generated from field: bool is_ready_to_send = 7;
-   */
-  isReadyToSend: boolean;
-
-  /**
-   * True when MX records are configured for receiving emails.
-   *
-   * @generated from field: bool is_ready_to_receive = 8;
-   */
-  isReadyToReceive: boolean;
-
-  /**
-   * True when all records are verified (DKIM, SPF, DMARC, MAIL FROM).
-   *
-   * @generated from field: bool is_fully_configured = 9;
-   */
-  isFullyConfigured: boolean;
 };
 
 /**
@@ -242,14 +168,88 @@ export const DomainRecordsSchema: GenMessage<DomainRecords> = /*@__PURE__*/
   messageDesc(file_v1_domain, 2);
 
 /**
- * AddDomainRequest is the request to add a new domain.
+ * DnsRecord represents a single DNS record to configure.
  *
+ * @generated from message emailapi.v1.DnsRecord
+ */
+export type DnsRecord = Message<"emailapi.v1.DnsRecord"> & {
+  /**
+   * DNS record type: CNAME, TXT, MX
+   *
+   * @generated from field: string type = 1;
+   */
+  type: string;
+
+  /**
+   * Full record name (e.g., "abc._domainkey.example.com")
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * Record value to set
+   *
+   * @generated from field: string value = 3;
+   */
+  value: string;
+
+  /**
+   * Priority (MX records only)
+   *
+   * @generated from field: int32 priority = 4;
+   */
+  priority: number;
+
+  /**
+   * Purpose of this record
+   *
+   * @generated from field: emailapi.v1.RecordType record_type = 5;
+   */
+  recordType: RecordType;
+
+  /**
+   * Current status
+   *
+   * @generated from field: emailapi.v1.RecordStatus status = 6;
+   */
+  status: RecordStatus;
+
+  /**
+   * Short name for DNS providers that want just the subdomain (e.g., "abc._domainkey")
+   *
+   * @generated from field: string name_short = 7;
+   */
+  nameShort: string;
+
+  /**
+   * What we found in DNS (after verification)
+   *
+   * @generated from field: string discovered_value = 8;
+   */
+  discoveredValue: string;
+
+  /**
+   * Human-readable instructions
+   *
+   * @generated from field: string instructions = 9;
+   */
+  instructions: string;
+};
+
+/**
+ * Describes the message emailapi.v1.DnsRecord.
+ * Use `create(DnsRecordSchema)` to create a new message.
+ */
+export const DnsRecordSchema: GenMessage<DnsRecord> = /*@__PURE__*/
+  messageDesc(file_v1_domain, 3);
+
+/**
  * @generated from message emailapi.v1.AddDomainRequest
  */
 export type AddDomainRequest = Message<"emailapi.v1.AddDomainRequest"> & {
   /**
-   * Domain name to add (e.g., "example.com").
-   * Do not include subdomains - use the root domain.
+   * Domain name to add (e.g., "example.com")
    *
    * @generated from field: string domain = 1;
    */
@@ -261,32 +261,19 @@ export type AddDomainRequest = Message<"emailapi.v1.AddDomainRequest"> & {
  * Use `create(AddDomainRequestSchema)` to create a new message.
  */
 export const AddDomainRequestSchema: GenMessage<AddDomainRequest> = /*@__PURE__*/
-  messageDesc(file_v1_domain, 3);
+  messageDesc(file_v1_domain, 4);
 
 /**
- * AddDomainResponse is returned after adding a domain.
- *
  * @generated from message emailapi.v1.AddDomainResponse
  */
 export type AddDomainResponse = Message<"emailapi.v1.AddDomainResponse"> & {
   /**
-   * The newly created domain.
-   *
    * @generated from field: emailapi.v1.Domain domain = 1;
    */
   domain?: Domain;
 
   /**
-   * All DNS records that need to be configured.
-   *
-   * @generated from field: emailapi.v1.DomainRecords records = 2;
-   */
-  records?: DomainRecords;
-
-  /**
-   * Human-readable next steps message.
-   *
-   * @generated from field: string message = 3;
+   * @generated from field: string message = 2;
    */
   message: string;
 };
@@ -296,17 +283,13 @@ export type AddDomainResponse = Message<"emailapi.v1.AddDomainResponse"> & {
  * Use `create(AddDomainResponseSchema)` to create a new message.
  */
 export const AddDomainResponseSchema: GenMessage<AddDomainResponse> = /*@__PURE__*/
-  messageDesc(file_v1_domain, 4);
+  messageDesc(file_v1_domain, 5);
 
 /**
- * GetDomainRequest identifies the domain to retrieve.
- *
  * @generated from message emailapi.v1.GetDomainRequest
  */
 export type GetDomainRequest = Message<"emailapi.v1.GetDomainRequest"> & {
   /**
-   * ID of the domain to retrieve.
-   *
    * @generated from field: string id = 1;
    */
   id: string;
@@ -317,11 +300,26 @@ export type GetDomainRequest = Message<"emailapi.v1.GetDomainRequest"> & {
  * Use `create(GetDomainRequestSchema)` to create a new message.
  */
 export const GetDomainRequestSchema: GenMessage<GetDomainRequest> = /*@__PURE__*/
-  messageDesc(file_v1_domain, 5);
+  messageDesc(file_v1_domain, 6);
 
 /**
- * ListDomainsRequest is the request to list all domains.
- *
+ * @generated from message emailapi.v1.GetDomainResponse
+ */
+export type GetDomainResponse = Message<"emailapi.v1.GetDomainResponse"> & {
+  /**
+   * @generated from field: emailapi.v1.Domain domain = 1;
+   */
+  domain?: Domain;
+};
+
+/**
+ * Describes the message emailapi.v1.GetDomainResponse.
+ * Use `create(GetDomainResponseSchema)` to create a new message.
+ */
+export const GetDomainResponseSchema: GenMessage<GetDomainResponse> = /*@__PURE__*/
+  messageDesc(file_v1_domain, 7);
+
+/**
  * @generated from message emailapi.v1.ListDomainsRequest
  */
 export type ListDomainsRequest = Message<"emailapi.v1.ListDomainsRequest"> & {
@@ -332,17 +330,13 @@ export type ListDomainsRequest = Message<"emailapi.v1.ListDomainsRequest"> & {
  * Use `create(ListDomainsRequestSchema)` to create a new message.
  */
 export const ListDomainsRequestSchema: GenMessage<ListDomainsRequest> = /*@__PURE__*/
-  messageDesc(file_v1_domain, 6);
+  messageDesc(file_v1_domain, 8);
 
 /**
- * ListDomainsResponse contains all domains for the user.
- *
  * @generated from message emailapi.v1.ListDomainsResponse
  */
 export type ListDomainsResponse = Message<"emailapi.v1.ListDomainsResponse"> & {
   /**
-   * List of domains.
-   *
    * @generated from field: repeated emailapi.v1.Domain data = 1;
    */
   data: Domain[];
@@ -353,17 +347,13 @@ export type ListDomainsResponse = Message<"emailapi.v1.ListDomainsResponse"> & {
  * Use `create(ListDomainsResponseSchema)` to create a new message.
  */
 export const ListDomainsResponseSchema: GenMessage<ListDomainsResponse> = /*@__PURE__*/
-  messageDesc(file_v1_domain, 7);
+  messageDesc(file_v1_domain, 9);
 
 /**
- * DeleteDomainRequest identifies the domain to delete.
- *
  * @generated from message emailapi.v1.DeleteDomainRequest
  */
 export type DeleteDomainRequest = Message<"emailapi.v1.DeleteDomainRequest"> & {
   /**
-   * ID of the domain to delete.
-   *
    * @generated from field: string id = 1;
    */
   id: string;
@@ -374,17 +364,13 @@ export type DeleteDomainRequest = Message<"emailapi.v1.DeleteDomainRequest"> & {
  * Use `create(DeleteDomainRequestSchema)` to create a new message.
  */
 export const DeleteDomainRequestSchema: GenMessage<DeleteDomainRequest> = /*@__PURE__*/
-  messageDesc(file_v1_domain, 8);
+  messageDesc(file_v1_domain, 10);
 
 /**
- * DeleteDomainResponse is returned after deleting a domain.
- *
  * @generated from message emailapi.v1.DeleteDomainResponse
  */
 export type DeleteDomainResponse = Message<"emailapi.v1.DeleteDomainResponse"> & {
   /**
-   * Human-readable confirmation message.
-   *
    * @generated from field: string message = 1;
    */
   message: string;
@@ -395,17 +381,13 @@ export type DeleteDomainResponse = Message<"emailapi.v1.DeleteDomainResponse"> &
  * Use `create(DeleteDomainResponseSchema)` to create a new message.
  */
 export const DeleteDomainResponseSchema: GenMessage<DeleteDomainResponse> = /*@__PURE__*/
-  messageDesc(file_v1_domain, 9);
+  messageDesc(file_v1_domain, 11);
 
 /**
- * VerifyDomainRequest is the request to verify a domain.
- *
  * @generated from message emailapi.v1.VerifyDomainRequest
  */
 export type VerifyDomainRequest = Message<"emailapi.v1.VerifyDomainRequest"> & {
   /**
-   * ID of the domain to verify.
-   *
    * @generated from field: string id = 1;
    */
   id: string;
@@ -416,38 +398,32 @@ export type VerifyDomainRequest = Message<"emailapi.v1.VerifyDomainRequest"> & {
  * Use `create(VerifyDomainRequestSchema)` to create a new message.
  */
 export const VerifyDomainRequestSchema: GenMessage<VerifyDomainRequest> = /*@__PURE__*/
-  messageDesc(file_v1_domain, 10);
+  messageDesc(file_v1_domain, 12);
 
 /**
- * VerifyDomainResponse contains the verification result.
- *
  * @generated from message emailapi.v1.VerifyDomainResponse
  */
 export type VerifyDomainResponse = Message<"emailapi.v1.VerifyDomainResponse"> & {
   /**
-   * The domain with updated verification status.
-   *
    * @generated from field: emailapi.v1.Domain domain = 1;
    */
   domain?: Domain;
 
   /**
-   * True if the status was actually refreshed from SES, false if cached data was returned.
+   * True if we actually checked (false if rate-limited)
    *
    * @generated from field: bool was_refreshed = 2;
    */
   wasRefreshed: boolean;
 
   /**
-   * If rate-limited, when the next verification attempt is allowed.
+   * When next check is allowed (if rate-limited)
    *
    * @generated from field: google.protobuf.Timestamp next_retry_at = 3;
    */
   nextRetryAt?: Timestamp;
 
   /**
-   * Human-readable message about the verification result.
-   *
    * @generated from field: string message = 4;
    */
   message: string;
@@ -458,98 +434,54 @@ export type VerifyDomainResponse = Message<"emailapi.v1.VerifyDomainResponse"> &
  * Use `create(VerifyDomainResponseSchema)` to create a new message.
  */
 export const VerifyDomainResponseSchema: GenMessage<VerifyDomainResponse> = /*@__PURE__*/
-  messageDesc(file_v1_domain, 11);
-
-/**
- * GetDomainRecordsRequest identifies the domain to get records for.
- *
- * @generated from message emailapi.v1.GetDomainRecordsRequest
- */
-export type GetDomainRecordsRequest = Message<"emailapi.v1.GetDomainRecordsRequest"> & {
-  /**
-   * ID of the domain.
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
-
-/**
- * Describes the message emailapi.v1.GetDomainRecordsRequest.
- * Use `create(GetDomainRecordsRequestSchema)` to create a new message.
- */
-export const GetDomainRecordsRequestSchema: GenMessage<GetDomainRecordsRequest> = /*@__PURE__*/
-  messageDesc(file_v1_domain, 12);
-
-/**
- * SetMailFromDomainRequest configures a custom MAIL FROM domain.
- *
- * @generated from message emailapi.v1.SetMailFromDomainRequest
- */
-export type SetMailFromDomainRequest = Message<"emailapi.v1.SetMailFromDomainRequest"> & {
-  /**
-   * ID of the domain to configure.
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-
-  /**
-   * Subdomain to use for MAIL FROM (e.g., "mail" for mail.example.com).
-   * Must be a subdomain of the verified domain.
-   *
-   * @generated from field: string mail_from_subdomain = 2;
-   */
-  mailFromSubdomain: string;
-};
-
-/**
- * Describes the message emailapi.v1.SetMailFromDomainRequest.
- * Use `create(SetMailFromDomainRequestSchema)` to create a new message.
- */
-export const SetMailFromDomainRequestSchema: GenMessage<SetMailFromDomainRequest> = /*@__PURE__*/
   messageDesc(file_v1_domain, 13);
 
 /**
- * DomainStatus represents the verification status of a domain.
+ * DomainStatus represents the overall status of a domain.
+ * Use in code: if (domain.status === DomainStatus.READY)
  *
  * @generated from enum emailapi.v1.DomainStatus
  */
 export enum DomainStatus {
   /**
-   * Default value, should not be used.
-   *
    * @generated from enum value: DOMAIN_STATUS_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * Domain is pending verification. Configure DNS records and call VerifyDomain.
+   * Just added, waiting for DNS configuration
    *
    * @generated from enum value: DOMAIN_STATUS_PENDING = 1;
    */
   PENDING = 1,
 
   /**
-   * Domain has been successfully verified and is ready for sending.
+   * DNS check in progress
    *
-   * @generated from enum value: DOMAIN_STATUS_SUCCESS = 2;
+   * @generated from enum value: DOMAIN_STATUS_VERIFYING = 2;
    */
-  SUCCESS = 2,
+  VERIFYING = 2,
 
   /**
-   * Domain verification failed. Check DNS configuration and try again.
+   * Ready to send emails!
    *
-   * @generated from enum value: DOMAIN_STATUS_FAILED = 3;
+   * @generated from enum value: DOMAIN_STATUS_READY = 3;
    */
-  FAILED = 3,
+  READY = 3,
 
   /**
-   * Temporary verification failure. Will be retried automatically.
+   * Works but missing optional records (SPF, DMARC, MAIL FROM)
    *
-   * @generated from enum value: DOMAIN_STATUS_TEMPORARY_FAILURE = 4;
+   * @generated from enum value: DOMAIN_STATUS_DEGRADED = 4;
    */
-  TEMPORARY_FAILURE = 4,
+  DEGRADED = 4,
+
+  /**
+   * Cannot send, action required
+   *
+   * @generated from enum value: DOMAIN_STATUS_FAILED = 5;
+   */
+  FAILED = 5,
 }
 
 /**
@@ -559,38 +491,44 @@ export const DomainStatusSchema: GenEnum<DomainStatus> = /*@__PURE__*/
   enumDesc(file_v1_domain, 0);
 
 /**
- * RecordStatus represents the verification status of an individual DNS record.
+ * RecordStatus represents the status of a single DNS record.
+ * Use in code: if (record.status === RecordStatus.FOUND)
  *
  * @generated from enum emailapi.v1.RecordStatus
  */
 export enum RecordStatus {
   /**
-   * Default value, should not be used.
-   *
    * @generated from enum value: RECORD_STATUS_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * Record has not been verified yet.
+   * Not configured yet
    *
    * @generated from enum value: RECORD_STATUS_PENDING = 1;
    */
   PENDING = 1,
 
   /**
-   * Record has been verified successfully.
+   * Found in DNS with correct value ✓
    *
-   * @generated from enum value: RECORD_STATUS_VERIFIED = 2;
+   * @generated from enum value: RECORD_STATUS_FOUND = 2;
    */
-  VERIFIED = 2,
+  FOUND = 2,
 
   /**
-   * Record verification failed.
+   * Found but wrong value
    *
-   * @generated from enum value: RECORD_STATUS_FAILED = 3;
+   * @generated from enum value: RECORD_STATUS_MISMATCH = 3;
    */
-  FAILED = 3,
+  MISMATCH = 3,
+
+  /**
+   * Not found in DNS
+   *
+   * @generated from enum value: RECORD_STATUS_MISSING = 4;
+   */
+  MISSING = 4,
 }
 
 /**
@@ -600,56 +538,42 @@ export const RecordStatusSchema: GenEnum<RecordStatus> = /*@__PURE__*/
   enumDesc(file_v1_domain, 1);
 
 /**
- * RecordType identifies the type and purpose of a DNS record.
+ * RecordType identifies the purpose of a DNS record.
  *
  * @generated from enum emailapi.v1.RecordType
  */
 export enum RecordType {
   /**
-   * Default value, should not be used.
-   *
    * @generated from enum value: RECORD_TYPE_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * DKIM record for email signing. There are 3 CNAME records.
-   *
    * @generated from enum value: RECORD_TYPE_DKIM = 1;
    */
   DKIM = 1,
 
   /**
-   * SPF record authorizing SES to send emails.
-   *
    * @generated from enum value: RECORD_TYPE_SPF = 2;
    */
   SPF = 2,
 
   /**
-   * DMARC record for authentication policy.
-   *
    * @generated from enum value: RECORD_TYPE_DMARC = 3;
    */
   DMARC = 3,
 
   /**
-   * MX record for receiving inbound emails.
-   *
    * @generated from enum value: RECORD_TYPE_MX_INBOUND = 4;
    */
   MX_INBOUND = 4,
 
   /**
-   * MX record for custom MAIL FROM domain.
-   *
    * @generated from enum value: RECORD_TYPE_MAIL_FROM_MX = 5;
    */
   MAIL_FROM_MX = 5,
 
   /**
-   * SPF record for custom MAIL FROM domain.
-   *
    * @generated from enum value: RECORD_TYPE_MAIL_FROM_SPF = 6;
    */
   MAIL_FROM_SPF = 6,
@@ -663,25 +587,19 @@ export const RecordTypeSchema: GenEnum<RecordType> = /*@__PURE__*/
 
 /**
  * =============================================================================
- * DomainService - Manage sending domains for email delivery
+ * DomainService - Simple domain management for email sending
  * =============================================================================
  *
- * This service handles domain verification with AWS SES. To send emails from
- * your domain, you need to:
- *   1. Add your domain using AddDomain
- *   2. Configure the DNS records returned by GetDomainRecords
- *   3. Call VerifyDomain to check if DNS propagation is complete
- *
- * For best deliverability, configure all records: DKIM, SPF, DMARC, and MAIL FROM.
+ * Add your domain, configure DNS records, and start sending emails.
+ * MAIL FROM is auto-configured for best deliverability.
  *
  * @generated from service emailapi.v1.DomainService
  */
 export const DomainService: GenService<{
   /**
-   * AddDomain registers a new sending domain with AWS SES.
-   *
-   * After adding, use GetDomainRecords to retrieve DNS records you need to
-   * configure. The domain starts in PENDING status until DNS is verified.
+   * AddDomain registers a new sending domain.
+   * Returns everything you need: domain info, DNS records, and next steps.
+   * MAIL FROM (mail.yourdomain.com) is auto-configured.
    *
    * @generated from rpc emailapi.v1.DomainService.AddDomain
    */
@@ -691,17 +609,18 @@ export const DomainService: GenService<{
     output: typeof AddDomainResponseSchema;
   },
   /**
-   * GetDomain retrieves a domain by its ID.
+   * GetDomain retrieves a domain with its configuration and status.
+   * Automatically refreshes from SES if data is stale (>5 min).
    *
    * @generated from rpc emailapi.v1.DomainService.GetDomain
    */
   getDomain: {
     methodKind: "unary";
     input: typeof GetDomainRequestSchema;
-    output: typeof DomainSchema;
+    output: typeof GetDomainResponseSchema;
   },
   /**
-   * ListDomains retrieves all domains for the authenticated user.
+   * ListDomains retrieves all domains with their status.
    *
    * @generated from rpc emailapi.v1.DomainService.ListDomains
    */
@@ -711,10 +630,7 @@ export const DomainService: GenService<{
     output: typeof ListDomainsResponseSchema;
   },
   /**
-   * DeleteDomain removes a domain from your account and AWS SES.
-   *
-   * This action is irreversible. You will need to re-add and re-verify the
-   * domain if you want to use it again.
+   * DeleteDomain removes a domain from your account.
    *
    * @generated from rpc emailapi.v1.DomainService.DeleteDomain
    */
@@ -724,12 +640,8 @@ export const DomainService: GenService<{
     output: typeof DeleteDomainResponseSchema;
   },
   /**
-   * VerifyDomain refreshes verification status from AWS SES.
-   *
-   * Call this after configuring your DNS records to check if they have
-   * propagated and been verified by AWS. DNS propagation can take up to 72 hours.
-   * This endpoint is rate-limited to prevent SES API abuse. If called too
-   * frequently, it will return cached data with was_refreshed=false.
+   * VerifyDomain forces a fresh check of DNS records and SES status.
+   * Rate-limited to 30s between calls. Use after configuring DNS.
    *
    * @generated from rpc emailapi.v1.DomainService.VerifyDomain
    */
@@ -737,41 +649,6 @@ export const DomainService: GenService<{
     methodKind: "unary";
     input: typeof VerifyDomainRequestSchema;
     output: typeof VerifyDomainResponseSchema;
-  },
-  /**
-   * GetDomainRecords returns all DNS records needed for full email deliverability.
-   *
-   * This includes:
-   *   - DKIM records (3 CNAMEs) - Required for email signing/authentication
-   *   - SPF record (TXT) - Authorizes SES to send on your behalf
-   *   - DMARC record (TXT) - Policy for handling authentication failures
-   *   - MX record - Required for receiving inbound emails
-   *   - MAIL FROM records (MX + TXT) - Improves deliverability and bounce handling
-   *
-   * Each record includes its current verification status and instructions.
-   *
-   * @generated from rpc emailapi.v1.DomainService.GetDomainRecords
-   */
-  getDomainRecords: {
-    methodKind: "unary";
-    input: typeof GetDomainRecordsRequestSchema;
-    output: typeof DomainRecordsSchema;
-  },
-  /**
-   * SetMailFromDomain configures a custom MAIL FROM subdomain.
-   *
-   * This improves email deliverability by letting you control the Return-Path
-   * header used for bounce handling. The subdomain must be part of your
-   * verified domain.
-   *
-   * Example: If your domain is "example.com", set mail_from to "mail.example.com"
-   *
-   * @generated from rpc emailapi.v1.DomainService.SetMailFromDomain
-   */
-  setMailFromDomain: {
-    methodKind: "unary";
-    input: typeof SetMailFromDomainRequestSchema;
-    output: typeof DomainSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_v1_domain, 0);

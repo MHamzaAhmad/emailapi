@@ -17,6 +17,7 @@ const (
 // Client is the Email API client.
 type Client struct {
 	Emails   emailapiv1connect.EmailServiceClient
+	Domains  emailapiv1connect.DomainServiceClient
 	Users    emailapiv1connect.UserServiceClient
 	Webhooks emailapiv1connect.WebhookServiceClient
 }
@@ -87,6 +88,7 @@ func NewClient(apiKey string, opts ...ClientOption) *Client {
 
 	return &Client{
 		Emails:   emailapiv1connect.NewEmailServiceClient(cfg.httpClient, cfg.baseURL, clientOpts...),
+		Domains:  emailapiv1connect.NewDomainServiceClient(cfg.httpClient, cfg.baseURL, clientOpts...),
 		Users:    emailapiv1connect.NewUserServiceClient(cfg.httpClient, cfg.baseURL, clientOpts...),
 		Webhooks: emailapiv1connect.NewWebhookServiceClient(cfg.httpClient, cfg.baseURL, clientOpts...),
 	}

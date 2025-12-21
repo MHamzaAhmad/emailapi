@@ -19,13 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DomainService_AddDomain_FullMethodName         = "/emailapi.v1.DomainService/AddDomain"
-	DomainService_GetDomain_FullMethodName         = "/emailapi.v1.DomainService/GetDomain"
-	DomainService_ListDomains_FullMethodName       = "/emailapi.v1.DomainService/ListDomains"
-	DomainService_DeleteDomain_FullMethodName      = "/emailapi.v1.DomainService/DeleteDomain"
-	DomainService_VerifyDomain_FullMethodName      = "/emailapi.v1.DomainService/VerifyDomain"
-	DomainService_GetDomainRecords_FullMethodName  = "/emailapi.v1.DomainService/GetDomainRecords"
-	DomainService_SetMailFromDomain_FullMethodName = "/emailapi.v1.DomainService/SetMailFromDomain"
+	DomainService_AddDomain_FullMethodName    = "/emailapi.v1.DomainService/AddDomain"
+	DomainService_GetDomain_FullMethodName    = "/emailapi.v1.DomainService/GetDomain"
+	DomainService_ListDomains_FullMethodName  = "/emailapi.v1.DomainService/ListDomains"
+	DomainService_DeleteDomain_FullMethodName = "/emailapi.v1.DomainService/DeleteDomain"
+	DomainService_VerifyDomain_FullMethodName = "/emailapi.v1.DomainService/VerifyDomain"
 )
 
 // DomainServiceClient is the client API for DomainService service.
@@ -33,57 +31,26 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // =============================================================================
-// DomainService - Manage sending domains for email delivery
+// DomainService - Simple domain management for email sending
 // =============================================================================
 //
-// This service handles domain verification with AWS SES. To send emails from
-// your domain, you need to:
-//  1. Add your domain using AddDomain
-//  2. Configure the DNS records returned by GetDomainRecords
-//  3. Call VerifyDomain to check if DNS propagation is complete
-//
-// For best deliverability, configure all records: DKIM, SPF, DMARC, and MAIL FROM.
+// Add your domain, configure DNS records, and start sending emails.
+// MAIL FROM is auto-configured for best deliverability.
 type DomainServiceClient interface {
-	// AddDomain registers a new sending domain with AWS SES.
-	//
-	// After adding, use GetDomainRecords to retrieve DNS records you need to
-	// configure. The domain starts in PENDING status until DNS is verified.
+	// AddDomain registers a new sending domain.
+	// Returns everything you need: domain info, DNS records, and next steps.
+	// MAIL FROM (mail.yourdomain.com) is auto-configured.
 	AddDomain(ctx context.Context, in *AddDomainRequest, opts ...grpc.CallOption) (*AddDomainResponse, error)
-	// GetDomain retrieves a domain by its ID.
-	GetDomain(ctx context.Context, in *GetDomainRequest, opts ...grpc.CallOption) (*Domain, error)
-	// ListDomains retrieves all domains for the authenticated user.
+	// GetDomain retrieves a domain with its configuration and status.
+	// Automatically refreshes from SES if data is stale (>5 min).
+	GetDomain(ctx context.Context, in *GetDomainRequest, opts ...grpc.CallOption) (*GetDomainResponse, error)
+	// ListDomains retrieves all domains with their status.
 	ListDomains(ctx context.Context, in *ListDomainsRequest, opts ...grpc.CallOption) (*ListDomainsResponse, error)
-	// DeleteDomain removes a domain from your account and AWS SES.
-	//
-	// This action is irreversible. You will need to re-add and re-verify the
-	// domain if you want to use it again.
+	// DeleteDomain removes a domain from your account.
 	DeleteDomain(ctx context.Context, in *DeleteDomainRequest, opts ...grpc.CallOption) (*DeleteDomainResponse, error)
-	// VerifyDomain refreshes verification status from AWS SES.
-	//
-	// Call this after configuring your DNS records to check if they have
-	// propagated and been verified by AWS. DNS propagation can take up to 72 hours.
-	// This endpoint is rate-limited to prevent SES API abuse. If called too
-	// frequently, it will return cached data with was_refreshed=false.
+	// VerifyDomain forces a fresh check of DNS records and SES status.
+	// Rate-limited to 30s between calls. Use after configuring DNS.
 	VerifyDomain(ctx context.Context, in *VerifyDomainRequest, opts ...grpc.CallOption) (*VerifyDomainResponse, error)
-	// GetDomainRecords returns all DNS records needed for full email deliverability.
-	//
-	// This includes:
-	//   - DKIM records (3 CNAMEs) - Required for email signing/authentication
-	//   - SPF record (TXT) - Authorizes SES to send on your behalf
-	//   - DMARC record (TXT) - Policy for handling authentication failures
-	//   - MX record - Required for receiving inbound emails
-	//   - MAIL FROM records (MX + TXT) - Improves deliverability and bounce handling
-	//
-	// Each record includes its current verification status and instructions.
-	GetDomainRecords(ctx context.Context, in *GetDomainRecordsRequest, opts ...grpc.CallOption) (*DomainRecords, error)
-	// SetMailFromDomain configures a custom MAIL FROM subdomain.
-	//
-	// This improves email deliverability by letting you control the Return-Path
-	// header used for bounce handling. The subdomain must be part of your
-	// verified domain.
-	//
-	// Example: If your domain is "example.com", set mail_from to "mail.example.com"
-	SetMailFromDomain(ctx context.Context, in *SetMailFromDomainRequest, opts ...grpc.CallOption) (*Domain, error)
 }
 
 type domainServiceClient struct {
@@ -104,9 +71,9 @@ func (c *domainServiceClient) AddDomain(ctx context.Context, in *AddDomainReques
 	return out, nil
 }
 
-func (c *domainServiceClient) GetDomain(ctx context.Context, in *GetDomainRequest, opts ...grpc.CallOption) (*Domain, error) {
+func (c *domainServiceClient) GetDomain(ctx context.Context, in *GetDomainRequest, opts ...grpc.CallOption) (*GetDomainResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Domain)
+	out := new(GetDomainResponse)
 	err := c.cc.Invoke(ctx, DomainService_GetDomain_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -144,82 +111,31 @@ func (c *domainServiceClient) VerifyDomain(ctx context.Context, in *VerifyDomain
 	return out, nil
 }
 
-func (c *domainServiceClient) GetDomainRecords(ctx context.Context, in *GetDomainRecordsRequest, opts ...grpc.CallOption) (*DomainRecords, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DomainRecords)
-	err := c.cc.Invoke(ctx, DomainService_GetDomainRecords_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *domainServiceClient) SetMailFromDomain(ctx context.Context, in *SetMailFromDomainRequest, opts ...grpc.CallOption) (*Domain, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Domain)
-	err := c.cc.Invoke(ctx, DomainService_SetMailFromDomain_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // DomainServiceServer is the server API for DomainService service.
 // All implementations must embed UnimplementedDomainServiceServer
 // for forward compatibility.
 //
 // =============================================================================
-// DomainService - Manage sending domains for email delivery
+// DomainService - Simple domain management for email sending
 // =============================================================================
 //
-// This service handles domain verification with AWS SES. To send emails from
-// your domain, you need to:
-//  1. Add your domain using AddDomain
-//  2. Configure the DNS records returned by GetDomainRecords
-//  3. Call VerifyDomain to check if DNS propagation is complete
-//
-// For best deliverability, configure all records: DKIM, SPF, DMARC, and MAIL FROM.
+// Add your domain, configure DNS records, and start sending emails.
+// MAIL FROM is auto-configured for best deliverability.
 type DomainServiceServer interface {
-	// AddDomain registers a new sending domain with AWS SES.
-	//
-	// After adding, use GetDomainRecords to retrieve DNS records you need to
-	// configure. The domain starts in PENDING status until DNS is verified.
+	// AddDomain registers a new sending domain.
+	// Returns everything you need: domain info, DNS records, and next steps.
+	// MAIL FROM (mail.yourdomain.com) is auto-configured.
 	AddDomain(context.Context, *AddDomainRequest) (*AddDomainResponse, error)
-	// GetDomain retrieves a domain by its ID.
-	GetDomain(context.Context, *GetDomainRequest) (*Domain, error)
-	// ListDomains retrieves all domains for the authenticated user.
+	// GetDomain retrieves a domain with its configuration and status.
+	// Automatically refreshes from SES if data is stale (>5 min).
+	GetDomain(context.Context, *GetDomainRequest) (*GetDomainResponse, error)
+	// ListDomains retrieves all domains with their status.
 	ListDomains(context.Context, *ListDomainsRequest) (*ListDomainsResponse, error)
-	// DeleteDomain removes a domain from your account and AWS SES.
-	//
-	// This action is irreversible. You will need to re-add and re-verify the
-	// domain if you want to use it again.
+	// DeleteDomain removes a domain from your account.
 	DeleteDomain(context.Context, *DeleteDomainRequest) (*DeleteDomainResponse, error)
-	// VerifyDomain refreshes verification status from AWS SES.
-	//
-	// Call this after configuring your DNS records to check if they have
-	// propagated and been verified by AWS. DNS propagation can take up to 72 hours.
-	// This endpoint is rate-limited to prevent SES API abuse. If called too
-	// frequently, it will return cached data with was_refreshed=false.
+	// VerifyDomain forces a fresh check of DNS records and SES status.
+	// Rate-limited to 30s between calls. Use after configuring DNS.
 	VerifyDomain(context.Context, *VerifyDomainRequest) (*VerifyDomainResponse, error)
-	// GetDomainRecords returns all DNS records needed for full email deliverability.
-	//
-	// This includes:
-	//   - DKIM records (3 CNAMEs) - Required for email signing/authentication
-	//   - SPF record (TXT) - Authorizes SES to send on your behalf
-	//   - DMARC record (TXT) - Policy for handling authentication failures
-	//   - MX record - Required for receiving inbound emails
-	//   - MAIL FROM records (MX + TXT) - Improves deliverability and bounce handling
-	//
-	// Each record includes its current verification status and instructions.
-	GetDomainRecords(context.Context, *GetDomainRecordsRequest) (*DomainRecords, error)
-	// SetMailFromDomain configures a custom MAIL FROM subdomain.
-	//
-	// This improves email deliverability by letting you control the Return-Path
-	// header used for bounce handling. The subdomain must be part of your
-	// verified domain.
-	//
-	// Example: If your domain is "example.com", set mail_from to "mail.example.com"
-	SetMailFromDomain(context.Context, *SetMailFromDomainRequest) (*Domain, error)
 	mustEmbedUnimplementedDomainServiceServer()
 }
 
@@ -233,7 +149,7 @@ type UnimplementedDomainServiceServer struct{}
 func (UnimplementedDomainServiceServer) AddDomain(context.Context, *AddDomainRequest) (*AddDomainResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AddDomain not implemented")
 }
-func (UnimplementedDomainServiceServer) GetDomain(context.Context, *GetDomainRequest) (*Domain, error) {
+func (UnimplementedDomainServiceServer) GetDomain(context.Context, *GetDomainRequest) (*GetDomainResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetDomain not implemented")
 }
 func (UnimplementedDomainServiceServer) ListDomains(context.Context, *ListDomainsRequest) (*ListDomainsResponse, error) {
@@ -244,12 +160,6 @@ func (UnimplementedDomainServiceServer) DeleteDomain(context.Context, *DeleteDom
 }
 func (UnimplementedDomainServiceServer) VerifyDomain(context.Context, *VerifyDomainRequest) (*VerifyDomainResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method VerifyDomain not implemented")
-}
-func (UnimplementedDomainServiceServer) GetDomainRecords(context.Context, *GetDomainRecordsRequest) (*DomainRecords, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetDomainRecords not implemented")
-}
-func (UnimplementedDomainServiceServer) SetMailFromDomain(context.Context, *SetMailFromDomainRequest) (*Domain, error) {
-	return nil, status.Error(codes.Unimplemented, "method SetMailFromDomain not implemented")
 }
 func (UnimplementedDomainServiceServer) mustEmbedUnimplementedDomainServiceServer() {}
 func (UnimplementedDomainServiceServer) testEmbeddedByValue()                       {}
@@ -362,42 +272,6 @@ func _DomainService_VerifyDomain_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DomainService_GetDomainRecords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetDomainRecordsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DomainServiceServer).GetDomainRecords(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DomainService_GetDomainRecords_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DomainServiceServer).GetDomainRecords(ctx, req.(*GetDomainRecordsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DomainService_SetMailFromDomain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetMailFromDomainRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DomainServiceServer).SetMailFromDomain(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DomainService_SetMailFromDomain_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DomainServiceServer).SetMailFromDomain(ctx, req.(*SetMailFromDomainRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // DomainService_ServiceDesc is the grpc.ServiceDesc for DomainService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -424,14 +298,6 @@ var DomainService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VerifyDomain",
 			Handler:    _DomainService_VerifyDomain_Handler,
-		},
-		{
-			MethodName: "GetDomainRecords",
-			Handler:    _DomainService_GetDomainRecords_Handler,
-		},
-		{
-			MethodName: "SetMailFromDomain",
-			Handler:    _DomainService_SetMailFromDomain_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

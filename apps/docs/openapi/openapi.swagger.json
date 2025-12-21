@@ -220,7 +220,7 @@
     },
     "/v1/domains": {
       "get": {
-        "summary": "ListDomains retrieves all domains for the authenticated user.",
+        "summary": "ListDomains retrieves all domains with their status.",
         "operationId": "DomainService_ListDomains",
         "responses": {
           "200": {
@@ -241,8 +241,7 @@
         ]
       },
       "post": {
-        "summary": "AddDomain registers a new sending domain with AWS SES.",
-        "description": "After adding, use GetDomainRecords to retrieve DNS records you need to\nconfigure. The domain starts in PENDING status until DNS is verified.",
+        "summary": "AddDomain registers a new sending domain.\nReturns everything you need: domain info, DNS records, and next steps.\nMAIL FROM (mail.yourdomain.com) is auto-configured.",
         "operationId": "DomainService_AddDomain",
         "responses": {
           "200": {
@@ -261,7 +260,6 @@
         "parameters": [
           {
             "name": "body",
-            "description": "AddDomainRequest is the request to add a new domain.",
             "in": "body",
             "required": true,
             "schema": {
@@ -276,13 +274,13 @@
     },
     "/v1/domains/{id}": {
       "get": {
-        "summary": "GetDomain retrieves a domain by its ID.",
+        "summary": "GetDomain retrieves a domain with its configuration and status.\nAutomatically refreshes from SES if data is stale (\u003e5 min).",
         "operationId": "DomainService_GetDomain",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1Domain"
+              "$ref": "#/definitions/v1GetDomainResponse"
             }
           },
           "default": {
@@ -295,7 +293,6 @@
         "parameters": [
           {
             "name": "id",
-            "description": "ID of the domain to retrieve.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -306,8 +303,7 @@
         ]
       },
       "delete": {
-        "summary": "DeleteDomain removes a domain from your account and AWS SES.",
-        "description": "This action is irreversible. You will need to re-add and re-verify the\ndomain if you want to use it again.",
+        "summary": "DeleteDomain removes a domain from your account.",
         "operationId": "DomainService_DeleteDomain",
         "responses": {
           "200": {
@@ -326,81 +322,6 @@
         "parameters": [
           {
             "name": "id",
-            "description": "ID of the domain to delete.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "DomainService"
-        ]
-      }
-    },
-    "/v1/domains/{id}/mail-from": {
-      "post": {
-        "summary": "SetMailFromDomain configures a custom MAIL FROM subdomain.",
-        "description": "This improves email deliverability by letting you control the Return-Path\nheader used for bounce handling. The subdomain must be part of your\nverified domain.\n\nExample: If your domain is \"example.com\", set mail_from to \"mail.example.com\"",
-        "operationId": "DomainService_SetMailFromDomain",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1Domain"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "description": "ID of the domain to configure.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/DomainServiceSetMailFromDomainBody"
-            }
-          }
-        ],
-        "tags": [
-          "DomainService"
-        ]
-      }
-    },
-    "/v1/domains/{id}/records": {
-      "get": {
-        "summary": "GetDomainRecords returns all DNS records needed for full email deliverability.",
-        "description": "This includes:\n  - DKIM records (3 CNAMEs) - Required for email signing/authentication\n  - SPF record (TXT) - Authorizes SES to send on your behalf\n  - DMARC record (TXT) - Policy for handling authentication failures\n  - MX record - Required for receiving inbound emails\n  - MAIL FROM records (MX + TXT) - Improves deliverability and bounce handling\n\nEach record includes its current verification status and instructions.",
-        "operationId": "DomainService_GetDomainRecords",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1DomainRecords"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "description": "ID of the domain.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -413,8 +334,7 @@
     },
     "/v1/domains/{id}/verify": {
       "post": {
-        "summary": "VerifyDomain refreshes verification status from AWS SES.",
-        "description": "Call this after configuring your DNS records to check if they have\npropagated and been verified by AWS. DNS propagation can take up to 72 hours.\nThis endpoint is rate-limited to prevent SES API abuse. If called too\nfrequently, it will return cached data with was_refreshed=false.",
+        "summary": "VerifyDomain forces a fresh check of DNS records and SES status.\nRate-limited to 30s between calls. Use after configuring DNS.",
         "operationId": "DomainService_VerifyDomain",
         "responses": {
           "200": {
@@ -433,7 +353,6 @@
         "parameters": [
           {
             "name": "id",
-            "description": "ID of the domain to verify.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -918,16 +837,6 @@
       },
       "description": "UpdateApiKeyRequest is the request to update an API key."
     },
-    "DomainServiceSetMailFromDomainBody": {
-      "type": "object",
-      "properties": {
-        "mailFromSubdomain": {
-          "type": "string",
-          "description": "Subdomain to use for MAIL FROM (e.g., \"mail\" for mail.example.com).\nMust be a subdomain of the verified domain."
-        }
-      },
-      "description": "SetMailFromDomainRequest configures a custom MAIL FROM domain."
-    },
     "UserServiceUpdateUserBody": {
       "type": "object",
       "properties": {
@@ -998,28 +907,20 @@
       "properties": {
         "domain": {
           "type": "string",
-          "description": "Domain name to add (e.g., \"example.com\").\nDo not include subdomains - use the root domain."
+          "title": "Domain name to add (e.g., \"example.com\")"
         }
-      },
-      "description": "AddDomainRequest is the request to add a new domain."
+      }
     },
     "v1AddDomainResponse": {
       "type": "object",
       "properties": {
         "domain": {
-          "$ref": "#/definitions/v1Domain",
-          "description": "The newly created domain."
-        },
-        "records": {
-          "$ref": "#/definitions/v1DomainRecords",
-          "description": "All DNS records that need to be configured."
+          "$ref": "#/definitions/v1Domain"
         },
         "message": {
-          "type": "string",
-          "description": "Human-readable next steps message."
+          "type": "string"
         }
-      },
-      "description": "AddDomainResponse is returned after adding a domain."
+      }
     },
     "v1ApiKey": {
       "type": "object",
@@ -1211,11 +1112,9 @@
       "type": "object",
       "properties": {
         "message": {
-          "type": "string",
-          "description": "Human-readable confirmation message."
+          "type": "string"
         }
-      },
-      "description": "DeleteDomainResponse is returned after deleting a domain."
+      }
     },
     "v1DeleteWebhookResponse": {
       "type": "object"
@@ -1223,152 +1122,159 @@
     "v1DnsRecord": {
       "type": "object",
       "properties": {
-        "dnsType": {
+        "type": {
           "type": "string",
-          "description": "Type of DNS record (e.g., CNAME, TXT, MX)."
+          "title": "DNS record type: CNAME, TXT, MX"
         },
         "name": {
           "type": "string",
-          "description": "Record name/host (e.g., \"selector1._domainkey.example.com\")."
+          "title": "Full record name (e.g., \"abc._domainkey.example.com\")"
         },
         "value": {
           "type": "string",
-          "description": "Record value to set."
+          "title": "Record value to set"
         },
         "priority": {
           "type": "integer",
           "format": "int32",
-          "description": "Priority for MX records. Ignored for other record types."
+          "title": "Priority (MX records only)"
         },
         "recordType": {
           "$ref": "#/definitions/v1RecordType",
-          "description": "Purpose of this record."
+          "title": "Purpose of this record"
         },
         "status": {
           "$ref": "#/definitions/v1RecordStatus",
-          "description": "Current verification status of this record."
+          "title": "Current status"
+        },
+        "nameShort": {
+          "type": "string",
+          "title": "Short name for DNS providers that want just the subdomain (e.g., \"abc._domainkey\")"
+        },
+        "discoveredValue": {
+          "type": "string",
+          "title": "What we found in DNS (after verification)"
         },
         "instructions": {
           "type": "string",
-          "description": "Human-readable instructions for configuring this record."
+          "title": "Human-readable instructions"
         }
       },
-      "description": "DnsRecord represents a single DNS record that needs to be configured."
+      "description": "DnsRecord represents a single DNS record to configure."
     },
     "v1Domain": {
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "description": "Unique identifier for the domain."
+          "type": "string"
         },
         "domain": {
-          "type": "string",
-          "description": "The domain name (e.g., \"example.com\")."
+          "type": "string"
         },
         "status": {
-          "$ref": "#/definitions/v1DomainStatus",
-          "description": "Current verification status."
-        },
-        "verifiedForSending": {
-          "type": "boolean",
-          "description": "Whether the domain is verified and ready to send emails."
-        },
-        "mailFromDomain": {
-          "type": "string",
-          "description": "Custom MAIL FROM subdomain (e.g., \"mail.example.com\").\nEmpty if not configured."
-        },
-        "mailFromStatus": {
-          "$ref": "#/definitions/v1DomainStatus",
-          "description": "MAIL FROM configuration status."
+          "$ref": "#/definitions/v1DomainStatus"
         },
         "region": {
-          "type": "string",
-          "description": "Region where the domain is registered in SES."
+          "type": "string"
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time",
-          "description": "Time when the domain was added."
+          "format": "date-time"
         },
         "updatedAt": {
           "type": "string",
-          "format": "date-time",
-          "description": "Time when the domain was last updated."
+          "format": "date-time"
         },
-        "lastVerifiedAt": {
+        "lastCheckedAt": {
           "type": "string",
-          "format": "date-time",
-          "description": "Time when verification status was last refreshed from SES."
+          "format": "date-time"
+        },
+        "summary": {
+          "$ref": "#/definitions/v1DomainSummary",
+          "title": "Human-readable summary for lazy users"
+        },
+        "records": {
+          "$ref": "#/definitions/v1DomainRecords",
+          "title": "All DNS records needed"
         }
       },
-      "description": "Domain represents a verified sending domain."
+      "description": "Domain represents a sending domain with all its configuration."
     },
     "v1DomainRecords": {
       "type": "object",
       "properties": {
-        "domain": {
-          "type": "string",
-          "description": "The domain these records belong to."
-        },
         "dkimRecords": {
           "type": "array",
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1DnsRecord"
-          },
-          "description": "DKIM records (3 CNAME records for email signing)."
+          }
         },
         "spfRecord": {
-          "$ref": "#/definitions/v1DnsRecord",
-          "description": "SPF record (TXT record authorizing SES)."
+          "$ref": "#/definitions/v1DnsRecord"
         },
         "dmarcRecord": {
-          "$ref": "#/definitions/v1DnsRecord",
-          "description": "DMARC record (TXT record for authentication policy)."
+          "$ref": "#/definitions/v1DnsRecord"
         },
         "mxRecords": {
           "type": "array",
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1DnsRecord"
-          },
-          "description": "MX records for inbound email."
+          }
         },
         "mailFromRecords": {
           "type": "array",
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1DnsRecord"
-          },
-          "description": "MAIL FROM records (MX + SPF for custom return path).\nEmpty if MAIL FROM is not configured."
-        },
-        "isReadyToSend": {
-          "type": "boolean",
-          "description": "True when DKIM is verified and domain can send emails."
-        },
-        "isReadyToReceive": {
-          "type": "boolean",
-          "description": "True when MX records are configured for receiving emails."
-        },
-        "isFullyConfigured": {
-          "type": "boolean",
-          "description": "True when all records are verified (DKIM, SPF, DMARC, MAIL FROM)."
+          }
         }
       },
-      "description": "DomainRecords contains all DNS records needed for email deliverability."
+      "description": "DomainRecords contains all DNS records needed for email."
     },
     "v1DomainStatus": {
       "type": "string",
       "enum": [
         "DOMAIN_STATUS_UNSPECIFIED",
         "DOMAIN_STATUS_PENDING",
-        "DOMAIN_STATUS_SUCCESS",
-        "DOMAIN_STATUS_FAILED",
-        "DOMAIN_STATUS_TEMPORARY_FAILURE"
+        "DOMAIN_STATUS_VERIFYING",
+        "DOMAIN_STATUS_READY",
+        "DOMAIN_STATUS_DEGRADED",
+        "DOMAIN_STATUS_FAILED"
       ],
       "default": "DOMAIN_STATUS_UNSPECIFIED",
-      "description": "DomainStatus represents the verification status of a domain.\n\n - DOMAIN_STATUS_UNSPECIFIED: Default value, should not be used.\n - DOMAIN_STATUS_PENDING: Domain is pending verification. Configure DNS records and call VerifyDomain.\n - DOMAIN_STATUS_SUCCESS: Domain has been successfully verified and is ready for sending.\n - DOMAIN_STATUS_FAILED: Domain verification failed. Check DNS configuration and try again.\n - DOMAIN_STATUS_TEMPORARY_FAILURE: Temporary verification failure. Will be retried automatically."
+      "description": "- DOMAIN_STATUS_PENDING: Just added, waiting for DNS configuration\n - DOMAIN_STATUS_VERIFYING: DNS check in progress\n - DOMAIN_STATUS_READY: Ready to send emails!\n - DOMAIN_STATUS_DEGRADED: Works but missing optional records (SPF, DMARC, MAIL FROM)\n - DOMAIN_STATUS_FAILED: Cannot send, action required",
+      "title": "DomainStatus represents the overall status of a domain.\nUse in code: if (domain.status === DomainStatus.READY)"
+    },
+    "v1DomainSummary": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "title": "e.g., \"Add 3 DNS records to start sending\" or \"Ready to send emails!\""
+        },
+        "nextAction": {
+          "type": "string",
+          "title": "What the user should do next: CONFIGURE_DNS, WAIT, NONE"
+        },
+        "recordsPending": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Quick stats"
+        },
+        "recordsConfigured": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "canSend": {
+          "type": "boolean"
+        },
+        "canReceive": {
+          "type": "boolean"
+        }
+      },
+      "description": "DomainSummary provides human-readable status for lazy users."
     },
     "v1Email": {
       "type": "object",
@@ -1532,6 +1438,14 @@
       "default": "ENVIRONMENT_UNSPECIFIED",
       "description": "Environment represents the API key environment."
     },
+    "v1GetDomainResponse": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "$ref": "#/definitions/v1Domain"
+        }
+      }
+    },
     "v1GuardDutyScanResultRequest": {
       "type": "object",
       "properties": {
@@ -1590,11 +1504,9 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1Domain"
-          },
-          "description": "List of domains."
+          }
         }
-      },
-      "description": "ListDomainsResponse contains all domains for the user."
+      }
     },
     "v1ListEmailsResponse": {
       "type": "object",
@@ -1665,11 +1577,13 @@
       "enum": [
         "RECORD_STATUS_UNSPECIFIED",
         "RECORD_STATUS_PENDING",
-        "RECORD_STATUS_VERIFIED",
-        "RECORD_STATUS_FAILED"
+        "RECORD_STATUS_FOUND",
+        "RECORD_STATUS_MISMATCH",
+        "RECORD_STATUS_MISSING"
       ],
       "default": "RECORD_STATUS_UNSPECIFIED",
-      "description": "RecordStatus represents the verification status of an individual DNS record.\n\n - RECORD_STATUS_UNSPECIFIED: Default value, should not be used.\n - RECORD_STATUS_PENDING: Record has not been verified yet.\n - RECORD_STATUS_VERIFIED: Record has been verified successfully.\n - RECORD_STATUS_FAILED: Record verification failed."
+      "description": "- RECORD_STATUS_PENDING: Not configured yet\n - RECORD_STATUS_FOUND: Found in DNS with correct value ✓\n - RECORD_STATUS_MISMATCH: Found but wrong value\n - RECORD_STATUS_MISSING: Not found in DNS",
+      "title": "RecordStatus represents the status of a single DNS record.\nUse in code: if (record.status === RecordStatus.FOUND)"
     },
     "v1RecordType": {
       "type": "string",
@@ -1683,7 +1597,7 @@
         "RECORD_TYPE_MAIL_FROM_SPF"
       ],
       "default": "RECORD_TYPE_UNSPECIFIED",
-      "description": "RecordType identifies the type and purpose of a DNS record.\n\n - RECORD_TYPE_UNSPECIFIED: Default value, should not be used.\n - RECORD_TYPE_DKIM: DKIM record for email signing. There are 3 CNAME records.\n - RECORD_TYPE_SPF: SPF record authorizing SES to send emails.\n - RECORD_TYPE_DMARC: DMARC record for authentication policy.\n - RECORD_TYPE_MX_INBOUND: MX record for receiving inbound emails.\n - RECORD_TYPE_MAIL_FROM_MX: MX record for custom MAIL FROM domain.\n - RECORD_TYPE_MAIL_FROM_SPF: SPF record for custom MAIL FROM domain."
+      "description": "RecordType identifies the purpose of a DNS record."
     },
     "v1Scope": {
       "type": "string",
@@ -1819,24 +1733,21 @@
       "type": "object",
       "properties": {
         "domain": {
-          "$ref": "#/definitions/v1Domain",
-          "description": "The domain with updated verification status."
+          "$ref": "#/definitions/v1Domain"
         },
         "wasRefreshed": {
           "type": "boolean",
-          "description": "True if the status was actually refreshed from SES, false if cached data was returned."
+          "title": "True if we actually checked (false if rate-limited)"
         },
         "nextRetryAt": {
           "type": "string",
           "format": "date-time",
-          "description": "If rate-limited, when the next verification attempt is allowed."
+          "title": "When next check is allowed (if rate-limited)"
         },
         "message": {
-          "type": "string",
-          "description": "Human-readable message about the verification result."
+          "type": "string"
         }
-      },
-      "description": "VerifyDomainResponse contains the verification result."
+      }
     },
     "v1Webhook": {
       "type": "object",

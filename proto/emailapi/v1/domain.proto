@@ -8,21 +8,15 @@ import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 // =============================================================================
-// DomainService - Manage sending domains for email delivery
+// DomainService - Simple domain management for email sending
 // =============================================================================
 //
-// This service handles domain verification with AWS SES. To send emails from
-// your domain, you need to:
-//   1. Add your domain using AddDomain
-//   2. Configure the DNS records returned by GetDomainRecords
-//   3. Call VerifyDomain to check if DNS propagation is complete
-//
-// For best deliverability, configure all records: DKIM, SPF, DMARC, and MAIL FROM.
+// Add your domain, configure DNS records, and start sending emails.
+// MAIL FROM is auto-configured for best deliverability.
 service DomainService {
-  // AddDomain registers a new sending domain with AWS SES.
-  //
-  // After adding, use GetDomainRecords to retrieve DNS records you need to
-  // configure. The domain starts in PENDING status until DNS is verified.
+  // AddDomain registers a new sending domain.
+  // Returns everything you need: domain info, DNS records, and next steps.
+  // MAIL FROM (mail.yourdomain.com) is auto-configured.
   rpc AddDomain(AddDomainRequest) returns (AddDomainResponse) {
     option (google.api.http) = {
       post: "/v1/domains"
@@ -30,131 +24,88 @@ service DomainService {
     };
   }
 
-  // GetDomain retrieves a domain by its ID.
-  rpc GetDomain(GetDomainRequest) returns (Domain) {
+  // GetDomain retrieves a domain with its configuration and status.
+  // Automatically refreshes from SES if data is stale (>5 min).
+  rpc GetDomain(GetDomainRequest) returns (GetDomainResponse) {
     option (google.api.http) = {
       get: "/v1/domains/{id}"
     };
   }
 
-  // ListDomains retrieves all domains for the authenticated user.
+  // ListDomains retrieves all domains with their status.
   rpc ListDomains(ListDomainsRequest) returns (ListDomainsResponse) {
     option (google.api.http) = {
       get: "/v1/domains"
     };
   }
 
-  // DeleteDomain removes a domain from your account and AWS SES.
-  //
-  // This action is irreversible. You will need to re-add and re-verify the
-  // domain if you want to use it again.
+  // DeleteDomain removes a domain from your account.
   rpc DeleteDomain(DeleteDomainRequest) returns (DeleteDomainResponse) {
     option (google.api.http) = {
       delete: "/v1/domains/{id}"
     };
   }
 
-  // VerifyDomain refreshes verification status from AWS SES.
-  //
-  // Call this after configuring your DNS records to check if they have
-  // propagated and been verified by AWS. DNS propagation can take up to 72 hours.
-  // This endpoint is rate-limited to prevent SES API abuse. If called too
-  // frequently, it will return cached data with was_refreshed=false.
+  // VerifyDomain forces a fresh check of DNS records and SES status.
+  // Rate-limited to 30s between calls. Use after configuring DNS.
   rpc VerifyDomain(VerifyDomainRequest) returns (VerifyDomainResponse) {
     option (google.api.http) = {
       post: "/v1/domains/{id}/verify"
     };
   }
-
-  // GetDomainRecords returns all DNS records needed for full email deliverability.
-  //
-  // This includes:
-  //   - DKIM records (3 CNAMEs) - Required for email signing/authentication
-  //   - SPF record (TXT) - Authorizes SES to send on your behalf
-  //   - DMARC record (TXT) - Policy for handling authentication failures
-  //   - MX record - Required for receiving inbound emails
-  //   - MAIL FROM records (MX + TXT) - Improves deliverability and bounce handling
-  //
-  // Each record includes its current verification status and instructions.
-  rpc GetDomainRecords(GetDomainRecordsRequest) returns (DomainRecords) {
-    option (google.api.http) = {
-      get: "/v1/domains/{id}/records"
-    };
-  }
-
-  // SetMailFromDomain configures a custom MAIL FROM subdomain.
-  //
-  // This improves email deliverability by letting you control the Return-Path
-  // header used for bounce handling. The subdomain must be part of your
-  // verified domain.
-  //
-  // Example: If your domain is "example.com", set mail_from to "mail.example.com"
-  rpc SetMailFromDomain(SetMailFromDomainRequest) returns (Domain) {
-    option (google.api.http) = {
-      post: "/v1/domains/{id}/mail-from"
-      body: "*"
-    };
-  }
 }
 
 // =============================================================================
-// Enums
+// Enums - DX-friendly statuses for easy comparison in code
 // =============================================================================
 
-// DomainStatus represents the verification status of a domain.
+// DomainStatus represents the overall status of a domain.
+// Use in code: if (domain.status === DomainStatus.READY)
 enum DomainStatus {
-  // Default value, should not be used.
   DOMAIN_STATUS_UNSPECIFIED = 0;
 
-  // Domain is pending verification. Configure DNS records and call VerifyDomain.
+  // Just added, waiting for DNS configuration
   DOMAIN_STATUS_PENDING = 1;
 
-  // Domain has been successfully verified and is ready for sending.
-  DOMAIN_STATUS_SUCCESS = 2;
+  // DNS check in progress
+  DOMAIN_STATUS_VERIFYING = 2;
 
-  // Domain verification failed. Check DNS configuration and try again.
-  DOMAIN_STATUS_FAILED = 3;
+  // Ready to send emails!
+  DOMAIN_STATUS_READY = 3;
 
-  // Temporary verification failure. Will be retried automatically.
-  DOMAIN_STATUS_TEMPORARY_FAILURE = 4;
+  // Works but missing optional records (SPF, DMARC, MAIL FROM)
+  DOMAIN_STATUS_DEGRADED = 4;
+
+  // Cannot send, action required
+  DOMAIN_STATUS_FAILED = 5;
 }
 
-// RecordStatus represents the verification status of an individual DNS record.
+// RecordStatus represents the status of a single DNS record.
+// Use in code: if (record.status === RecordStatus.FOUND)
 enum RecordStatus {
-  // Default value, should not be used.
   RECORD_STATUS_UNSPECIFIED = 0;
 
-  // Record has not been verified yet.
+  // Not configured yet
   RECORD_STATUS_PENDING = 1;
 
-  // Record has been verified successfully.
-  RECORD_STATUS_VERIFIED = 2;
+  // Found in DNS with correct value ✓
+  RECORD_STATUS_FOUND = 2;
 
-  // Record verification failed.
-  RECORD_STATUS_FAILED = 3;
+  // Found but wrong value
+  RECORD_STATUS_MISMATCH = 3;
+
+  // Not found in DNS
+  RECORD_STATUS_MISSING = 4;
 }
 
-// RecordType identifies the type and purpose of a DNS record.
+// RecordType identifies the purpose of a DNS record.
 enum RecordType {
-  // Default value, should not be used.
   RECORD_TYPE_UNSPECIFIED = 0;
-
-  // DKIM record for email signing. There are 3 CNAME records.
   RECORD_TYPE_DKIM = 1;
-
-  // SPF record authorizing SES to send emails.
   RECORD_TYPE_SPF = 2;
-
-  // DMARC record for authentication policy.
   RECORD_TYPE_DMARC = 3;
-
-  // MX record for receiving inbound emails.
   RECORD_TYPE_MX_INBOUND = 4;
-
-  // MX record for custom MAIL FROM domain.
   RECORD_TYPE_MAIL_FROM_MX = 5;
-
-  // SPF record for custom MAIL FROM domain.
   RECORD_TYPE_MAIL_FROM_SPF = 6;
 }
 
@@ -162,178 +113,125 @@ enum RecordType {
 // Messages
 // =============================================================================
 
-// Domain represents a verified sending domain.
+// Domain represents a sending domain with all its configuration.
 message Domain {
-  // Unique identifier for the domain.
   string id = 1;
-
-  // The domain name (e.g., "example.com").
   string domain = 2;
-
-  // Current verification status.
   DomainStatus status = 3;
+  string region = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  google.protobuf.Timestamp last_checked_at = 7;
 
-  // Whether the domain is verified and ready to send emails.
-  bool verified_for_sending = 4;
+  // Human-readable summary for lazy users
+  DomainSummary summary = 8;
 
-  // Custom MAIL FROM subdomain (e.g., "mail.example.com").
-  // Empty if not configured.
-  string mail_from_domain = 5;
-
-  // MAIL FROM configuration status.
-  DomainStatus mail_from_status = 6;
-
-  // Region where the domain is registered in SES.
-  string region = 7;
-
-  // Time when the domain was added.
-  google.protobuf.Timestamp created_at = 8;
-
-  // Time when the domain was last updated.
-  google.protobuf.Timestamp updated_at = 9;
-
-  // Time when verification status was last refreshed from SES.
-  google.protobuf.Timestamp last_verified_at = 10;
+  // All DNS records needed
+  DomainRecords records = 9;
 }
 
-// DnsRecord represents a single DNS record that needs to be configured.
-message DnsRecord {
-  // Type of DNS record (e.g., CNAME, TXT, MX).
-  string dns_type = 1;
+// DomainSummary provides human-readable status for lazy users.
+message DomainSummary {
+  // e.g., "Add 3 DNS records to start sending" or "Ready to send emails!"
+  string message = 1;
 
-  // Record name/host (e.g., "selector1._domainkey.example.com").
+  // What the user should do next: CONFIGURE_DNS, WAIT, NONE
+  string next_action = 2;
+
+  // Quick stats
+  int32 records_pending = 3;
+  int32 records_configured = 4;
+  bool can_send = 5;
+  bool can_receive = 6;
+}
+
+// DomainRecords contains all DNS records needed for email.
+message DomainRecords {
+  repeated DnsRecord dkim_records = 1;
+  DnsRecord spf_record = 2;
+  DnsRecord dmarc_record = 3;
+  repeated DnsRecord mx_records = 4;
+  repeated DnsRecord mail_from_records = 5;
+}
+
+// DnsRecord represents a single DNS record to configure.
+message DnsRecord {
+  // DNS record type: CNAME, TXT, MX
+  string type = 1;
+
+  // Full record name (e.g., "abc._domainkey.example.com")
   string name = 2;
 
-  // Record value to set.
+  // Record value to set
   string value = 3;
 
-  // Priority for MX records. Ignored for other record types.
+  // Priority (MX records only)
   int32 priority = 4;
 
-  // Purpose of this record.
+  // Purpose of this record
   RecordType record_type = 5;
 
-  // Current verification status of this record.
+  // Current status
   RecordStatus status = 6;
 
-  // Human-readable instructions for configuring this record.
-  string instructions = 7;
-}
+  // Short name for DNS providers that want just the subdomain (e.g., "abc._domainkey")
+  string name_short = 7;
 
-// DomainRecords contains all DNS records needed for email deliverability.
-message DomainRecords {
-  // The domain these records belong to.
-  string domain = 1;
+  // What we found in DNS (after verification)
+  string discovered_value = 8;
 
-  // DKIM records (3 CNAME records for email signing).
-  repeated DnsRecord dkim_records = 2;
-
-  // SPF record (TXT record authorizing SES).
-  DnsRecord spf_record = 3;
-
-  // DMARC record (TXT record for authentication policy).
-  DnsRecord dmarc_record = 4;
-
-  // MX records for inbound email.
-  repeated DnsRecord mx_records = 5;
-
-  // MAIL FROM records (MX + SPF for custom return path).
-  // Empty if MAIL FROM is not configured.
-  repeated DnsRecord mail_from_records = 6;
-
-  // True when DKIM is verified and domain can send emails.
-  bool is_ready_to_send = 7;
-
-  // True when MX records are configured for receiving emails.
-  bool is_ready_to_receive = 8;
-
-  // True when all records are verified (DKIM, SPF, DMARC, MAIL FROM).
-  bool is_fully_configured = 9;
+  // Human-readable instructions
+  string instructions = 9;
 }
 
 // =============================================================================
 // Request/Response Messages
 // =============================================================================
 
-// AddDomainRequest is the request to add a new domain.
 message AddDomainRequest {
-  // Domain name to add (e.g., "example.com").
-  // Do not include subdomains - use the root domain.
+  // Domain name to add (e.g., "example.com")
   string domain = 1;
 }
 
-// AddDomainResponse is returned after adding a domain.
 message AddDomainResponse {
-  // The newly created domain.
   Domain domain = 1;
-
-  // All DNS records that need to be configured.
-  DomainRecords records = 2;
-
-  // Human-readable next steps message.
-  string message = 3;
+  string message = 2;
 }
 
-// GetDomainRequest identifies the domain to retrieve.
 message GetDomainRequest {
-  // ID of the domain to retrieve.
   string id = 1;
 }
 
-// ListDomainsRequest is the request to list all domains.
+message GetDomainResponse {
+  Domain domain = 1;
+}
+
 message ListDomainsRequest {}
 
-// ListDomainsResponse contains all domains for the user.
 message ListDomainsResponse {
-  // List of domains.
   repeated Domain data = 1;
 }
 
-// DeleteDomainRequest identifies the domain to delete.
 message DeleteDomainRequest {
-  // ID of the domain to delete.
   string id = 1;
 }
 
-// DeleteDomainResponse is returned after deleting a domain.
 message DeleteDomainResponse {
-  // Human-readable confirmation message.
   string message = 1;
 }
 
-// VerifyDomainRequest is the request to verify a domain.
 message VerifyDomainRequest {
-  // ID of the domain to verify.
   string id = 1;
 }
 
-// VerifyDomainResponse contains the verification result.
 message VerifyDomainResponse {
-  // The domain with updated verification status.
   Domain domain = 1;
-
-  // True if the status was actually refreshed from SES, false if cached data was returned.
+  
+  // True if we actually checked (false if rate-limited)
   bool was_refreshed = 2;
 
-  // If rate-limited, when the next verification attempt is allowed.
+  // When next check is allowed (if rate-limited)
   google.protobuf.Timestamp next_retry_at = 3;
 
-  // Human-readable message about the verification result.
   string message = 4;
-}
-
-// GetDomainRecordsRequest identifies the domain to get records for.
-message GetDomainRecordsRequest {
-  // ID of the domain.
-  string id = 1;
-}
-
-// SetMailFromDomainRequest configures a custom MAIL FROM domain.
-message SetMailFromDomainRequest {
-  // ID of the domain to configure.
-  string id = 1;
-
-  // Subdomain to use for MAIL FROM (e.g., "mail" for mail.example.com).
-  // Must be a subdomain of the verified domain.
-  string mail_from_subdomain = 2;
 }

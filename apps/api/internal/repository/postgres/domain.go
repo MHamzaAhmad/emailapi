@@ -45,7 +45,7 @@ func (r *DomainRepository) Create(ctx context.Context, d *domain.SendingDomain) 
 		d.Region,
 		toPgTimestampFromTime(d.CreatedAt),
 		toPgTimestampFromTime(d.UpdatedAt),
-		toPgTimestampFromTimePtr(d.LastVerifiedAt),
+		toPgTimestampFromTimePtr(d.LastCheckedAt),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create domain: %w", err)
@@ -130,7 +130,7 @@ func (r *DomainRepository) Update(ctx context.Context, d *domain.SendingDomain) 
 		string(d.DkimStatus),
 		toPgText(d.MailFromDomain),
 		toPgTextFromStatus(d.MailFromStatus),
-		toPgTimestampFromTimePtr(d.LastVerifiedAt),
+		toPgTimestampFromTimePtr(d.LastCheckedAt),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update domain: %w", err)
@@ -192,7 +192,7 @@ func (r *DomainRepository) scanDomain(row pgx.Row) (*domain.SendingDomain, error
 		d.UpdatedAt = updatedAt.Time
 	}
 	if lastVerifiedAt.Valid {
-		d.LastVerifiedAt = &lastVerifiedAt.Time
+		d.LastCheckedAt = &lastVerifiedAt.Time
 	}
 
 	return &d, nil
@@ -239,7 +239,7 @@ func (r *DomainRepository) scanDomainRow(rows pgx.Rows) (*domain.SendingDomain, 
 		d.UpdatedAt = updatedAt.Time
 	}
 	if lastVerifiedAt.Valid {
-		d.LastVerifiedAt = &lastVerifiedAt.Time
+		d.LastCheckedAt = &lastVerifiedAt.Time
 	}
 
 	return &d, nil

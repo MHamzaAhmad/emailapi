@@ -4,26 +4,30 @@ import (
 	"time"
 )
 
-// DomainStatus represents the verification status of a domain.
+// DomainStatus represents the overall status of a domain.
+// Designed for easy comparison: if domain.Status == DomainStatusReady
 type DomainStatus string
 
 const (
-	DomainStatusPending          DomainStatus = "pending"
-	DomainStatusSuccess          DomainStatus = "success"
-	DomainStatusFailed           DomainStatus = "failed"
-	DomainStatusTemporaryFailure DomainStatus = "temporary_failure"
+	DomainStatusPending   DomainStatus = "pending"   // Just added, waiting for DNS
+	DomainStatusVerifying DomainStatus = "verifying" // DNS check in progress
+	DomainStatusReady     DomainStatus = "ready"     // Can send emails!
+	DomainStatusDegraded  DomainStatus = "degraded"  // Works but missing optional records
+	DomainStatusFailed    DomainStatus = "failed"    // Cannot send, action required
 )
 
-// RecordStatus represents the verification status of an individual DNS record.
+// RecordStatus represents the status of a single DNS record.
+// Designed for easy comparison: if record.Status == RecordStatusFound
 type RecordStatus string
 
 const (
-	RecordStatusPending  RecordStatus = "pending"
-	RecordStatusVerified RecordStatus = "verified"
-	RecordStatusFailed   RecordStatus = "failed"
+	RecordStatusPending  RecordStatus = "pending"  // Not checked yet
+	RecordStatusFound    RecordStatus = "found"    // Found with correct value ✓
+	RecordStatusMismatch RecordStatus = "mismatch" // Found but wrong value
+	RecordStatusMissing  RecordStatus = "missing"  // Not found in DNS
 )
 
-// RecordType identifies the type and purpose of a DNS record.
+// RecordType identifies the purpose of a DNS record.
 type RecordType string
 
 const (
@@ -35,109 +39,75 @@ const (
 	RecordTypeMailFromSPF RecordType = "mail_from_spf"
 )
 
-// SendingDomain represents a verified sending domain in the system.
+// SendingDomain represents a sending domain with all its configuration.
 type SendingDomain struct {
-	ID                 string       `json:"id"`
-	UserID             string       `json:"user_id"`
-	Domain             string       `json:"domain"`
-	Status             DomainStatus `json:"status"`
-	VerifiedForSending bool         `json:"verified_for_sending"`
+	ID        string       `json:"id"`
+	UserID    string       `json:"user_id"`
+	Domain    string       `json:"domain"`
+	Status    DomainStatus `json:"status"`
+	Region    string       `json:"region"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
 
-	// DKIM configuration
+	// LastCheckedAt tracks when DNS/SES was last checked.
+	// Used for rate limiting and stale data refresh.
+	LastCheckedAt *time.Time `json:"last_checked_at,omitempty"`
+
+	// DKIM configuration (stored for building records)
 	DkimTokens []string     `json:"dkim_tokens,omitempty"`
 	DkimStatus DomainStatus `json:"dkim_status"`
 
-	// Custom MAIL FROM configuration
+	// MAIL FROM configuration (auto-configured on add)
 	MailFromDomain string       `json:"mail_from_domain,omitempty"`
 	MailFromStatus DomainStatus `json:"mail_from_status,omitempty"`
 
-	// AWS region where the domain is registered
-	Region string `json:"region"`
-
-	// LastVerifiedAt tracks when SES was last queried for this domain's status.
-	// Used for rate limiting verification requests.
-	LastVerifiedAt *time.Time `json:"last_verified_at,omitempty"`
-
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	// SES verification status
+	VerifiedForSending bool `json:"verified_for_sending"`
 }
 
-// DnsRecord represents a single DNS record that needs to be configured.
+// DomainSummary provides human-readable status for lazy users.
+type DomainSummary struct {
+	Message           string `json:"message"`
+	NextAction        string `json:"next_action"` // CONFIGURE_DNS, WAIT, NONE
+	RecordsPending    int    `json:"records_pending"`
+	RecordsConfigured int    `json:"records_configured"`
+	CanSend           bool   `json:"can_send"`
+	CanReceive        bool   `json:"can_receive"`
+}
+
+// DnsRecord represents a single DNS record to configure.
 type DnsRecord struct {
-	// DNS record type (e.g., CNAME, TXT, MX)
-	DnsType string `json:"dns_type"`
-
-	// Record name/host (e.g., "selector1._domainkey.example.com")
-	Name string `json:"name"`
-
-	// Record value to set
-	Value string `json:"value"`
-
-	// Priority for MX records (ignored for other types)
-	Priority int `json:"priority,omitempty"`
-
-	// Purpose of this record
-	RecordType RecordType `json:"record_type"`
-
-	// Current verification status
-	Status RecordStatus `json:"status"`
-
-	// Human-readable instructions
-	Instructions string `json:"instructions,omitempty"`
+	Type            string       `json:"type"`     // CNAME, TXT, MX
+	Name            string       `json:"name"`     // Full name
+	Value           string       `json:"value"`    // Expected value
+	Priority        int          `json:"priority"` // For MX records
+	RecordType      RecordType   `json:"record_type"`
+	Status          RecordStatus `json:"status"`
+	NameShort       string       `json:"name_short"`       // For DNS providers wanting just subdomain
+	DiscoveredValue string       `json:"discovered_value"` // What we found in DNS
+	Instructions    string       `json:"instructions"`
 }
 
-// DomainRecords contains all DNS records needed for email deliverability.
+// DomainRecords contains all DNS records needed for email.
 type DomainRecords struct {
-	Domain string `json:"domain"`
-
-	// DKIM records (3 CNAME records for email signing)
-	DkimRecords []DnsRecord `json:"dkim_records"`
-
-	// SPF record (TXT record authorizing SES)
-	SpfRecord *DnsRecord `json:"spf_record,omitempty"`
-
-	// DMARC record (TXT record for authentication policy)
-	DmarcRecord *DnsRecord `json:"dmarc_record,omitempty"`
-
-	// MX records for inbound email
-	MxRecords []DnsRecord `json:"mx_records,omitempty"`
-
-	// MAIL FROM records (MX + SPF for custom return path)
+	DkimRecords     []DnsRecord `json:"dkim_records"`
+	SpfRecord       *DnsRecord  `json:"spf_record,omitempty"`
+	DmarcRecord     *DnsRecord  `json:"dmarc_record,omitempty"`
+	MxRecords       []DnsRecord `json:"mx_records,omitempty"`
 	MailFromRecords []DnsRecord `json:"mail_from_records,omitempty"`
-
-	// Status flags
-	IsReadyToSend     bool `json:"is_ready_to_send"`
-	IsReadyToReceive  bool `json:"is_ready_to_receive"`
-	IsFullyConfigured bool `json:"is_fully_configured"`
 }
 
-// DomainWithRecords combines domain info with DNS records for a single API response.
-type DomainWithRecords struct {
-	Domain  *SendingDomain `json:"domain"`
+// DomainWithDetails combines domain info with records and summary.
+type DomainWithDetails struct {
+	*SendingDomain
+	Summary *DomainSummary `json:"summary"`
 	Records *DomainRecords `json:"records"`
 }
 
 // VerifyResult contains the outcome of a verification attempt.
 type VerifyResult struct {
-	// Domain contains the current domain state
-	Domain *SendingDomain `json:"domain"`
-
-	// WasRefreshed indicates if SES was actually queried (true) or cached data returned (false)
-	WasRefreshed bool `json:"was_refreshed"`
-
-	// NextRetryAt indicates when the next verification attempt is allowed (if rate limited)
-	NextRetryAt *time.Time `json:"next_retry_at,omitempty"`
-
-	// Message provides human-readable context about the verification result
-	Message string `json:"message,omitempty"`
-}
-
-// AddDomainRequest represents a request to add a new domain.
-type AddDomainRequest struct {
-	Domain string `json:"domain" binding:"required"`
-}
-
-// SetMailFromRequest represents a request to configure custom MAIL FROM.
-type SetMailFromRequest struct {
-	MailFromSubdomain string `json:"mail_from_subdomain" binding:"required"`
+	Domain       *DomainWithDetails `json:"domain"`
+	WasRefreshed bool               `json:"was_refreshed"`
+	NextRetryAt  *time.Time         `json:"next_retry_at,omitempty"`
+	Message      string             `json:"message,omitempty"`
 }
