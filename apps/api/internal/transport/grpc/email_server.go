@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 
-	emailapiv1 "github.com/emailapi/api/gen/emailapi/v1"
+	emailapiv1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/service"
 )
 

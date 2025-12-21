@@ -15,6 +15,9 @@
       "name": "EmailService"
     },
     {
+      "name": "InternalService"
+    },
+    {
       "name": "UserService"
     },
     {
@@ -512,6 +515,40 @@
         ],
         "tags": [
           "EmailService"
+        ]
+      }
+    },
+    "/v1/internal/webhooks/guardduty-scan": {
+      "post": {
+        "summary": "HandleGuardDutyScanResult processes GuardDuty malware scan results from EventBridge.",
+        "operationId": "InternalService_HandleGuardDutyScanResult",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GuardDutyScanResultResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "GuardDutyScanResultRequest contains the scan result from GuardDuty via EventBridge.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1GuardDutyScanResultRequest"
+            }
+          }
+        ],
+        "tags": [
+          "InternalService"
         ]
       }
     },
@@ -1039,10 +1076,13 @@
           "type": "string",
           "description": "MIME type of the attachment (e.g., application/pdf)."
         },
-        "content": {
+        "url": {
           "type": "string",
-          "format": "byte",
-          "description": "Raw content of the attachment."
+          "description": "URL to download the attachment from."
+        },
+        "base64Content": {
+          "type": "string",
+          "description": "Base64-encoded content of the attachment."
         }
       },
       "description": "Attachment represents a file to be attached to the email."
@@ -1399,15 +1439,58 @@
           "type": "string",
           "format": "date-time",
           "description": "Time when the email record was last updated."
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1EmailAttachment"
+          },
+          "description": "Attachments associated with this email."
+        },
+        "errorMessage": {
+          "type": "string",
+          "description": "Error message if the email failed."
         }
       },
       "description": "Email represents a single email message and its status."
+    },
+    "v1EmailAttachment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the attachment."
+        },
+        "filename": {
+          "type": "string",
+          "description": "Original filename."
+        },
+        "contentType": {
+          "type": "string",
+          "description": "MIME content type."
+        },
+        "sizeBytes": {
+          "type": "string",
+          "format": "int64",
+          "description": "Size in bytes."
+        },
+        "scanStatus": {
+          "type": "string",
+          "description": "Security scan status (pending, clean, threats_found, failed)."
+        }
+      },
+      "description": "EmailAttachment represents an attachment's metadata."
     },
     "v1EmailStatus": {
       "type": "string",
       "enum": [
         "EMAIL_STATUS_UNSPECIFIED",
         "EMAIL_STATUS_PENDING",
+        "EMAIL_STATUS_PROCESSING_ATTACHMENTS",
+        "EMAIL_STATUS_SCANNING_ATTACHMENTS",
+        "EMAIL_STATUS_SCAN_FAILED",
+        "EMAIL_STATUS_QUEUED",
         "EMAIL_STATUS_SENT",
         "EMAIL_STATUS_DELIVERED",
         "EMAIL_STATUS_FAILED",
@@ -1425,6 +1508,42 @@
       ],
       "default": "ENVIRONMENT_UNSPECIFIED",
       "description": "Environment represents the API key environment."
+    },
+    "v1GuardDutyScanResultRequest": {
+      "type": "object",
+      "properties": {
+        "s3Bucket": {
+          "type": "string",
+          "description": "S3 bucket where the scanned object resides."
+        },
+        "s3Key": {
+          "type": "string",
+          "description": "S3 key of the scanned object."
+        },
+        "scanStatus": {
+          "type": "string",
+          "description": "Scan status: CLEAN, THREATS_FOUND, UNSUPPORTED, FAILED."
+        },
+        "threatName": {
+          "type": "string",
+          "description": "Name of the threat if threats were found."
+        }
+      },
+      "description": "GuardDutyScanResultRequest contains the scan result from GuardDuty via EventBridge."
+    },
+    "v1GuardDutyScanResultResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether the result was processed successfully."
+        },
+        "message": {
+          "type": "string",
+          "description": "Message describing the action taken."
+        }
+      },
+      "description": "GuardDutyScanResultResponse is the response after processing scan result."
     },
     "v1ListApiKeysResponse": {
       "type": "object",

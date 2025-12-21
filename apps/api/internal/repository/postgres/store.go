@@ -58,3 +58,8 @@ func (s *Store) APIKeys() repository.APIKeyRepository {
 func (s *Store) Domains() repository.DomainRepository {
 	return s.domain
 }
+
+// Pool returns the underlying connection pool for use by other repositories.
+func (s *Store) Pool() *pgxpool.Pool {
+	return s.pool
+}

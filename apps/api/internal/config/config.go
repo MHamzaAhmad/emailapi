@@ -31,6 +31,9 @@ type Config struct {
 	AWSAccessKeyID     string `envconfig:"AWS_ACCESS_KEY_ID" required:"true"`
 	AWSSecretAccessKey string `envconfig:"AWS_SECRET_ACCESS_KEY" required:"true"`
 	S3Bucket           string `envconfig:"S3_BUCKET" required:"true"`
+
+	// Internal webhook authentication
+	InternalWebhookSecret string `envconfig:"INTERNAL_WEBHOOK_SECRET" required:"true"`
 }
 
 // Load reads configuration from environment variables.

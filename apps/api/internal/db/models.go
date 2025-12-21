@@ -39,6 +39,38 @@ type Domain struct {
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Email struct {
+	ID           string             `json:"id"`
+	UserID       string             `json:"user_id"`
+	FromAddress  string             `json:"from_address"`
+	ToAddresses  []string           `json:"to_addresses"`
+	CcAddresses  []string           `json:"cc_addresses"`
+	BccAddresses []string           `json:"bcc_addresses"`
+	Subject      string             `json:"subject"`
+	Body         pgtype.Text        `json:"body"`
+	Html         pgtype.Text        `json:"html"`
+	Status       string             `json:"status"`
+	ProviderID   pgtype.Text        `json:"provider_id"`
+	Metadata     []byte             `json:"metadata"`
+	ScheduledAt  pgtype.Timestamptz `json:"scheduled_at"`
+	SentAt       pgtype.Timestamptz `json:"sent_at"`
+	ErrorMessage pgtype.Text        `json:"error_message"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+type EmailAttachment struct {
+	ID            string             `json:"id"`
+	EmailID       string             `json:"email_id"`
+	Filename      string             `json:"filename"`
+	ContentType   string             `json:"content_type"`
+	S3Key         string             `json:"s3_key"`
+	SizeBytes     int64              `json:"size_bytes"`
+	ScanStatus    string             `json:"scan_status"`
+	ScanCheckedAt pgtype.Timestamptz `json:"scan_checked_at"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
 type User struct {
 	ID        string             `json:"id"`
 	Email     string             `json:"email"`

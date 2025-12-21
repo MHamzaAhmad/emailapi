@@ -18,10 +18,12 @@ import (
 
 	emailapiv1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/config"
+	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
 	middleware "github.com/emailapi/api/internal/middleware"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/repository/postgres"
+	pgrepo "github.com/emailapi/api/internal/repository/postgres"
 	"github.com/emailapi/api/internal/service"
 	grpctransport "github.com/emailapi/api/internal/transport/grpc"
 	worker "github.com/emailapi/api/internal/worker"
@@ -102,6 +104,10 @@ func main() {
 	logger.Info().Msg("✓ Connected to ClickHouse")
 	chRepo := chrepo.NewEmailRepository(chConn)
 
+	// Initialize PostgreSQL Email Repository
+	pgEmailRepo := pgrepo.NewEmailRepository(store.Pool())
+	logger.Info().Msg("✓ Initialized email repositories")
+
 	// Initialize River
 	// Create a new pgxpool for River (recommended to separate from application pool)
 	riverPool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
@@ -111,9 +117,12 @@ func main() {
 	defer riverPool.Close()
 
 	workers := river.NewWorkers()
-	// Register EmailWorker
-	emailWorker := worker.NewEmailWorker(sesClient, s3Client, chRepo)
+	// Register EmailWorker with new dependencies
+	emailWorker := worker.NewEmailWorker(sesClient, s3Client, pgEmailRepo, chRepo)
 	river.AddWorker(workers, emailWorker)
+	// Register AttachmentWorker
+	attachmentWorker := worker.NewAttachmentWorker(s3Client, pgEmailRepo)
+	river.AddWorker(workers, attachmentWorker)
 
 	riverClient, err := river.NewClient(riverpgxv5.New(riverPool), &river.Config{
 		Queues: map[string]river.QueueConfig{
@@ -132,9 +141,16 @@ func main() {
 	defer riverClient.Stop(context.Background())
 	logger.Info().Msg("✓ Started River client")
 
-	// Initialize service layer
-	// NewWithSES now includes EmailService dependencies
-	svc := service.NewWithSES(store, sesClient, cfg.AWSRegion, riverClient, s3Client, chRepo)
+	// Initialize service layer with new dependencies
+	svc := service.NewWithDeps(service.ServiceDeps{
+		Store:       store,
+		SESClient:   sesClient,
+		S3Client:    s3Client,
+		Region:      cfg.AWSRegion,
+		RiverClient: riverClient,
+		PGEmailRepo: pgEmailRepo,
+		CHEmailRepo: chRepo,
+	})
 
 	// Start gRPC server
 	go func() {

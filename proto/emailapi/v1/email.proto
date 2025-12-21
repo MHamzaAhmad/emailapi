@@ -41,10 +41,14 @@ service EmailService {
 enum EmailStatus {
   EMAIL_STATUS_UNSPECIFIED = 0;
   EMAIL_STATUS_PENDING = 1;
-  EMAIL_STATUS_SENT = 2;
-  EMAIL_STATUS_DELIVERED = 3;
-  EMAIL_STATUS_FAILED = 4;
-  EMAIL_STATUS_BOUNCED = 5;
+  EMAIL_STATUS_PROCESSING_ATTACHMENTS = 2;
+  EMAIL_STATUS_SCANNING_ATTACHMENTS = 3;
+  EMAIL_STATUS_SCAN_FAILED = 4;
+  EMAIL_STATUS_QUEUED = 5;
+  EMAIL_STATUS_SENT = 6;
+  EMAIL_STATUS_DELIVERED = 7;
+  EMAIL_STATUS_FAILED = 8;
+  EMAIL_STATUS_BOUNCED = 9;
 }
 
 // SendEmailRequest is the payload for sending an email.
@@ -77,8 +81,13 @@ message Attachment {
   string filename = 1;
   // MIME type of the attachment (e.g., application/pdf).
   string content_type = 2;
-  // Raw content of the attachment.
-  bytes content = 3;
+  // Content source - either a URL to download from or base64-encoded content.
+  oneof source {
+    // URL to download the attachment from.
+    string url = 3;
+    // Base64-encoded content of the attachment.
+    string base64_content = 4;
+  }
 }
 
 
@@ -130,6 +139,24 @@ message Email {
   google.protobuf.Timestamp created_at = 15;
   // Time when the email record was last updated.
   google.protobuf.Timestamp updated_at = 16;
+  // Attachments associated with this email.
+  repeated EmailAttachment attachments = 17;
+  // Error message if the email failed.
+  string error_message = 18;
+}
+
+// EmailAttachment represents an attachment's metadata.
+message EmailAttachment {
+  // Unique identifier for the attachment.
+  string id = 1;
+  // Original filename.
+  string filename = 2;
+  // MIME content type.
+  string content_type = 3;
+  // Size in bytes.
+  int64 size_bytes = 4;
+  // Security scan status (pending, clean, threats_found, failed).
+  string scan_status = 5;
 }
 
 // ListEmailsRequest filters and pagination for listing emails.

@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package emailapi.v1;
+
+option go_package = "github.com/emailapi/api/gen/emailapi/v1";
+
+import "google/api/annotations.proto";
+
+// InternalService handles internal webhook endpoints.
+// These endpoints are authenticated via X-Webhook-Secret header.
+service InternalService {
+  // HandleGuardDutyScanResult processes GuardDuty malware scan results from EventBridge.
+  rpc HandleGuardDutyScanResult(GuardDutyScanResultRequest) returns (GuardDutyScanResultResponse) {
+    option (google.api.http) = {
+      post: "/v1/internal/webhooks/guardduty-scan"
+      body: "*"
+    };
+  }
+}
+
+// GuardDutyScanResultRequest contains the scan result from GuardDuty via EventBridge.
+message GuardDutyScanResultRequest {
+  // S3 bucket where the scanned object resides.
+  string s3_bucket = 1;
+  // S3 key of the scanned object.
+  string s3_key = 2;
+  // Scan status: CLEAN, THREATS_FOUND, UNSUPPORTED, FAILED.
+  string scan_status = 3;
+  // Name of the threat if threats were found.
+  string threat_name = 4;
+}
+
+// GuardDutyScanResultResponse is the response after processing scan result.
+message GuardDutyScanResultResponse {
+  // Whether the result was processed successfully.
+  bool success = 1;
+  // Message describing the action taken.
+  string message = 2;
+}

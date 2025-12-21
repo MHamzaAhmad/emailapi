@@ -4,17 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
-
-// Client defines the interface for S3 operations.
-type Client interface {
-	UploadAttachment(ctx context.Context, key string, content []byte, contentType string) error
-	Download(ctx context.Context, key string) ([]byte, error)
-}
 
 // s3Client implements the Client interface using AWS SDK v2.
 type s3Client struct {
@@ -86,10 +81,71 @@ func (c *s3Client) Download(ctx context.Context, key string) ([]byte, error) {
 	defer output.Body.Close()
 
 	buf := new(bytes.Buffer)
-	_, err = buf.ReadFrom(output.Body)
+	_, err = io.Copy(buf, output.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read attachment body: %w", err)
 	}
 
 	return buf.Bytes(), nil
+}
+
+// GetObjectTags retrieves tags for an S3 object.
+// Used to check GuardDuty malware scan status via the GuardDutyMalwareScanStatus tag.
+func (c *s3Client) GetObjectTags(ctx context.Context, key string) (map[string]string, error) {
+	input := &s3.GetObjectTaggingInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
+	}
+
+	output, err := c.client.GetObjectTagging(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get object tags: %w", err)
+	}
+
+	tags := make(map[string]string)
+	for _, tag := range output.TagSet {
+		if tag.Key != nil && tag.Value != nil {
+			tags[*tag.Key] = *tag.Value
+		}
+	}
+
+	return tags, nil
+}
+
+// HeadObject gets object metadata (size, content-type).
+func (c *s3Client) HeadObject(ctx context.Context, key string) (*ObjectMeta, error) {
+	input := &s3.HeadObjectInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
+	}
+
+	output, err := c.client.HeadObject(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to head object: %w", err)
+	}
+
+	meta := &ObjectMeta{}
+	if output.ContentLength != nil {
+		meta.SizeBytes = *output.ContentLength
+	}
+	if output.ContentType != nil {
+		meta.ContentType = *output.ContentType
+	}
+
+	return meta, nil
+}
+
+// DeleteObject removes an object from S3.
+func (c *s3Client) DeleteObject(ctx context.Context, key string) error {
+	input := &s3.DeleteObjectInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
+	}
+
+	_, err := c.client.DeleteObject(ctx, input)
+	if err != nil {
+		return fmt.Errorf("failed to delete object: %w", err)
+	}
+
+	return nil
 }
