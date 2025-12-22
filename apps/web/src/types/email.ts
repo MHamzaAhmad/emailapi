@@ -44,11 +44,14 @@ export interface SendEmailRequest {
     scheduledAt?: string; // ISO string
     attachments?: Attachment[];
     inReplyTo?: string;
+    async?: boolean;
 }
 
 export interface SendEmailResponse {
     id: string;
     status: EmailStatus;
+    messageId?: string;
+    statusMessage?: string;
 }
 
 export interface Email {

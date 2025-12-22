@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { Send, Plus, Trash2, Mail, CheckCircle, XCircle, Reply, RefreshCw } from 'lucide-react';
-import { useSendEmail, useListEmails } from '@/hooks';
-import { SendEmailRequest, EmailCategory } from '@/types';
+import { Send, Plus, Trash2, Mail, CheckCircle, XCircle, Reply, ExternalLink, Trash } from 'lucide-react';
+import { useSendEmail, useLocalEmails } from '@/hooks';
+import { SendEmailRequest } from '@/types';
+import { webhookService } from '@/services/webhookService';
 
 export const Route = createFileRoute('/test-email')({
     component: TestEmailPage,
@@ -19,12 +20,10 @@ function TestEmailPage() {
     });
     const [useHtml, setUseHtml] = useState(false);
     const [successId, setSuccessId] = useState<string | null>(null);
+    const [portalLoading, setPortalLoading] = useState(false);
 
     const sendEmailMutation = useSendEmail();
-    const { data: emailsData, refetch: refetchEmails, isFetching: isFetchingEmails } = useListEmails({
-        limit: 20,
-        category: EmailCategory.EMAIL_CATEGORY_ACTIVE,
-    });
+    const { emails, addEmail, clearEmails } = useLocalEmails();
 
     const handleAddField = (field: 'to' | 'cc' | 'bcc') => {
         setFormData((prev) => ({
@@ -65,6 +64,19 @@ function TestEmailPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    const handleOpenPortal = async () => {
+        setPortalLoading(true);
+        try {
+            const res = await webhookService.getAppPortalAccess();
+            window.open(res.url, '_blank');
+        } catch (error) {
+            console.error('Failed to get portal access:', error);
+            alert('Failed to open webhook portal. Check console for details.');
+        } finally {
+            setPortalLoading(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSuccessId(null);
@@ -88,7 +100,18 @@ function TestEmailPage() {
         try {
             const res = await sendEmailMutation.mutateAsync(cleanData);
             setSuccessId(res.id);
-            refetchEmails();
+
+            // Add to local store
+            addEmail({
+                id: res.id,
+                messageId: res.message_id, // Important for replies
+                from: cleanData.from,
+                to: cleanData.to,
+                subject: cleanData.subject,
+                body: cleanData.body || cleanData.html || '',
+                status: cleanData.async ? 'QUEUED' : 'SENT',
+            });
+
         } catch (error) {
             console.error('Failed to send email:', error);
         }
@@ -258,20 +281,35 @@ function TestEmailPage() {
                     </div>
                 </div>
 
-                {/* Right Column: Sent Emails List */}
+                {/* Right Column: Sent Emails List & Webhooks */}
                 <div>
                     <div className="flex items-center justify-between mb-8">
                         <h2 className="text-2xl font-bold text-white">Sent Emails</h2>
-                        <button
-                            onClick={() => refetchEmails()}
-                            className="p-2 text-gray-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
-                        >
-                            <RefreshCw className={`w-5 h-5 ${isFetchingEmails ? 'animate-spin' : ''}`} />
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleOpenPortal}
+                                disabled={portalLoading}
+                                className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-cyan-400 rounded-lg transition-colors text-sm font-medium"
+                            >
+                                <ExternalLink className="w-4 h-4" />
+                                {portalLoading ? 'Loading...' : 'View Webhooks'}
+                            </button>
+                            <button
+                                onClick={clearEmails}
+                                className="p-2 text-gray-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors"
+                                title="Clear History"
+                            >
+                                <Trash className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="mb-4 text-xs text-gray-400 bg-slate-800/30 p-3 rounded-lg border border-slate-700/50">
+                        Connect your inbox to see replies. Click "View Webhooks" to verify reply events.
                     </div>
 
                     <div className="space-y-4">
-                        {emailsData?.data?.map((email: any) => (
+                        {emails.map((email) => (
                             <div key={email.id} className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 transition-all hover:border-slate-600">
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
@@ -282,11 +320,11 @@ function TestEmailPage() {
                                             To: {email.to.join(', ')}
                                         </p>
                                     </div>
-                                    <span className={`px-2 py-1 text-xs rounded-full border ${email.status === 'EMAIL_STATUS_SENT'
-                                            ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                                            : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                    <span className={`px-2 py-1 text-xs rounded-full border ${email.status === 'SENT'
+                                        ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                        : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
                                         }`}>
-                                        {email.status.replace('EMAIL_STATUS_', '')}
+                                        {email.status}
                                     </span>
                                 </div>
 
@@ -304,9 +342,9 @@ function TestEmailPage() {
                             </div>
                         ))}
 
-                        {(!emailsData?.data || emailsData.data.length === 0) && (
+                        {emails.length === 0 && (
                             <div className="text-center py-12 text-gray-500">
-                                No emails found. Send one to get started!
+                                No emails sent in this session.
                             </div>
                         )}
                     </div>
