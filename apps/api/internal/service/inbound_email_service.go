@@ -13,6 +13,7 @@ import (
 	"github.com/jordan-wright/email"
 
 	"github.com/emailapi/api/internal/external/s3"
+	"github.com/emailapi/api/internal/external/sns"
 	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 )
@@ -22,6 +23,7 @@ type InboundEmailService struct {
 	s3Client      s3.Client
 	chRepo        *chrepo.EmailRepository
 	svixClient    svix.Client
+	snsVerifier   *sns.Verifier
 	inboundBucket string
 }
 
@@ -36,6 +38,7 @@ func NewInboundEmailService(
 		s3Client:      s3Client,
 		chRepo:        chRepo,
 		svixClient:    svixClient,
+		snsVerifier:   sns.NewVerifier(),
 		inboundBucket: inboundBucket,
 	}
 }
@@ -86,17 +89,47 @@ type InboundEmail struct {
 	UserID          string   `json:"user_id"`
 }
 
+// SNSNotificationInput contains all fields from an SNS notification for verification and processing.
+type SNSNotificationInput struct {
+	Type             string
+	MessageID        string
+	TopicArn         string
+	Message          string
+	SubscribeURL     string
+	Timestamp        string
+	SignatureVersion string
+	Signature        string
+	SigningCertURL   string
+	Subject          string
+}
+
 // HandleSNSNotification processes SNS notifications from SES.
-func (s *InboundEmailService) HandleSNSNotification(ctx context.Context, snsType, message, subscribeURL string) error {
-	switch snsType {
+func (s *InboundEmailService) HandleSNSNotification(ctx context.Context, input *SNSNotificationInput) error {
+	// Verify SNS signature first
+	if err := s.snsVerifier.VerifySignature(
+		input.SigningCertURL,
+		input.Signature,
+		input.SignatureVersion,
+		input.Type,
+		input.Message,
+		input.MessageID,
+		input.Timestamp,
+		input.TopicArn,
+		input.SubscribeURL,
+		input.Subject,
+	); err != nil {
+		return fmt.Errorf("SNS signature verification failed: %w", err)
+	}
+
+	switch input.Type {
 	case "SubscriptionConfirmation":
-		return s.handleSubscriptionConfirmation(ctx, subscribeURL)
+		return s.handleSubscriptionConfirmation(ctx, input.SubscribeURL)
 	case "Notification":
-		return s.handleNotification(ctx, message)
+		return s.handleNotification(ctx, input.Message)
 	case "UnsubscribeConfirmation":
 		return nil
 	default:
-		return fmt.Errorf("unknown SNS notification type: %s", snsType)
+		return fmt.Errorf("unknown SNS notification type: %s", input.Type)
 	}
 }
 

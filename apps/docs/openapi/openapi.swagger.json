@@ -1502,6 +1502,22 @@
         "timestamp": {
           "type": "string",
           "title": "When SNS sent this"
+        },
+        "signatureVersion": {
+          "type": "string",
+          "title": "Signature version (1 or 2)"
+        },
+        "signature": {
+          "type": "string",
+          "title": "Base64-encoded signature"
+        },
+        "signingCertUrl": {
+          "type": "string",
+          "title": "URL to the signing certificate"
+        },
+        "subject": {
+          "type": "string",
+          "title": "Subject (optional, for some Notification types)"
         }
       },
       "description": "SNSNotificationRequest is the raw SNS HTTP payload.\nSNS sends different message types - we handle SubscriptionConfirmation and Notification."

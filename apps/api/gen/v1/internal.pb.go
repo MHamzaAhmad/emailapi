@@ -165,7 +165,15 @@ type SNSNotificationRequest struct {
 	// URL to confirm subscription (only for SubscriptionConfirmation)
 	SubscribeUrl string `protobuf:"bytes,5,opt,name=subscribe_url,json=subscribeUrl,proto3" json:"subscribe_url,omitempty"`
 	// When SNS sent this
-	Timestamp     string `protobuf:"bytes,6,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Timestamp string `protobuf:"bytes,6,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	// Signature version (1 or 2)
+	SignatureVersion string `protobuf:"bytes,7,opt,name=signature_version,json=signatureVersion,proto3" json:"signature_version,omitempty"`
+	// Base64-encoded signature
+	Signature string `protobuf:"bytes,8,opt,name=signature,proto3" json:"signature,omitempty"`
+	// URL to the signing certificate
+	SigningCertUrl string `protobuf:"bytes,9,opt,name=signing_cert_url,json=signingCertUrl,proto3" json:"signing_cert_url,omitempty"`
+	// Subject (optional, for some Notification types)
+	Subject       string `protobuf:"bytes,10,opt,name=subject,proto3" json:"subject,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -238,6 +246,34 @@ func (x *SNSNotificationRequest) GetSubscribeUrl() string {
 func (x *SNSNotificationRequest) GetTimestamp() string {
 	if x != nil {
 		return x.Timestamp
+	}
+	return ""
+}
+
+func (x *SNSNotificationRequest) GetSignatureVersion() string {
+	if x != nil {
+		return x.SignatureVersion
+	}
+	return ""
+}
+
+func (x *SNSNotificationRequest) GetSignature() string {
+	if x != nil {
+		return x.Signature
+	}
+	return ""
+}
+
+func (x *SNSNotificationRequest) GetSigningCertUrl() string {
+	if x != nil {
+		return x.SigningCertUrl
+	}
+	return ""
+}
+
+func (x *SNSNotificationRequest) GetSubject() string {
+	if x != nil {
+		return x.Subject
 	}
 	return ""
 }
@@ -447,7 +483,7 @@ const file_v1_internal_proto_rawDesc = "" +
 	"threatName\"Q\n" +
 	"\x1bGuardDutyScanResultResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xc5\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xd4\x02\n" +
 	"\x16SNSNotificationRequest\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x1d\n" +
 	"\n" +
@@ -455,7 +491,12 @@ const file_v1_internal_proto_rawDesc = "" +
 	"\ttopic_arn\x18\x03 \x01(\tR\btopicArn\x12\x18\n" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12#\n" +
 	"\rsubscribe_url\x18\x05 \x01(\tR\fsubscribeUrl\x12\x1c\n" +
-	"\ttimestamp\x18\x06 \x01(\tR\ttimestamp\"M\n" +
+	"\ttimestamp\x18\x06 \x01(\tR\ttimestamp\x12+\n" +
+	"\x11signature_version\x18\a \x01(\tR\x10signatureVersion\x12\x1c\n" +
+	"\tsignature\x18\b \x01(\tR\tsignature\x12(\n" +
+	"\x10signing_cert_url\x18\t \x01(\tR\x0esigningCertUrl\x12\x18\n" +
+	"\asubject\x18\n" +
+	" \x01(\tR\asubject\"M\n" +
 	"\x17SNSNotificationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\xa8\x02\n" +

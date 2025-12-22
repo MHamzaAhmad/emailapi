@@ -61,6 +61,14 @@ message SNSNotificationRequest {
   string subscribe_url = 5;
   // When SNS sent this
   string timestamp = 6;
+  // Signature version (1 or 2)
+  string signature_version = 7;
+  // Base64-encoded signature
+  string signature = 8;
+  // URL to the signing certificate
+  string signing_cert_url = 9;
+  // Subject (optional, for some Notification types)
+  string subject = 10;
 }
 
 // SNSNotificationResponse is the response after processing SNS notification.

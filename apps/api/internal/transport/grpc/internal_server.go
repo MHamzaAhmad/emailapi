@@ -54,7 +54,20 @@ func (s *InternalServer) HandleSNSNotification(ctx context.Context, req *emailap
 		}, nil
 	}
 
-	err := s.inboundEmailSvc.HandleSNSNotification(ctx, req.Type, req.Message, req.SubscribeUrl)
+	input := &service.SNSNotificationInput{
+		Type:             req.Type,
+		MessageID:        req.MessageId,
+		TopicArn:         req.TopicArn,
+		Message:          req.Message,
+		SubscribeURL:     req.SubscribeUrl,
+		Timestamp:        req.Timestamp,
+		SignatureVersion: req.SignatureVersion,
+		Signature:        req.Signature,
+		SigningCertURL:   req.SigningCertUrl,
+		Subject:          req.Subject,
+	}
+
+	err := s.inboundEmailSvc.HandleSNSNotification(ctx, input)
 	if err != nil {
 		return &emailapiv1.SNSNotificationResponse{
 			Success: false,
