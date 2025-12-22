@@ -190,6 +190,15 @@ func (r *EmailRepository) CountByUserID(ctx context.Context, userID string) (int
 	return int(count), nil
 }
 
+// GetEmailByMessageID retrieves an email by its Message-ID header.
+func (r *EmailRepository) GetEmailByMessageID(ctx context.Context, messageID string) (*domain.Email, error) {
+	row, err := r.queries.GetEmailByMessageID(ctx, toPgText(messageID))
+	if err != nil {
+		return nil, fmt.Errorf("email not found for message ID %s: %w", messageID, err)
+	}
+	return dbEmailToDomain(row), nil
+}
+
 // dbEmailToDomain converts a sqlc Email to domain.Email.
 func dbEmailToDomain(row db.Email) *domain.Email {
 	var metadata domain.Metadata

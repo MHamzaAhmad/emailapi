@@ -26,13 +26,14 @@ const (
 type WebhookEventType int32
 
 const (
-	WebhookEventType_WEBHOOK_EVENT_TYPE_UNSPECIFIED     WebhookEventType = 0
-	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_SENT      WebhookEventType = 1
-	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_DELIVERED WebhookEventType = 2
-	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_FAILED    WebhookEventType = 3
-	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED   WebhookEventType = 4
-	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_OPENED    WebhookEventType = 5
-	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_CLICKED   WebhookEventType = 6
+	WebhookEventType_WEBHOOK_EVENT_TYPE_UNSPECIFIED          WebhookEventType = 0
+	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_SENT           WebhookEventType = 1
+	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_DELIVERED      WebhookEventType = 2
+	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_FAILED         WebhookEventType = 3
+	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED        WebhookEventType = 4
+	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_OPENED         WebhookEventType = 5
+	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_CLICKED        WebhookEventType = 6
+	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED WebhookEventType = 7
 )
 
 // Enum value maps for WebhookEventType.
@@ -45,15 +46,17 @@ var (
 		4: "WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED",
 		5: "WEBHOOK_EVENT_TYPE_EMAIL_OPENED",
 		6: "WEBHOOK_EVENT_TYPE_EMAIL_CLICKED",
+		7: "WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED",
 	}
 	WebhookEventType_value = map[string]int32{
-		"WEBHOOK_EVENT_TYPE_UNSPECIFIED":     0,
-		"WEBHOOK_EVENT_TYPE_EMAIL_SENT":      1,
-		"WEBHOOK_EVENT_TYPE_EMAIL_DELIVERED": 2,
-		"WEBHOOK_EVENT_TYPE_EMAIL_FAILED":    3,
-		"WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED":   4,
-		"WEBHOOK_EVENT_TYPE_EMAIL_OPENED":    5,
-		"WEBHOOK_EVENT_TYPE_EMAIL_CLICKED":   6,
+		"WEBHOOK_EVENT_TYPE_UNSPECIFIED":          0,
+		"WEBHOOK_EVENT_TYPE_EMAIL_SENT":           1,
+		"WEBHOOK_EVENT_TYPE_EMAIL_DELIVERED":      2,
+		"WEBHOOK_EVENT_TYPE_EMAIL_FAILED":         3,
+		"WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED":        4,
+		"WEBHOOK_EVENT_TYPE_EMAIL_OPENED":         5,
+		"WEBHOOK_EVENT_TYPE_EMAIL_CLICKED":        6,
+		"WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED": 7,
 	}
 )
 
@@ -608,6 +611,98 @@ func (*DeleteWebhookResponse) Descriptor() ([]byte, []int) {
 	return file_v1_webhook_proto_rawDescGZIP(), []int{8}
 }
 
+// GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
+// Frontend uses this with svix-react to let users manage webhook endpoints.
+type GetAppPortalAccessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAppPortalAccessRequest) Reset() {
+	*x = GetAppPortalAccessRequest{}
+	mi := &file_v1_webhook_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAppPortalAccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAppPortalAccessRequest) ProtoMessage() {}
+
+func (x *GetAppPortalAccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_webhook_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAppPortalAccessRequest.ProtoReflect.Descriptor instead.
+func (*GetAppPortalAccessRequest) Descriptor() ([]byte, []int) {
+	return file_v1_webhook_proto_rawDescGZIP(), []int{9}
+}
+
+type GetAppPortalAccessResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Magic URL for embedding Svix App Portal
+	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	// Token for the portal session
+	Token         string `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAppPortalAccessResponse) Reset() {
+	*x = GetAppPortalAccessResponse{}
+	mi := &file_v1_webhook_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAppPortalAccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAppPortalAccessResponse) ProtoMessage() {}
+
+func (x *GetAppPortalAccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_webhook_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAppPortalAccessResponse.ProtoReflect.Descriptor instead.
+func (*GetAppPortalAccessResponse) Descriptor() ([]byte, []int) {
+	return file_v1_webhook_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetAppPortalAccessResponse) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *GetAppPortalAccessResponse) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
 var File_v1_webhook_proto protoreflect.FileDescriptor
 
 const file_v1_webhook_proto_rawDesc = "" +
@@ -654,7 +749,11 @@ const file_v1_webhook_proto_rawDesc = "" +
 	"_is_active\"&\n" +
 	"\x14DeleteWebhookRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x17\n" +
-	"\x15DeleteWebhookResponse*\x97\x02\n" +
+	"\x15DeleteWebhookResponse\"\x1b\n" +
+	"\x19GetAppPortalAccessRequest\"D\n" +
+	"\x1aGetAppPortalAccessResponse\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x14\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token*\xc4\x02\n" +
 	"\x10WebhookEventType\x12\"\n" +
 	"\x1eWEBHOOK_EVENT_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dWEBHOOK_EVENT_TYPE_EMAIL_SENT\x10\x01\x12&\n" +
@@ -662,14 +761,16 @@ const file_v1_webhook_proto_rawDesc = "" +
 	"\x1fWEBHOOK_EVENT_TYPE_EMAIL_FAILED\x10\x03\x12$\n" +
 	" WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED\x10\x04\x12#\n" +
 	"\x1fWEBHOOK_EVENT_TYPE_EMAIL_OPENED\x10\x05\x12$\n" +
-	" WEBHOOK_EVENT_TYPE_EMAIL_CLICKED\x10\x062\xa6\x04\n" +
+	" WEBHOOK_EVENT_TYPE_EMAIL_CLICKED\x10\x06\x12+\n" +
+	"'WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED\x10\a2\xae\x05\n" +
 	"\x0eWebhookService\x12o\n" +
 	"\rCreateWebhook\x12!.emailapi.v1.CreateWebhookRequest\x1a\".emailapi.v1.CreateWebhookResponse\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/v1/webhooks\x12]\n" +
 	"\n" +
 	"GetWebhook\x12\x1e.emailapi.v1.GetWebhookRequest\x1a\x14.emailapi.v1.Webhook\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/v1/webhooks/{id}\x12i\n" +
 	"\fListWebhooks\x12 .emailapi.v1.ListWebhooksRequest\x1a!.emailapi.v1.ListWebhooksResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/webhooks\x12f\n" +
 	"\rUpdateWebhook\x12!.emailapi.v1.UpdateWebhookRequest\x1a\x14.emailapi.v1.Webhook\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*2\x11/v1/webhooks/{id}\x12q\n" +
-	"\rDeleteWebhook\x12!.emailapi.v1.DeleteWebhookRequest\x1a\".emailapi.v1.DeleteWebhookResponse\"\x19\x82\xd3\xe4\x93\x02\x13*\x11/v1/webhooks/{id}B\x97\x01\n" +
+	"\rDeleteWebhook\x12!.emailapi.v1.DeleteWebhookRequest\x1a\".emailapi.v1.DeleteWebhookResponse\"\x19\x82\xd3\xe4\x93\x02\x13*\x11/v1/webhooks/{id}\x12\x85\x01\n" +
+	"\x12GetAppPortalAccess\x12&.emailapi.v1.GetAppPortalAccessRequest\x1a'.emailapi.v1.GetAppPortalAccessResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/webhooks/portalB\x97\x01\n" +
 	"\x0fcom.emailapi.v1B\fWebhookProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
 var (
@@ -685,28 +786,30 @@ func file_v1_webhook_proto_rawDescGZIP() []byte {
 }
 
 var file_v1_webhook_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_v1_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_v1_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_v1_webhook_proto_goTypes = []any{
-	(WebhookEventType)(0),         // 0: emailapi.v1.WebhookEventType
-	(*CreateWebhookRequest)(nil),  // 1: emailapi.v1.CreateWebhookRequest
-	(*CreateWebhookResponse)(nil), // 2: emailapi.v1.CreateWebhookResponse
-	(*GetWebhookRequest)(nil),     // 3: emailapi.v1.GetWebhookRequest
-	(*Webhook)(nil),               // 4: emailapi.v1.Webhook
-	(*ListWebhooksRequest)(nil),   // 5: emailapi.v1.ListWebhooksRequest
-	(*ListWebhooksResponse)(nil),  // 6: emailapi.v1.ListWebhooksResponse
-	(*UpdateWebhookRequest)(nil),  // 7: emailapi.v1.UpdateWebhookRequest
-	(*DeleteWebhookRequest)(nil),  // 8: emailapi.v1.DeleteWebhookRequest
-	(*DeleteWebhookResponse)(nil), // 9: emailapi.v1.DeleteWebhookResponse
-	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
+	(WebhookEventType)(0),              // 0: emailapi.v1.WebhookEventType
+	(*CreateWebhookRequest)(nil),       // 1: emailapi.v1.CreateWebhookRequest
+	(*CreateWebhookResponse)(nil),      // 2: emailapi.v1.CreateWebhookResponse
+	(*GetWebhookRequest)(nil),          // 3: emailapi.v1.GetWebhookRequest
+	(*Webhook)(nil),                    // 4: emailapi.v1.Webhook
+	(*ListWebhooksRequest)(nil),        // 5: emailapi.v1.ListWebhooksRequest
+	(*ListWebhooksResponse)(nil),       // 6: emailapi.v1.ListWebhooksResponse
+	(*UpdateWebhookRequest)(nil),       // 7: emailapi.v1.UpdateWebhookRequest
+	(*DeleteWebhookRequest)(nil),       // 8: emailapi.v1.DeleteWebhookRequest
+	(*DeleteWebhookResponse)(nil),      // 9: emailapi.v1.DeleteWebhookResponse
+	(*GetAppPortalAccessRequest)(nil),  // 10: emailapi.v1.GetAppPortalAccessRequest
+	(*GetAppPortalAccessResponse)(nil), // 11: emailapi.v1.GetAppPortalAccessResponse
+	(*timestamppb.Timestamp)(nil),      // 12: google.protobuf.Timestamp
 }
 var file_v1_webhook_proto_depIdxs = []int32{
 	0,  // 0: emailapi.v1.CreateWebhookRequest.events:type_name -> emailapi.v1.WebhookEventType
 	4,  // 1: emailapi.v1.CreateWebhookResponse.webhook:type_name -> emailapi.v1.Webhook
 	0,  // 2: emailapi.v1.Webhook.events:type_name -> emailapi.v1.WebhookEventType
-	10, // 3: emailapi.v1.Webhook.last_success:type_name -> google.protobuf.Timestamp
-	10, // 4: emailapi.v1.Webhook.last_failure:type_name -> google.protobuf.Timestamp
-	10, // 5: emailapi.v1.Webhook.created_at:type_name -> google.protobuf.Timestamp
-	10, // 6: emailapi.v1.Webhook.updated_at:type_name -> google.protobuf.Timestamp
+	12, // 3: emailapi.v1.Webhook.last_success:type_name -> google.protobuf.Timestamp
+	12, // 4: emailapi.v1.Webhook.last_failure:type_name -> google.protobuf.Timestamp
+	12, // 5: emailapi.v1.Webhook.created_at:type_name -> google.protobuf.Timestamp
+	12, // 6: emailapi.v1.Webhook.updated_at:type_name -> google.protobuf.Timestamp
 	4,  // 7: emailapi.v1.ListWebhooksResponse.data:type_name -> emailapi.v1.Webhook
 	0,  // 8: emailapi.v1.UpdateWebhookRequest.events:type_name -> emailapi.v1.WebhookEventType
 	1,  // 9: emailapi.v1.WebhookService.CreateWebhook:input_type -> emailapi.v1.CreateWebhookRequest
@@ -714,13 +817,15 @@ var file_v1_webhook_proto_depIdxs = []int32{
 	5,  // 11: emailapi.v1.WebhookService.ListWebhooks:input_type -> emailapi.v1.ListWebhooksRequest
 	7,  // 12: emailapi.v1.WebhookService.UpdateWebhook:input_type -> emailapi.v1.UpdateWebhookRequest
 	8,  // 13: emailapi.v1.WebhookService.DeleteWebhook:input_type -> emailapi.v1.DeleteWebhookRequest
-	2,  // 14: emailapi.v1.WebhookService.CreateWebhook:output_type -> emailapi.v1.CreateWebhookResponse
-	4,  // 15: emailapi.v1.WebhookService.GetWebhook:output_type -> emailapi.v1.Webhook
-	6,  // 16: emailapi.v1.WebhookService.ListWebhooks:output_type -> emailapi.v1.ListWebhooksResponse
-	4,  // 17: emailapi.v1.WebhookService.UpdateWebhook:output_type -> emailapi.v1.Webhook
-	9,  // 18: emailapi.v1.WebhookService.DeleteWebhook:output_type -> emailapi.v1.DeleteWebhookResponse
-	14, // [14:19] is the sub-list for method output_type
-	9,  // [9:14] is the sub-list for method input_type
+	10, // 14: emailapi.v1.WebhookService.GetAppPortalAccess:input_type -> emailapi.v1.GetAppPortalAccessRequest
+	2,  // 15: emailapi.v1.WebhookService.CreateWebhook:output_type -> emailapi.v1.CreateWebhookResponse
+	4,  // 16: emailapi.v1.WebhookService.GetWebhook:output_type -> emailapi.v1.Webhook
+	6,  // 17: emailapi.v1.WebhookService.ListWebhooks:output_type -> emailapi.v1.ListWebhooksResponse
+	4,  // 18: emailapi.v1.WebhookService.UpdateWebhook:output_type -> emailapi.v1.Webhook
+	9,  // 19: emailapi.v1.WebhookService.DeleteWebhook:output_type -> emailapi.v1.DeleteWebhookResponse
+	11, // 20: emailapi.v1.WebhookService.GetAppPortalAccess:output_type -> emailapi.v1.GetAppPortalAccessResponse
+	15, // [15:21] is the sub-list for method output_type
+	9,  // [9:15] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name
@@ -738,7 +843,7 @@ func file_v1_webhook_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_webhook_proto_rawDesc), len(file_v1_webhook_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

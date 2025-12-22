@@ -6,6 +6,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -31,12 +33,14 @@ type Querier interface {
 	GetDomainByName(ctx context.Context, arg GetDomainByNameParams) (Domain, error)
 	GetDomainsByUserID(ctx context.Context, userID string) ([]Domain, error)
 	GetEmailByID(ctx context.Context, id string) (Email, error)
+	GetEmailByMessageID(ctx context.Context, messageID pgtype.Text) (Email, error)
 	GetEmailsByUserID(ctx context.Context, arg GetEmailsByUserIDParams) ([]Email, error)
 	GetEmailsWithPendingAttachments(ctx context.Context) ([]Email, error)
 	// Get domains that need verification refresh (never verified or older than threshold)
 	GetStaleDomains(ctx context.Context, limit int32) ([]Domain, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id string) (User, error)
+	GetUserIDByMessageID(ctx context.Context, messageID pgtype.Text) (string, error)
 	ListApiKeysByUserID(ctx context.Context, userID string) ([]ListApiKeysByUserIDRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	RevokeApiKey(ctx context.Context, id string) (ApiKey, error)

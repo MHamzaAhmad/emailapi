@@ -39,6 +39,12 @@ type Config struct {
 
 	// Internal webhook authentication
 	InternalWebhookSecret string `envconfig:"INTERNAL_WEBHOOK_SECRET" required:"true"`
+
+	// Svix Configuration (for sending webhooks to users)
+	SvixAPIKey string `envconfig:"SVIX_API_KEY" required:"true"`
+
+	// S3 bucket where SES stores inbound emails (replies)
+	S3InboundBucket string `envconfig:"S3_INBOUND_BUCKET" required:"true"`
 }
 
 // Load reads configuration from environment variables.

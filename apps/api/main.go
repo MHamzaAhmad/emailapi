@@ -20,6 +20,7 @@ import (
 	"github.com/emailapi/api/internal/config"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
+	"github.com/emailapi/api/internal/external/svix"
 	middleware "github.com/emailapi/api/internal/middleware"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/repository/postgres"
@@ -143,15 +144,24 @@ func main() {
 	defer riverClient.Stop(context.Background())
 	logger.Info().Msg("✓ Started River client")
 
+	// Initialize Svix client
+	svixClient, err := svix.NewClient(cfg.SvixAPIKey)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create Svix client")
+	}
+	logger.Info().Msg("✓ Initialized Svix client")
+
 	// Initialize service layer with new dependencies
 	svc := service.NewWithDeps(service.ServiceDeps{
-		Store:       store,
-		SESClient:   sesClient,
-		S3Client:    s3Client,
-		Region:      cfg.AWSRegion,
-		RiverClient: riverClient,
-		PGEmailRepo: pgEmailRepo,
-		CHEmailRepo: chRepo,
+		Store:           store,
+		SESClient:       sesClient,
+		S3Client:        s3Client,
+		Region:          cfg.AWSRegion,
+		RiverClient:     riverClient,
+		PGEmailRepo:     pgEmailRepo,
+		CHEmailRepo:     chRepo,
+		SvixClient:      svixClient,
+		S3InboundBucket: cfg.S3InboundBucket,
 	})
 
 	// Start gRPC server
@@ -213,7 +223,8 @@ func runGRPCServer(cfg *config.Config, svc *service.Service, logger zerolog.Logg
 	emailapiv1.RegisterApiKeyServiceServer(grpcServer, grpctransport.NewApiKeyServer(svc.APIKey))
 	emailapiv1.RegisterDomainServiceServer(grpcServer, grpctransport.NewDomainServer(svc.Domain))
 	emailapiv1.RegisterEmailServiceServer(grpcServer, grpctransport.NewEmailServer(svc.Email))
-	emailapiv1.RegisterInternalServiceServer(grpcServer, grpctransport.NewInternalServer(svc.Internal))
+	emailapiv1.RegisterInternalServiceServer(grpcServer, grpctransport.NewInternalServer(svc.Internal, svc.InboundEmail))
+	emailapiv1.RegisterWebhookServiceServer(grpcServer, grpctransport.NewWebhookServer(svc.Webhook))
 
 	// Enable reflection for grpcurl
 	reflection.Register(grpcServer)
@@ -247,6 +258,9 @@ func runHTTPServer(cfg *config.Config, logger zerolog.Logger) error {
 		return err
 	}
 	if err := emailapiv1.RegisterInternalServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
+		return err
+	}
+	if err := emailapiv1.RegisterWebhookServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
 		return err
 	}
 

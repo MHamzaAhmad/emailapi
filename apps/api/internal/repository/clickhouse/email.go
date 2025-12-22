@@ -296,6 +296,54 @@ func (r *EmailRepository) CountArchivedEmails(ctx context.Context, userID string
 	return int(count), nil
 }
 
+// GetEmailByMessageID retrieves an archived email by its Message-ID header.
+func (r *EmailRepository) GetEmailByMessageID(ctx context.Context, messageID string) (*domain.Email, error) {
+	query := `
+		SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
+		       subject, body, html, status, provider_id, message_id, in_reply_to,
+		       error_message, scheduled_at, sent_at, created_at
+		FROM email_archive
+		WHERE message_id = ?
+		LIMIT 1
+	`
+
+	row := r.conn.QueryRow(ctx, query, messageID)
+
+	var email domain.Email
+	var toAddrs, ccAddrs, bccAddrs []string
+	var scheduledAt, sentAt *time.Time
+
+	if err := row.Scan(
+		&email.ID,
+		&email.UserID,
+		&email.From,
+		&toAddrs,
+		&ccAddrs,
+		&bccAddrs,
+		&email.Subject,
+		&email.Body,
+		&email.HTML,
+		&email.Status,
+		&email.ProviderID,
+		&email.MessageID,
+		&email.InReplyTo,
+		&email.ErrorMessage,
+		&scheduledAt,
+		&sentAt,
+		&email.CreatedAt,
+	); err != nil {
+		return nil, fmt.Errorf("archived email not found for message ID %s: %w", messageID, err)
+	}
+
+	email.To = toAddrs
+	email.Cc = ccAddrs
+	email.Bcc = bccAddrs
+	email.ScheduledAt = scheduledAt
+	email.SentAt = sentAt
+
+	return &email, nil
+}
+
 // nullableStringSlice converts a slice to a format suitable for ClickHouse Array.
 func nullableStringSlice(s []string) []string {
 	if s == nil {

@@ -150,6 +150,289 @@ func (x *GuardDutyScanResultResponse) GetMessage() string {
 	return ""
 }
 
+// SNSNotificationRequest is the raw SNS HTTP payload.
+// SNS sends different message types - we handle SubscriptionConfirmation and Notification.
+type SNSNotificationRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Type: SubscriptionConfirmation, Notification, UnsubscribeConfirmation
+	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	// SNS message ID
+	MessageId string `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// SNS topic ARN
+	TopicArn string `protobuf:"bytes,3,opt,name=topic_arn,json=topicArn,proto3" json:"topic_arn,omitempty"`
+	// For Notification: SES notification JSON; For SubscriptionConfirmation: message
+	Message string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	// URL to confirm subscription (only for SubscriptionConfirmation)
+	SubscribeUrl string `protobuf:"bytes,5,opt,name=subscribe_url,json=subscribeUrl,proto3" json:"subscribe_url,omitempty"`
+	// When SNS sent this
+	Timestamp     string `protobuf:"bytes,6,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SNSNotificationRequest) Reset() {
+	*x = SNSNotificationRequest{}
+	mi := &file_v1_internal_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SNSNotificationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SNSNotificationRequest) ProtoMessage() {}
+
+func (x *SNSNotificationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_internal_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SNSNotificationRequest.ProtoReflect.Descriptor instead.
+func (*SNSNotificationRequest) Descriptor() ([]byte, []int) {
+	return file_v1_internal_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SNSNotificationRequest) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *SNSNotificationRequest) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *SNSNotificationRequest) GetTopicArn() string {
+	if x != nil {
+		return x.TopicArn
+	}
+	return ""
+}
+
+func (x *SNSNotificationRequest) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *SNSNotificationRequest) GetSubscribeUrl() string {
+	if x != nil {
+		return x.SubscribeUrl
+	}
+	return ""
+}
+
+func (x *SNSNotificationRequest) GetTimestamp() string {
+	if x != nil {
+		return x.Timestamp
+	}
+	return ""
+}
+
+// SNSNotificationResponse is the response after processing SNS notification.
+type SNSNotificationResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Whether the notification was processed successfully.
+	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	// Message describing the action taken.
+	Message       string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SNSNotificationResponse) Reset() {
+	*x = SNSNotificationResponse{}
+	mi := &file_v1_internal_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SNSNotificationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SNSNotificationResponse) ProtoMessage() {}
+
+func (x *SNSNotificationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_internal_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SNSNotificationResponse.ProtoReflect.Descriptor instead.
+func (*SNSNotificationResponse) Descriptor() ([]byte, []int) {
+	return file_v1_internal_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SNSNotificationResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *SNSNotificationResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+// InboundEmail represents a parsed inbound email reply.
+type InboundEmail struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Our generated ID for this inbound email
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// The Message-ID header of this email
+	MessageId string `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// Message-ID of the original email being replied to
+	InReplyTo string `protobuf:"bytes,3,opt,name=in_reply_to,json=inReplyTo,proto3" json:"in_reply_to,omitempty"`
+	// Full References header chain
+	References []string `protobuf:"bytes,4,rep,name=references,proto3" json:"references,omitempty"`
+	// Sender email
+	From string `protobuf:"bytes,5,opt,name=from,proto3" json:"from,omitempty"`
+	// Recipients
+	To []string `protobuf:"bytes,6,rep,name=to,proto3" json:"to,omitempty"`
+	// Subject
+	Subject string `protobuf:"bytes,7,opt,name=subject,proto3" json:"subject,omitempty"`
+	// Plain text content
+	Body string `protobuf:"bytes,8,opt,name=body,proto3" json:"body,omitempty"`
+	// HTML content
+	Html string `protobuf:"bytes,9,opt,name=html,proto3" json:"html,omitempty"`
+	// Our internal ID of the original sent email
+	OriginalEmailId string `protobuf:"bytes,10,opt,name=original_email_id,json=originalEmailId,proto3" json:"original_email_id,omitempty"`
+	// User who sent the original email
+	UserId        string `protobuf:"bytes,11,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InboundEmail) Reset() {
+	*x = InboundEmail{}
+	mi := &file_v1_internal_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InboundEmail) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InboundEmail) ProtoMessage() {}
+
+func (x *InboundEmail) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_internal_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InboundEmail.ProtoReflect.Descriptor instead.
+func (*InboundEmail) Descriptor() ([]byte, []int) {
+	return file_v1_internal_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *InboundEmail) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *InboundEmail) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *InboundEmail) GetInReplyTo() string {
+	if x != nil {
+		return x.InReplyTo
+	}
+	return ""
+}
+
+func (x *InboundEmail) GetReferences() []string {
+	if x != nil {
+		return x.References
+	}
+	return nil
+}
+
+func (x *InboundEmail) GetFrom() string {
+	if x != nil {
+		return x.From
+	}
+	return ""
+}
+
+func (x *InboundEmail) GetTo() []string {
+	if x != nil {
+		return x.To
+	}
+	return nil
+}
+
+func (x *InboundEmail) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *InboundEmail) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+func (x *InboundEmail) GetHtml() string {
+	if x != nil {
+		return x.Html
+	}
+	return ""
+}
+
+func (x *InboundEmail) GetOriginalEmailId() string {
+	if x != nil {
+		return x.OriginalEmailId
+	}
+	return ""
+}
+
+func (x *InboundEmail) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
 var File_v1_internal_proto protoreflect.FileDescriptor
 
 const file_v1_internal_proto_rawDesc = "" +
@@ -164,9 +447,37 @@ const file_v1_internal_proto_rawDesc = "" +
 	"threatName\"Q\n" +
 	"\x1bGuardDutyScanResultResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xb3\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xc5\x01\n" +
+	"\x16SNSNotificationRequest\x12\x12\n" +
+	"\x04type\x18\x01 \x01(\tR\x04type\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x02 \x01(\tR\tmessageId\x12\x1b\n" +
+	"\ttopic_arn\x18\x03 \x01(\tR\btopicArn\x12\x18\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage\x12#\n" +
+	"\rsubscribe_url\x18\x05 \x01(\tR\fsubscribeUrl\x12\x1c\n" +
+	"\ttimestamp\x18\x06 \x01(\tR\ttimestamp\"M\n" +
+	"\x17SNSNotificationResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xa8\x02\n" +
+	"\fInboundEmail\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x02 \x01(\tR\tmessageId\x12\x1e\n" +
+	"\vin_reply_to\x18\x03 \x01(\tR\tinReplyTo\x12\x1e\n" +
+	"\n" +
+	"references\x18\x04 \x03(\tR\n" +
+	"references\x12\x12\n" +
+	"\x04from\x18\x05 \x01(\tR\x04from\x12\x0e\n" +
+	"\x02to\x18\x06 \x03(\tR\x02to\x12\x18\n" +
+	"\asubject\x18\a \x01(\tR\asubject\x12\x12\n" +
+	"\x04body\x18\b \x01(\tR\x04body\x12\x12\n" +
+	"\x04html\x18\t \x01(\tR\x04html\x12*\n" +
+	"\x11original_email_id\x18\n" +
+	" \x01(\tR\x0foriginalEmailId\x12\x17\n" +
+	"\auser_id\x18\v \x01(\tR\x06userId2\xbe\x02\n" +
 	"\x0fInternalService\x12\x9f\x01\n" +
-	"\x19HandleGuardDutyScanResult\x12'.emailapi.v1.GuardDutyScanResultRequest\x1a(.emailapi.v1.GuardDutyScanResultResponse\"/\x82\xd3\xe4\x93\x02):\x01*\"$/v1/internal/webhooks/guardduty-scanB\x98\x01\n" +
+	"\x19HandleGuardDutyScanResult\x12'.emailapi.v1.GuardDutyScanResultRequest\x1a(.emailapi.v1.GuardDutyScanResultResponse\"/\x82\xd3\xe4\x93\x02):\x01*\"$/v1/internal/webhooks/guardduty-scan\x12\x88\x01\n" +
+	"\x15HandleSNSNotification\x12#.emailapi.v1.SNSNotificationRequest\x1a$.emailapi.v1.SNSNotificationResponse\"$\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/v1/internal/webhooks/snsB\x98\x01\n" +
 	"\x0fcom.emailapi.v1B\rInternalProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
 var (
@@ -181,16 +492,21 @@ func file_v1_internal_proto_rawDescGZIP() []byte {
 	return file_v1_internal_proto_rawDescData
 }
 
-var file_v1_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_v1_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_v1_internal_proto_goTypes = []any{
 	(*GuardDutyScanResultRequest)(nil),  // 0: emailapi.v1.GuardDutyScanResultRequest
 	(*GuardDutyScanResultResponse)(nil), // 1: emailapi.v1.GuardDutyScanResultResponse
+	(*SNSNotificationRequest)(nil),      // 2: emailapi.v1.SNSNotificationRequest
+	(*SNSNotificationResponse)(nil),     // 3: emailapi.v1.SNSNotificationResponse
+	(*InboundEmail)(nil),                // 4: emailapi.v1.InboundEmail
 }
 var file_v1_internal_proto_depIdxs = []int32{
 	0, // 0: emailapi.v1.InternalService.HandleGuardDutyScanResult:input_type -> emailapi.v1.GuardDutyScanResultRequest
-	1, // 1: emailapi.v1.InternalService.HandleGuardDutyScanResult:output_type -> emailapi.v1.GuardDutyScanResultResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: emailapi.v1.InternalService.HandleSNSNotification:input_type -> emailapi.v1.SNSNotificationRequest
+	1, // 2: emailapi.v1.InternalService.HandleGuardDutyScanResult:output_type -> emailapi.v1.GuardDutyScanResultResponse
+	3, // 3: emailapi.v1.InternalService.HandleSNSNotification:output_type -> emailapi.v1.SNSNotificationResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -207,7 +523,7 @@ func file_v1_internal_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_internal_proto_rawDesc), len(file_v1_internal_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -48,6 +48,9 @@ const (
 	// WebhookServiceDeleteWebhookProcedure is the fully-qualified name of the WebhookService's
 	// DeleteWebhook RPC.
 	WebhookServiceDeleteWebhookProcedure = "/emailapi.v1.WebhookService/DeleteWebhook"
+	// WebhookServiceGetAppPortalAccessProcedure is the fully-qualified name of the WebhookService's
+	// GetAppPortalAccess RPC.
+	WebhookServiceGetAppPortalAccessProcedure = "/emailapi.v1.WebhookService/GetAppPortalAccess"
 )
 
 // WebhookServiceClient is a client for the emailapi.v1.WebhookService service.
@@ -62,6 +65,9 @@ type WebhookServiceClient interface {
 	UpdateWebhook(context.Context, *connect.Request[v1.UpdateWebhookRequest]) (*connect.Response[v1.Webhook], error)
 	// DeleteWebhook deletes a webhook.
 	DeleteWebhook(context.Context, *connect.Request[v1.DeleteWebhookRequest]) (*connect.Response[v1.DeleteWebhookResponse], error)
+	// GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
+	// Frontend uses this with svix-react to let users manage webhook endpoints.
+	GetAppPortalAccess(context.Context, *connect.Request[v1.GetAppPortalAccessRequest]) (*connect.Response[v1.GetAppPortalAccessResponse], error)
 }
 
 // NewWebhookServiceClient constructs a client for the emailapi.v1.WebhookService service. By
@@ -105,16 +111,23 @@ func NewWebhookServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(webhookServiceMethods.ByName("DeleteWebhook")),
 			connect.WithClientOptions(opts...),
 		),
+		getAppPortalAccess: connect.NewClient[v1.GetAppPortalAccessRequest, v1.GetAppPortalAccessResponse](
+			httpClient,
+			baseURL+WebhookServiceGetAppPortalAccessProcedure,
+			connect.WithSchema(webhookServiceMethods.ByName("GetAppPortalAccess")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // webhookServiceClient implements WebhookServiceClient.
 type webhookServiceClient struct {
-	createWebhook *connect.Client[v1.CreateWebhookRequest, v1.CreateWebhookResponse]
-	getWebhook    *connect.Client[v1.GetWebhookRequest, v1.Webhook]
-	listWebhooks  *connect.Client[v1.ListWebhooksRequest, v1.ListWebhooksResponse]
-	updateWebhook *connect.Client[v1.UpdateWebhookRequest, v1.Webhook]
-	deleteWebhook *connect.Client[v1.DeleteWebhookRequest, v1.DeleteWebhookResponse]
+	createWebhook      *connect.Client[v1.CreateWebhookRequest, v1.CreateWebhookResponse]
+	getWebhook         *connect.Client[v1.GetWebhookRequest, v1.Webhook]
+	listWebhooks       *connect.Client[v1.ListWebhooksRequest, v1.ListWebhooksResponse]
+	updateWebhook      *connect.Client[v1.UpdateWebhookRequest, v1.Webhook]
+	deleteWebhook      *connect.Client[v1.DeleteWebhookRequest, v1.DeleteWebhookResponse]
+	getAppPortalAccess *connect.Client[v1.GetAppPortalAccessRequest, v1.GetAppPortalAccessResponse]
 }
 
 // CreateWebhook calls emailapi.v1.WebhookService.CreateWebhook.
@@ -142,6 +155,11 @@ func (c *webhookServiceClient) DeleteWebhook(ctx context.Context, req *connect.R
 	return c.deleteWebhook.CallUnary(ctx, req)
 }
 
+// GetAppPortalAccess calls emailapi.v1.WebhookService.GetAppPortalAccess.
+func (c *webhookServiceClient) GetAppPortalAccess(ctx context.Context, req *connect.Request[v1.GetAppPortalAccessRequest]) (*connect.Response[v1.GetAppPortalAccessResponse], error) {
+	return c.getAppPortalAccess.CallUnary(ctx, req)
+}
+
 // WebhookServiceHandler is an implementation of the emailapi.v1.WebhookService service.
 type WebhookServiceHandler interface {
 	// CreateWebhook creates a new webhook.
@@ -154,6 +172,9 @@ type WebhookServiceHandler interface {
 	UpdateWebhook(context.Context, *connect.Request[v1.UpdateWebhookRequest]) (*connect.Response[v1.Webhook], error)
 	// DeleteWebhook deletes a webhook.
 	DeleteWebhook(context.Context, *connect.Request[v1.DeleteWebhookRequest]) (*connect.Response[v1.DeleteWebhookResponse], error)
+	// GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
+	// Frontend uses this with svix-react to let users manage webhook endpoints.
+	GetAppPortalAccess(context.Context, *connect.Request[v1.GetAppPortalAccessRequest]) (*connect.Response[v1.GetAppPortalAccessResponse], error)
 }
 
 // NewWebhookServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -193,6 +214,12 @@ func NewWebhookServiceHandler(svc WebhookServiceHandler, opts ...connect.Handler
 		connect.WithSchema(webhookServiceMethods.ByName("DeleteWebhook")),
 		connect.WithHandlerOptions(opts...),
 	)
+	webhookServiceGetAppPortalAccessHandler := connect.NewUnaryHandler(
+		WebhookServiceGetAppPortalAccessProcedure,
+		svc.GetAppPortalAccess,
+		connect.WithSchema(webhookServiceMethods.ByName("GetAppPortalAccess")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/emailapi.v1.WebhookService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case WebhookServiceCreateWebhookProcedure:
@@ -205,6 +232,8 @@ func NewWebhookServiceHandler(svc WebhookServiceHandler, opts ...connect.Handler
 			webhookServiceUpdateWebhookHandler.ServeHTTP(w, r)
 		case WebhookServiceDeleteWebhookProcedure:
 			webhookServiceDeleteWebhookHandler.ServeHTTP(w, r)
+		case WebhookServiceGetAppPortalAccessProcedure:
+			webhookServiceGetAppPortalAccessHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -232,4 +261,8 @@ func (UnimplementedWebhookServiceHandler) UpdateWebhook(context.Context, *connec
 
 func (UnimplementedWebhookServiceHandler) DeleteWebhook(context.Context, *connect.Request[v1.DeleteWebhookRequest]) (*connect.Response[v1.DeleteWebhookResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.WebhookService.DeleteWebhook is not implemented"))
+}
+
+func (UnimplementedWebhookServiceHandler) GetAppPortalAccess(context.Context, *connect.Request[v1.GetAppPortalAccessRequest]) (*connect.Response[v1.GetAppPortalAccessResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.WebhookService.GetAppPortalAccess is not implemented"))
 }

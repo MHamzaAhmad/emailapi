@@ -484,6 +484,40 @@
         ]
       }
     },
+    "/v1/internal/webhooks/sns": {
+      "post": {
+        "summary": "HandleSNSNotification processes SNS notifications for inbound emails.",
+        "operationId": "InternalService_HandleSNSNotification",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SNSNotificationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "SNSNotificationRequest is the raw SNS HTTP payload.\nSNS sends different message types - we handle SubscriptionConfirmation and Notification.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1SNSNotificationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "InternalService"
+        ]
+      }
+    },
     "/v1/send": {
       "post": {
         "summary": "SendEmail queues an email for sending.",
@@ -704,6 +738,40 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1CreateWebhookRequest"
+            }
+          }
+        ],
+        "tags": [
+          "WebhookService"
+        ]
+      }
+    },
+    "/v1/webhooks/portal": {
+      "post": {
+        "summary": "GetAppPortalAccess returns a magic URL for embedding Svix App Portal.\nFrontend uses this with svix-react to let users manage webhook endpoints.",
+        "operationId": "WebhookService_GetAppPortalAccess",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetAppPortalAccessResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "GetAppPortalAccess returns a magic URL for embedding Svix App Portal.\nFrontend uses this with svix-react to let users manage webhook endpoints.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1GetAppPortalAccessRequest"
             }
           }
         ],
@@ -1446,6 +1514,23 @@
       "default": "ENVIRONMENT_UNSPECIFIED",
       "description": "Environment represents the API key environment."
     },
+    "v1GetAppPortalAccessRequest": {
+      "type": "object",
+      "description": "GetAppPortalAccess returns a magic URL for embedding Svix App Portal.\nFrontend uses this with svix-react to let users manage webhook endpoints."
+    },
+    "v1GetAppPortalAccessResponse": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "title": "Magic URL for embedding Svix App Portal"
+        },
+        "token": {
+          "type": "string",
+          "title": "Token for the portal session"
+        }
+      }
+    },
     "v1GetDomainResponse": {
       "type": "object",
       "properties": {
@@ -1606,6 +1691,50 @@
       ],
       "default": "RECORD_TYPE_UNSPECIFIED",
       "description": "RecordType identifies the purpose of a DNS record."
+    },
+    "v1SNSNotificationRequest": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "title": "Type: SubscriptionConfirmation, Notification, UnsubscribeConfirmation"
+        },
+        "messageId": {
+          "type": "string",
+          "title": "SNS message ID"
+        },
+        "topicArn": {
+          "type": "string",
+          "title": "SNS topic ARN"
+        },
+        "message": {
+          "type": "string",
+          "title": "For Notification: SES notification JSON; For SubscriptionConfirmation: message"
+        },
+        "subscribeUrl": {
+          "type": "string",
+          "title": "URL to confirm subscription (only for SubscriptionConfirmation)"
+        },
+        "timestamp": {
+          "type": "string",
+          "title": "When SNS sent this"
+        }
+      },
+      "description": "SNSNotificationRequest is the raw SNS HTTP payload.\nSNS sends different message types - we handle SubscriptionConfirmation and Notification."
+    },
+    "v1SNSNotificationResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether the notification was processed successfully."
+        },
+        "message": {
+          "type": "string",
+          "description": "Message describing the action taken."
+        }
+      },
+      "description": "SNSNotificationResponse is the response after processing SNS notification."
     },
     "v1Scope": {
       "type": "string",
@@ -1828,7 +1957,8 @@
         "WEBHOOK_EVENT_TYPE_EMAIL_FAILED",
         "WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED",
         "WEBHOOK_EVENT_TYPE_EMAIL_OPENED",
-        "WEBHOOK_EVENT_TYPE_EMAIL_CLICKED"
+        "WEBHOOK_EVENT_TYPE_EMAIL_CLICKED",
+        "WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED"
       ],
       "default": "WEBHOOK_EVENT_TYPE_UNSPECIFIED"
     }

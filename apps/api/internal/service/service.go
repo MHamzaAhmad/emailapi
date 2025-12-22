@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
+	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	pgrepo "github.com/emailapi/api/internal/repository/postgres"
 	"github.com/emailapi/api/internal/validation"
@@ -16,11 +17,13 @@ import (
 type Service struct {
 	store Store
 
-	User     *UserService
-	APIKey   *APIKeyService
-	Domain   *DomainService
-	Email    *EmailService
-	Internal *InternalService
+	User         *UserService
+	APIKey       *APIKeyService
+	Domain       *DomainService
+	Email        *EmailService
+	Internal     *InternalService
+	Webhook      *WebhookService
+	InboundEmail *InboundEmailService
 }
 
 // New creates a new Service with the given Store.
@@ -34,13 +37,15 @@ func New(store Store) *Service {
 
 // ServiceDeps holds dependencies for service initialization.
 type ServiceDeps struct {
-	Store       Store
-	SESClient   ses.Client
-	S3Client    s3.Client
-	Region      string
-	RiverClient *river.Client[pgx.Tx]
-	PGEmailRepo *pgrepo.EmailRepository
-	CHEmailRepo *chrepo.EmailRepository
+	Store           Store
+	SESClient       ses.Client
+	S3Client        s3.Client
+	Region          string
+	RiverClient     *river.Client[pgx.Tx]
+	PGEmailRepo     *pgrepo.EmailRepository
+	CHEmailRepo     *chrepo.EmailRepository
+	SvixClient      svix.Client
+	S3InboundBucket string
 }
 
 // NewWithDeps creates a new Service with all dependencies.
@@ -53,6 +58,19 @@ func NewWithDeps(deps ServiceDeps) *Service {
 
 	svc.Email = NewEmailService(deps.RiverClient, deps.PGEmailRepo, deps.CHEmailRepo, emailValidator, deps.SESClient)
 	svc.Internal = NewInternalService(deps.PGEmailRepo, deps.RiverClient)
+
+	// Initialize Svix-dependent services if client is available
+	if deps.SvixClient != nil {
+		svc.Webhook = NewWebhookService(deps.SvixClient)
+		svc.InboundEmail = NewInboundEmailService(
+			deps.S3Client,
+			deps.PGEmailRepo,
+			deps.CHEmailRepo,
+			deps.SvixClient,
+			deps.S3InboundBucket,
+		)
+	}
+
 	return svc
 }
 

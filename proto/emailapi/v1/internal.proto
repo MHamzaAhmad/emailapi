@@ -16,6 +16,14 @@ service InternalService {
       body: "*"
     };
   }
+
+  // HandleSNSNotification processes SNS notifications for inbound emails.
+  rpc HandleSNSNotification(SNSNotificationRequest) returns (SNSNotificationResponse) {
+    option (google.api.http) = {
+      post: "/v1/internal/webhooks/sns"
+      body: "*"
+    };
+  }
 }
 
 // GuardDutyScanResultRequest contains the scan result from GuardDuty via EventBridge.
@@ -37,3 +45,55 @@ message GuardDutyScanResultResponse {
   // Message describing the action taken.
   string message = 2;
 }
+
+// SNSNotificationRequest is the raw SNS HTTP payload.
+// SNS sends different message types - we handle SubscriptionConfirmation and Notification.
+message SNSNotificationRequest {
+  // Type: SubscriptionConfirmation, Notification, UnsubscribeConfirmation
+  string type = 1;
+  // SNS message ID
+  string message_id = 2;
+  // SNS topic ARN
+  string topic_arn = 3;
+  // For Notification: SES notification JSON; For SubscriptionConfirmation: message
+  string message = 4;
+  // URL to confirm subscription (only for SubscriptionConfirmation)
+  string subscribe_url = 5;
+  // When SNS sent this
+  string timestamp = 6;
+}
+
+// SNSNotificationResponse is the response after processing SNS notification.
+message SNSNotificationResponse {
+  // Whether the notification was processed successfully.
+  bool success = 1;
+  // Message describing the action taken.
+  string message = 2;
+}
+
+// InboundEmail represents a parsed inbound email reply.
+message InboundEmail {
+  // Our generated ID for this inbound email
+  string id = 1;
+  // The Message-ID header of this email
+  string message_id = 2;
+  // Message-ID of the original email being replied to
+  string in_reply_to = 3;
+  // Full References header chain
+  repeated string references = 4;
+  // Sender email
+  string from = 5;
+  // Recipients
+  repeated string to = 6;
+  // Subject
+  string subject = 7;
+  // Plain text content
+  string body = 8;
+  // HTML content
+  string html = 9;
+  // Our internal ID of the original sent email
+  string original_email_id = 10;
+  // User who sent the original email
+  string user_id = 11;
+}
+

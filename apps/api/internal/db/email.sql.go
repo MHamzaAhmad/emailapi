@@ -257,6 +257,37 @@ func (q *Queries) GetEmailByID(ctx context.Context, id string) (Email, error) {
 	return i, err
 }
 
+const getEmailByMessageID = `-- name: GetEmailByMessageID :one
+SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses, subject, body, html, status, provider_id, metadata, scheduled_at, sent_at, error_message, created_at, updated_at, message_id, in_reply_to FROM emails WHERE message_id = $1
+`
+
+func (q *Queries) GetEmailByMessageID(ctx context.Context, messageID pgtype.Text) (Email, error) {
+	row := q.db.QueryRow(ctx, getEmailByMessageID, messageID)
+	var i Email
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.FromAddress,
+		&i.ToAddresses,
+		&i.CcAddresses,
+		&i.BccAddresses,
+		&i.Subject,
+		&i.Body,
+		&i.Html,
+		&i.Status,
+		&i.ProviderID,
+		&i.Metadata,
+		&i.ScheduledAt,
+		&i.SentAt,
+		&i.ErrorMessage,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MessageID,
+		&i.InReplyTo,
+	)
+	return i, err
+}
+
 const getEmailsByUserID = `-- name: GetEmailsByUserID :many
 SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses, subject, body, html, status, provider_id, metadata, scheduled_at, sent_at, error_message, created_at, updated_at, message_id, in_reply_to FROM emails 
 WHERE user_id = $1 
@@ -355,6 +386,17 @@ func (q *Queries) GetEmailsWithPendingAttachments(ctx context.Context) ([]Email,
 		return nil, err
 	}
 	return items, nil
+}
+
+const getUserIDByMessageID = `-- name: GetUserIDByMessageID :one
+SELECT user_id FROM emails WHERE message_id = $1
+`
+
+func (q *Queries) GetUserIDByMessageID(ctx context.Context, messageID pgtype.Text) (string, error) {
+	row := q.db.QueryRow(ctx, getUserIDByMessageID, messageID)
+	var user_id string
+	err := row.Scan(&user_id)
+	return user_id, err
 }
 
 const updateAttachmentScanStatus = `-- name: UpdateAttachmentScanStatus :one

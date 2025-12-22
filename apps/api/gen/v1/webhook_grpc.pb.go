@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WebhookService_CreateWebhook_FullMethodName = "/emailapi.v1.WebhookService/CreateWebhook"
-	WebhookService_GetWebhook_FullMethodName    = "/emailapi.v1.WebhookService/GetWebhook"
-	WebhookService_ListWebhooks_FullMethodName  = "/emailapi.v1.WebhookService/ListWebhooks"
-	WebhookService_UpdateWebhook_FullMethodName = "/emailapi.v1.WebhookService/UpdateWebhook"
-	WebhookService_DeleteWebhook_FullMethodName = "/emailapi.v1.WebhookService/DeleteWebhook"
+	WebhookService_CreateWebhook_FullMethodName      = "/emailapi.v1.WebhookService/CreateWebhook"
+	WebhookService_GetWebhook_FullMethodName         = "/emailapi.v1.WebhookService/GetWebhook"
+	WebhookService_ListWebhooks_FullMethodName       = "/emailapi.v1.WebhookService/ListWebhooks"
+	WebhookService_UpdateWebhook_FullMethodName      = "/emailapi.v1.WebhookService/UpdateWebhook"
+	WebhookService_DeleteWebhook_FullMethodName      = "/emailapi.v1.WebhookService/DeleteWebhook"
+	WebhookService_GetAppPortalAccess_FullMethodName = "/emailapi.v1.WebhookService/GetAppPortalAccess"
 )
 
 // WebhookServiceClient is the client API for WebhookService service.
@@ -42,6 +43,9 @@ type WebhookServiceClient interface {
 	UpdateWebhook(ctx context.Context, in *UpdateWebhookRequest, opts ...grpc.CallOption) (*Webhook, error)
 	// DeleteWebhook deletes a webhook.
 	DeleteWebhook(ctx context.Context, in *DeleteWebhookRequest, opts ...grpc.CallOption) (*DeleteWebhookResponse, error)
+	// GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
+	// Frontend uses this with svix-react to let users manage webhook endpoints.
+	GetAppPortalAccess(ctx context.Context, in *GetAppPortalAccessRequest, opts ...grpc.CallOption) (*GetAppPortalAccessResponse, error)
 }
 
 type webhookServiceClient struct {
@@ -102,6 +106,16 @@ func (c *webhookServiceClient) DeleteWebhook(ctx context.Context, in *DeleteWebh
 	return out, nil
 }
 
+func (c *webhookServiceClient) GetAppPortalAccess(ctx context.Context, in *GetAppPortalAccessRequest, opts ...grpc.CallOption) (*GetAppPortalAccessResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAppPortalAccessResponse)
+	err := c.cc.Invoke(ctx, WebhookService_GetAppPortalAccess_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WebhookServiceServer is the server API for WebhookService service.
 // All implementations must embed UnimplementedWebhookServiceServer
 // for forward compatibility.
@@ -118,6 +132,9 @@ type WebhookServiceServer interface {
 	UpdateWebhook(context.Context, *UpdateWebhookRequest) (*Webhook, error)
 	// DeleteWebhook deletes a webhook.
 	DeleteWebhook(context.Context, *DeleteWebhookRequest) (*DeleteWebhookResponse, error)
+	// GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
+	// Frontend uses this with svix-react to let users manage webhook endpoints.
+	GetAppPortalAccess(context.Context, *GetAppPortalAccessRequest) (*GetAppPortalAccessResponse, error)
 	mustEmbedUnimplementedWebhookServiceServer()
 }
 
@@ -142,6 +159,9 @@ func (UnimplementedWebhookServiceServer) UpdateWebhook(context.Context, *UpdateW
 }
 func (UnimplementedWebhookServiceServer) DeleteWebhook(context.Context, *DeleteWebhookRequest) (*DeleteWebhookResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteWebhook not implemented")
+}
+func (UnimplementedWebhookServiceServer) GetAppPortalAccess(context.Context, *GetAppPortalAccessRequest) (*GetAppPortalAccessResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAppPortalAccess not implemented")
 }
 func (UnimplementedWebhookServiceServer) mustEmbedUnimplementedWebhookServiceServer() {}
 func (UnimplementedWebhookServiceServer) testEmbeddedByValue()                        {}
@@ -254,6 +274,24 @@ func _WebhookService_DeleteWebhook_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WebhookService_GetAppPortalAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAppPortalAccessRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WebhookServiceServer).GetAppPortalAccess(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WebhookService_GetAppPortalAccess_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WebhookServiceServer).GetAppPortalAccess(ctx, req.(*GetAppPortalAccessRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WebhookService_ServiceDesc is the grpc.ServiceDesc for WebhookService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -280,6 +318,10 @@ var WebhookService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteWebhook",
 			Handler:    _WebhookService_DeleteWebhook_Handler,
+		},
+		{
+			MethodName: "GetAppPortalAccess",
+			Handler:    _WebhookService_GetAppPortalAccess_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -100,3 +100,12 @@ func MetadataAnnotator(ctx context.Context, req interface{}) metadata.MD {
 
 	return md
 }
+
+// GetUserID extracts the user ID from the context.
+// Returns empty string if not found.
+func GetUserID(ctx context.Context) string {
+	if userID, ok := ctx.Value("user_id").(string); ok {
+		return userID
+	}
+	return ""
+}

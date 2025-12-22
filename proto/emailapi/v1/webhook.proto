@@ -45,6 +45,15 @@ service WebhookService {
       delete: "/v1/webhooks/{id}"
     };
   }
+
+  // GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
+  // Frontend uses this with svix-react to let users manage webhook endpoints.
+  rpc GetAppPortalAccess(GetAppPortalAccessRequest) returns (GetAppPortalAccessResponse) {
+    option (google.api.http) = {
+      post: "/v1/webhooks/portal"
+      body: "*"
+    };
+  }
 }
 
 enum WebhookEventType {
@@ -55,6 +64,7 @@ enum WebhookEventType {
   WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED = 4;
   WEBHOOK_EVENT_TYPE_EMAIL_OPENED = 5;
   WEBHOOK_EVENT_TYPE_EMAIL_CLICKED = 6;
+  WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED = 7;
 }
 
 message CreateWebhookRequest {
@@ -106,3 +116,14 @@ message DeleteWebhookRequest {
 }
 
 message DeleteWebhookResponse {}
+
+// GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
+// Frontend uses this with svix-react to let users manage webhook endpoints.
+message GetAppPortalAccessRequest {}
+
+message GetAppPortalAccessResponse {
+  // Magic URL for embedding Svix App Portal
+  string url = 1;
+  // Token for the portal session
+  string token = 2;
+}

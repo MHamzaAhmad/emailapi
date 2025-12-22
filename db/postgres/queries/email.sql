@@ -74,3 +74,8 @@ DELETE FROM email_attachments WHERE email_id = $1;
 -- name: CountEmailsByUserID :one
 SELECT COUNT(*) FROM emails WHERE user_id = $1;
 
+-- name: GetEmailByMessageID :one
+SELECT * FROM emails WHERE message_id = $1;
+
+-- name: GetUserIDByMessageID :one
+SELECT user_id FROM emails WHERE message_id = $1;
