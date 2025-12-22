@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/internal.proto.
  */
 export const file_v1_internal: GenFile = /*@__PURE__*/
-  fileDesc("ChF2MS9pbnRlcm5hbC5wcm90bxILZW1haWxhcGkudjEiaQoaR3VhcmREdXR5U2NhblJlc3VsdFJlcXVlc3QSEQoJczNfYnVja2V0GAEgASgJEg4KBnMzX2tleRgCIAEoCRITCgtzY2FuX3N0YXR1cxgDIAEoCRITCgt0aHJlYXRfbmFtZRgEIAEoCSI/ChtHdWFyZER1dHlTY2FuUmVzdWx0UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJItQCChZTTlNOb3RpZmljYXRpb25SZXF1ZXN0EhIKBHR5cGUYASABKAlSBFR5cGUSHQoKbWVzc2FnZV9pZBgCIAEoCVIJTWVzc2FnZUlkEhsKCXRvcGljX2FybhgDIAEoCVIIVG9waWNBcm4SGAoHbWVzc2FnZRgEIAEoCVIHTWVzc2FnZRIjCg1zdWJzY3JpYmVfdXJsGAUgASgJUgxTdWJzY3JpYmVVUkwSHAoJdGltZXN0YW1wGAYgASgJUglUaW1lc3RhbXASKwoRc2lnbmF0dXJlX3ZlcnNpb24YByABKAlSEFNpZ25hdHVyZVZlcnNpb24SHAoJc2lnbmF0dXJlGAggASgJUglTaWduYXR1cmUSKAoQc2lnbmluZ19jZXJ0X3VybBgJIAEoCVIOU2lnbmluZ0NlcnRVUkwSGAoHc3ViamVjdBgKIAEoCVIHU3ViamVjdCI7ChdTTlNOb3RpZmljYXRpb25SZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiygEKDEluYm91bmRFbWFpbBIKCgJpZBgBIAEoCRISCgptZXNzYWdlX2lkGAIgASgJEhMKC2luX3JlcGx5X3RvGAMgASgJEhIKCnJlZmVyZW5jZXMYBCADKAkSDAoEZnJvbRgFIAEoCRIKCgJ0bxgGIAMoCRIPCgdzdWJqZWN0GAcgASgJEgwKBGJvZHkYCCABKAkSDAoEaHRtbBgJIAEoCRIZChFvcmlnaW5hbF9lbWFpbF9pZBgKIAEoCRIPCgd1c2VyX2lkGAsgASgJMr4CCg9JbnRlcm5hbFNlcnZpY2USnwEKGUhhbmRsZUd1YXJkRHV0eVNjYW5SZXN1bHQSJy5lbWFpbGFwaS52MS5HdWFyZER1dHlTY2FuUmVzdWx0UmVxdWVzdBooLmVtYWlsYXBpLnYxLkd1YXJkRHV0eVNjYW5SZXN1bHRSZXNwb25zZSIvgtPkkwIpOgEqIiQvdjEvaW50ZXJuYWwvd2ViaG9va3MvZ3VhcmRkdXR5LXNjYW4SiAEKFUhhbmRsZVNOU05vdGlmaWNhdGlvbhIjLmVtYWlsYXBpLnYxLlNOU05vdGlmaWNhdGlvblJlcXVlc3QaJC5lbWFpbGFwaS52MS5TTlNOb3RpZmljYXRpb25SZXNwb25zZSIkgtPkkwIeOgEqIhkvdjEvaW50ZXJuYWwvd2ViaG9va3Mvc25zQpsBCg9jb20uZW1haWxhcGkudjFCDUludGVybmFsUHJvdG9QAVosZ2l0aHViLmNvbS9lbWFpbGFwaS9zZGstZ28vZ2VuL3YxO2VtYWlsYXBpdjGiAgNFWFiqAgtFbWFpbGFwaS5WMcoCC0VtYWlsYXBpXFYx4gIXRW1haWxhcGlcVjFcR1BCTWV0YWRhdGHqAgxFbWFpbGFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations]);
+  fileDesc("ChF2MS9pbnRlcm5hbC5wcm90bxILZW1haWxhcGkudjEiaQoaR3VhcmREdXR5U2NhblJlc3VsdFJlcXVlc3QSEQoJczNfYnVja2V0GAEgASgJEg4KBnMzX2tleRgCIAEoCRITCgtzY2FuX3N0YXR1cxgDIAEoCRITCgt0aHJlYXRfbmFtZRgEIAEoCSI/ChtHdWFyZER1dHlTY2FuUmVzdWx0UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIsoBCgxJbmJvdW5kRW1haWwSCgoCaWQYASABKAkSEgoKbWVzc2FnZV9pZBgCIAEoCRITCgtpbl9yZXBseV90bxgDIAEoCRISCgpyZWZlcmVuY2VzGAQgAygJEgwKBGZyb20YBSABKAkSCgoCdG8YBiADKAkSDwoHc3ViamVjdBgHIAEoCRIMCgRib2R5GAggASgJEgwKBGh0bWwYCSABKAkSGQoRb3JpZ2luYWxfZW1haWxfaWQYCiABKAkSDwoHdXNlcl9pZBgLIAEoCTKzAQoPSW50ZXJuYWxTZXJ2aWNlEp8BChlIYW5kbGVHdWFyZER1dHlTY2FuUmVzdWx0EicuZW1haWxhcGkudjEuR3VhcmREdXR5U2NhblJlc3VsdFJlcXVlc3QaKC5lbWFpbGFwaS52MS5HdWFyZER1dHlTY2FuUmVzdWx0UmVzcG9uc2UiL4LT5JMCKToBKiIkL3YxL2ludGVybmFsL3dlYmhvb2tzL2d1YXJkZHV0eS1zY2FuQpsBCg9jb20uZW1haWxhcGkudjFCDUludGVybmFsUHJvdG9QAVosZ2l0aHViLmNvbS9lbWFpbGFwaS9zZGstZ28vZ2VuL3YxO2VtYWlsYXBpdjGiAgNFWFiqAgtFbWFpbGFwaS5WMcoCC0VtYWlsYXBpXFYx4gIXRW1haWxhcGlcVjFcR1BCTWV0YWRhdGHqAgxFbWFpbGFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations]);
 
 /**
  * GuardDutyScanResultRequest contains the scan result from GuardDuty via EventBridge.
@@ -82,119 +82,6 @@ export type GuardDutyScanResultResponse = Message<"emailapi.v1.GuardDutyScanResu
  */
 export const GuardDutyScanResultResponseSchema: GenMessage<GuardDutyScanResultResponse> = /*@__PURE__*/
   messageDesc(file_v1_internal, 1);
-
-/**
- * SNSNotificationRequest is the raw SNS HTTP payload.
- * SNS sends different message types - we handle SubscriptionConfirmation and Notification.
- *
- * @generated from message emailapi.v1.SNSNotificationRequest
- */
-export type SNSNotificationRequest = Message<"emailapi.v1.SNSNotificationRequest"> & {
-  /**
-   * Type: SubscriptionConfirmation, Notification, UnsubscribeConfirmation
-   *
-   * @generated from field: string type = 1 [json_name = "Type"];
-   */
-  type: string;
-
-  /**
-   * SNS message ID
-   *
-   * @generated from field: string message_id = 2 [json_name = "MessageId"];
-   */
-  messageId: string;
-
-  /**
-   * SNS topic ARN
-   *
-   * @generated from field: string topic_arn = 3 [json_name = "TopicArn"];
-   */
-  topicArn: string;
-
-  /**
-   * For Notification: SES notification JSON; For SubscriptionConfirmation: message
-   *
-   * @generated from field: string message = 4 [json_name = "Message"];
-   */
-  message: string;
-
-  /**
-   * URL to confirm subscription (only for SubscriptionConfirmation)
-   *
-   * @generated from field: string subscribe_url = 5 [json_name = "SubscribeURL"];
-   */
-  subscribeUrl: string;
-
-  /**
-   * When SNS sent this
-   *
-   * @generated from field: string timestamp = 6 [json_name = "Timestamp"];
-   */
-  timestamp: string;
-
-  /**
-   * Signature version (1 or 2)
-   *
-   * @generated from field: string signature_version = 7 [json_name = "SignatureVersion"];
-   */
-  signatureVersion: string;
-
-  /**
-   * Base64-encoded signature
-   *
-   * @generated from field: string signature = 8 [json_name = "Signature"];
-   */
-  signature: string;
-
-  /**
-   * URL to the signing certificate
-   *
-   * @generated from field: string signing_cert_url = 9 [json_name = "SigningCertURL"];
-   */
-  signingCertUrl: string;
-
-  /**
-   * Subject (optional, for some Notification types)
-   *
-   * @generated from field: string subject = 10 [json_name = "Subject"];
-   */
-  subject: string;
-};
-
-/**
- * Describes the message emailapi.v1.SNSNotificationRequest.
- * Use `create(SNSNotificationRequestSchema)` to create a new message.
- */
-export const SNSNotificationRequestSchema: GenMessage<SNSNotificationRequest> = /*@__PURE__*/
-  messageDesc(file_v1_internal, 2);
-
-/**
- * SNSNotificationResponse is the response after processing SNS notification.
- *
- * @generated from message emailapi.v1.SNSNotificationResponse
- */
-export type SNSNotificationResponse = Message<"emailapi.v1.SNSNotificationResponse"> & {
-  /**
-   * Whether the notification was processed successfully.
-   *
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-
-  /**
-   * Message describing the action taken.
-   *
-   * @generated from field: string message = 2;
-   */
-  message: string;
-};
-
-/**
- * Describes the message emailapi.v1.SNSNotificationResponse.
- * Use `create(SNSNotificationResponseSchema)` to create a new message.
- */
-export const SNSNotificationResponseSchema: GenMessage<SNSNotificationResponse> = /*@__PURE__*/
-  messageDesc(file_v1_internal, 3);
 
 /**
  * InboundEmail represents a parsed inbound email reply.
@@ -285,7 +172,7 @@ export type InboundEmail = Message<"emailapi.v1.InboundEmail"> & {
  * Use `create(InboundEmailSchema)` to create a new message.
  */
 export const InboundEmailSchema: GenMessage<InboundEmail> = /*@__PURE__*/
-  messageDesc(file_v1_internal, 4);
+  messageDesc(file_v1_internal, 2);
 
 /**
  * InternalService handles internal webhook endpoints.
@@ -303,16 +190,6 @@ export const InternalService: GenService<{
     methodKind: "unary";
     input: typeof GuardDutyScanResultRequestSchema;
     output: typeof GuardDutyScanResultResponseSchema;
-  },
-  /**
-   * HandleSNSNotification processes SNS notifications for inbound emails.
-   *
-   * @generated from rpc emailapi.v1.InternalService.HandleSNSNotification
-   */
-  handleSNSNotification: {
-    methodKind: "unary";
-    input: typeof SNSNotificationRequestSchema;
-    output: typeof SNSNotificationResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_v1_internal, 0);

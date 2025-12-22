@@ -18,6 +18,9 @@
       "name": "InternalService"
     },
     {
+      "name": "SnsService"
+    },
+    {
       "name": "UserService"
     },
     {
@@ -484,40 +487,6 @@
         ]
       }
     },
-    "/v1/internal/webhooks/sns": {
-      "post": {
-        "summary": "HandleSNSNotification processes SNS notifications for inbound emails.",
-        "operationId": "InternalService_HandleSNSNotification",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1SNSNotificationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "description": "SNSNotificationRequest is the raw SNS HTTP payload.\nSNS sends different message types - we handle SubscriptionConfirmation and Notification.",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1SNSNotificationRequest"
-            }
-          }
-        ],
-        "tags": [
-          "InternalService"
-        ]
-      }
-    },
     "/v1/send": {
       "post": {
         "summary": "SendEmail queues an email for sending.",
@@ -723,6 +692,40 @@
         ],
         "tags": [
           "WebhookService"
+        ]
+      }
+    },
+    "/v1/webhooks/sns": {
+      "post": {
+        "summary": "HandleSNSNotification processes SNS notifications.",
+        "operationId": "SnsService_HandleSNSNotification",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SNSNotificationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "SNSNotificationRequest is the raw SNS HTTP payload.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1SNSNotificationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SnsService"
         ]
       }
     }
@@ -1520,7 +1523,7 @@
           "title": "Subject (optional, for some Notification types)"
         }
       },
-      "description": "SNSNotificationRequest is the raw SNS HTTP payload.\nSNS sends different message types - we handle SubscriptionConfirmation and Notification."
+      "description": "SNSNotificationRequest is the raw SNS HTTP payload."
     },
     "v1SNSNotificationResponse": {
       "type": "object",

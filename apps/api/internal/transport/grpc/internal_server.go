@@ -10,15 +10,13 @@ import (
 // InternalServer wraps InternalService for gRPC.
 type InternalServer struct {
 	emailapiv1.UnimplementedInternalServiceServer
-	svc             *service.InternalService
-	inboundEmailSvc *service.InboundEmailService
+	svc *service.InternalService
 }
 
 // NewInternalServer creates a new InternalServer.
-func NewInternalServer(svc *service.InternalService, inboundEmailSvc *service.InboundEmailService) *InternalServer {
+func NewInternalServer(svc *service.InternalService) *InternalServer {
 	return &InternalServer{
-		svc:             svc,
-		inboundEmailSvc: inboundEmailSvc,
+		svc: svc,
 	}
 }
 
@@ -42,41 +40,5 @@ func (s *InternalServer) HandleGuardDutyScanResult(ctx context.Context, req *ema
 	return &emailapiv1.GuardDutyScanResultResponse{
 		Success: true,
 		Message: "Scan result processed successfully",
-	}, nil
-}
-
-// HandleSNSNotification processes SNS notifications for inbound emails.
-func (s *InternalServer) HandleSNSNotification(ctx context.Context, req *emailapiv1.SNSNotificationRequest) (*emailapiv1.SNSNotificationResponse, error) {
-	if s.inboundEmailSvc == nil {
-		return &emailapiv1.SNSNotificationResponse{
-			Success: false,
-			Message: "Inbound email service not configured",
-		}, nil
-	}
-
-	input := &service.SNSNotificationInput{
-		Type:             req.Type,
-		MessageID:        req.MessageId,
-		TopicArn:         req.TopicArn,
-		Message:          req.Message,
-		SubscribeURL:     req.SubscribeUrl,
-		Timestamp:        req.Timestamp,
-		SignatureVersion: req.SignatureVersion,
-		Signature:        req.Signature,
-		SigningCertURL:   req.SigningCertUrl,
-		Subject:          req.Subject,
-	}
-
-	err := s.inboundEmailSvc.HandleSNSNotification(ctx, input)
-	if err != nil {
-		return &emailapiv1.SNSNotificationResponse{
-			Success: false,
-			Message: err.Error(),
-		}, nil
-	}
-
-	return &emailapiv1.SNSNotificationResponse{
-		Success: true,
-		Message: "SNS notification processed successfully",
 	}, nil
 }

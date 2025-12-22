@@ -257,8 +257,9 @@ func runGRPCServer(cfg *config.Config, svc *service.Service, logger zerolog.Logg
 	emailapiv1.RegisterApiKeyServiceServer(grpcServer, grpctransport.NewApiKeyServer(svc.APIKey))
 	emailapiv1.RegisterDomainServiceServer(grpcServer, grpctransport.NewDomainServer(svc.Domain))
 	emailapiv1.RegisterEmailServiceServer(grpcServer, grpctransport.NewEmailServer(svc.Email))
-	emailapiv1.RegisterInternalServiceServer(grpcServer, grpctransport.NewInternalServer(svc.Internal, svc.InboundEmail))
+	emailapiv1.RegisterInternalServiceServer(grpcServer, grpctransport.NewInternalServer(svc.Internal))
 	emailapiv1.RegisterWebhookServiceServer(grpcServer, grpctransport.NewWebhookServer(svc.Webhook))
+	emailapiv1.RegisterSnsServiceServer(grpcServer, grpctransport.NewSnsServer(svc.SNSNotification))
 
 	// Enable reflection for grpcurl
 	reflection.Register(grpcServer)
@@ -295,6 +296,9 @@ func runHTTPServer(cfg *config.Config, logger zerolog.Logger) error {
 		return err
 	}
 	if err := emailapiv1.RegisterWebhookServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
+		return err
+	}
+	if err := emailapiv1.RegisterSnsServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
 		return err
 	}
 

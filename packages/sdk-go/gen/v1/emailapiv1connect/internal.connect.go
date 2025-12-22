@@ -36,17 +36,12 @@ const (
 	// InternalServiceHandleGuardDutyScanResultProcedure is the fully-qualified name of the
 	// InternalService's HandleGuardDutyScanResult RPC.
 	InternalServiceHandleGuardDutyScanResultProcedure = "/emailapi.v1.InternalService/HandleGuardDutyScanResult"
-	// InternalServiceHandleSNSNotificationProcedure is the fully-qualified name of the
-	// InternalService's HandleSNSNotification RPC.
-	InternalServiceHandleSNSNotificationProcedure = "/emailapi.v1.InternalService/HandleSNSNotification"
 )
 
 // InternalServiceClient is a client for the emailapi.v1.InternalService service.
 type InternalServiceClient interface {
 	// HandleGuardDutyScanResult processes GuardDuty malware scan results from EventBridge.
 	HandleGuardDutyScanResult(context.Context, *connect.Request[v1.GuardDutyScanResultRequest]) (*connect.Response[v1.GuardDutyScanResultResponse], error)
-	// HandleSNSNotification processes SNS notifications for inbound emails.
-	HandleSNSNotification(context.Context, *connect.Request[v1.SNSNotificationRequest]) (*connect.Response[v1.SNSNotificationResponse], error)
 }
 
 // NewInternalServiceClient constructs a client for the emailapi.v1.InternalService service. By
@@ -66,19 +61,12 @@ func NewInternalServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(internalServiceMethods.ByName("HandleGuardDutyScanResult")),
 			connect.WithClientOptions(opts...),
 		),
-		handleSNSNotification: connect.NewClient[v1.SNSNotificationRequest, v1.SNSNotificationResponse](
-			httpClient,
-			baseURL+InternalServiceHandleSNSNotificationProcedure,
-			connect.WithSchema(internalServiceMethods.ByName("HandleSNSNotification")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
 // internalServiceClient implements InternalServiceClient.
 type internalServiceClient struct {
 	handleGuardDutyScanResult *connect.Client[v1.GuardDutyScanResultRequest, v1.GuardDutyScanResultResponse]
-	handleSNSNotification     *connect.Client[v1.SNSNotificationRequest, v1.SNSNotificationResponse]
 }
 
 // HandleGuardDutyScanResult calls emailapi.v1.InternalService.HandleGuardDutyScanResult.
@@ -86,17 +74,10 @@ func (c *internalServiceClient) HandleGuardDutyScanResult(ctx context.Context, r
 	return c.handleGuardDutyScanResult.CallUnary(ctx, req)
 }
 
-// HandleSNSNotification calls emailapi.v1.InternalService.HandleSNSNotification.
-func (c *internalServiceClient) HandleSNSNotification(ctx context.Context, req *connect.Request[v1.SNSNotificationRequest]) (*connect.Response[v1.SNSNotificationResponse], error) {
-	return c.handleSNSNotification.CallUnary(ctx, req)
-}
-
 // InternalServiceHandler is an implementation of the emailapi.v1.InternalService service.
 type InternalServiceHandler interface {
 	// HandleGuardDutyScanResult processes GuardDuty malware scan results from EventBridge.
 	HandleGuardDutyScanResult(context.Context, *connect.Request[v1.GuardDutyScanResultRequest]) (*connect.Response[v1.GuardDutyScanResultResponse], error)
-	// HandleSNSNotification processes SNS notifications for inbound emails.
-	HandleSNSNotification(context.Context, *connect.Request[v1.SNSNotificationRequest]) (*connect.Response[v1.SNSNotificationResponse], error)
 }
 
 // NewInternalServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -112,18 +93,10 @@ func NewInternalServiceHandler(svc InternalServiceHandler, opts ...connect.Handl
 		connect.WithSchema(internalServiceMethods.ByName("HandleGuardDutyScanResult")),
 		connect.WithHandlerOptions(opts...),
 	)
-	internalServiceHandleSNSNotificationHandler := connect.NewUnaryHandler(
-		InternalServiceHandleSNSNotificationProcedure,
-		svc.HandleSNSNotification,
-		connect.WithSchema(internalServiceMethods.ByName("HandleSNSNotification")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/emailapi.v1.InternalService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case InternalServiceHandleGuardDutyScanResultProcedure:
 			internalServiceHandleGuardDutyScanResultHandler.ServeHTTP(w, r)
-		case InternalServiceHandleSNSNotificationProcedure:
-			internalServiceHandleSNSNotificationHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -135,8 +108,4 @@ type UnimplementedInternalServiceHandler struct{}
 
 func (UnimplementedInternalServiceHandler) HandleGuardDutyScanResult(context.Context, *connect.Request[v1.GuardDutyScanResultRequest]) (*connect.Response[v1.GuardDutyScanResultResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.InternalService.HandleGuardDutyScanResult is not implemented"))
-}
-
-func (UnimplementedInternalServiceHandler) HandleSNSNotification(context.Context, *connect.Request[v1.SNSNotificationRequest]) (*connect.Response[v1.SNSNotificationResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.InternalService.HandleSNSNotification is not implemented"))
 }

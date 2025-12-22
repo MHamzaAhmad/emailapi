@@ -36,11 +36,6 @@ func (i *WebhookInterceptor) Unary() grpc.UnaryServerInterceptor {
 			return handler(ctx, req)
 		}
 
-		// Skip verification for SNS notifications - they use SNS signature verification instead
-		if strings.HasSuffix(info.FullMethod, "/HandleSNSNotification") {
-			return handler(ctx, req)
-		}
-
 		// Extract metadata from context
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
