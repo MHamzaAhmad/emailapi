@@ -149,6 +149,11 @@ func main() {
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create Svix client")
 	}
+
+	// Register event types in Svix (idempotent)
+	if err := svixClient.EnsureEventTypes(context.Background()); err != nil {
+		logger.Warn().Err(err).Msg("Failed to register Svix event types")
+	}
 	logger.Info().Msg("✓ Initialized Svix client")
 
 	// Initialize service layer with new dependencies

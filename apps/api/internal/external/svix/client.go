@@ -3,10 +3,25 @@ package svix
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	svixlib "github.com/svix/svix-webhooks/go"
 	"github.com/svix/svix-webhooks/go/models"
 )
+
+// Event types for the email API.
+var eventTypes = []struct {
+	Name        string
+	Description string
+}{
+	{"email.sent", "Email was successfully sent to the mail server"},
+	{"email.delivered", "Email was delivered to the recipient"},
+	{"email.failed", "Email sending failed"},
+	{"email.bounced", "Email bounced (recipient rejected)"},
+	{"email.opened", "Email was opened by recipient"},
+	{"email.clicked", "Link in email was clicked"},
+	{"email.reply_received", "Reply to a sent email was received"},
+}
 
 // svixClient implements the Client interface using Svix SDK.
 type svixClient struct {
@@ -20,6 +35,25 @@ func NewClient(apiKey string) (Client, error) {
 		return nil, fmt.Errorf("failed to create svix client: %w", err)
 	}
 	return &svixClient{client: client}, nil
+}
+
+// EnsureEventTypes registers all email event types in Svix.
+// Idempotent - creates if not exists, skips if already exists.
+func (c *svixClient) EnsureEventTypes(ctx context.Context) error {
+	for _, et := range eventTypes {
+		desc := et.Description
+		_, err := c.client.EventType.Create(ctx, models.EventTypeIn{
+			Name:        et.Name,
+			Description: desc,
+		}, nil)
+		if err != nil {
+			// Ignore 409 conflict (already exists)
+			if !strings.Contains(err.Error(), "409") && !strings.Contains(err.Error(), "already exists") {
+				return fmt.Errorf("failed to register event type %s: %w", et.Name, err)
+			}
+		}
+	}
+	return nil
 }
 
 // EnsureApp creates a Svix app for the user if it doesn't exist.
@@ -45,7 +79,6 @@ func (c *svixClient) GetAppPortalAccess(ctx context.Context, userID string) (str
 
 // SendMessage sends a webhook message to all user's configured endpoints.
 func (c *svixClient) SendMessage(ctx context.Context, userID, eventType string, payload interface{}) error {
-	// Convert payload to map for Svix
 	payloadMap, ok := payload.(map[string]interface{})
 	if !ok {
 		payloadMap = map[string]interface{}{"data": payload}
