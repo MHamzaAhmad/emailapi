@@ -22,6 +22,7 @@ func NewWebhookServer(svc *service.WebhookService) *WebhookServer {
 }
 
 // GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
+// Users can use this URL with svix-react to manage their webhook endpoints.
 func (s *WebhookServer) GetAppPortalAccess(ctx context.Context, req *emailapiv1.GetAppPortalAccessRequest) (*emailapiv1.GetAppPortalAccessResponse, error) {
 	userID := middleware.GetUserID(ctx)
 	if userID == "" {
@@ -37,29 +38,4 @@ func (s *WebhookServer) GetAppPortalAccess(ctx context.Context, req *emailapiv1.
 		Url:   url,
 		Token: token,
 	}, nil
-}
-
-// CreateWebhook is a no-op since webhook endpoints are managed via Svix App Portal.
-func (s *WebhookServer) CreateWebhook(ctx context.Context, req *emailapiv1.CreateWebhookRequest) (*emailapiv1.CreateWebhookResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "webhook endpoints are managed via the App Portal")
-}
-
-// GetWebhook is a no-op since webhook endpoints are managed via Svix App Portal.
-func (s *WebhookServer) GetWebhook(ctx context.Context, req *emailapiv1.GetWebhookRequest) (*emailapiv1.Webhook, error) {
-	return nil, status.Error(codes.Unimplemented, "webhook endpoints are managed via the App Portal")
-}
-
-// ListWebhooks is a no-op since webhook endpoints are managed via Svix App Portal.
-func (s *WebhookServer) ListWebhooks(ctx context.Context, req *emailapiv1.ListWebhooksRequest) (*emailapiv1.ListWebhooksResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "webhook endpoints are managed via the App Portal")
-}
-
-// UpdateWebhook is a no-op since webhook endpoints are managed via Svix App Portal.
-func (s *WebhookServer) UpdateWebhook(ctx context.Context, req *emailapiv1.UpdateWebhookRequest) (*emailapiv1.Webhook, error) {
-	return nil, status.Error(codes.Unimplemented, "webhook endpoints are managed via the App Portal")
-}
-
-// DeleteWebhook is a no-op since webhook endpoints are managed via Svix App Portal.
-func (s *WebhookServer) DeleteWebhook(ctx context.Context, req *emailapiv1.DeleteWebhookRequest) (*emailapiv1.DeleteWebhookResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "webhook endpoints are managed via the App Portal")
 }

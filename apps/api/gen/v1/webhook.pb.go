@@ -10,7 +10,6 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -23,6 +22,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// WebhookEventType defines the types of webhook events that can be delivered.
 type WebhookEventType int32
 
 const (
@@ -87,532 +87,7 @@ func (WebhookEventType) EnumDescriptor() ([]byte, []int) {
 	return file_v1_webhook_proto_rawDescGZIP(), []int{0}
 }
 
-type CreateWebhookRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
-	Events        []WebhookEventType     `protobuf:"varint,3,rep,packed,name=events,proto3,enum=emailapi.v1.WebhookEventType" json:"events,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateWebhookRequest) Reset() {
-	*x = CreateWebhookRequest{}
-	mi := &file_v1_webhook_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateWebhookRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateWebhookRequest) ProtoMessage() {}
-
-func (x *CreateWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_webhook_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateWebhookRequest.ProtoReflect.Descriptor instead.
-func (*CreateWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_v1_webhook_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *CreateWebhookRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *CreateWebhookRequest) GetUrl() string {
-	if x != nil {
-		return x.Url
-	}
-	return ""
-}
-
-func (x *CreateWebhookRequest) GetEvents() []WebhookEventType {
-	if x != nil {
-		return x.Events
-	}
-	return nil
-}
-
-type CreateWebhookResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Webhook       *Webhook               `protobuf:"bytes,1,opt,name=webhook,proto3" json:"webhook,omitempty"`
-	Secret        string                 `protobuf:"bytes,2,opt,name=secret,proto3" json:"secret,omitempty"`
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateWebhookResponse) Reset() {
-	*x = CreateWebhookResponse{}
-	mi := &file_v1_webhook_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateWebhookResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateWebhookResponse) ProtoMessage() {}
-
-func (x *CreateWebhookResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_webhook_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateWebhookResponse.ProtoReflect.Descriptor instead.
-func (*CreateWebhookResponse) Descriptor() ([]byte, []int) {
-	return file_v1_webhook_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *CreateWebhookResponse) GetWebhook() *Webhook {
-	if x != nil {
-		return x.Webhook
-	}
-	return nil
-}
-
-func (x *CreateWebhookResponse) GetSecret() string {
-	if x != nil {
-		return x.Secret
-	}
-	return ""
-}
-
-func (x *CreateWebhookResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-type GetWebhookRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetWebhookRequest) Reset() {
-	*x = GetWebhookRequest{}
-	mi := &file_v1_webhook_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetWebhookRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetWebhookRequest) ProtoMessage() {}
-
-func (x *GetWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_webhook_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetWebhookRequest.ProtoReflect.Descriptor instead.
-func (*GetWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_v1_webhook_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *GetWebhookRequest) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-type Webhook struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Url           string                 `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
-	Events        []WebhookEventType     `protobuf:"varint,5,rep,packed,name=events,proto3,enum=emailapi.v1.WebhookEventType" json:"events,omitempty"`
-	IsActive      bool                   `protobuf:"varint,6,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
-	RetryCount    int32                  `protobuf:"varint,7,opt,name=retry_count,json=retryCount,proto3" json:"retry_count,omitempty"`
-	LastSuccess   *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=last_success,json=lastSuccess,proto3" json:"last_success,omitempty"`
-	LastFailure   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=last_failure,json=lastFailure,proto3" json:"last_failure,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Webhook) Reset() {
-	*x = Webhook{}
-	mi := &file_v1_webhook_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Webhook) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Webhook) ProtoMessage() {}
-
-func (x *Webhook) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_webhook_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Webhook.ProtoReflect.Descriptor instead.
-func (*Webhook) Descriptor() ([]byte, []int) {
-	return file_v1_webhook_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *Webhook) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *Webhook) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *Webhook) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *Webhook) GetUrl() string {
-	if x != nil {
-		return x.Url
-	}
-	return ""
-}
-
-func (x *Webhook) GetEvents() []WebhookEventType {
-	if x != nil {
-		return x.Events
-	}
-	return nil
-}
-
-func (x *Webhook) GetIsActive() bool {
-	if x != nil {
-		return x.IsActive
-	}
-	return false
-}
-
-func (x *Webhook) GetRetryCount() int32 {
-	if x != nil {
-		return x.RetryCount
-	}
-	return 0
-}
-
-func (x *Webhook) GetLastSuccess() *timestamppb.Timestamp {
-	if x != nil {
-		return x.LastSuccess
-	}
-	return nil
-}
-
-func (x *Webhook) GetLastFailure() *timestamppb.Timestamp {
-	if x != nil {
-		return x.LastFailure
-	}
-	return nil
-}
-
-func (x *Webhook) GetCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return nil
-}
-
-func (x *Webhook) GetUpdatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.UpdatedAt
-	}
-	return nil
-}
-
-type ListWebhooksRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListWebhooksRequest) Reset() {
-	*x = ListWebhooksRequest{}
-	mi := &file_v1_webhook_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListWebhooksRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListWebhooksRequest) ProtoMessage() {}
-
-func (x *ListWebhooksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_webhook_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListWebhooksRequest.ProtoReflect.Descriptor instead.
-func (*ListWebhooksRequest) Descriptor() ([]byte, []int) {
-	return file_v1_webhook_proto_rawDescGZIP(), []int{4}
-}
-
-type ListWebhooksResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          []*Webhook             `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListWebhooksResponse) Reset() {
-	*x = ListWebhooksResponse{}
-	mi := &file_v1_webhook_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListWebhooksResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListWebhooksResponse) ProtoMessage() {}
-
-func (x *ListWebhooksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_webhook_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListWebhooksResponse.ProtoReflect.Descriptor instead.
-func (*ListWebhooksResponse) Descriptor() ([]byte, []int) {
-	return file_v1_webhook_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *ListWebhooksResponse) GetData() []*Webhook {
-	if x != nil {
-		return x.Data
-	}
-	return nil
-}
-
-type UpdateWebhookRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          *string                `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
-	Url           *string                `protobuf:"bytes,3,opt,name=url,proto3,oneof" json:"url,omitempty"`
-	Events        []WebhookEventType     `protobuf:"varint,4,rep,packed,name=events,proto3,enum=emailapi.v1.WebhookEventType" json:"events,omitempty"`
-	IsActive      *bool                  `protobuf:"varint,5,opt,name=is_active,json=isActive,proto3,oneof" json:"is_active,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpdateWebhookRequest) Reset() {
-	*x = UpdateWebhookRequest{}
-	mi := &file_v1_webhook_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateWebhookRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateWebhookRequest) ProtoMessage() {}
-
-func (x *UpdateWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_webhook_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateWebhookRequest.ProtoReflect.Descriptor instead.
-func (*UpdateWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_v1_webhook_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *UpdateWebhookRequest) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *UpdateWebhookRequest) GetName() string {
-	if x != nil && x.Name != nil {
-		return *x.Name
-	}
-	return ""
-}
-
-func (x *UpdateWebhookRequest) GetUrl() string {
-	if x != nil && x.Url != nil {
-		return *x.Url
-	}
-	return ""
-}
-
-func (x *UpdateWebhookRequest) GetEvents() []WebhookEventType {
-	if x != nil {
-		return x.Events
-	}
-	return nil
-}
-
-func (x *UpdateWebhookRequest) GetIsActive() bool {
-	if x != nil && x.IsActive != nil {
-		return *x.IsActive
-	}
-	return false
-}
-
-type DeleteWebhookRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeleteWebhookRequest) Reset() {
-	*x = DeleteWebhookRequest{}
-	mi := &file_v1_webhook_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeleteWebhookRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteWebhookRequest) ProtoMessage() {}
-
-func (x *DeleteWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_webhook_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteWebhookRequest.ProtoReflect.Descriptor instead.
-func (*DeleteWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_v1_webhook_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *DeleteWebhookRequest) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-type DeleteWebhookResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeleteWebhookResponse) Reset() {
-	*x = DeleteWebhookResponse{}
-	mi := &file_v1_webhook_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeleteWebhookResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteWebhookResponse) ProtoMessage() {}
-
-func (x *DeleteWebhookResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_webhook_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteWebhookResponse.ProtoReflect.Descriptor instead.
-func (*DeleteWebhookResponse) Descriptor() ([]byte, []int) {
-	return file_v1_webhook_proto_rawDescGZIP(), []int{8}
-}
-
-// GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
-// Frontend uses this with svix-react to let users manage webhook endpoints.
+// GetAppPortalAccessRequest is empty - user is identified via auth.
 type GetAppPortalAccessRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -621,7 +96,7 @@ type GetAppPortalAccessRequest struct {
 
 func (x *GetAppPortalAccessRequest) Reset() {
 	*x = GetAppPortalAccessRequest{}
-	mi := &file_v1_webhook_proto_msgTypes[9]
+	mi := &file_v1_webhook_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -633,7 +108,7 @@ func (x *GetAppPortalAccessRequest) String() string {
 func (*GetAppPortalAccessRequest) ProtoMessage() {}
 
 func (x *GetAppPortalAccessRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_webhook_proto_msgTypes[9]
+	mi := &file_v1_webhook_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -646,14 +121,16 @@ func (x *GetAppPortalAccessRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAppPortalAccessRequest.ProtoReflect.Descriptor instead.
 func (*GetAppPortalAccessRequest) Descriptor() ([]byte, []int) {
-	return file_v1_webhook_proto_rawDescGZIP(), []int{9}
+	return file_v1_webhook_proto_rawDescGZIP(), []int{0}
 }
 
+// GetAppPortalAccessResponse contains the Svix App Portal access details.
 type GetAppPortalAccessResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Magic URL for embedding Svix App Portal
+	// Magic URL for embedding Svix App Portal.
+	// Pass this to the svix-react AppPortal component.
 	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
-	// Token for the portal session
+	// Token for the portal session.
 	Token         string `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -661,7 +138,7 @@ type GetAppPortalAccessResponse struct {
 
 func (x *GetAppPortalAccessResponse) Reset() {
 	*x = GetAppPortalAccessResponse{}
-	mi := &file_v1_webhook_proto_msgTypes[10]
+	mi := &file_v1_webhook_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -673,7 +150,7 @@ func (x *GetAppPortalAccessResponse) String() string {
 func (*GetAppPortalAccessResponse) ProtoMessage() {}
 
 func (x *GetAppPortalAccessResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_webhook_proto_msgTypes[10]
+	mi := &file_v1_webhook_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -686,7 +163,7 @@ func (x *GetAppPortalAccessResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAppPortalAccessResponse.ProtoReflect.Descriptor instead.
 func (*GetAppPortalAccessResponse) Descriptor() ([]byte, []int) {
-	return file_v1_webhook_proto_rawDescGZIP(), []int{10}
+	return file_v1_webhook_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetAppPortalAccessResponse) GetUrl() string {
@@ -707,49 +184,7 @@ var File_v1_webhook_proto protoreflect.FileDescriptor
 
 const file_v1_webhook_proto_rawDesc = "" +
 	"\n" +
-	"\x10v1/webhook.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"s\n" +
-	"\x14CreateWebhookRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
-	"\x03url\x18\x02 \x01(\tR\x03url\x125\n" +
-	"\x06events\x18\x03 \x03(\x0e2\x1d.emailapi.v1.WebhookEventTypeR\x06events\"y\n" +
-	"\x15CreateWebhookResponse\x12.\n" +
-	"\awebhook\x18\x01 \x01(\v2\x14.emailapi.v1.WebhookR\awebhook\x12\x16\n" +
-	"\x06secret\x18\x02 \x01(\tR\x06secret\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"#\n" +
-	"\x11GetWebhookRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xc1\x03\n" +
-	"\aWebhook\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12\x10\n" +
-	"\x03url\x18\x04 \x01(\tR\x03url\x125\n" +
-	"\x06events\x18\x05 \x03(\x0e2\x1d.emailapi.v1.WebhookEventTypeR\x06events\x12\x1b\n" +
-	"\tis_active\x18\x06 \x01(\bR\bisActive\x12\x1f\n" +
-	"\vretry_count\x18\a \x01(\x05R\n" +
-	"retryCount\x12=\n" +
-	"\flast_success\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\vlastSuccess\x12=\n" +
-	"\flast_failure\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\vlastFailure\x129\n" +
-	"\n" +
-	"created_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
-	"\n" +
-	"updated_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x15\n" +
-	"\x13ListWebhooksRequest\"@\n" +
-	"\x14ListWebhooksResponse\x12(\n" +
-	"\x04data\x18\x01 \x03(\v2\x14.emailapi.v1.WebhookR\x04data\"\xce\x01\n" +
-	"\x14UpdateWebhookRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
-	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x15\n" +
-	"\x03url\x18\x03 \x01(\tH\x01R\x03url\x88\x01\x01\x125\n" +
-	"\x06events\x18\x04 \x03(\x0e2\x1d.emailapi.v1.WebhookEventTypeR\x06events\x12 \n" +
-	"\tis_active\x18\x05 \x01(\bH\x02R\bisActive\x88\x01\x01B\a\n" +
-	"\x05_nameB\x06\n" +
-	"\x04_urlB\f\n" +
-	"\n" +
-	"_is_active\"&\n" +
-	"\x14DeleteWebhookRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x17\n" +
-	"\x15DeleteWebhookResponse\"\x1b\n" +
+	"\x10v1/webhook.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\"\x1b\n" +
 	"\x19GetAppPortalAccessRequest\"D\n" +
 	"\x1aGetAppPortalAccessResponse\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x14\n" +
@@ -762,14 +197,8 @@ const file_v1_webhook_proto_rawDesc = "" +
 	" WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED\x10\x04\x12#\n" +
 	"\x1fWEBHOOK_EVENT_TYPE_EMAIL_OPENED\x10\x05\x12$\n" +
 	" WEBHOOK_EVENT_TYPE_EMAIL_CLICKED\x10\x06\x12+\n" +
-	"'WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED\x10\a2\xae\x05\n" +
-	"\x0eWebhookService\x12o\n" +
-	"\rCreateWebhook\x12!.emailapi.v1.CreateWebhookRequest\x1a\".emailapi.v1.CreateWebhookResponse\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/v1/webhooks\x12]\n" +
-	"\n" +
-	"GetWebhook\x12\x1e.emailapi.v1.GetWebhookRequest\x1a\x14.emailapi.v1.Webhook\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/v1/webhooks/{id}\x12i\n" +
-	"\fListWebhooks\x12 .emailapi.v1.ListWebhooksRequest\x1a!.emailapi.v1.ListWebhooksResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/webhooks\x12f\n" +
-	"\rUpdateWebhook\x12!.emailapi.v1.UpdateWebhookRequest\x1a\x14.emailapi.v1.Webhook\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*2\x11/v1/webhooks/{id}\x12q\n" +
-	"\rDeleteWebhook\x12!.emailapi.v1.DeleteWebhookRequest\x1a\".emailapi.v1.DeleteWebhookResponse\"\x19\x82\xd3\xe4\x93\x02\x13*\x11/v1/webhooks/{id}\x12\x85\x01\n" +
+	"'WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED\x10\a2\x98\x01\n" +
+	"\x0eWebhookService\x12\x85\x01\n" +
 	"\x12GetAppPortalAccess\x12&.emailapi.v1.GetAppPortalAccessRequest\x1a'.emailapi.v1.GetAppPortalAccessResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/webhooks/portalB\x97\x01\n" +
 	"\x0fcom.emailapi.v1B\fWebhookProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
@@ -786,49 +215,20 @@ func file_v1_webhook_proto_rawDescGZIP() []byte {
 }
 
 var file_v1_webhook_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_v1_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_v1_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_v1_webhook_proto_goTypes = []any{
 	(WebhookEventType)(0),              // 0: emailapi.v1.WebhookEventType
-	(*CreateWebhookRequest)(nil),       // 1: emailapi.v1.CreateWebhookRequest
-	(*CreateWebhookResponse)(nil),      // 2: emailapi.v1.CreateWebhookResponse
-	(*GetWebhookRequest)(nil),          // 3: emailapi.v1.GetWebhookRequest
-	(*Webhook)(nil),                    // 4: emailapi.v1.Webhook
-	(*ListWebhooksRequest)(nil),        // 5: emailapi.v1.ListWebhooksRequest
-	(*ListWebhooksResponse)(nil),       // 6: emailapi.v1.ListWebhooksResponse
-	(*UpdateWebhookRequest)(nil),       // 7: emailapi.v1.UpdateWebhookRequest
-	(*DeleteWebhookRequest)(nil),       // 8: emailapi.v1.DeleteWebhookRequest
-	(*DeleteWebhookResponse)(nil),      // 9: emailapi.v1.DeleteWebhookResponse
-	(*GetAppPortalAccessRequest)(nil),  // 10: emailapi.v1.GetAppPortalAccessRequest
-	(*GetAppPortalAccessResponse)(nil), // 11: emailapi.v1.GetAppPortalAccessResponse
-	(*timestamppb.Timestamp)(nil),      // 12: google.protobuf.Timestamp
+	(*GetAppPortalAccessRequest)(nil),  // 1: emailapi.v1.GetAppPortalAccessRequest
+	(*GetAppPortalAccessResponse)(nil), // 2: emailapi.v1.GetAppPortalAccessResponse
 }
 var file_v1_webhook_proto_depIdxs = []int32{
-	0,  // 0: emailapi.v1.CreateWebhookRequest.events:type_name -> emailapi.v1.WebhookEventType
-	4,  // 1: emailapi.v1.CreateWebhookResponse.webhook:type_name -> emailapi.v1.Webhook
-	0,  // 2: emailapi.v1.Webhook.events:type_name -> emailapi.v1.WebhookEventType
-	12, // 3: emailapi.v1.Webhook.last_success:type_name -> google.protobuf.Timestamp
-	12, // 4: emailapi.v1.Webhook.last_failure:type_name -> google.protobuf.Timestamp
-	12, // 5: emailapi.v1.Webhook.created_at:type_name -> google.protobuf.Timestamp
-	12, // 6: emailapi.v1.Webhook.updated_at:type_name -> google.protobuf.Timestamp
-	4,  // 7: emailapi.v1.ListWebhooksResponse.data:type_name -> emailapi.v1.Webhook
-	0,  // 8: emailapi.v1.UpdateWebhookRequest.events:type_name -> emailapi.v1.WebhookEventType
-	1,  // 9: emailapi.v1.WebhookService.CreateWebhook:input_type -> emailapi.v1.CreateWebhookRequest
-	3,  // 10: emailapi.v1.WebhookService.GetWebhook:input_type -> emailapi.v1.GetWebhookRequest
-	5,  // 11: emailapi.v1.WebhookService.ListWebhooks:input_type -> emailapi.v1.ListWebhooksRequest
-	7,  // 12: emailapi.v1.WebhookService.UpdateWebhook:input_type -> emailapi.v1.UpdateWebhookRequest
-	8,  // 13: emailapi.v1.WebhookService.DeleteWebhook:input_type -> emailapi.v1.DeleteWebhookRequest
-	10, // 14: emailapi.v1.WebhookService.GetAppPortalAccess:input_type -> emailapi.v1.GetAppPortalAccessRequest
-	2,  // 15: emailapi.v1.WebhookService.CreateWebhook:output_type -> emailapi.v1.CreateWebhookResponse
-	4,  // 16: emailapi.v1.WebhookService.GetWebhook:output_type -> emailapi.v1.Webhook
-	6,  // 17: emailapi.v1.WebhookService.ListWebhooks:output_type -> emailapi.v1.ListWebhooksResponse
-	4,  // 18: emailapi.v1.WebhookService.UpdateWebhook:output_type -> emailapi.v1.Webhook
-	9,  // 19: emailapi.v1.WebhookService.DeleteWebhook:output_type -> emailapi.v1.DeleteWebhookResponse
-	11, // 20: emailapi.v1.WebhookService.GetAppPortalAccess:output_type -> emailapi.v1.GetAppPortalAccessResponse
-	15, // [15:21] is the sub-list for method output_type
-	9,  // [9:15] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	1, // 0: emailapi.v1.WebhookService.GetAppPortalAccess:input_type -> emailapi.v1.GetAppPortalAccessRequest
+	2, // 1: emailapi.v1.WebhookService.GetAppPortalAccess:output_type -> emailapi.v1.GetAppPortalAccessResponse
+	1, // [1:2] is the sub-list for method output_type
+	0, // [0:1] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_v1_webhook_proto_init() }
@@ -836,14 +236,13 @@ func file_v1_webhook_proto_init() {
 	if File_v1_webhook_proto != nil {
 		return
 	}
-	file_v1_webhook_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_webhook_proto_rawDesc), len(file_v1_webhook_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

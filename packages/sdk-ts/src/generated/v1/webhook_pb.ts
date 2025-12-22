@@ -5,254 +5,16 @@
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv1";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv1";
 import { file_google_api_annotations } from "../google/api/annotations_pb";
-import type { Timestamp } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file v1/webhook.proto.
  */
 export const file_v1_webhook: GenFile = /*@__PURE__*/
-  fileDesc("ChB2MS93ZWJob29rLnByb3RvEgtlbWFpbGFwaS52MSJgChRDcmVhdGVXZWJob29rUmVxdWVzdBIMCgRuYW1lGAEgASgJEgsKA3VybBgCIAEoCRItCgZldmVudHMYAyADKA4yHS5lbWFpbGFwaS52MS5XZWJob29rRXZlbnRUeXBlIl8KFUNyZWF0ZVdlYmhvb2tSZXNwb25zZRIlCgd3ZWJob29rGAEgASgLMhQuZW1haWxhcGkudjEuV2ViaG9vaxIOCgZzZWNyZXQYAiABKAkSDwoHbWVzc2FnZRgDIAEoCSIfChFHZXRXZWJob29rUmVxdWVzdBIKCgJpZBgBIAEoCSLcAgoHV2ViaG9vaxIKCgJpZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEgwKBG5hbWUYAyABKAkSCwoDdXJsGAQgASgJEi0KBmV2ZW50cxgFIAMoDjIdLmVtYWlsYXBpLnYxLldlYmhvb2tFdmVudFR5cGUSEQoJaXNfYWN0aXZlGAYgASgIEhMKC3JldHJ5X2NvdW50GAcgASgFEjAKDGxhc3Rfc3VjY2VzcxgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMAoMbGFzdF9mYWlsdXJlGAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX2F0GAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIVChNMaXN0V2ViaG9va3NSZXF1ZXN0IjoKFExpc3RXZWJob29rc1Jlc3BvbnNlEiIKBGRhdGEYASADKAsyFC5lbWFpbGFwaS52MS5XZWJob29rIq0BChRVcGRhdGVXZWJob29rUmVxdWVzdBIKCgJpZBgBIAEoCRIRCgRuYW1lGAIgASgJSACIAQESEAoDdXJsGAMgASgJSAGIAQESLQoGZXZlbnRzGAQgAygOMh0uZW1haWxhcGkudjEuV2ViaG9va0V2ZW50VHlwZRIWCglpc19hY3RpdmUYBSABKAhIAogBAUIHCgVfbmFtZUIGCgRfdXJsQgwKCl9pc19hY3RpdmUiIgoURGVsZXRlV2ViaG9va1JlcXVlc3QSCgoCaWQYASABKAkiFwoVRGVsZXRlV2ViaG9va1Jlc3BvbnNlIhsKGUdldEFwcFBvcnRhbEFjY2Vzc1JlcXVlc3QiOAoaR2V0QXBwUG9ydGFsQWNjZXNzUmVzcG9uc2USCwoDdXJsGAEgASgJEg0KBXRva2VuGAIgASgJKsQCChBXZWJob29rRXZlbnRUeXBlEiIKHldFQkhPT0tfRVZFTlRfVFlQRV9VTlNQRUNJRklFRBAAEiEKHVdFQkhPT0tfRVZFTlRfVFlQRV9FTUFJTF9TRU5UEAESJgoiV0VCSE9PS19FVkVOVF9UWVBFX0VNQUlMX0RFTElWRVJFRBACEiMKH1dFQkhPT0tfRVZFTlRfVFlQRV9FTUFJTF9GQUlMRUQQAxIkCiBXRUJIT09LX0VWRU5UX1RZUEVfRU1BSUxfQk9VTkNFRBAEEiMKH1dFQkhPT0tfRVZFTlRfVFlQRV9FTUFJTF9PUEVORUQQBRIkCiBXRUJIT09LX0VWRU5UX1RZUEVfRU1BSUxfQ0xJQ0tFRBAGEisKJ1dFQkhPT0tfRVZFTlRfVFlQRV9FTUFJTF9SRVBMWV9SRUNFSVZFRBAHMq4FCg5XZWJob29rU2VydmljZRJvCg1DcmVhdGVXZWJob29rEiEuZW1haWxhcGkudjEuQ3JlYXRlV2ViaG9va1JlcXVlc3QaIi5lbWFpbGFwaS52MS5DcmVhdGVXZWJob29rUmVzcG9uc2UiF4LT5JMCEToBKiIML3YxL3dlYmhvb2tzEl0KCkdldFdlYmhvb2sSHi5lbWFpbGFwaS52MS5HZXRXZWJob29rUmVxdWVzdBoULmVtYWlsYXBpLnYxLldlYmhvb2siGYLT5JMCExIRL3YxL3dlYmhvb2tzL3tpZH0SaQoMTGlzdFdlYmhvb2tzEiAuZW1haWxhcGkudjEuTGlzdFdlYmhvb2tzUmVxdWVzdBohLmVtYWlsYXBpLnYxLkxpc3RXZWJob29rc1Jlc3BvbnNlIhSC0+STAg4SDC92MS93ZWJob29rcxJmCg1VcGRhdGVXZWJob29rEiEuZW1haWxhcGkudjEuVXBkYXRlV2ViaG9va1JlcXVlc3QaFC5lbWFpbGFwaS52MS5XZWJob29rIhyC0+STAhY6ASoyES92MS93ZWJob29rcy97aWR9EnEKDURlbGV0ZVdlYmhvb2sSIS5lbWFpbGFwaS52MS5EZWxldGVXZWJob29rUmVxdWVzdBoiLmVtYWlsYXBpLnYxLkRlbGV0ZVdlYmhvb2tSZXNwb25zZSIZgtPkkwITKhEvdjEvd2ViaG9va3Mve2lkfRKFAQoSR2V0QXBwUG9ydGFsQWNjZXNzEiYuZW1haWxhcGkudjEuR2V0QXBwUG9ydGFsQWNjZXNzUmVxdWVzdBonLmVtYWlsYXBpLnYxLkdldEFwcFBvcnRhbEFjY2Vzc1Jlc3BvbnNlIh6C0+STAhg6ASoiEy92MS93ZWJob29rcy9wb3J0YWxCmgEKD2NvbS5lbWFpbGFwaS52MUIMV2ViaG9va1Byb3RvUAFaLGdpdGh1Yi5jb20vZW1haWxhcGkvc2RrLWdvL2dlbi92MTtlbWFpbGFwaXYxogIDRVhYqgILRW1haWxhcGkuVjHKAgtFbWFpbGFwaVxWMeICF0VtYWlsYXBpXFYxXEdQQk1ldGFkYXRh6gIMRW1haWxhcGk6OlYxYgZwcm90bzM", [file_google_api_annotations, file_google_protobuf_timestamp]);
+  fileDesc("ChB2MS93ZWJob29rLnByb3RvEgtlbWFpbGFwaS52MSIbChlHZXRBcHBQb3J0YWxBY2Nlc3NSZXF1ZXN0IjgKGkdldEFwcFBvcnRhbEFjY2Vzc1Jlc3BvbnNlEgsKA3VybBgBIAEoCRINCgV0b2tlbhgCIAEoCSrEAgoQV2ViaG9va0V2ZW50VHlwZRIiCh5XRUJIT09LX0VWRU5UX1RZUEVfVU5TUEVDSUZJRUQQABIhCh1XRUJIT09LX0VWRU5UX1RZUEVfRU1BSUxfU0VOVBABEiYKIldFQkhPT0tfRVZFTlRfVFlQRV9FTUFJTF9ERUxJVkVSRUQQAhIjCh9XRUJIT09LX0VWRU5UX1RZUEVfRU1BSUxfRkFJTEVEEAMSJAogV0VCSE9PS19FVkVOVF9UWVBFX0VNQUlMX0JPVU5DRUQQBBIjCh9XRUJIT09LX0VWRU5UX1RZUEVfRU1BSUxfT1BFTkVEEAUSJAogV0VCSE9PS19FVkVOVF9UWVBFX0VNQUlMX0NMSUNLRUQQBhIrCidXRUJIT09LX0VWRU5UX1RZUEVfRU1BSUxfUkVQTFlfUkVDRUlWRUQQBzKYAQoOV2ViaG9va1NlcnZpY2UShQEKEkdldEFwcFBvcnRhbEFjY2VzcxImLmVtYWlsYXBpLnYxLkdldEFwcFBvcnRhbEFjY2Vzc1JlcXVlc3QaJy5lbWFpbGFwaS52MS5HZXRBcHBQb3J0YWxBY2Nlc3NSZXNwb25zZSIegtPkkwIYOgEqIhMvdjEvd2ViaG9va3MvcG9ydGFsQpoBCg9jb20uZW1haWxhcGkudjFCDFdlYmhvb2tQcm90b1ABWixnaXRodWIuY29tL2VtYWlsYXBpL3Nkay1nby9nZW4vdjE7ZW1haWxhcGl2MaICA0VYWKoCC0VtYWlsYXBpLlYxygILRW1haWxhcGlcVjHiAhdFbWFpbGFwaVxWMVxHUEJNZXRhZGF0YeoCDEVtYWlsYXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations]);
 
 /**
- * @generated from message emailapi.v1.CreateWebhookRequest
- */
-export type CreateWebhookRequest = Message<"emailapi.v1.CreateWebhookRequest"> & {
-  /**
-   * @generated from field: string name = 1;
-   */
-  name: string;
-
-  /**
-   * @generated from field: string url = 2;
-   */
-  url: string;
-
-  /**
-   * @generated from field: repeated emailapi.v1.WebhookEventType events = 3;
-   */
-  events: WebhookEventType[];
-};
-
-/**
- * Describes the message emailapi.v1.CreateWebhookRequest.
- * Use `create(CreateWebhookRequestSchema)` to create a new message.
- */
-export const CreateWebhookRequestSchema: GenMessage<CreateWebhookRequest> = /*@__PURE__*/
-  messageDesc(file_v1_webhook, 0);
-
-/**
- * @generated from message emailapi.v1.CreateWebhookResponse
- */
-export type CreateWebhookResponse = Message<"emailapi.v1.CreateWebhookResponse"> & {
-  /**
-   * @generated from field: emailapi.v1.Webhook webhook = 1;
-   */
-  webhook?: Webhook;
-
-  /**
-   * @generated from field: string secret = 2;
-   */
-  secret: string;
-
-  /**
-   * @generated from field: string message = 3;
-   */
-  message: string;
-};
-
-/**
- * Describes the message emailapi.v1.CreateWebhookResponse.
- * Use `create(CreateWebhookResponseSchema)` to create a new message.
- */
-export const CreateWebhookResponseSchema: GenMessage<CreateWebhookResponse> = /*@__PURE__*/
-  messageDesc(file_v1_webhook, 1);
-
-/**
- * @generated from message emailapi.v1.GetWebhookRequest
- */
-export type GetWebhookRequest = Message<"emailapi.v1.GetWebhookRequest"> & {
-  /**
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
-
-/**
- * Describes the message emailapi.v1.GetWebhookRequest.
- * Use `create(GetWebhookRequestSchema)` to create a new message.
- */
-export const GetWebhookRequestSchema: GenMessage<GetWebhookRequest> = /*@__PURE__*/
-  messageDesc(file_v1_webhook, 2);
-
-/**
- * @generated from message emailapi.v1.Webhook
- */
-export type Webhook = Message<"emailapi.v1.Webhook"> & {
-  /**
-   * @generated from field: string id = 1;
-   */
-  id: string;
-
-  /**
-   * @generated from field: string user_id = 2;
-   */
-  userId: string;
-
-  /**
-   * @generated from field: string name = 3;
-   */
-  name: string;
-
-  /**
-   * @generated from field: string url = 4;
-   */
-  url: string;
-
-  /**
-   * @generated from field: repeated emailapi.v1.WebhookEventType events = 5;
-   */
-  events: WebhookEventType[];
-
-  /**
-   * @generated from field: bool is_active = 6;
-   */
-  isActive: boolean;
-
-  /**
-   * @generated from field: int32 retry_count = 7;
-   */
-  retryCount: number;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp last_success = 8;
-   */
-  lastSuccess?: Timestamp;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp last_failure = 9;
-   */
-  lastFailure?: Timestamp;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp created_at = 10;
-   */
-  createdAt?: Timestamp;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_at = 11;
-   */
-  updatedAt?: Timestamp;
-};
-
-/**
- * Describes the message emailapi.v1.Webhook.
- * Use `create(WebhookSchema)` to create a new message.
- */
-export const WebhookSchema: GenMessage<Webhook> = /*@__PURE__*/
-  messageDesc(file_v1_webhook, 3);
-
-/**
- * @generated from message emailapi.v1.ListWebhooksRequest
- */
-export type ListWebhooksRequest = Message<"emailapi.v1.ListWebhooksRequest"> & {
-};
-
-/**
- * Describes the message emailapi.v1.ListWebhooksRequest.
- * Use `create(ListWebhooksRequestSchema)` to create a new message.
- */
-export const ListWebhooksRequestSchema: GenMessage<ListWebhooksRequest> = /*@__PURE__*/
-  messageDesc(file_v1_webhook, 4);
-
-/**
- * @generated from message emailapi.v1.ListWebhooksResponse
- */
-export type ListWebhooksResponse = Message<"emailapi.v1.ListWebhooksResponse"> & {
-  /**
-   * @generated from field: repeated emailapi.v1.Webhook data = 1;
-   */
-  data: Webhook[];
-};
-
-/**
- * Describes the message emailapi.v1.ListWebhooksResponse.
- * Use `create(ListWebhooksResponseSchema)` to create a new message.
- */
-export const ListWebhooksResponseSchema: GenMessage<ListWebhooksResponse> = /*@__PURE__*/
-  messageDesc(file_v1_webhook, 5);
-
-/**
- * @generated from message emailapi.v1.UpdateWebhookRequest
- */
-export type UpdateWebhookRequest = Message<"emailapi.v1.UpdateWebhookRequest"> & {
-  /**
-   * @generated from field: string id = 1;
-   */
-  id: string;
-
-  /**
-   * @generated from field: optional string name = 2;
-   */
-  name?: string;
-
-  /**
-   * @generated from field: optional string url = 3;
-   */
-  url?: string;
-
-  /**
-   * @generated from field: repeated emailapi.v1.WebhookEventType events = 4;
-   */
-  events: WebhookEventType[];
-
-  /**
-   * @generated from field: optional bool is_active = 5;
-   */
-  isActive?: boolean;
-};
-
-/**
- * Describes the message emailapi.v1.UpdateWebhookRequest.
- * Use `create(UpdateWebhookRequestSchema)` to create a new message.
- */
-export const UpdateWebhookRequestSchema: GenMessage<UpdateWebhookRequest> = /*@__PURE__*/
-  messageDesc(file_v1_webhook, 6);
-
-/**
- * @generated from message emailapi.v1.DeleteWebhookRequest
- */
-export type DeleteWebhookRequest = Message<"emailapi.v1.DeleteWebhookRequest"> & {
-  /**
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
-
-/**
- * Describes the message emailapi.v1.DeleteWebhookRequest.
- * Use `create(DeleteWebhookRequestSchema)` to create a new message.
- */
-export const DeleteWebhookRequestSchema: GenMessage<DeleteWebhookRequest> = /*@__PURE__*/
-  messageDesc(file_v1_webhook, 7);
-
-/**
- * @generated from message emailapi.v1.DeleteWebhookResponse
- */
-export type DeleteWebhookResponse = Message<"emailapi.v1.DeleteWebhookResponse"> & {
-};
-
-/**
- * Describes the message emailapi.v1.DeleteWebhookResponse.
- * Use `create(DeleteWebhookResponseSchema)` to create a new message.
- */
-export const DeleteWebhookResponseSchema: GenMessage<DeleteWebhookResponse> = /*@__PURE__*/
-  messageDesc(file_v1_webhook, 8);
-
-/**
- * GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
- * Frontend uses this with svix-react to let users manage webhook endpoints.
+ * GetAppPortalAccessRequest is empty - user is identified via auth.
  *
  * @generated from message emailapi.v1.GetAppPortalAccessRequest
  */
@@ -264,21 +26,24 @@ export type GetAppPortalAccessRequest = Message<"emailapi.v1.GetAppPortalAccessR
  * Use `create(GetAppPortalAccessRequestSchema)` to create a new message.
  */
 export const GetAppPortalAccessRequestSchema: GenMessage<GetAppPortalAccessRequest> = /*@__PURE__*/
-  messageDesc(file_v1_webhook, 9);
+  messageDesc(file_v1_webhook, 0);
 
 /**
+ * GetAppPortalAccessResponse contains the Svix App Portal access details.
+ *
  * @generated from message emailapi.v1.GetAppPortalAccessResponse
  */
 export type GetAppPortalAccessResponse = Message<"emailapi.v1.GetAppPortalAccessResponse"> & {
   /**
-   * Magic URL for embedding Svix App Portal
+   * Magic URL for embedding Svix App Portal.
+   * Pass this to the svix-react AppPortal component.
    *
    * @generated from field: string url = 1;
    */
   url: string;
 
   /**
-   * Token for the portal session
+   * Token for the portal session.
    *
    * @generated from field: string token = 2;
    */
@@ -290,9 +55,11 @@ export type GetAppPortalAccessResponse = Message<"emailapi.v1.GetAppPortalAccess
  * Use `create(GetAppPortalAccessResponseSchema)` to create a new message.
  */
 export const GetAppPortalAccessResponseSchema: GenMessage<GetAppPortalAccessResponse> = /*@__PURE__*/
-  messageDesc(file_v1_webhook, 10);
+  messageDesc(file_v1_webhook, 1);
 
 /**
+ * WebhookEventType defines the types of webhook events that can be delivered.
+ *
  * @generated from enum emailapi.v1.WebhookEventType
  */
 export enum WebhookEventType {
@@ -345,60 +112,12 @@ export const WebhookEventTypeSchema: GenEnum<WebhookEventType> = /*@__PURE__*/
 
 /**
  * WebhookService handles webhook operations.
+ * Webhook endpoints are managed via Svix App Portal - this service only provides
+ * access to the portal for users to configure their endpoints.
  *
  * @generated from service emailapi.v1.WebhookService
  */
 export const WebhookService: GenService<{
-  /**
-   * CreateWebhook creates a new webhook.
-   *
-   * @generated from rpc emailapi.v1.WebhookService.CreateWebhook
-   */
-  createWebhook: {
-    methodKind: "unary";
-    input: typeof CreateWebhookRequestSchema;
-    output: typeof CreateWebhookResponseSchema;
-  },
-  /**
-   * GetWebhook retrieves a webhook by ID.
-   *
-   * @generated from rpc emailapi.v1.WebhookService.GetWebhook
-   */
-  getWebhook: {
-    methodKind: "unary";
-    input: typeof GetWebhookRequestSchema;
-    output: typeof WebhookSchema;
-  },
-  /**
-   * ListWebhooks retrieves all webhooks.
-   *
-   * @generated from rpc emailapi.v1.WebhookService.ListWebhooks
-   */
-  listWebhooks: {
-    methodKind: "unary";
-    input: typeof ListWebhooksRequestSchema;
-    output: typeof ListWebhooksResponseSchema;
-  },
-  /**
-   * UpdateWebhook updates a webhook.
-   *
-   * @generated from rpc emailapi.v1.WebhookService.UpdateWebhook
-   */
-  updateWebhook: {
-    methodKind: "unary";
-    input: typeof UpdateWebhookRequestSchema;
-    output: typeof WebhookSchema;
-  },
-  /**
-   * DeleteWebhook deletes a webhook.
-   *
-   * @generated from rpc emailapi.v1.WebhookService.DeleteWebhook
-   */
-  deleteWebhook: {
-    methodKind: "unary";
-    input: typeof DeleteWebhookRequestSchema;
-    output: typeof DeleteWebhookResponseSchema;
-  },
   /**
    * GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
    * Frontend uses this with svix-react to let users manage webhook endpoints.

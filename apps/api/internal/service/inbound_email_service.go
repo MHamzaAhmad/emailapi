@@ -1,15 +1,16 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/mail"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/jordan-wright/email"
 
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/svix"
@@ -96,7 +97,6 @@ func (s *InboundEmailService) HandleSNSNotification(ctx context.Context, snsType
 	case "Notification":
 		return s.handleNotification(ctx, message)
 	case "UnsubscribeConfirmation":
-		// Just log and acknowledge
 		return nil
 	default:
 		return fmt.Errorf("unknown SNS notification type: %s", snsType)
@@ -109,7 +109,6 @@ func (s *InboundEmailService) handleSubscriptionConfirmation(ctx context.Context
 		return fmt.Errorf("missing subscribe URL")
 	}
 
-	// Make a GET request to confirm the subscription
 	resp, err := http.Get(subscribeURL)
 	if err != nil {
 		return fmt.Errorf("failed to confirm subscription: %w", err)
@@ -125,36 +124,25 @@ func (s *InboundEmailService) handleSubscriptionConfirmation(ctx context.Context
 
 // handleNotification processes the actual email notification.
 func (s *InboundEmailService) handleNotification(ctx context.Context, message string) error {
-	// Parse SES notification from message
 	var sesNotif SESNotification
 	if err := json.Unmarshal([]byte(message), &sesNotif); err != nil {
 		return fmt.Errorf("failed to parse SES notification: %w", err)
 	}
 
-	// Only process email received notifications with S3 action
 	if sesNotif.NotificationType != "Received" {
-		return nil // Ignore other notification types
+		return nil
 	}
 
 	if sesNotif.Receipt.Action.Type != "S3" {
 		return fmt.Errorf("expected S3 action, got: %s", sesNotif.Receipt.Action.Type)
 	}
 
-	// Download raw email from S3
-	bucket := sesNotif.Receipt.Action.BucketName
 	key := sesNotif.Receipt.Action.ObjectKey
-
-	// Use the configured inbound bucket if not specified in notification
-	if bucket == "" {
-		bucket = s.inboundBucket
-	}
-
 	rawEmail, err := s.s3Client.Download(ctx, key)
 	if err != nil {
 		return fmt.Errorf("failed to download email from S3: %w", err)
 	}
 
-	// Parse the email
 	inboundEmail, err := s.parseEmail(rawEmail)
 	if err != nil {
 		return fmt.Errorf("failed to parse email: %w", err)
@@ -162,76 +150,56 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 
 	// Look up original email by In-Reply-To header
 	if inboundEmail.InReplyTo == "" {
-		// No In-Reply-To header - check References
 		if len(inboundEmail.References) == 0 {
-			// Not a reply, skip
-			return nil
+			return nil // Not a reply
 		}
-		// Use the last reference as the reply target
 		inboundEmail.InReplyTo = inboundEmail.References[len(inboundEmail.References)-1]
 	}
 
-	// Find the original email to get the user ID
 	originalEmail, err := s.lookupOriginalEmail(ctx, inboundEmail.InReplyTo)
 	if err != nil {
-		// Could be a reply to an email we didn't send
-		return nil
+		return nil // Reply to email we didn't send
 	}
 
 	inboundEmail.OriginalEmailID = originalEmail.ID
 	inboundEmail.UserID = originalEmail.UserID
 
-	// Deliver webhook to user via Svix
 	return s.deliverWebhook(ctx, inboundEmail)
 }
 
-// parseEmail parses raw MIME email content.
+// parseEmail parses raw MIME email using jordan-wright/email package.
 func (s *InboundEmailService) parseEmail(rawEmail []byte) (*InboundEmail, error) {
-	msg, err := mail.ReadMessage(strings.NewReader(string(rawEmail)))
+	// Use jordan-wright/email to parse (same library we use to build emails)
+	parsed, err := email.NewEmailFromReader(bytes.NewReader(rawEmail))
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse email message: %w", err)
+		return nil, fmt.Errorf("failed to parse email: %w", err)
 	}
 
 	inbound := &InboundEmail{
 		ID:        uuid.New().String(),
-		MessageID: cleanMessageID(msg.Header.Get("Message-ID")),
-		InReplyTo: cleanMessageID(msg.Header.Get("In-Reply-To")),
-		From:      msg.Header.Get("From"),
-		Subject:   msg.Header.Get("Subject"),
+		MessageID: cleanMessageID(parsed.Headers.Get("Message-ID")),
+		InReplyTo: cleanMessageID(parsed.Headers.Get("In-Reply-To")),
+		From:      parsed.From,
+		Subject:   parsed.Subject,
+		Body:      string(parsed.Text),
+		HTML:      string(parsed.HTML),
 	}
 
-	// Parse References header (space-separated message IDs)
-	references := msg.Header.Get("References")
-	if references != "" {
-		refs := strings.Fields(references)
-		for _, ref := range refs {
+	// Parse References header
+	if references := parsed.Headers.Get("References"); references != "" {
+		for _, ref := range strings.Fields(references) {
 			inbound.References = append(inbound.References, cleanMessageID(ref))
 		}
 	}
 
 	// Parse To addresses
-	toHeader := msg.Header.Get("To")
-	if toHeader != "" {
-		addresses, err := mail.ParseAddressList(toHeader)
-		if err == nil {
-			for _, addr := range addresses {
-				inbound.To = append(inbound.To, addr.Address)
-			}
+	for _, to := range parsed.To {
+		if addr, err := mail.ParseAddress(to); err == nil {
+			inbound.To = append(inbound.To, addr.Address)
 		} else {
-			// Fallback: just use raw header
-			inbound.To = []string{toHeader}
+			inbound.To = append(inbound.To, to)
 		}
 	}
-
-	// Read body
-	body, err := io.ReadAll(msg.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read email body: %w", err)
-	}
-
-	// TODO: Handle multipart MIME to extract HTML and attachments
-	// For now, just use the raw body as text
-	inbound.Body = string(body)
 
 	return inbound, nil
 }
@@ -260,12 +228,10 @@ type originalEmailInfo struct {
 
 // deliverWebhook sends the reply notification to the user via Svix.
 func (s *InboundEmailService) deliverWebhook(ctx context.Context, email *InboundEmail) error {
-	// Ensure user has a Svix app
 	if err := s.svixClient.EnsureApp(ctx, email.UserID, "User "+email.UserID); err != nil {
 		return fmt.Errorf("failed to ensure svix app: %w", err)
 	}
 
-	// Build webhook payload
 	payload := map[string]interface{}{
 		"type": "email.reply_received",
 		"data": map[string]interface{}{
@@ -282,9 +248,7 @@ func (s *InboundEmailService) deliverWebhook(ctx context.Context, email *Inbound
 		},
 	}
 
-	// Send via Svix
-	err := s.svixClient.SendMessage(ctx, email.UserID, "email.reply_received", payload)
-	if err != nil {
+	if err := s.svixClient.SendMessage(ctx, email.UserID, "email.reply_received", payload); err != nil {
 		return fmt.Errorf("failed to send webhook: %w", err)
 	}
 

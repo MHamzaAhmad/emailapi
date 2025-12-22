@@ -692,60 +692,6 @@
         ]
       }
     },
-    "/v1/webhooks": {
-      "get": {
-        "summary": "ListWebhooks retrieves all webhooks.",
-        "operationId": "WebhookService_ListWebhooks",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListWebhooksResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "tags": [
-          "WebhookService"
-        ]
-      },
-      "post": {
-        "summary": "CreateWebhook creates a new webhook.",
-        "operationId": "WebhookService_CreateWebhook",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1CreateWebhookResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1CreateWebhookRequest"
-            }
-          }
-        ],
-        "tags": [
-          "WebhookService"
-        ]
-      }
-    },
     "/v1/webhooks/portal": {
       "post": {
         "summary": "GetAppPortalAccess returns a magic URL for embedding Svix App Portal.\nFrontend uses this with svix-react to let users manage webhook endpoints.",
@@ -767,108 +713,11 @@
         "parameters": [
           {
             "name": "body",
-            "description": "GetAppPortalAccess returns a magic URL for embedding Svix App Portal.\nFrontend uses this with svix-react to let users manage webhook endpoints.",
+            "description": "GetAppPortalAccessRequest is empty - user is identified via auth.",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1GetAppPortalAccessRequest"
-            }
-          }
-        ],
-        "tags": [
-          "WebhookService"
-        ]
-      }
-    },
-    "/v1/webhooks/{id}": {
-      "get": {
-        "summary": "GetWebhook retrieves a webhook by ID.",
-        "operationId": "WebhookService_GetWebhook",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1Webhook"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "WebhookService"
-        ]
-      },
-      "delete": {
-        "summary": "DeleteWebhook deletes a webhook.",
-        "operationId": "WebhookService_DeleteWebhook",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1DeleteWebhookResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "WebhookService"
-        ]
-      },
-      "patch": {
-        "summary": "UpdateWebhook updates a webhook.",
-        "operationId": "WebhookService_UpdateWebhook",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1Webhook"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/WebhookServiceUpdateWebhookBody"
             }
           }
         ],
@@ -916,26 +765,6 @@
         },
         "role": {
           "$ref": "#/definitions/v1UserRole"
-        },
-        "isActive": {
-          "type": "boolean"
-        }
-      }
-    },
-    "WebhookServiceUpdateWebhookBody": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1WebhookEventType"
-          }
         },
         "isActive": {
           "type": "boolean"
@@ -1141,37 +970,6 @@
         }
       }
     },
-    "v1CreateWebhookRequest": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1WebhookEventType"
-          }
-        }
-      }
-    },
-    "v1CreateWebhookResponse": {
-      "type": "object",
-      "properties": {
-        "webhook": {
-          "$ref": "#/definitions/v1Webhook"
-        },
-        "secret": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
-    },
     "v1DeleteApiKeyResponse": {
       "type": "object",
       "description": "DeleteApiKeyResponse is the response for deleting an API key."
@@ -1183,9 +981,6 @@
           "type": "string"
         }
       }
-    },
-    "v1DeleteWebhookResponse": {
-      "type": "object"
     },
     "v1DnsRecord": {
       "type": "object",
@@ -1516,20 +1311,21 @@
     },
     "v1GetAppPortalAccessRequest": {
       "type": "object",
-      "description": "GetAppPortalAccess returns a magic URL for embedding Svix App Portal.\nFrontend uses this with svix-react to let users manage webhook endpoints."
+      "description": "GetAppPortalAccessRequest is empty - user is identified via auth."
     },
     "v1GetAppPortalAccessResponse": {
       "type": "object",
       "properties": {
         "url": {
           "type": "string",
-          "title": "Magic URL for embedding Svix App Portal"
+          "description": "Magic URL for embedding Svix App Portal.\nPass this to the svix-react AppPortal component."
         },
         "token": {
           "type": "string",
-          "title": "Token for the portal session"
+          "description": "Token for the portal session."
         }
-      }
+      },
+      "description": "GetAppPortalAccessResponse contains the Svix App Portal access details."
     },
     "v1GetDomainResponse": {
       "type": "object",
@@ -1650,18 +1446,6 @@
         },
         "nextPageToken": {
           "type": "string"
-        }
-      }
-    },
-    "v1ListWebhooksResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1Webhook"
-          }
         }
       }
     },
@@ -1901,66 +1685,6 @@
           "type": "string"
         }
       }
-    },
-    "v1Webhook": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "userId": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "events": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/v1WebhookEventType"
-          }
-        },
-        "isActive": {
-          "type": "boolean"
-        },
-        "retryCount": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "lastSuccess": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "lastFailure": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "v1WebhookEventType": {
-      "type": "string",
-      "enum": [
-        "WEBHOOK_EVENT_TYPE_UNSPECIFIED",
-        "WEBHOOK_EVENT_TYPE_EMAIL_SENT",
-        "WEBHOOK_EVENT_TYPE_EMAIL_DELIVERED",
-        "WEBHOOK_EVENT_TYPE_EMAIL_FAILED",
-        "WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED",
-        "WEBHOOK_EVENT_TYPE_EMAIL_OPENED",
-        "WEBHOOK_EVENT_TYPE_EMAIL_CLICKED",
-        "WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED"
-      ],
-      "default": "WEBHOOK_EVENT_TYPE_UNSPECIFIED"
     }
   }
 }

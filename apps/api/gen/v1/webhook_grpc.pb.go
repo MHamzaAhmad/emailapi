@@ -19,11 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WebhookService_CreateWebhook_FullMethodName      = "/emailapi.v1.WebhookService/CreateWebhook"
-	WebhookService_GetWebhook_FullMethodName         = "/emailapi.v1.WebhookService/GetWebhook"
-	WebhookService_ListWebhooks_FullMethodName       = "/emailapi.v1.WebhookService/ListWebhooks"
-	WebhookService_UpdateWebhook_FullMethodName      = "/emailapi.v1.WebhookService/UpdateWebhook"
-	WebhookService_DeleteWebhook_FullMethodName      = "/emailapi.v1.WebhookService/DeleteWebhook"
 	WebhookService_GetAppPortalAccess_FullMethodName = "/emailapi.v1.WebhookService/GetAppPortalAccess"
 )
 
@@ -32,17 +27,9 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // WebhookService handles webhook operations.
+// Webhook endpoints are managed via Svix App Portal - this service only provides
+// access to the portal for users to configure their endpoints.
 type WebhookServiceClient interface {
-	// CreateWebhook creates a new webhook.
-	CreateWebhook(ctx context.Context, in *CreateWebhookRequest, opts ...grpc.CallOption) (*CreateWebhookResponse, error)
-	// GetWebhook retrieves a webhook by ID.
-	GetWebhook(ctx context.Context, in *GetWebhookRequest, opts ...grpc.CallOption) (*Webhook, error)
-	// ListWebhooks retrieves all webhooks.
-	ListWebhooks(ctx context.Context, in *ListWebhooksRequest, opts ...grpc.CallOption) (*ListWebhooksResponse, error)
-	// UpdateWebhook updates a webhook.
-	UpdateWebhook(ctx context.Context, in *UpdateWebhookRequest, opts ...grpc.CallOption) (*Webhook, error)
-	// DeleteWebhook deletes a webhook.
-	DeleteWebhook(ctx context.Context, in *DeleteWebhookRequest, opts ...grpc.CallOption) (*DeleteWebhookResponse, error)
 	// GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
 	// Frontend uses this with svix-react to let users manage webhook endpoints.
 	GetAppPortalAccess(ctx context.Context, in *GetAppPortalAccessRequest, opts ...grpc.CallOption) (*GetAppPortalAccessResponse, error)
@@ -54,56 +41,6 @@ type webhookServiceClient struct {
 
 func NewWebhookServiceClient(cc grpc.ClientConnInterface) WebhookServiceClient {
 	return &webhookServiceClient{cc}
-}
-
-func (c *webhookServiceClient) CreateWebhook(ctx context.Context, in *CreateWebhookRequest, opts ...grpc.CallOption) (*CreateWebhookResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateWebhookResponse)
-	err := c.cc.Invoke(ctx, WebhookService_CreateWebhook_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *webhookServiceClient) GetWebhook(ctx context.Context, in *GetWebhookRequest, opts ...grpc.CallOption) (*Webhook, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Webhook)
-	err := c.cc.Invoke(ctx, WebhookService_GetWebhook_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *webhookServiceClient) ListWebhooks(ctx context.Context, in *ListWebhooksRequest, opts ...grpc.CallOption) (*ListWebhooksResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListWebhooksResponse)
-	err := c.cc.Invoke(ctx, WebhookService_ListWebhooks_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *webhookServiceClient) UpdateWebhook(ctx context.Context, in *UpdateWebhookRequest, opts ...grpc.CallOption) (*Webhook, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Webhook)
-	err := c.cc.Invoke(ctx, WebhookService_UpdateWebhook_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *webhookServiceClient) DeleteWebhook(ctx context.Context, in *DeleteWebhookRequest, opts ...grpc.CallOption) (*DeleteWebhookResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteWebhookResponse)
-	err := c.cc.Invoke(ctx, WebhookService_DeleteWebhook_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *webhookServiceClient) GetAppPortalAccess(ctx context.Context, in *GetAppPortalAccessRequest, opts ...grpc.CallOption) (*GetAppPortalAccessResponse, error) {
@@ -121,17 +58,9 @@ func (c *webhookServiceClient) GetAppPortalAccess(ctx context.Context, in *GetAp
 // for forward compatibility.
 //
 // WebhookService handles webhook operations.
+// Webhook endpoints are managed via Svix App Portal - this service only provides
+// access to the portal for users to configure their endpoints.
 type WebhookServiceServer interface {
-	// CreateWebhook creates a new webhook.
-	CreateWebhook(context.Context, *CreateWebhookRequest) (*CreateWebhookResponse, error)
-	// GetWebhook retrieves a webhook by ID.
-	GetWebhook(context.Context, *GetWebhookRequest) (*Webhook, error)
-	// ListWebhooks retrieves all webhooks.
-	ListWebhooks(context.Context, *ListWebhooksRequest) (*ListWebhooksResponse, error)
-	// UpdateWebhook updates a webhook.
-	UpdateWebhook(context.Context, *UpdateWebhookRequest) (*Webhook, error)
-	// DeleteWebhook deletes a webhook.
-	DeleteWebhook(context.Context, *DeleteWebhookRequest) (*DeleteWebhookResponse, error)
 	// GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
 	// Frontend uses this with svix-react to let users manage webhook endpoints.
 	GetAppPortalAccess(context.Context, *GetAppPortalAccessRequest) (*GetAppPortalAccessResponse, error)
@@ -145,21 +74,6 @@ type WebhookServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedWebhookServiceServer struct{}
 
-func (UnimplementedWebhookServiceServer) CreateWebhook(context.Context, *CreateWebhookRequest) (*CreateWebhookResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CreateWebhook not implemented")
-}
-func (UnimplementedWebhookServiceServer) GetWebhook(context.Context, *GetWebhookRequest) (*Webhook, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetWebhook not implemented")
-}
-func (UnimplementedWebhookServiceServer) ListWebhooks(context.Context, *ListWebhooksRequest) (*ListWebhooksResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ListWebhooks not implemented")
-}
-func (UnimplementedWebhookServiceServer) UpdateWebhook(context.Context, *UpdateWebhookRequest) (*Webhook, error) {
-	return nil, status.Error(codes.Unimplemented, "method UpdateWebhook not implemented")
-}
-func (UnimplementedWebhookServiceServer) DeleteWebhook(context.Context, *DeleteWebhookRequest) (*DeleteWebhookResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method DeleteWebhook not implemented")
-}
 func (UnimplementedWebhookServiceServer) GetAppPortalAccess(context.Context, *GetAppPortalAccessRequest) (*GetAppPortalAccessResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetAppPortalAccess not implemented")
 }
@@ -182,96 +96,6 @@ func RegisterWebhookServiceServer(s grpc.ServiceRegistrar, srv WebhookServiceSer
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&WebhookService_ServiceDesc, srv)
-}
-
-func _WebhookService_CreateWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateWebhookRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WebhookServiceServer).CreateWebhook(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: WebhookService_CreateWebhook_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WebhookServiceServer).CreateWebhook(ctx, req.(*CreateWebhookRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _WebhookService_GetWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetWebhookRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WebhookServiceServer).GetWebhook(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: WebhookService_GetWebhook_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WebhookServiceServer).GetWebhook(ctx, req.(*GetWebhookRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _WebhookService_ListWebhooks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListWebhooksRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WebhookServiceServer).ListWebhooks(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: WebhookService_ListWebhooks_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WebhookServiceServer).ListWebhooks(ctx, req.(*ListWebhooksRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _WebhookService_UpdateWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateWebhookRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WebhookServiceServer).UpdateWebhook(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: WebhookService_UpdateWebhook_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WebhookServiceServer).UpdateWebhook(ctx, req.(*UpdateWebhookRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _WebhookService_DeleteWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteWebhookRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WebhookServiceServer).DeleteWebhook(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: WebhookService_DeleteWebhook_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WebhookServiceServer).DeleteWebhook(ctx, req.(*DeleteWebhookRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _WebhookService_GetAppPortalAccess_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -299,26 +123,6 @@ var WebhookService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "emailapi.v1.WebhookService",
 	HandlerType: (*WebhookServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "CreateWebhook",
-			Handler:    _WebhookService_CreateWebhook_Handler,
-		},
-		{
-			MethodName: "GetWebhook",
-			Handler:    _WebhookService_GetWebhook_Handler,
-		},
-		{
-			MethodName: "ListWebhooks",
-			Handler:    _WebhookService_ListWebhooks_Handler,
-		},
-		{
-			MethodName: "UpdateWebhook",
-			Handler:    _WebhookService_UpdateWebhook_Handler,
-		},
-		{
-			MethodName: "DeleteWebhook",
-			Handler:    _WebhookService_DeleteWebhook_Handler,
-		},
 		{
 			MethodName: "GetAppPortalAccess",
 			Handler:    _WebhookService_GetAppPortalAccess_Handler,
