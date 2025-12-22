@@ -13,6 +13,7 @@ import {
   Mail,
   Key,
   Globe,
+  Webhook,
 } from 'lucide-react'
 
 export default function Header() {
@@ -108,6 +109,19 @@ export default function Header() {
           >
             <Key size={20} />
             <span className="font-medium">API Keys</span>
+          </Link>
+
+          <Link
+            to="/webhooks"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+            activeProps={{
+              className:
+                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+            }}
+          >
+            <Webhook size={20} />
+            <span className="font-medium">Webhooks</span>
           </Link>
 
           <div className="my-4 border-t border-gray-700" />

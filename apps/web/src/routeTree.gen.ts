@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WebhooksRouteImport } from './routes/webhooks'
 import { Route as UserRouteImport } from './routes/user'
 import { Route as TestEmailRouteImport } from './routes/test-email'
 import { Route as ApiKeysRouteImport } from './routes/api-keys'
@@ -16,6 +17,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DomainsIndexRouteImport } from './routes/domains/index'
 import { Route as DomainsDomainIdRouteImport } from './routes/domains/$domainId'
 
+const WebhooksRoute = WebhooksRouteImport.update({
+  id: '/webhooks',
+  path: '/webhooks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UserRoute = UserRouteImport.update({
   id: '/user',
   path: '/user',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/api-keys': typeof ApiKeysRoute
   '/test-email': typeof TestEmailRoute
   '/user': typeof UserRoute
+  '/webhooks': typeof WebhooksRoute
   '/domains/$domainId': typeof DomainsDomainIdRoute
   '/domains': typeof DomainsIndexRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/api-keys': typeof ApiKeysRoute
   '/test-email': typeof TestEmailRoute
   '/user': typeof UserRoute
+  '/webhooks': typeof WebhooksRoute
   '/domains/$domainId': typeof DomainsDomainIdRoute
   '/domains': typeof DomainsIndexRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/api-keys': typeof ApiKeysRoute
   '/test-email': typeof TestEmailRoute
   '/user': typeof UserRoute
+  '/webhooks': typeof WebhooksRoute
   '/domains/$domainId': typeof DomainsDomainIdRoute
   '/domains/': typeof DomainsIndexRoute
 }
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
     | '/api-keys'
     | '/test-email'
     | '/user'
+    | '/webhooks'
     | '/domains/$domainId'
     | '/domains'
   fileRoutesByTo: FileRoutesByTo
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/api-keys'
     | '/test-email'
     | '/user'
+    | '/webhooks'
     | '/domains/$domainId'
     | '/domains'
   id:
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/api-keys'
     | '/test-email'
     | '/user'
+    | '/webhooks'
     | '/domains/$domainId'
     | '/domains/'
   fileRoutesById: FileRoutesById
@@ -104,12 +116,20 @@ export interface RootRouteChildren {
   ApiKeysRoute: typeof ApiKeysRoute
   TestEmailRoute: typeof TestEmailRoute
   UserRoute: typeof UserRoute
+  WebhooksRoute: typeof WebhooksRoute
   DomainsDomainIdRoute: typeof DomainsDomainIdRoute
   DomainsIndexRoute: typeof DomainsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/webhooks': {
+      id: '/webhooks'
+      path: '/webhooks'
+      fullPath: '/webhooks'
+      preLoaderRoute: typeof WebhooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/user': {
       id: '/user'
       path: '/user'
@@ -160,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiKeysRoute: ApiKeysRoute,
   TestEmailRoute: TestEmailRoute,
   UserRoute: UserRoute,
+  WebhooksRoute: WebhooksRoute,
   DomainsDomainIdRoute: DomainsDomainIdRoute,
   DomainsIndexRoute: DomainsIndexRoute,
 }

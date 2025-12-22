@@ -43,6 +43,7 @@ export interface SendEmailRequest {
     metadata?: Record<string, string>;
     scheduledAt?: string; // ISO string
     attachments?: Attachment[];
+    inReplyTo?: string;
 }
 
 export interface SendEmailResponse {

@@ -2,3 +2,5 @@
 export { userService } from './userService';
 export { apiKeyService } from './apiKeyService';
 export { domainService } from './domainService';
+export { emailService } from './emailService';
+export { webhookService } from './webhookService';
