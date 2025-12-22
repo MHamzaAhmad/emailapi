@@ -25,6 +25,8 @@ import (
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/repository/postgres"
 	pgrepo "github.com/emailapi/api/internal/repository/postgres"
+	redisrepo "github.com/emailapi/api/internal/repository/redis"
+	"github.com/emailapi/api/internal/repository/suppression"
 	"github.com/emailapi/api/internal/service"
 	grpctransport "github.com/emailapi/api/internal/transport/grpc"
 	worker "github.com/emailapi/api/internal/worker"
@@ -108,10 +110,33 @@ func main() {
 	}
 	logger.Info().Msg("✓ Connected to ClickHouse")
 	chRepo := chrepo.NewEmailRepository(chConn)
+	chActivityRepo := chrepo.NewActivityRepository(chConn)
 
 	// Initialize PostgreSQL Email Repository
 	pgEmailRepo := pgrepo.NewEmailRepository(store.Pool())
 	logger.Info().Msg("✓ Initialized email repositories")
+
+	// Initialize Redis client
+	redisClient, err := redisrepo.NewClient(cfg.RedisURL)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to connect to Redis")
+	}
+	if err := redisClient.Ping(context.Background()); err != nil {
+		logger.Fatal().Err(err).Msg("Failed to ping Redis")
+	}
+	defer redisClient.Close()
+	logger.Info().Msg("✓ Connected to Redis")
+
+	// Initialize suppression repository (hybrid Redis + PostgreSQL)
+	suppressionRepo := suppression.NewRepository(redisClient, store.Queries())
+
+	// Sync suppression list from PostgreSQL to Redis on startup
+	go func() {
+		if err := suppressionRepo.SyncFromPostgres(context.Background()); err != nil {
+			logger.Warn().Err(err).Msg("Failed to sync suppression list from PostgreSQL")
+		}
+	}()
+	logger.Info().Msg("✓ Initialized suppression repository")
 
 	// Initialize River
 	// Create a new pgxpool for River (recommended to separate from application pool)
@@ -168,7 +193,9 @@ func main() {
 		RiverClient:         riverClient,
 		PGEmailRepo:         pgEmailRepo,
 		CHEmailRepo:         chRepo,
+		CHActivityRepo:      chActivityRepo,
 		SvixClient:          svixClient,
+		SuppressionRepo:     suppressionRepo,
 	})
 
 	// Start gRPC server

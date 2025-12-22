@@ -6,13 +6,15 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/emailapi/api/internal/db"
 	"github.com/emailapi/api/internal/repository"
 )
 
 // Store implements the service.Store interface using PostgreSQL.
 // It aggregates all repository implementations.
 type Store struct {
-	pool *pgxpool.Pool
+	pool    *pgxpool.Pool
+	queries *db.Queries
 
 	user   *UserRepository
 	apiKey *APIKeyRepository
@@ -31,7 +33,10 @@ func NewStore(databaseURL string) (*Store, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	store := &Store{pool: pool}
+	store := &Store{
+		pool:    pool,
+		queries: db.New(pool),
+	}
 	store.user = NewUserRepository(pool)
 	store.apiKey = NewAPIKeyRepository(pool)
 	store.domain = NewDomainRepository(pool)
@@ -62,4 +67,9 @@ func (s *Store) Domains() repository.DomainRepository {
 // Pool returns the underlying connection pool for use by other repositories.
 func (s *Store) Pool() *pgxpool.Pool {
 	return s.pool
+}
+
+// Queries returns the sqlc generated queries.
+func (s *Store) Queries() *db.Queries {
+	return s.queries
 }

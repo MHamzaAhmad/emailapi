@@ -14,6 +14,7 @@ type Querier interface {
 	CheckAllAttachmentsScanned(ctx context.Context, emailID string) (CheckAllAttachmentsScannedRow, error)
 	CountActiveApiKeysByUserID(ctx context.Context, userID string) (int64, error)
 	CountEmailsByUserID(ctx context.Context, userID string) (int64, error)
+	CountSuppressionsByUser(ctx context.Context, userID string) (int64, error)
 	CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error)
 	CreateDomain(ctx context.Context, arg CreateDomainParams) error
 	CreateEmail(ctx context.Context, arg CreateEmailParams) (Email, error)
@@ -23,6 +24,8 @@ type Querier interface {
 	DeleteAttachmentsByEmailID(ctx context.Context, emailID string) error
 	DeleteDomain(ctx context.Context, id string) error
 	DeleteEmail(ctx context.Context, id string) error
+	DeleteExpiredSuppressions(ctx context.Context) (int64, error)
+	DeleteSuppressionByHash(ctx context.Context, emailHash string) error
 	DeleteUser(ctx context.Context, id string) error
 	GetApiKeyByHash(ctx context.Context, keyHash string) (ApiKey, error)
 	GetApiKeyByID(ctx context.Context, id string) (ApiKey, error)
@@ -38,10 +41,14 @@ type Querier interface {
 	GetEmailsWithPendingAttachments(ctx context.Context) ([]Email, error)
 	// Get domains that need verification refresh (never verified or older than threshold)
 	GetStaleDomains(ctx context.Context, limit int32) ([]Domain, error)
+	GetSuppressionByHash(ctx context.Context, emailHash string) (SuppressionList, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id string) (User, error)
 	GetUserIDByMessageID(ctx context.Context, messageID pgtype.Text) (string, error)
+	InsertSuppression(ctx context.Context, arg InsertSuppressionParams) error
+	ListActiveSuppressions(ctx context.Context) ([]ListActiveSuppressionsRow, error)
 	ListApiKeysByUserID(ctx context.Context, userID string) ([]ListApiKeysByUserIDRow, error)
+	ListSuppressionsByUser(ctx context.Context, arg ListSuppressionsByUserParams) ([]ListSuppressionsByUserRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	RevokeApiKey(ctx context.Context, id string) (ApiKey, error)
 	UpdateApiKey(ctx context.Context, arg UpdateApiKeyParams) (ApiKey, error)

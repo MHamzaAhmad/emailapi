@@ -5,8 +5,10 @@ import (
 	"strings"
 
 	emailverifier "github.com/AfterShip/email-verifier"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/emailapi/api/internal/domain"
+	"github.com/emailapi/api/internal/repository/suppression"
 )
 
 // DomainChecker is an interface for checking domain ownership.
@@ -14,15 +16,21 @@ type DomainChecker interface {
 	GetVerifiedDomainForSending(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error)
 }
 
+// SuppressionChecker checks if emails are suppressed.
+type SuppressionChecker interface {
+	CheckBatch(ctx context.Context, hashes []string) ([]string, error)
+}
+
 // EmailValidator validates email addresses for sending.
 type EmailValidator struct {
-	verifier      *emailverifier.Verifier
-	domainChecker DomainChecker
+	verifier           *emailverifier.Verifier
+	domainChecker      DomainChecker
+	suppressionChecker SuppressionChecker
 }
 
 // NewEmailValidator creates a new EmailValidator.
 // SMTP checking is disabled, as noted by the user.
-func NewEmailValidator(domainChecker DomainChecker) *EmailValidator {
+func NewEmailValidator(domainChecker DomainChecker, suppressionChecker SuppressionChecker) *EmailValidator {
 	verifier := emailverifier.NewVerifier().
 		EnableDomainSuggest() // Enable typo detection
 
@@ -30,14 +38,90 @@ func NewEmailValidator(domainChecker DomainChecker) *EmailValidator {
 	// verifier.EnableSMTPCheck() - DISABLED
 
 	return &EmailValidator{
-		verifier:      verifier,
-		domainChecker: domainChecker,
+		verifier:           verifier,
+		domainChecker:      domainChecker,
+		suppressionChecker: suppressionChecker,
 	}
 }
 
 // ValidateSendEmail validates all email addresses in a send email request.
+// Runs email validation and suppression check in parallel using errgroup.
 // Returns nil if all validations pass, or ValidationErrors with all failures.
 func (v *EmailValidator) ValidateSendEmail(ctx context.Context, userID, from string, to, cc, bcc []string) error {
+	g, ctx := errgroup.WithContext(ctx)
+
+	var validationErrors *ValidationErrors
+	var suppressedHashes []string
+
+	// Goroutine 1: Standard email validation (sender domain + recipient format)
+	g.Go(func() error {
+		validationErrors = v.validateAllAddresses(ctx, userID, from, to, cc, bcc)
+		if validationErrors.HasErrors() {
+			return validationErrors // Cancels context, stops other goroutines
+		}
+		return nil
+	})
+
+	// Goroutine 2: Suppression check (runs in parallel)
+	g.Go(func() error {
+		if v.suppressionChecker == nil {
+			return nil
+		}
+
+		// Collect all recipient emails
+		allRecipients := make([]string, 0, len(to)+len(cc)+len(bcc))
+		allRecipients = append(allRecipients, to...)
+		allRecipients = append(allRecipients, cc...)
+		allRecipients = append(allRecipients, bcc...)
+
+		if len(allRecipients) == 0 {
+			return nil
+		}
+
+		// Hash all emails for lookup
+		hashes := make([]string, len(allRecipients))
+		for i, email := range allRecipients {
+			hashes[i] = suppression.HashEmail(email)
+		}
+
+		// Single batch query to Redis
+		var err error
+		suppressedHashes, err = v.suppressionChecker.CheckBatch(ctx, hashes)
+		return err
+	})
+
+	// Wait for both to complete
+	if err := g.Wait(); err != nil {
+		// If it's a validation error, return it directly
+		if ve, ok := err.(*ValidationErrors); ok {
+			return ve
+		}
+		return err
+	}
+
+	// Build combined error response
+	errors := NewValidationErrors()
+
+	// Add validation errors if any
+	if validationErrors != nil && validationErrors.HasErrors() {
+		for _, e := range validationErrors.Errors {
+			errors.Add(e)
+		}
+	}
+
+	// Add suppression errors if any
+	if len(suppressedHashes) > 0 {
+		errors.Add(SuppressionError("recipients", len(suppressedHashes)))
+	}
+
+	if errors.HasErrors() {
+		return errors
+	}
+	return nil
+}
+
+// validateAllAddresses performs all address validations (non-concurrent helper).
+func (v *EmailValidator) validateAllAddresses(ctx context.Context, userID, from string, to, cc, bcc []string) *ValidationErrors {
 	errors := NewValidationErrors()
 
 	// 1. Validate FROM email (domain ownership + verified for sending)
@@ -66,10 +150,7 @@ func (v *EmailValidator) ValidateSendEmail(ctx context.Context, userID, from str
 		}
 	}
 
-	if errors.HasErrors() {
-		return errors
-	}
-	return nil
+	return errors
 }
 
 // validateSender checks if the FROM email's domain is owned and verified.

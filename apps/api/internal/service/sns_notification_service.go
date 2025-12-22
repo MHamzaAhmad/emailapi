@@ -13,6 +13,7 @@ import (
 	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	pgrepo "github.com/emailapi/api/internal/repository/postgres"
+	"github.com/emailapi/api/internal/repository/suppression"
 )
 
 // SNSNotificationService handles all SNS notifications from SES.
@@ -23,6 +24,7 @@ type SNSNotificationService struct {
 	activityRepo *chrepo.ActivityRepository
 	svixClient   svix.Client
 	s3Factory    *s3.Factory
+	suppressRepo *suppression.Repository
 	snsVerifier  *sns.Verifier
 }
 
@@ -33,6 +35,7 @@ func NewSNSNotificationService(
 	activityRepo *chrepo.ActivityRepository,
 	svixClient svix.Client,
 	s3Factory *s3.Factory,
+	suppressRepo *suppression.Repository,
 ) *SNSNotificationService {
 	return &SNSNotificationService{
 		pgRepo:       pgRepo,
@@ -40,6 +43,7 @@ func NewSNSNotificationService(
 		activityRepo: activityRepo,
 		svixClient:   svixClient,
 		s3Factory:    s3Factory,
+		suppressRepo: suppressRepo,
 		snsVerifier:  sns.NewVerifier(),
 	}
 }
@@ -261,6 +265,26 @@ func (s *SNSNotificationService) handleBounce(ctx context.Context, notification 
 	email.Status = domain.EmailStatusFailed
 	email.ErrorMessage = fmt.Sprintf("Bounced: %s - %s", notification.Bounce.BounceType, notification.Bounce.BounceSubType)
 
+	// Add bounced recipients to suppression list
+	if s.suppressRepo != nil {
+		for _, recipient := range notification.Bounce.BouncedRecipients {
+			reason := suppression.ReasonBounceSoft
+			if notification.Bounce.BounceType == "Permanent" {
+				reason = suppression.ReasonBounceHard
+			}
+
+			if err := s.suppressRepo.Add(ctx, &suppression.Entry{
+				EmailHash:       suppression.HashEmail(recipient.EmailAddress),
+				UserID:          email.UserID,
+				Reason:          reason,
+				BounceType:      notification.Bounce.BounceType,
+				SourceMessageID: messageID,
+			}); err != nil {
+				fmt.Printf("Warning: failed to add %s to suppression list: %v\n", recipient.EmailAddress, err)
+			}
+		}
+	}
+
 	// Archive to ClickHouse
 	if err := s.chRepo.SaveEmail(ctx, email); err != nil {
 		fmt.Printf("Warning: failed to archive email: %v\n", err)
@@ -299,6 +323,20 @@ func (s *SNSNotificationService) handleComplaint(ctx context.Context, notificati
 
 	email.Status = domain.EmailStatusFailed
 	email.ErrorMessage = fmt.Sprintf("Complaint: %s", notification.Complaint.ComplaintFeedbackType)
+
+	// Add complained recipients to suppression list (permanent)
+	if s.suppressRepo != nil {
+		for _, recipient := range notification.Complaint.ComplainedRecipients {
+			if err := s.suppressRepo.Add(ctx, &suppression.Entry{
+				EmailHash:       suppression.HashEmail(recipient.EmailAddress),
+				UserID:          email.UserID,
+				Reason:          suppression.ReasonComplaint,
+				SourceMessageID: messageID,
+			}); err != nil {
+				fmt.Printf("Warning: failed to add %s to suppression list: %v\n", recipient.EmailAddress, err)
+			}
+		}
+	}
 
 	// Archive to ClickHouse
 	if err := s.chRepo.SaveEmail(ctx, email); err != nil {

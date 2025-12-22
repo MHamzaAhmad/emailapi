@@ -19,6 +19,9 @@ const (
 	// Domain ownership errors
 	ErrCodeDomainNotOwned    ValidationErrorCode = "DOMAIN_NOT_OWNED"
 	ErrCodeDomainNotVerified ValidationErrorCode = "DOMAIN_NOT_VERIFIED"
+
+	// Suppression errors
+	ErrCodeEmailSuppressed ValidationErrorCode = "EMAIL_SUPPRESSED"
 )
 
 // ValidationError represents a single validation error.
@@ -108,5 +111,18 @@ func InvalidDomainWithSuggestion(field, email, suggestion string) *ValidationErr
 		Code:       ErrCodeInvalidDomain,
 		Message:    fmt.Sprintf("'%s' may have a typo in the domain", email),
 		Suggestion: suggestion,
+	}
+}
+
+// SuppressionError creates an error for suppressed email addresses.
+func SuppressionError(field string, count int) *ValidationError {
+	msg := fmt.Sprintf("%d recipient(s) are suppressed due to previous bounces or complaints", count)
+	if count == 1 {
+		msg = "recipient is suppressed due to previous bounce or complaint"
+	}
+	return &ValidationError{
+		Field:   field,
+		Code:    ErrCodeEmailSuppressed,
+		Message: msg,
 	}
 }
