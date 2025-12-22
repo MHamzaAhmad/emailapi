@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -20,17 +21,18 @@ import (
 // SendEmailArgs contains all email data embedded in the job payload.
 // This is the transient storage - data is cleaned up when job completes.
 type SendEmailArgs struct {
-	EmailID   string            `json:"email_id"`
-	UserID    string            `json:"user_id"`
-	From      string            `json:"from"`
-	To        []string          `json:"to"`
-	Cc        []string          `json:"cc,omitempty"`
-	Bcc       []string          `json:"bcc,omitempty"`
-	Subject   string            `json:"subject"`
-	Body      string            `json:"body,omitempty"`
-	HTML      string            `json:"html,omitempty"`
-	InReplyTo string            `json:"in_reply_to,omitempty"`
-	Metadata  map[string]string `json:"metadata,omitempty"`
+	EmailID    string            `json:"email_id"`
+	UserID     string            `json:"user_id"`
+	From       string            `json:"from"`
+	To         []string          `json:"to"`
+	Cc         []string          `json:"cc,omitempty"`
+	Bcc        []string          `json:"bcc,omitempty"`
+	Subject    string            `json:"subject"`
+	Body       string            `json:"body,omitempty"`
+	HTML       string            `json:"html,omitempty"`
+	InReplyTo  string            `json:"in_reply_to,omitempty"`
+	References []string          `json:"references,omitempty"`
+	Metadata   map[string]string `json:"metadata,omitempty"`
 	// S3 keys of attachments (populated by attachment worker)
 	AttachmentKeys []AttachmentInfo `json:"attachment_keys,omitempty"`
 }
@@ -181,7 +183,11 @@ func buildMIMEMessage(args *SendEmailArgs, attachments []attachmentContent) ([]b
 	// Add In-Reply-To header if present
 	if args.InReplyTo != "" {
 		e.Headers.Add("In-Reply-To", args.InReplyTo)
-		e.Headers.Add("References", args.InReplyTo)
+	}
+
+	// Add References header if present (for proper threading)
+	if len(args.References) > 0 {
+		e.Headers.Add("References", strings.Join(args.References, " "))
 	}
 
 	for _, att := range attachments {

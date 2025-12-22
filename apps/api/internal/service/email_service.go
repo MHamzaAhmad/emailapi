@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -136,6 +137,7 @@ func (s *EmailService) queueWithAttachments(ctx context.Context, emailID, userID
 		Body:        req.Body,
 		HTML:        req.Html,
 		InReplyTo:   req.InReplyTo,
+		References:  req.References,
 		Metadata:    req.Metadata,
 		Attachments: attachments,
 	}
@@ -156,17 +158,18 @@ func (s *EmailService) queueWithAttachments(ctx context.Context, emailID, userID
 // queueForSend queues an email for async sending.
 func (s *EmailService) queueForSend(ctx context.Context, emailID, userID string, req *emailapi.SendEmailRequest) (*emailapi.SendEmailResponse, error) {
 	args := worker.SendEmailArgs{
-		EmailID:   emailID,
-		UserID:    userID,
-		From:      req.From,
-		To:        req.To,
-		Cc:        req.Cc,
-		Bcc:       req.Bcc,
-		Subject:   req.Subject,
-		Body:      req.Body,
-		HTML:      req.Html,
-		InReplyTo: req.InReplyTo,
-		Metadata:  req.Metadata,
+		EmailID:    emailID,
+		UserID:     userID,
+		From:       req.From,
+		To:         req.To,
+		Cc:         req.Cc,
+		Bcc:        req.Bcc,
+		Subject:    req.Subject,
+		Body:       req.Body,
+		HTML:       req.Html,
+		InReplyTo:  req.InReplyTo,
+		References: req.References,
+		Metadata:   req.Metadata,
 	}
 
 	_, err := s.riverClient.Insert(ctx, args, nil)
@@ -223,6 +226,13 @@ func (s *EmailService) sendToSES(ctx context.Context, req *emailapi.SendEmailReq
 		input.EmailTags = append(input.EmailTags, types.MessageTag{
 			Name:  aws.String("InReplyTo"),
 			Value: aws.String(req.InReplyTo),
+		})
+	}
+
+	if len(req.References) > 0 {
+		input.EmailTags = append(input.EmailTags, types.MessageTag{
+			Name:  aws.String("References"),
+			Value: aws.String(strings.Join(req.References, " ")),
 		})
 	}
 

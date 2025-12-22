@@ -58,10 +58,13 @@ message SendEmailRequest {
   repeated Attachment attachments = 10;
   // Message-ID of the email being replied to (for threading).
   string in_reply_to = 11;
+  // Full list of message IDs in the thread (for proper threading).
+  // Should include in_reply_to and all previous message IDs.
+  repeated string references = 12;
   // If true, queue for async processing (we handle retries).
   // If false, send synchronously and return message_id immediately.
   // Note: Emails with attachments are always processed async.
-  bool async = 12;
+  bool async = 13;
 }
 
 // Attachment represents a file to be attached to the email.

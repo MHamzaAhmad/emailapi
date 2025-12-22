@@ -1351,6 +1351,13 @@
           "type": "string",
           "description": "Message-ID of the email being replied to (for threading)."
         },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Full list of message IDs in the thread (for proper threading).\nShould include in_reply_to and all previous message IDs."
+        },
         "async": {
           "type": "boolean",
           "description": "If true, queue for async processing (we handle retries).\nIf false, send synchronously and return message_id immediately.\nNote: Emails with attachments are always processed async."

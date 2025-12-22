@@ -15,17 +15,18 @@ import (
 // After processing, this job enqueues a SendEmailArgs job.
 type ProcessAttachmentsArgs struct {
 	// Full email data (embedded, not stored)
-	EmailID   string            `json:"email_id"`
-	UserID    string            `json:"user_id"`
-	From      string            `json:"from"`
-	To        []string          `json:"to"`
-	Cc        []string          `json:"cc,omitempty"`
-	Bcc       []string          `json:"bcc,omitempty"`
-	Subject   string            `json:"subject"`
-	Body      string            `json:"body,omitempty"`
-	HTML      string            `json:"html,omitempty"`
-	InReplyTo string            `json:"in_reply_to,omitempty"`
-	Metadata  map[string]string `json:"metadata,omitempty"`
+	EmailID    string            `json:"email_id"`
+	UserID     string            `json:"user_id"`
+	From       string            `json:"from"`
+	To         []string          `json:"to"`
+	Cc         []string          `json:"cc,omitempty"`
+	Bcc        []string          `json:"bcc,omitempty"`
+	Subject    string            `json:"subject"`
+	Body       string            `json:"body,omitempty"`
+	HTML       string            `json:"html,omitempty"`
+	InReplyTo  string            `json:"in_reply_to,omitempty"`
+	References []string          `json:"references,omitempty"`
+	Metadata   map[string]string `json:"metadata,omitempty"`
 	// Attachments to download/decode and upload to S3
 	Attachments []AttachmentSource `json:"attachments"`
 }
@@ -99,6 +100,7 @@ func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttac
 		Body:           args.Body,
 		HTML:           args.HTML,
 		InReplyTo:      args.InReplyTo,
+		References:     args.References,
 		Metadata:       args.Metadata,
 		AttachmentKeys: attachmentKeys,
 	}

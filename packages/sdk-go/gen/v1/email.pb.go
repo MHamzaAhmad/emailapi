@@ -104,10 +104,13 @@ type SendEmailRequest struct {
 	Attachments []*Attachment `protobuf:"bytes,10,rep,name=attachments,proto3" json:"attachments,omitempty"`
 	// Message-ID of the email being replied to (for threading).
 	InReplyTo string `protobuf:"bytes,11,opt,name=in_reply_to,json=inReplyTo,proto3" json:"in_reply_to,omitempty"`
+	// Full list of message IDs in the thread (for proper threading).
+	// Should include in_reply_to and all previous message IDs.
+	References []string `protobuf:"bytes,12,rep,name=references,proto3" json:"references,omitempty"`
 	// If true, queue for async processing (we handle retries).
 	// If false, send synchronously and return message_id immediately.
 	// Note: Emails with attachments are always processed async.
-	Async         bool `protobuf:"varint,12,opt,name=async,proto3" json:"async,omitempty"`
+	Async         bool `protobuf:"varint,13,opt,name=async,proto3" json:"async,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -217,6 +220,13 @@ func (x *SendEmailRequest) GetInReplyTo() string {
 		return x.InReplyTo
 	}
 	return ""
+}
+
+func (x *SendEmailRequest) GetReferences() []string {
+	if x != nil {
+		return x.References
+	}
+	return nil
 }
 
 func (x *SendEmailRequest) GetAsync() bool {
@@ -408,7 +418,7 @@ var File_v1_email_proto protoreflect.FileDescriptor
 
 const file_v1_email_proto_rawDesc = "" +
 	"\n" +
-	"\x0ev1/email.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd0\x03\n" +
+	"\x0ev1/email.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf0\x03\n" +
 	"\x10SendEmailRequest\x12\x12\n" +
 	"\x04from\x18\x01 \x01(\tR\x04from\x12\x0e\n" +
 	"\x02to\x18\x02 \x03(\tR\x02to\x12\x0e\n" +
@@ -421,8 +431,11 @@ const file_v1_email_proto_rawDesc = "" +
 	"\fscheduled_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\vscheduledAt\x129\n" +
 	"\vattachments\x18\n" +
 	" \x03(\v2\x17.emailapi.v1.AttachmentR\vattachments\x12\x1e\n" +
-	"\vin_reply_to\x18\v \x01(\tR\tinReplyTo\x12\x14\n" +
-	"\x05async\x18\f \x01(\bR\x05async\x1a;\n" +
+	"\vin_reply_to\x18\v \x01(\tR\tinReplyTo\x12\x1e\n" +
+	"\n" +
+	"references\x18\f \x03(\tR\n" +
+	"references\x12\x14\n" +
+	"\x05async\x18\r \x01(\bR\x05async\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x92\x01\n" +
