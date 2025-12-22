@@ -12,17 +12,34 @@ import (
 	"github.com/jordan-wright/email"
 	"github.com/riverqueue/river"
 
-	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
-	pgrepo "github.com/emailapi/api/internal/repository/postgres"
 )
 
-// SendEmailArgs defines the arguments for the send_email job.
-// Now only needs EmailID since email data is stored in PostgreSQL.
+// SendEmailArgs contains all email data embedded in the job payload.
+// This is the transient storage - data is cleaned up when job completes.
 type SendEmailArgs struct {
-	EmailID string `json:"email_id"`
+	EmailID   string            `json:"email_id"`
+	UserID    string            `json:"user_id"`
+	From      string            `json:"from"`
+	To        []string          `json:"to"`
+	Cc        []string          `json:"cc,omitempty"`
+	Bcc       []string          `json:"bcc,omitempty"`
+	Subject   string            `json:"subject"`
+	Body      string            `json:"body,omitempty"`
+	HTML      string            `json:"html,omitempty"`
+	InReplyTo string            `json:"in_reply_to,omitempty"`
+	Metadata  map[string]string `json:"metadata,omitempty"`
+	// S3 keys of attachments (populated by attachment worker)
+	AttachmentKeys []AttachmentInfo `json:"attachment_keys,omitempty"`
+}
+
+// AttachmentInfo contains info about an attachment stored in S3.
+type AttachmentInfo struct {
+	S3Key       string `json:"s3_key"`
+	Filename    string `json:"filename"`
+	ContentType string `json:"content_type"`
 }
 
 func (SendEmailArgs) Kind() string { return "send_email" }
@@ -32,7 +49,6 @@ type EmailWorker struct {
 	river.WorkerDefaults[SendEmailArgs]
 	sesClient ses.Client
 	s3Factory *s3.Factory
-	pgRepo    *pgrepo.EmailRepository
 	chRepo    *chrepo.EmailRepository
 }
 
@@ -40,42 +56,24 @@ type EmailWorker struct {
 func NewEmailWorker(
 	sesClient ses.Client,
 	s3Factory *s3.Factory,
-	pgRepo *pgrepo.EmailRepository,
 	chRepo *chrepo.EmailRepository,
 ) *EmailWorker {
 	return &EmailWorker{
 		sesClient: sesClient,
 		s3Factory: s3Factory,
-		pgRepo:    pgRepo,
 		chRepo:    chRepo,
 	}
 }
 
 func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) error {
-	emailID := job.Args.EmailID
+	args := job.Args
 
-	// 1. Load email from PostgreSQL
-	email, err := w.pgRepo.GetByID(ctx, emailID)
-	if err != nil {
-		return fmt.Errorf("failed to get email: %w", err)
-	}
-
-	// 2. Load attachments
-	attachments, err := w.pgRepo.GetAttachmentsByEmailID(ctx, emailID)
-	if err != nil {
-		return fmt.Errorf("failed to get attachments: %w", err)
-	}
-	email.Attachments = make([]domain.EmailAttachment, len(attachments))
-	for i, att := range attachments {
-		email.Attachments[i] = *att
-	}
-
-	// 3. Download attachments from S3
+	// Download attachments from S3 if present
 	var attachmentData []attachmentContent
-	for _, att := range attachments {
+	for _, att := range args.AttachmentKeys {
 		data, err := w.s3Factory.Bucket(s3.BucketAttachments).Download(ctx, att.S3Key)
 		if err != nil {
-			w.pgRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, fmt.Sprintf("Failed to download attachment: %v", err))
+			w.logActivity(ctx, args, "failed", fmt.Sprintf("Failed to download attachment: %v", err))
 			return fmt.Errorf("failed to download attachment %s: %w", att.Filename, err)
 		}
 		attachmentData = append(attachmentData, attachmentContent{
@@ -85,42 +83,53 @@ func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) e
 		})
 	}
 
-	// 4. Send via SES
-	messageID, err := w.sendEmail(ctx, email, attachmentData)
+	// Send via SES
+	messageID, err := w.sendEmail(ctx, &args, attachmentData)
 	if err != nil {
-		w.pgRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, err.Error())
-		// Log failure event
-		w.chRepo.LogEmailEvent(ctx, email, "failed")
+		w.logActivity(ctx, args, "failed", err.Error())
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 
-	// 5. Update email with message ID and sent status
-	email.MessageID = messageID
-	email.Status = domain.EmailStatusSent
-	now := time.Now()
-	email.SentAt = &now
-
-	// 6. Update PostgreSQL with sent status (keep in PG until delivery confirmed)
-	if err := w.pgRepo.UpdateSent(ctx, emailID, messageID, messageID); err != nil {
-		fmt.Printf("Warning: failed to update sent status: %v\n", err)
-	}
-
-	// 7. Write to routing table for infinite reply tracking
-	if err := w.chRepo.InsertRouting(ctx, messageID, emailID, email.UserID, email.From); err != nil {
+	// Write routing entry for reply tracking
+	if err := w.chRepo.InsertRouting(ctx, messageID, args.EmailID, args.UserID); err != nil {
 		fmt.Printf("Warning: failed to insert routing entry: %v\n", err)
 	}
 
-	// 8. Log sent event to activity_logs
-	if err := w.chRepo.LogEmailEvent(ctx, email, "sent"); err != nil {
-		fmt.Printf("Warning: failed to log sent event: %v\n", err)
+	// Log success
+	w.logActivity(ctx, args, "sent", fmt.Sprintf("Message ID: %s", messageID))
+
+	// Clean up attachments from S3 after successful send
+	for _, att := range args.AttachmentKeys {
+		if err := w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(ctx, att.S3Key); err != nil {
+			fmt.Printf("Warning: failed to delete attachment %s from S3: %v\n", att.S3Key, err)
+		}
 	}
 
-	// NOTE: Do NOT archive or delete from PG here!
-	// Email stays in PG until we receive delivery/bounce/complaint notification from SNS
-	// At that point, SNSNotificationService will archive to CH and delete from PG
-
-	fmt.Printf("Sent email %s to %v (MsgID: %s)\n", emailID, email.To, messageID)
+	fmt.Printf("Sent email %s to %v (MsgID: %s)\n", args.EmailID, args.To, messageID)
 	return nil
+}
+
+func (w *EmailWorker) logActivity(ctx context.Context, args SendEmailArgs, action, details string) {
+	status := "success"
+	if action == "failed" {
+		status = "failed"
+	}
+
+	metadata := map[string]interface{}{
+		"from":            args.From,
+		"to":              args.To,
+		"subject":         args.Subject,
+		"has_attachments": len(args.AttachmentKeys) > 0,
+	}
+	if args.Metadata != nil {
+		for k, v := range args.Metadata {
+			metadata[k] = v
+		}
+	}
+
+	if w.chRepo != nil {
+		w.chRepo.LogActivity(ctx, args.UserID, "email", args.EmailID, action, status, details, metadata)
+	}
 }
 
 type attachmentContent struct {
@@ -130,15 +139,12 @@ type attachmentContent struct {
 }
 
 // sendEmail sends the email via SES using raw MIME message.
-// Uses jordan-wright/email library to build proper MIME with attachments.
-func (w *EmailWorker) sendEmail(ctx context.Context, domainEmail *domain.Email, attachments []attachmentContent) (string, error) {
-	// Build MIME message using jordan-wright/email
-	rawMessage, err := buildMIMEMessage(domainEmail, attachments)
+func (w *EmailWorker) sendEmail(ctx context.Context, args *SendEmailArgs, attachments []attachmentContent) (string, error) {
+	rawMessage, err := buildMIMEMessage(args, attachments)
 	if err != nil {
 		return "", fmt.Errorf("failed to build MIME message: %w", err)
 	}
 
-	// Always send as raw email for consistency
 	input := &sesv2.SendEmailInput{
 		Content: &types.EmailContent{
 			Raw: &types.RawMessage{
@@ -156,25 +162,28 @@ func (w *EmailWorker) sendEmail(ctx context.Context, domainEmail *domain.Email, 
 }
 
 // buildMIMEMessage constructs a MIME message using jordan-wright/email library.
-func buildMIMEMessage(domainEmail *domain.Email, attachments []attachmentContent) ([]byte, error) {
+func buildMIMEMessage(args *SendEmailArgs, attachments []attachmentContent) ([]byte, error) {
 	e := email.NewEmail()
 
-	// Set sender and recipients
-	e.From = domainEmail.From
-	e.To = domainEmail.To
-	e.Cc = domainEmail.Cc
-	e.Bcc = domainEmail.Bcc
-	e.Subject = domainEmail.Subject
+	e.From = args.From
+	e.To = args.To
+	e.Cc = args.Cc
+	e.Bcc = args.Bcc
+	e.Subject = args.Subject
 
-	// Set body content
-	if domainEmail.Body != "" {
-		e.Text = []byte(domainEmail.Body)
+	if args.Body != "" {
+		e.Text = []byte(args.Body)
 	}
-	if domainEmail.HTML != "" {
-		e.HTML = []byte(domainEmail.HTML)
+	if args.HTML != "" {
+		e.HTML = []byte(args.HTML)
 	}
 
-	// Add attachments
+	// Add In-Reply-To header if present
+	if args.InReplyTo != "" {
+		e.Headers.Add("In-Reply-To", args.InReplyTo)
+		e.Headers.Add("References", args.InReplyTo)
+	}
+
 	for _, att := range attachments {
 		_, err := e.Attach(bytes.NewReader(att.Data), att.Filename, att.ContentType)
 		if err != nil {
@@ -182,6 +191,13 @@ func buildMIMEMessage(domainEmail *domain.Email, attachments []attachmentContent
 		}
 	}
 
-	// Build the raw MIME message
 	return e.Bytes()
 }
+
+// ScheduledEmailArgs is for scheduled emails (processed at scheduled_at time).
+type ScheduledEmailArgs struct {
+	SendEmailArgs
+	ScheduledAt time.Time `json:"scheduled_at"`
+}
+
+func (ScheduledEmailArgs) Kind() string { return "scheduled_email" }

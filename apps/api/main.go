@@ -24,7 +24,6 @@ import (
 	middleware "github.com/emailapi/api/internal/middleware"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/repository/postgres"
-	pgrepo "github.com/emailapi/api/internal/repository/postgres"
 	redisrepo "github.com/emailapi/api/internal/repository/redis"
 	"github.com/emailapi/api/internal/repository/suppression"
 	"github.com/emailapi/api/internal/service"
@@ -111,10 +110,7 @@ func main() {
 	logger.Info().Msg("✓ Connected to ClickHouse")
 	chRepo := chrepo.NewEmailRepository(chConn)
 	chActivityRepo := chrepo.NewActivityRepository(chConn)
-
-	// Initialize PostgreSQL Email Repository
-	pgEmailRepo := pgrepo.NewEmailRepository(store.Pool())
-	logger.Info().Msg("✓ Initialized email repositories")
+	logger.Info().Msg("✓ Initialized ClickHouse repositories")
 
 	// Initialize Redis client
 	redisClient, err := redisrepo.NewClient(cfg.RedisURL)
@@ -147,12 +143,9 @@ func main() {
 	defer riverPool.Close()
 
 	workers := river.NewWorkers()
-	// Register EmailWorker with new dependencies
-	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, pgEmailRepo, chRepo)
+	// Register EmailWorker (no PG dependency - email data in job payload)
+	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, chRepo)
 	river.AddWorker(workers, emailWorker)
-	// Register AttachmentWorker
-	attachmentWorker := worker.NewAttachmentWorker(s3Factory, pgEmailRepo)
-	river.AddWorker(workers, attachmentWorker)
 
 	riverClient, err := river.NewClient(riverpgxv5.New(riverPool), &river.Config{
 		Queues: map[string]river.QueueConfig{
@@ -183,7 +176,7 @@ func main() {
 	}
 	logger.Info().Msg("✓ Initialized Svix client")
 
-	// Initialize service layer with new dependencies
+	// Initialize service layer (no PG email repo - stateless architecture)
 	svc := service.NewWithDeps(service.ServiceDeps{
 		Store:               store,
 		SESClient:           sesClient,
@@ -191,7 +184,6 @@ func main() {
 		Region:              cfg.AWSRegion,
 		SESConfigurationSet: cfg.SESConfigurationSet,
 		RiverClient:         riverClient,
-		PGEmailRepo:         pgEmailRepo,
 		CHEmailRepo:         chRepo,
 		CHActivityRepo:      chActivityRepo,
 		SvixClient:          svixClient,

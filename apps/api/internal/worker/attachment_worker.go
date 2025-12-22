@@ -8,14 +8,25 @@ import (
 	"github.com/google/uuid"
 	"github.com/riverqueue/river"
 
-	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/external/s3"
-	"github.com/emailapi/api/internal/repository/postgres"
 )
 
-// ProcessAttachmentsArgs defines the arguments for the process_attachments job.
+// ProcessAttachmentsArgs contains email data + attachments to process.
+// After processing, this job enqueues a SendEmailArgs job.
 type ProcessAttachmentsArgs struct {
-	EmailID     string             `json:"email_id"`
+	// Full email data (embedded, not stored)
+	EmailID   string            `json:"email_id"`
+	UserID    string            `json:"user_id"`
+	From      string            `json:"from"`
+	To        []string          `json:"to"`
+	Cc        []string          `json:"cc,omitempty"`
+	Bcc       []string          `json:"bcc,omitempty"`
+	Subject   string            `json:"subject"`
+	Body      string            `json:"body,omitempty"`
+	HTML      string            `json:"html,omitempty"`
+	InReplyTo string            `json:"in_reply_to,omitempty"`
+	Metadata  map[string]string `json:"metadata,omitempty"`
+	// Attachments to download/decode and upload to S3
 	Attachments []AttachmentSource `json:"attachments"`
 }
 
@@ -32,75 +43,75 @@ func (ProcessAttachmentsArgs) Kind() string { return "process_attachments" }
 // AttachmentWorker handles attachment processing jobs.
 type AttachmentWorker struct {
 	river.WorkerDefaults[ProcessAttachmentsArgs]
-	s3Factory *s3.Factory
-	emailRepo *postgres.EmailRepository
+	s3Factory   *s3.Factory
+	riverClient RiverClient
+}
+
+// RiverClient interface for enqueueing jobs.
+type RiverClient interface {
+	Insert(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (interface{}, error)
 }
 
 // NewAttachmentWorker creates a new AttachmentWorker.
-func NewAttachmentWorker(s3Factory *s3.Factory, emailRepo *postgres.EmailRepository) *AttachmentWorker {
+func NewAttachmentWorker(s3Factory *s3.Factory, riverClient RiverClient) *AttachmentWorker {
 	return &AttachmentWorker{
-		s3Factory: s3Factory,
-		emailRepo: emailRepo,
+		s3Factory:   s3Factory,
+		riverClient: riverClient,
 	}
 }
 
-// Work processes attachments: downloads from URL or decodes base64, uploads to S3.
+// Work processes attachments: downloads from URL or decodes base64, uploads to S3, then enqueues send job.
 func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttachmentsArgs]) error {
-	emailID := job.Args.EmailID
+	args := job.Args
 
-	// Update email status to processing_attachments
-	if err := w.emailRepo.UpdateStatus(ctx, emailID, domain.EmailStatusProcessingAttachments, ""); err != nil {
-		return fmt.Errorf("failed to update email status: %w", err)
-	}
-
-	// Process each attachment
-	for _, att := range job.Args.Attachments {
+	// Process each attachment and upload to S3
+	var attachmentKeys []AttachmentInfo
+	for _, att := range args.Attachments {
 		content, contentType, err := w.getAttachmentContent(ctx, att)
 		if err != nil {
-			// Update email status to failed
-			w.emailRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, fmt.Sprintf("Failed to process attachment %s: %v", att.Filename, err))
 			return fmt.Errorf("failed to get attachment content for %s: %w", att.Filename, err)
 		}
 
 		// Generate S3 key
-		s3Key := fmt.Sprintf("attachments/%s/%s/%s", emailID, uuid.New().String(), att.Filename)
+		s3Key := fmt.Sprintf("attachments/%s/%s/%s", args.EmailID, uuid.New().String(), att.Filename)
 
 		// Upload to S3
 		if err := w.s3Factory.Bucket(s3.BucketAttachments).UploadAttachment(ctx, s3Key, content, contentType); err != nil {
-			w.emailRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, fmt.Sprintf("Failed to upload attachment %s: %v", att.Filename, err))
 			return fmt.Errorf("failed to upload attachment %s: %w", att.Filename, err)
 		}
 
-		// Get object metadata for size
-		meta, err := w.s3Factory.Bucket(s3.BucketAttachments).HeadObject(ctx, s3Key)
-		if err != nil {
-			// Non-fatal, just use content length
-			meta = &s3.ObjectMeta{SizeBytes: int64(len(content)), ContentType: contentType}
-		}
-
-		// Create attachment record in database
-		attachment := &domain.EmailAttachment{
-			ID:          uuid.New().String(),
-			EmailID:     emailID,
+		attachmentKeys = append(attachmentKeys, AttachmentInfo{
+			S3Key:       s3Key,
 			Filename:    att.Filename,
 			ContentType: contentType,
-			S3Key:       s3Key,
-			SizeBytes:   meta.SizeBytes,
-			ScanStatus:  domain.ScanStatusPending,
-		}
-
-		if err := w.emailRepo.CreateAttachment(ctx, attachment); err != nil {
-			w.emailRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, fmt.Sprintf("Failed to save attachment record %s: %v", att.Filename, err))
-			return fmt.Errorf("failed to create attachment record: %w", err)
-		}
+		})
 	}
 
-	// Update email status to scanning_attachments
-	// GuardDuty will scan the files and EventBridge will call our webhook
-	if err := w.emailRepo.UpdateStatus(ctx, emailID, domain.EmailStatusScanningAttachments, ""); err != nil {
-		return fmt.Errorf("failed to update email status to scanning: %w", err)
+	// Enqueue the send email job with attachment info
+	sendArgs := SendEmailArgs{
+		EmailID:        args.EmailID,
+		UserID:         args.UserID,
+		From:           args.From,
+		To:             args.To,
+		Cc:             args.Cc,
+		Bcc:            args.Bcc,
+		Subject:        args.Subject,
+		Body:           args.Body,
+		HTML:           args.HTML,
+		InReplyTo:      args.InReplyTo,
+		Metadata:       args.Metadata,
+		AttachmentKeys: attachmentKeys,
 	}
 
+	if _, err := w.riverClient.Insert(ctx, sendArgs, nil); err != nil {
+		// Clean up uploaded attachments on failure
+		for _, att := range attachmentKeys {
+			w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(ctx, att.S3Key)
+		}
+		return fmt.Errorf("failed to enqueue send job: %w", err)
+	}
+
+	fmt.Printf("Processed %d attachments for email %s, enqueued for sending\n", len(attachmentKeys), args.EmailID)
 	return nil
 }
 

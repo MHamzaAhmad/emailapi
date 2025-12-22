@@ -19,28 +19,24 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	EmailService_SendEmail_FullMethodName  = "/emailapi.v1.EmailService/SendEmail"
-	EmailService_GetEmail_FullMethodName   = "/emailapi.v1.EmailService/GetEmail"
-	EmailService_ListEmails_FullMethodName = "/emailapi.v1.EmailService/ListEmails"
+	EmailService_SendEmail_FullMethodName = "/emailapi.v1.EmailService/SendEmail"
 )
 
 // EmailServiceClient is the client API for EmailService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// EmailService handles all email-related operations including sending, retrieving, and listing emails.
+// EmailService handles email sending operations.
+// This is a stateless, compliance-first API - no email content is stored.
 type EmailServiceClient interface {
-	// SendEmail queues an email for sending.
+	// SendEmail sends an email immediately or queues it for async processing.
 	//
-	// It supports both text and HTML content, multiple recipients (To, CC, BCC),
-	// metadata, and scheduled sending.
+	// Behavior:
+	// - async=false + no attachments: Send synchronously, return message_id
+	// - async=true OR has attachments: Queue for processing with retries
+	//
+	// Delivery status is sent to your webhook endpoint.
 	SendEmail(ctx context.Context, in *SendEmailRequest, opts ...grpc.CallOption) (*SendEmailResponse, error)
-	// GetEmail retrieves the details of a specific email by its ID.
-	GetEmail(ctx context.Context, in *GetEmailRequest, opts ...grpc.CallOption) (*Email, error)
-	// ListEmails retrieves a paginated list of emails sent by the authenticated user.
-	//
-	// Results are ordered by creation time descending.
-	ListEmails(ctx context.Context, in *ListEmailsRequest, opts ...grpc.CallOption) (*ListEmailsResponse, error)
 }
 
 type emailServiceClient struct {
@@ -61,43 +57,21 @@ func (c *emailServiceClient) SendEmail(ctx context.Context, in *SendEmailRequest
 	return out, nil
 }
 
-func (c *emailServiceClient) GetEmail(ctx context.Context, in *GetEmailRequest, opts ...grpc.CallOption) (*Email, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Email)
-	err := c.cc.Invoke(ctx, EmailService_GetEmail_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *emailServiceClient) ListEmails(ctx context.Context, in *ListEmailsRequest, opts ...grpc.CallOption) (*ListEmailsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListEmailsResponse)
-	err := c.cc.Invoke(ctx, EmailService_ListEmails_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // EmailServiceServer is the server API for EmailService service.
 // All implementations must embed UnimplementedEmailServiceServer
 // for forward compatibility.
 //
-// EmailService handles all email-related operations including sending, retrieving, and listing emails.
+// EmailService handles email sending operations.
+// This is a stateless, compliance-first API - no email content is stored.
 type EmailServiceServer interface {
-	// SendEmail queues an email for sending.
+	// SendEmail sends an email immediately or queues it for async processing.
 	//
-	// It supports both text and HTML content, multiple recipients (To, CC, BCC),
-	// metadata, and scheduled sending.
+	// Behavior:
+	// - async=false + no attachments: Send synchronously, return message_id
+	// - async=true OR has attachments: Queue for processing with retries
+	//
+	// Delivery status is sent to your webhook endpoint.
 	SendEmail(context.Context, *SendEmailRequest) (*SendEmailResponse, error)
-	// GetEmail retrieves the details of a specific email by its ID.
-	GetEmail(context.Context, *GetEmailRequest) (*Email, error)
-	// ListEmails retrieves a paginated list of emails sent by the authenticated user.
-	//
-	// Results are ordered by creation time descending.
-	ListEmails(context.Context, *ListEmailsRequest) (*ListEmailsResponse, error)
 	mustEmbedUnimplementedEmailServiceServer()
 }
 
@@ -110,12 +84,6 @@ type UnimplementedEmailServiceServer struct{}
 
 func (UnimplementedEmailServiceServer) SendEmail(context.Context, *SendEmailRequest) (*SendEmailResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SendEmail not implemented")
-}
-func (UnimplementedEmailServiceServer) GetEmail(context.Context, *GetEmailRequest) (*Email, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetEmail not implemented")
-}
-func (UnimplementedEmailServiceServer) ListEmails(context.Context, *ListEmailsRequest) (*ListEmailsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ListEmails not implemented")
 }
 func (UnimplementedEmailServiceServer) mustEmbedUnimplementedEmailServiceServer() {}
 func (UnimplementedEmailServiceServer) testEmbeddedByValue()                      {}
@@ -156,42 +124,6 @@ func _EmailService_SendEmail_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EmailService_GetEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetEmailRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EmailServiceServer).GetEmail(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: EmailService_GetEmail_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EmailServiceServer).GetEmail(ctx, req.(*GetEmailRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _EmailService_ListEmails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListEmailsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EmailServiceServer).ListEmails(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: EmailService_ListEmails_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EmailServiceServer).ListEmails(ctx, req.(*ListEmailsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // EmailService_ServiceDesc is the grpc.ServiceDesc for EmailService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -202,14 +134,6 @@ var EmailService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendEmail",
 			Handler:    _EmailService_SendEmail_Handler,
-		},
-		{
-			MethodName: "GetEmail",
-			Handler:    _EmailService_GetEmail_Handler,
-		},
-		{
-			MethodName: "ListEmails",
-			Handler:    _EmailService_ListEmails_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

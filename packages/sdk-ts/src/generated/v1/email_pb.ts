@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/email.proto.
  */
 export const file_v1_email: GenFile = /*@__PURE__*/
-  fileDesc("Cg52MS9lbWFpbC5wcm90bxILZW1haWxhcGkudjEi5gIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSPQoIbWV0YWRhdGEYCCADKAsyKy5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCgthdHRhY2htZW50cxgKIAMoCzIXLmVtYWlsYXBpLnYxLkF0dGFjaG1lbnQSEwoLaW5fcmVwbHlfdG8YCyABKAkSDQoFYXN5bmMYDCABKAgaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBImcKCkF0dGFjaG1lbnQSEAoIZmlsZW5hbWUYASABKAkSFAoMY29udGVudF90eXBlGAIgASgJEg0KA3VybBgDIAEoCUgAEhgKDmJhc2U2NF9jb250ZW50GAQgASgJSABCCAoGc291cmNlInUKEVNlbmRFbWFpbFJlc3BvbnNlEgoKAmlkGAEgASgJEigKBnN0YXR1cxgCIAEoDjIYLmVtYWlsYXBpLnYxLkVtYWlsU3RhdHVzEhIKCm1lc3NhZ2VfaWQYAyABKAkSFgoOc3RhdHVzX21lc3NhZ2UYBCABKAkiHQoPR2V0RW1haWxSZXF1ZXN0EgoKAmlkGAEgASgJItoECgVFbWFpbBIKCgJpZBgBIAEoCRIMCgRmcm9tGAIgASgJEgoKAnRvGAMgAygJEgoKAmNjGAQgAygJEgsKA2JjYxgFIAMoCRIPCgdzdWJqZWN0GAYgASgJEgwKBGJvZHkYByABKAkSDAoEaHRtbBgIIAEoCRIoCgZzdGF0dXMYCSABKA4yGC5lbWFpbGFwaS52MS5FbWFpbFN0YXR1cxITCgtwcm92aWRlcl9pZBgKIAEoCRISCgptZXNzYWdlX2lkGAsgASgJEhMKC2luX3JlcGx5X3RvGAwgASgJEg8KB3VzZXJfaWQYDSABKAkSMgoIbWV0YWRhdGEYDiADKAsyIC5lbWFpbGFwaS52MS5FbWFpbC5NZXRhZGF0YUVudHJ5EjAKDHNjaGVkdWxlZF9hdBgPIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKwoHc2VudF9hdBgQIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKY3JlYXRlZF9hdBgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgSIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoLYXR0YWNobWVudHMYEyADKAsyHC5lbWFpbGFwaS52MS5FbWFpbEF0dGFjaG1lbnQSFQoNZXJyb3JfbWVzc2FnZRgUIAEoCRovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEibgoPRW1haWxBdHRhY2htZW50EgoKAmlkGAEgASgJEhAKCGZpbGVuYW1lGAIgASgJEhQKDGNvbnRlbnRfdHlwZRgDIAEoCRISCgpzaXplX2J5dGVzGAQgASgDEhMKC3NjYW5fc3RhdHVzGAUgASgJImAKEUxpc3RFbWFpbHNSZXF1ZXN0EiwKCGNhdGVnb3J5GAEgASgOMhouZW1haWxhcGkudjEuRW1haWxDYXRlZ29yeRINCgVsaW1pdBgCIAEoBRIOCgZvZmZzZXQYAyABKAUimAEKEkxpc3RFbWFpbHNSZXNwb25zZRIgCgRkYXRhGAEgAygLMhIuZW1haWxhcGkudjEuRW1haWwSDQoFbGltaXQYAiABKAUSDgoGb2Zmc2V0GAMgASgFEhMKC3RvdGFsX2NvdW50GAQgASgFEiwKCGNhdGVnb3J5GAUgASgOMhouZW1haWxhcGkudjEuRW1haWxDYXRlZ29yeSqyAgoLRW1haWxTdGF0dXMSHAoYRU1BSUxfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGAoURU1BSUxfU1RBVFVTX1BFTkRJTkcQARInCiNFTUFJTF9TVEFUVVNfUFJPQ0VTU0lOR19BVFRBQ0hNRU5UUxACEiUKIUVNQUlMX1NUQVRVU19TQ0FOTklOR19BVFRBQ0hNRU5UUxADEhwKGEVNQUlMX1NUQVRVU19TQ0FOX0ZBSUxFRBAEEhcKE0VNQUlMX1NUQVRVU19RVUVVRUQQBRIVChFFTUFJTF9TVEFUVVNfU0VOVBAGEhoKFkVNQUlMX1NUQVRVU19ERUxJVkVSRUQQBxIXChNFTUFJTF9TVEFUVVNfRkFJTEVEEAgSGAoURU1BSUxfU1RBVFVTX0JPVU5DRUQQCSpnCg1FbWFpbENhdGVnb3J5Eh4KGkVNQUlMX0NBVEVHT1JZX1VOU1BFQ0lGSUVEEAASGQoVRU1BSUxfQ0FURUdPUllfQUNUSVZFEAESGwoXRU1BSUxfQ0FURUdPUllfQVJDSElWRUQQAjKpAgoMRW1haWxTZXJ2aWNlEl8KCVNlbmRFbWFpbBIdLmVtYWlsYXBpLnYxLlNlbmRFbWFpbFJlcXVlc3QaHi5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXNwb25zZSITgtPkkwINOgEqIggvdjEvc2VuZBJVCghHZXRFbWFpbBIcLmVtYWlsYXBpLnYxLkdldEVtYWlsUmVxdWVzdBoSLmVtYWlsYXBpLnYxLkVtYWlsIheC0+STAhESDy92MS9lbWFpbHMve2lkfRJhCgpMaXN0RW1haWxzEh4uZW1haWxhcGkudjEuTGlzdEVtYWlsc1JlcXVlc3QaHy5lbWFpbGFwaS52MS5MaXN0RW1haWxzUmVzcG9uc2UiEoLT5JMCDBIKL3YxL2VtYWlsc0KYAQoPY29tLmVtYWlsYXBpLnYxQgpFbWFpbFByb3RvUAFaLGdpdGh1Yi5jb20vZW1haWxhcGkvc2RrLWdvL2dlbi92MTtlbWFpbGFwaXYxogIDRVhYqgILRW1haWxhcGkuVjHKAgtFbWFpbGFwaVxWMeICF0VtYWlsYXBpXFYxXEdQQk1ldGFkYXRh6gIMRW1haWxhcGk6OlYxYgZwcm90bzM", [file_google_api_annotations, file_google_protobuf_timestamp]);
+  fileDesc("Cg52MS9lbWFpbC5wcm90bxILZW1haWxhcGkudjEi5gIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSPQoIbWV0YWRhdGEYCCADKAsyKy5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCgthdHRhY2htZW50cxgKIAMoCzIXLmVtYWlsYXBpLnYxLkF0dGFjaG1lbnQSEwoLaW5fcmVwbHlfdG8YCyABKAkSDQoFYXN5bmMYDCABKAgaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBImcKCkF0dGFjaG1lbnQSEAoIZmlsZW5hbWUYASABKAkSFAoMY29udGVudF90eXBlGAIgASgJEg0KA3VybBgDIAEoCUgAEhgKDmJhc2U2NF9jb250ZW50GAQgASgJSABCCAoGc291cmNlInUKEVNlbmRFbWFpbFJlc3BvbnNlEgoKAmlkGAEgASgJEigKBnN0YXR1cxgCIAEoDjIYLmVtYWlsYXBpLnYxLkVtYWlsU3RhdHVzEhIKCm1lc3NhZ2VfaWQYAyABKAkSFgoOc3RhdHVzX21lc3NhZ2UYBCABKAkqkQEKC0VtYWlsU3RhdHVzEhwKGEVNQUlMX1NUQVRVU19VTlNQRUNJRklFRBAAEhcKE0VNQUlMX1NUQVRVU19RVUVVRUQQARIbChdFTUFJTF9TVEFUVVNfUFJPQ0VTU0lORxACEhUKEUVNQUlMX1NUQVRVU19TRU5UEAMSFwoTRU1BSUxfU1RBVFVTX0ZBSUxFRBAEMm8KDEVtYWlsU2VydmljZRJfCglTZW5kRW1haWwSHS5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXF1ZXN0Gh4uZW1haWxhcGkudjEuU2VuZEVtYWlsUmVzcG9uc2UiE4LT5JMCDToBKiIIL3YxL3NlbmRCmAEKD2NvbS5lbWFpbGFwaS52MUIKRW1haWxQcm90b1ABWixnaXRodWIuY29tL2VtYWlsYXBpL3Nkay1nby9nZW4vdjE7ZW1haWxhcGl2MaICA0VYWKoCC0VtYWlsYXBpLlYxygILRW1haWxhcGlcVjHiAhdFbWFpbGFwaVxWMVxHUEJNZXRhZGF0YeoCDEVtYWlsYXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations, file_google_protobuf_timestamp]);
 
 /**
  * SendEmailRequest is the payload for sending an email.
@@ -22,7 +22,7 @@ export const file_v1_email: GenFile = /*@__PURE__*/
  */
 export type SendEmailRequest = Message<"emailapi.v1.SendEmailRequest"> & {
   /**
-   * Sender email address (must be verified).
+   * Sender email address (must be from a verified domain).
    *
    * @generated from field: string from = 1;
    */
@@ -71,7 +71,7 @@ export type SendEmailRequest = Message<"emailapi.v1.SendEmailRequest"> & {
   html: string;
 
   /**
-   * Custom key-value metadata to attach to the email.
+   * Custom key-value metadata (returned in webhooks).
    *
    * @generated from field: map<string, string> metadata = 8;
    */
@@ -101,7 +101,7 @@ export type SendEmailRequest = Message<"emailapi.v1.SendEmailRequest"> & {
   /**
    * If true, queue for async processing (we handle retries).
    * If false, send synchronously and return message_id immediately.
-   * Emails with attachments are always async.
+   * Note: Emails with attachments are always processed async.
    *
    * @generated from field: bool async = 12;
    */
@@ -167,13 +167,13 @@ export const AttachmentSchema: GenMessage<Attachment> = /*@__PURE__*/
   messageDesc(file_v1_email, 1);
 
 /**
- * SendEmailResponse contains the ID of the sent email.
+ * SendEmailResponse contains the result of a send request.
  *
  * @generated from message emailapi.v1.SendEmailResponse
  */
 export type SendEmailResponse = Message<"emailapi.v1.SendEmailResponse"> & {
   /**
-   * Unique identifier for the email.
+   * Unique identifier for tracking this email.
    *
    * @generated from field: string id = 1;
    */
@@ -187,7 +187,7 @@ export type SendEmailResponse = Message<"emailapi.v1.SendEmailResponse"> & {
   status: EmailStatus;
 
   /**
-   * SES Message-ID (only present if async=false and send succeeded).
+   * SES Message-ID (only present if sync send succeeded).
    *
    * @generated from field: string message_id = 3;
    */
@@ -209,316 +209,7 @@ export const SendEmailResponseSchema: GenMessage<SendEmailResponse> = /*@__PURE_
   messageDesc(file_v1_email, 2);
 
 /**
- * GetEmailRequest identifies the email to retrieve.
- *
- * @generated from message emailapi.v1.GetEmailRequest
- */
-export type GetEmailRequest = Message<"emailapi.v1.GetEmailRequest"> & {
-  /**
-   * The ID of the email to retrieve.
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
-
-/**
- * Describes the message emailapi.v1.GetEmailRequest.
- * Use `create(GetEmailRequestSchema)` to create a new message.
- */
-export const GetEmailRequestSchema: GenMessage<GetEmailRequest> = /*@__PURE__*/
-  messageDesc(file_v1_email, 3);
-
-/**
- * Email represents a single email message and its status.
- *
- * @generated from message emailapi.v1.Email
- */
-export type Email = Message<"emailapi.v1.Email"> & {
-  /**
-   * Unique identifier for the email.
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-
-  /**
-   * Sender email address.
-   *
-   * @generated from field: string from = 2;
-   */
-  from: string;
-
-  /**
-   * Primary recipients.
-   *
-   * @generated from field: repeated string to = 3;
-   */
-  to: string[];
-
-  /**
-   * CC recipients.
-   *
-   * @generated from field: repeated string cc = 4;
-   */
-  cc: string[];
-
-  /**
-   * BCC recipients.
-   *
-   * @generated from field: repeated string bcc = 5;
-   */
-  bcc: string[];
-
-  /**
-   * Email subject.
-   *
-   * @generated from field: string subject = 6;
-   */
-  subject: string;
-
-  /**
-   * Plain text content.
-   *
-   * @generated from field: string body = 7;
-   */
-  body: string;
-
-  /**
-   * HTML content.
-   *
-   * @generated from field: string html = 8;
-   */
-  html: string;
-
-  /**
-   * Current status.
-   *
-   * @generated from field: emailapi.v1.EmailStatus status = 9;
-   */
-  status: EmailStatus;
-
-  /**
-   * Provider-specific ID (e.g. SES Message ID).
-   *
-   * @generated from field: string provider_id = 10;
-   */
-  providerId: string;
-
-  /**
-   * SES Message-ID for threading.
-   *
-   * @generated from field: string message_id = 11;
-   */
-  messageId: string;
-
-  /**
-   * Message-ID of email this is replying to.
-   *
-   * @generated from field: string in_reply_to = 12;
-   */
-  inReplyTo: string;
-
-  /**
-   * ID of the user who sent the email.
-   *
-   * @generated from field: string user_id = 13;
-   */
-  userId: string;
-
-  /**
-   * Custom metadata attached to the email.
-   *
-   * @generated from field: map<string, string> metadata = 14;
-   */
-  metadata: { [key: string]: string };
-
-  /**
-   * Time when the email is scheduled to be sent.
-   *
-   * @generated from field: google.protobuf.Timestamp scheduled_at = 15;
-   */
-  scheduledAt?: Timestamp;
-
-  /**
-   * Time when the email was sent to the provider.
-   *
-   * @generated from field: google.protobuf.Timestamp sent_at = 16;
-   */
-  sentAt?: Timestamp;
-
-  /**
-   * Time when the email record was created.
-   *
-   * @generated from field: google.protobuf.Timestamp created_at = 17;
-   */
-  createdAt?: Timestamp;
-
-  /**
-   * Time when the email record was last updated.
-   *
-   * @generated from field: google.protobuf.Timestamp updated_at = 18;
-   */
-  updatedAt?: Timestamp;
-
-  /**
-   * Attachments associated with this email.
-   *
-   * @generated from field: repeated emailapi.v1.EmailAttachment attachments = 19;
-   */
-  attachments: EmailAttachment[];
-
-  /**
-   * Error message if the email failed.
-   *
-   * @generated from field: string error_message = 20;
-   */
-  errorMessage: string;
-};
-
-/**
- * Describes the message emailapi.v1.Email.
- * Use `create(EmailSchema)` to create a new message.
- */
-export const EmailSchema: GenMessage<Email> = /*@__PURE__*/
-  messageDesc(file_v1_email, 4);
-
-/**
- * EmailAttachment represents an attachment's metadata.
- *
- * @generated from message emailapi.v1.EmailAttachment
- */
-export type EmailAttachment = Message<"emailapi.v1.EmailAttachment"> & {
-  /**
-   * Unique identifier for the attachment.
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-
-  /**
-   * Original filename.
-   *
-   * @generated from field: string filename = 2;
-   */
-  filename: string;
-
-  /**
-   * MIME content type.
-   *
-   * @generated from field: string content_type = 3;
-   */
-  contentType: string;
-
-  /**
-   * Size in bytes.
-   *
-   * @generated from field: int64 size_bytes = 4;
-   */
-  sizeBytes: bigint;
-
-  /**
-   * Security scan status (pending, clean, threats_found, failed).
-   *
-   * @generated from field: string scan_status = 5;
-   */
-  scanStatus: string;
-};
-
-/**
- * Describes the message emailapi.v1.EmailAttachment.
- * Use `create(EmailAttachmentSchema)` to create a new message.
- */
-export const EmailAttachmentSchema: GenMessage<EmailAttachment> = /*@__PURE__*/
-  messageDesc(file_v1_email, 5);
-
-/**
- * ListEmailsRequest filters and pagination for listing emails.
- *
- * @generated from message emailapi.v1.ListEmailsRequest
- */
-export type ListEmailsRequest = Message<"emailapi.v1.ListEmailsRequest"> & {
-  /**
-   * Category to query: ACTIVE (in-progress) or ARCHIVED (completed).
-   * Default: ACTIVE
-   *
-   * @generated from field: emailapi.v1.EmailCategory category = 1;
-   */
-  category: EmailCategory;
-
-  /**
-   * Maximum number of emails to return (default: 20, max: 100).
-   *
-   * @generated from field: int32 limit = 2;
-   */
-  limit: number;
-
-  /**
-   * Number of emails to skip.
-   *
-   * @generated from field: int32 offset = 3;
-   */
-  offset: number;
-};
-
-/**
- * Describes the message emailapi.v1.ListEmailsRequest.
- * Use `create(ListEmailsRequestSchema)` to create a new message.
- */
-export const ListEmailsRequestSchema: GenMessage<ListEmailsRequest> = /*@__PURE__*/
-  messageDesc(file_v1_email, 6);
-
-/**
- * ListEmailsResponse returns a page of emails.
- *
- * @generated from message emailapi.v1.ListEmailsResponse
- */
-export type ListEmailsResponse = Message<"emailapi.v1.ListEmailsResponse"> & {
-  /**
-   * The list of emails.
-   *
-   * @generated from field: repeated emailapi.v1.Email data = 1;
-   */
-  data: Email[];
-
-  /**
-   * The limit applied to the request.
-   *
-   * @generated from field: int32 limit = 2;
-   */
-  limit: number;
-
-  /**
-   * The offset applied to the request.
-   *
-   * @generated from field: int32 offset = 3;
-   */
-  offset: number;
-
-  /**
-   * Total count of emails in this category.
-   *
-   * @generated from field: int32 total_count = 4;
-   */
-  totalCount: number;
-
-  /**
-   * The category that was queried.
-   *
-   * @generated from field: emailapi.v1.EmailCategory category = 5;
-   */
-  category: EmailCategory;
-};
-
-/**
- * Describes the message emailapi.v1.ListEmailsResponse.
- * Use `create(ListEmailsResponseSchema)` to create a new message.
- */
-export const ListEmailsResponseSchema: GenMessage<ListEmailsResponse> = /*@__PURE__*/
-  messageDesc(file_v1_email, 7);
-
-/**
- * EmailStatus represents the delivery status.
+ * EmailStatus represents the current processing status.
  *
  * @generated from enum emailapi.v1.EmailStatus
  */
@@ -529,49 +220,24 @@ export enum EmailStatus {
   UNSPECIFIED = 0,
 
   /**
-   * @generated from enum value: EMAIL_STATUS_PENDING = 1;
+   * @generated from enum value: EMAIL_STATUS_QUEUED = 1;
    */
-  PENDING = 1,
+  QUEUED = 1,
 
   /**
-   * @generated from enum value: EMAIL_STATUS_PROCESSING_ATTACHMENTS = 2;
+   * @generated from enum value: EMAIL_STATUS_PROCESSING = 2;
    */
-  PROCESSING_ATTACHMENTS = 2,
+  PROCESSING = 2,
 
   /**
-   * @generated from enum value: EMAIL_STATUS_SCANNING_ATTACHMENTS = 3;
+   * @generated from enum value: EMAIL_STATUS_SENT = 3;
    */
-  SCANNING_ATTACHMENTS = 3,
+  SENT = 3,
 
   /**
-   * @generated from enum value: EMAIL_STATUS_SCAN_FAILED = 4;
+   * @generated from enum value: EMAIL_STATUS_FAILED = 4;
    */
-  SCAN_FAILED = 4,
-
-  /**
-   * @generated from enum value: EMAIL_STATUS_QUEUED = 5;
-   */
-  QUEUED = 5,
-
-  /**
-   * @generated from enum value: EMAIL_STATUS_SENT = 6;
-   */
-  SENT = 6,
-
-  /**
-   * @generated from enum value: EMAIL_STATUS_DELIVERED = 7;
-   */
-  DELIVERED = 7,
-
-  /**
-   * @generated from enum value: EMAIL_STATUS_FAILED = 8;
-   */
-  FAILED = 8,
-
-  /**
-   * @generated from enum value: EMAIL_STATUS_BOUNCED = 9;
-   */
-  BOUNCED = 9,
+  FAILED = 4,
 }
 
 /**
@@ -581,48 +247,20 @@ export const EmailStatusSchema: GenEnum<EmailStatus> = /*@__PURE__*/
   enumDesc(file_v1_email, 0);
 
 /**
- * EmailCategory represents where emails are stored.
- *
- * @generated from enum emailapi.v1.EmailCategory
- */
-export enum EmailCategory {
-  /**
-   * @generated from enum value: EMAIL_CATEGORY_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * Active emails in PostgreSQL (pending, processing, scanning, queued).
-   *
-   * @generated from enum value: EMAIL_CATEGORY_ACTIVE = 1;
-   */
-  ACTIVE = 1,
-
-  /**
-   * Archived emails in ClickHouse (sent, delivered, bounced, failed).
-   *
-   * @generated from enum value: EMAIL_CATEGORY_ARCHIVED = 2;
-   */
-  ARCHIVED = 2,
-}
-
-/**
- * Describes the enum emailapi.v1.EmailCategory.
- */
-export const EmailCategorySchema: GenEnum<EmailCategory> = /*@__PURE__*/
-  enumDesc(file_v1_email, 1);
-
-/**
- * EmailService handles all email-related operations including sending, retrieving, and listing emails.
+ * EmailService handles email sending operations.
+ * This is a stateless, compliance-first API - no email content is stored.
  *
  * @generated from service emailapi.v1.EmailService
  */
 export const EmailService: GenService<{
   /**
-   * SendEmail queues an email for sending.
+   * SendEmail sends an email immediately or queues it for async processing.
    *
-   * It supports both text and HTML content, multiple recipients (To, CC, BCC),
-   * metadata, and scheduled sending.
+   * Behavior:
+   * - async=false + no attachments: Send synchronously, return message_id
+   * - async=true OR has attachments: Queue for processing with retries
+   *
+   * Delivery status is sent to your webhook endpoint.
    *
    * @generated from rpc emailapi.v1.EmailService.SendEmail
    */
@@ -630,28 +268,6 @@ export const EmailService: GenService<{
     methodKind: "unary";
     input: typeof SendEmailRequestSchema;
     output: typeof SendEmailResponseSchema;
-  },
-  /**
-   * GetEmail retrieves the details of a specific email by its ID.
-   *
-   * @generated from rpc emailapi.v1.EmailService.GetEmail
-   */
-  getEmail: {
-    methodKind: "unary";
-    input: typeof GetEmailRequestSchema;
-    output: typeof EmailSchema;
-  },
-  /**
-   * ListEmails retrieves a paginated list of emails sent by the authenticated user.
-   *
-   * Results are ordered by creation time descending.
-   *
-   * @generated from rpc emailapi.v1.EmailService.ListEmails
-   */
-  listEmails: {
-    methodKind: "unary";
-    input: typeof ListEmailsRequestSchema;
-    output: typeof ListEmailsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_v1_email, 0);

@@ -2,16 +2,14 @@ package clickhouse
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"github.com/emailapi/api/internal/domain"
 )
 
-// EmailRepository handles email-specific ClickHouse operations.
+// EmailRepository handles email routing and activity logging in ClickHouse.
 type EmailRepository struct {
 	conn         driver.Conn
 	activityRepo *ActivityRepository
@@ -25,344 +23,23 @@ func NewEmailRepository(conn driver.Conn) *EmailRepository {
 	}
 }
 
-// LogEmailEvent logs an email-specific event to activity_logs.
-func (r *EmailRepository) LogEmailEvent(ctx context.Context, email *domain.Email, action string) error {
-	status := "success"
-	if action == "failed" || action == "bounced" || action == "complained" || action == "rejected" {
-		status = "failed"
-	}
-
-	metadata := map[string]interface{}{
-		"message_id":  email.MessageID,
-		"provider_id": email.ProviderID,
-		"from":        email.From,
-		"to":          email.To,
-	}
-
-	return r.activityRepo.LogEmail(ctx, email.UserID, email.ID, action, status,
-		fmt.Sprintf("Email %s", action), metadata)
-}
-
-// LogReplyEvent logs an inbound reply event to activity_logs.
-func (r *EmailRepository) LogReplyEvent(ctx context.Context, originalEmailID, messageID, userID, fromAddr, subject string) error {
-	metadata := map[string]interface{}{
-		"original_email_id": originalEmailID,
-		"message_id":        messageID,
-		"from":              fromAddr,
-		"subject":           subject,
-	}
-
-	return r.activityRepo.Log(ctx, userID, "email", originalEmailID, "reply_received", "success",
-		fmt.Sprintf("Reply received from %s: %s", fromAddr, subject), metadata)
-}
-
-// SaveEmail archives a completed email from PostgreSQL to ClickHouse.
-// This is called after an email reaches a terminal state (delivered, bounced, complained).
-func (r *EmailRepository) SaveEmail(ctx context.Context, email *domain.Email) error {
-	metadataJSON, err := json.Marshal(email.Metadata)
-	if err != nil {
-		metadataJSON = []byte("{}")
-	}
-
-	query := `
-		INSERT INTO emails (
-			id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
-			subject, body, html, status, provider_id, attachment_count, metadata,
-			error_message, scheduled_at, sent_at, created_at
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
-
-	var scheduledAt, sentAt *time.Time
-	if email.ScheduledAt != nil {
-		scheduledAt = email.ScheduledAt
-	}
-	if email.SentAt != nil {
-		sentAt = email.SentAt
-	}
-
-	err = r.conn.Exec(ctx, query,
-		email.ID,
-		email.UserID,
-		email.From,
-		email.To,
-		nullableStringSlice(email.Cc),
-		nullableStringSlice(email.Bcc),
-		email.Subject,
-		email.Body,
-		email.HTML,
-		string(email.Status),
-		email.ProviderID,
-		uint8(len(email.Attachments)),
-		string(metadataJSON),
-		email.ErrorMessage,
-		scheduledAt,
-		sentAt,
-		email.CreatedAt,
-	)
-
-	if err != nil {
-		return fmt.Errorf("failed to save email: %w", err)
-	}
-
-	return nil
-}
-
-// GetEmailActivities retrieves activity history for an email from activity_logs.
-func (r *EmailRepository) GetEmailActivities(ctx context.Context, emailID string) ([]*domain.EmailEvent, error) {
-	query := `
-		SELECT entity_id, user_id, action, status, details, metadata, timestamp
-		FROM activity_logs
-		WHERE entity_type = 'email' AND entity_id = ?
-		ORDER BY timestamp DESC
-	`
-
-	rows, err := r.conn.Query(ctx, query, emailID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query email activities: %w", err)
-	}
-	defer rows.Close()
-
-	var events []*domain.EmailEvent
-	for rows.Next() {
-		var event domain.EmailEvent
-		var action, status string
-		if err := rows.Scan(
-			&event.EmailID,
-			&event.UserID,
-			&action,
-			&status,
-			&event.Message,
-			&event.Metadata,
-			&event.Timestamp,
-		); err != nil {
-			return nil, fmt.Errorf("failed to scan email activity: %w", err)
-		}
-		event.EventType = action
-		event.Level = status
-		events = append(events, &event)
-	}
-
-	return events, nil
-}
-
-// GetUserEmailStats retrieves aggregated stats for a user over the last N days from activity_logs.
-func (r *EmailRepository) GetUserEmailStats(ctx context.Context, userID string, days int) (*domain.EmailStats, error) {
-	query := `
-		SELECT 
-			countIf(action = 'sent') as total_sent,
-			countIf(action = 'delivered') as total_delivered,
-			countIf(action = 'bounced') as total_bounced,
-			countIf(action = 'failed') as total_failed
-		FROM activity_logs
-		WHERE user_id = ? AND entity_type = 'email' AND date >= today() - ?
-	`
-
-	row := r.conn.QueryRow(ctx, query, userID, days)
-
-	var stats domain.EmailStats
-	if err := row.Scan(
-		&stats.TotalSent,
-		&stats.TotalDelivered,
-		&stats.TotalBounced,
-		&stats.TotalFailed,
-	); err != nil {
-		return nil, fmt.Errorf("failed to get user email stats: %w", err)
-	}
-
-	return &stats, nil
-}
-
-// Ping ensures the database connection is valid.
-func (r *EmailRepository) Ping(ctx context.Context) error {
-	return r.conn.Ping(ctx)
-}
-
-// GetArchivedEmail retrieves a single archived email by ID.
-func (r *EmailRepository) GetArchivedEmail(ctx context.Context, id string) (*domain.Email, error) {
-	query := `
-		SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
-		       subject, body, html, status, provider_id, attachment_count, metadata,
-		       error_message, scheduled_at, sent_at, created_at, archived_at
-		FROM emails
-		WHERE id = ?
-		LIMIT 1
-	`
-
-	row := r.conn.QueryRow(ctx, query, id)
-
-	var email domain.Email
-	var toAddrs, ccAddrs, bccAddrs []string
-	var metadataJSON string
-	var attachmentCount uint8
-	var scheduledAt, sentAt, archivedAt *time.Time
-
-	if err := row.Scan(
-		&email.ID,
-		&email.UserID,
-		&email.From,
-		&toAddrs,
-		&ccAddrs,
-		&bccAddrs,
-		&email.Subject,
-		&email.Body,
-		&email.HTML,
-		&email.Status,
-		&email.ProviderID,
-		&attachmentCount,
-		&metadataJSON,
-		&email.ErrorMessage,
-		&scheduledAt,
-		&sentAt,
-		&email.CreatedAt,
-		&archivedAt,
-	); err != nil {
-		return nil, fmt.Errorf("failed to get archived email: %w", err)
-	}
-
-	email.To = toAddrs
-	email.Cc = ccAddrs
-	email.Bcc = bccAddrs
-	email.ScheduledAt = scheduledAt
-	email.SentAt = sentAt
-
-	if metadataJSON != "" && metadataJSON != "{}" {
-		_ = json.Unmarshal([]byte(metadataJSON), &email.Metadata)
-	}
-
-	return &email, nil
-}
-
-// ListArchivedEmails retrieves archived emails for a user with pagination.
-func (r *EmailRepository) ListArchivedEmails(ctx context.Context, userID string, limit, offset int) ([]*domain.Email, error) {
-	query := `
-		SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
-		       subject, status, provider_id, error_message, sent_at, created_at
-		FROM emails
-		WHERE user_id = ?
-		ORDER BY created_at DESC
-		LIMIT ? OFFSET ?
-	`
-
-	rows, err := r.conn.Query(ctx, query, userID, limit, offset)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query archived emails: %w", err)
-	}
-	defer rows.Close()
-
-	var emails []*domain.Email
-	for rows.Next() {
-		var email domain.Email
-		var toAddrs, ccAddrs, bccAddrs []string
-		var sentAt *time.Time
-
-		if err := rows.Scan(
-			&email.ID,
-			&email.UserID,
-			&email.From,
-			&toAddrs,
-			&ccAddrs,
-			&bccAddrs,
-			&email.Subject,
-			&email.Status,
-			&email.ProviderID,
-			&email.ErrorMessage,
-			&sentAt,
-			&email.CreatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("failed to scan archived email: %w", err)
-		}
-
-		email.To = toAddrs
-		email.Cc = ccAddrs
-		email.Bcc = bccAddrs
-		email.SentAt = sentAt
-		emails = append(emails, &email)
-	}
-
-	return emails, nil
-}
-
-// CountArchivedEmails counts the total archived emails for a user.
-func (r *EmailRepository) CountArchivedEmails(ctx context.Context, userID string) (int, error) {
-	query := `SELECT count() FROM emails WHERE user_id = ?`
-	row := r.conn.QueryRow(ctx, query, userID)
-
-	var count uint64
-	if err := row.Scan(&count); err != nil {
-		return 0, fmt.Errorf("failed to count archived emails: %w", err)
-	}
-
-	return int(count), nil
-}
-
-// GetEmailByMessageID retrieves an archived email by its Message-ID header.
-func (r *EmailRepository) GetEmailByMessageID(ctx context.Context, messageID string) (*domain.Email, error) {
-	query := `
-		SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
-		       subject, body, html, status, provider_id, message_id, in_reply_to,
-		       error_message, scheduled_at, sent_at, created_at
-		FROM emails
-		WHERE message_id = ?
-		LIMIT 1
-	`
-
-	row := r.conn.QueryRow(ctx, query, messageID)
-
-	var email domain.Email
-	var toAddrs, ccAddrs, bccAddrs []string
-	var scheduledAt, sentAt *time.Time
-
-	if err := row.Scan(
-		&email.ID,
-		&email.UserID,
-		&email.From,
-		&toAddrs,
-		&ccAddrs,
-		&bccAddrs,
-		&email.Subject,
-		&email.Body,
-		&email.HTML,
-		&email.Status,
-		&email.ProviderID,
-		&email.MessageID,
-		&email.InReplyTo,
-		&email.ErrorMessage,
-		&scheduledAt,
-		&sentAt,
-		&email.CreatedAt,
-	); err != nil {
-		return nil, fmt.Errorf("archived email not found for message ID %s: %w", messageID, err)
-	}
-
-	email.To = toAddrs
-	email.Cc = ccAddrs
-	email.Bcc = bccAddrs
-	email.ScheduledAt = scheduledAt
-	email.SentAt = sentAt
-
-	return &email, nil
-}
-
 // EmailRouting represents a routing table entry for reply lookups.
 type EmailRouting struct {
 	MessageID string
 	EmailID   string
 	UserID    string
-	FromEmail string
 	SentAt    time.Time
 }
 
 // InsertRouting adds an entry to the email_routing table.
-// This should be called when an email is successfully sent.
-func (r *EmailRepository) InsertRouting(ctx context.Context, messageID, emailID, userID, fromEmail string) error {
+// This is called when an email is successfully sent.
+func (r *EmailRepository) InsertRouting(ctx context.Context, messageID, emailID, userID string) error {
 	query := `
-		INSERT INTO email_routing (message_id, email_id, user_id, from_email, sent_at)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT INTO email_routing (message_id, email_id, user_id, sent_at)
+		VALUES (?, ?, ?, ?)
 	`
 
-	err := r.conn.Exec(ctx, query, messageID, emailID, userID, fromEmail, time.Now())
+	err := r.conn.Exec(ctx, query, messageID, emailID, userID, time.Now())
 	if err != nil {
 		return fmt.Errorf("failed to insert routing entry: %w", err)
 	}
@@ -374,13 +51,14 @@ func (r *EmailRepository) InsertRouting(ctx context.Context, messageID, emailID,
 // This is the single source of truth for reply routing.
 func (r *EmailRepository) LookupRouting(ctx context.Context, messageID string) (*EmailRouting, error) {
 	query := `
-		SELECT message_id, email_id, user_id, from_email, sent_at
+		SELECT message_id, email_id, user_id, sent_at
 		FROM email_routing
 		WHERE message_id = ?
 		LIMIT 1
 	`
 
-	msgId := strings.Split(messageID, "@")[0] // Remove the domain part
+	// Remove domain part if present (e.g., "abc123@amazonses.com" -> "abc123")
+	msgId := strings.Split(messageID, "@")[0]
 	row := r.conn.QueryRow(ctx, query, msgId)
 
 	var routing EmailRouting
@@ -388,7 +66,6 @@ func (r *EmailRepository) LookupRouting(ctx context.Context, messageID string) (
 		&routing.MessageID,
 		&routing.EmailID,
 		&routing.UserID,
-		&routing.FromEmail,
 		&routing.SentAt,
 	); err != nil {
 		return nil, fmt.Errorf("routing not found for message ID %s: %w", messageID, err)
@@ -397,20 +74,25 @@ func (r *EmailRepository) LookupRouting(ctx context.Context, messageID string) (
 	return &routing, nil
 }
 
-// nullableStringSlice converts a slice to a format suitable for ClickHouse Array.
-func nullableStringSlice(s []string) []string {
-	if s == nil {
-		return []string{}
-	}
-	// Clean up any empty strings
-	var result []string
-	for _, v := range s {
-		if strings.TrimSpace(v) != "" {
-			result = append(result, v)
-		}
-	}
-	if result == nil {
-		return []string{}
-	}
-	return result
+// LogActivity logs an activity event to activity_logs table.
+func (r *EmailRepository) LogActivity(
+	ctx context.Context,
+	userID, entityType, entityID, action, status, details string,
+	metadata map[string]interface{},
+) error {
+	return r.activityRepo.Log(ctx, userID, entityType, entityID, action, status, details, metadata)
+}
+
+// LogEmailEvent logs an email-specific event to activity_logs.
+func (r *EmailRepository) LogEmailEvent(
+	ctx context.Context,
+	userID, emailID, action, status, details string,
+	metadata map[string]interface{},
+) error {
+	return r.activityRepo.Log(ctx, userID, "email", emailID, action, status, details, metadata)
+}
+
+// Ping ensures the database connection is valid.
+func (r *EmailRepository) Ping(ctx context.Context) error {
+	return r.conn.Ping(ctx)
 }

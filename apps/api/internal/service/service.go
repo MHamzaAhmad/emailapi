@@ -5,7 +5,6 @@ import (
 	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
-	pgrepo "github.com/emailapi/api/internal/repository/postgres"
 	"github.com/emailapi/api/internal/repository/suppression"
 	"github.com/emailapi/api/internal/validation"
 
@@ -43,9 +42,8 @@ type ServiceDeps struct {
 	SESClient           ses.Client
 	S3Factory           *s3.Factory
 	Region              string
-	SESConfigurationSet string // SES configuration set for email event notifications
+	SESConfigurationSet string
 	RiverClient         *river.Client[pgx.Tx]
-	PGEmailRepo         *pgrepo.EmailRepository
 	CHEmailRepo         *chrepo.EmailRepository
 	CHActivityRepo      *chrepo.ActivityRepository
 	SvixClient          svix.Client
@@ -60,16 +58,14 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	// Create email validator with domain checker and suppression checker
 	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo)
 
-	svc.Email = NewEmailService(deps.RiverClient, deps.PGEmailRepo, deps.CHEmailRepo, emailValidator, deps.SESClient)
-	svc.Internal = NewInternalService(deps.PGEmailRepo, deps.RiverClient)
+	svc.Email = NewEmailService(deps.RiverClient, deps.CHEmailRepo, emailValidator, deps.SESClient)
+	svc.Internal = NewInternalService()
 
 	// Initialize SNS notification service
 	svc.SNSNotification = NewSNSNotificationService(
-		deps.PGEmailRepo,
 		deps.CHEmailRepo,
 		deps.CHActivityRepo,
 		deps.SvixClient,
-		deps.S3Factory,
 		deps.SuppressionRepo,
 	)
 

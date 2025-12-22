@@ -366,93 +366,6 @@
         ]
       }
     },
-    "/v1/emails": {
-      "get": {
-        "summary": "ListEmails retrieves a paginated list of emails sent by the authenticated user.",
-        "description": "Results are ordered by creation time descending.",
-        "operationId": "EmailService_ListEmails",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListEmailsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "category",
-            "description": "Category to query: ACTIVE (in-progress) or ARCHIVED (completed).\nDefault: ACTIVE\n\n - EMAIL_CATEGORY_ACTIVE: Active emails in PostgreSQL (pending, processing, scanning, queued).\n - EMAIL_CATEGORY_ARCHIVED: Archived emails in ClickHouse (sent, delivered, bounced, failed).",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "enum": [
-              "EMAIL_CATEGORY_UNSPECIFIED",
-              "EMAIL_CATEGORY_ACTIVE",
-              "EMAIL_CATEGORY_ARCHIVED"
-            ],
-            "default": "EMAIL_CATEGORY_UNSPECIFIED"
-          },
-          {
-            "name": "limit",
-            "description": "Maximum number of emails to return (default: 20, max: 100).",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "offset",
-            "description": "Number of emails to skip.",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          }
-        ],
-        "tags": [
-          "EmailService"
-        ]
-      }
-    },
-    "/v1/emails/{id}": {
-      "get": {
-        "summary": "GetEmail retrieves the details of a specific email by its ID.",
-        "operationId": "EmailService_GetEmail",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1Email"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "description": "The ID of the email to retrieve.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "EmailService"
-        ]
-      }
-    },
     "/v1/internal/webhooks/guardduty-scan": {
       "post": {
         "summary": "HandleGuardDutyScanResult processes GuardDuty malware scan results from EventBridge.",
@@ -489,8 +402,8 @@
     },
     "/v1/send": {
       "post": {
-        "summary": "SendEmail queues an email for sending.",
-        "description": "It supports both text and HTML content, multiple recipients (To, CC, BCC),\nmetadata, and scheduled sending.",
+        "summary": "SendEmail sends an email immediately or queues it for async processing.",
+        "description": "Behavior:\n- async=false + no attachments: Send synchronously, return message_id\n- async=true OR has attachments: Queue for processing with retries\n\nDelivery status is sent to your webhook endpoint.",
         "operationId": "EmailService_SendEmail",
         "responses": {
           "200": {
@@ -1142,165 +1055,17 @@
       },
       "description": "DomainSummary provides human-readable status for lazy users."
     },
-    "v1Email": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the email."
-        },
-        "from": {
-          "type": "string",
-          "description": "Sender email address."
-        },
-        "to": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Primary recipients."
-        },
-        "cc": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "CC recipients."
-        },
-        "bcc": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "BCC recipients."
-        },
-        "subject": {
-          "type": "string",
-          "description": "Email subject."
-        },
-        "body": {
-          "type": "string",
-          "description": "Plain text content."
-        },
-        "html": {
-          "type": "string",
-          "description": "HTML content."
-        },
-        "status": {
-          "$ref": "#/definitions/v1EmailStatus",
-          "description": "Current status."
-        },
-        "providerId": {
-          "type": "string",
-          "description": "Provider-specific ID (e.g. SES Message ID)."
-        },
-        "messageId": {
-          "type": "string",
-          "description": "SES Message-ID for threading."
-        },
-        "inReplyTo": {
-          "type": "string",
-          "description": "Message-ID of email this is replying to."
-        },
-        "userId": {
-          "type": "string",
-          "description": "ID of the user who sent the email."
-        },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Custom metadata attached to the email."
-        },
-        "scheduledAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Time when the email is scheduled to be sent."
-        },
-        "sentAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Time when the email was sent to the provider."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Time when the email record was created."
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Time when the email record was last updated."
-        },
-        "attachments": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1EmailAttachment"
-          },
-          "description": "Attachments associated with this email."
-        },
-        "errorMessage": {
-          "type": "string",
-          "description": "Error message if the email failed."
-        }
-      },
-      "description": "Email represents a single email message and its status."
-    },
-    "v1EmailAttachment": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the attachment."
-        },
-        "filename": {
-          "type": "string",
-          "description": "Original filename."
-        },
-        "contentType": {
-          "type": "string",
-          "description": "MIME content type."
-        },
-        "sizeBytes": {
-          "type": "string",
-          "format": "int64",
-          "description": "Size in bytes."
-        },
-        "scanStatus": {
-          "type": "string",
-          "description": "Security scan status (pending, clean, threats_found, failed)."
-        }
-      },
-      "description": "EmailAttachment represents an attachment's metadata."
-    },
-    "v1EmailCategory": {
-      "type": "string",
-      "enum": [
-        "EMAIL_CATEGORY_UNSPECIFIED",
-        "EMAIL_CATEGORY_ACTIVE",
-        "EMAIL_CATEGORY_ARCHIVED"
-      ],
-      "default": "EMAIL_CATEGORY_UNSPECIFIED",
-      "description": "EmailCategory represents where emails are stored.\n\n - EMAIL_CATEGORY_ACTIVE: Active emails in PostgreSQL (pending, processing, scanning, queued).\n - EMAIL_CATEGORY_ARCHIVED: Archived emails in ClickHouse (sent, delivered, bounced, failed)."
-    },
     "v1EmailStatus": {
       "type": "string",
       "enum": [
         "EMAIL_STATUS_UNSPECIFIED",
-        "EMAIL_STATUS_PENDING",
-        "EMAIL_STATUS_PROCESSING_ATTACHMENTS",
-        "EMAIL_STATUS_SCANNING_ATTACHMENTS",
-        "EMAIL_STATUS_SCAN_FAILED",
         "EMAIL_STATUS_QUEUED",
+        "EMAIL_STATUS_PROCESSING",
         "EMAIL_STATUS_SENT",
-        "EMAIL_STATUS_DELIVERED",
-        "EMAIL_STATUS_FAILED",
-        "EMAIL_STATUS_BOUNCED"
+        "EMAIL_STATUS_FAILED"
       ],
       "default": "EMAIL_STATUS_UNSPECIFIED",
-      "description": "EmailStatus represents the delivery status."
+      "description": "EmailStatus represents the current processing status."
     },
     "v1Environment": {
       "type": "string",
@@ -1399,39 +1164,6 @@
           }
         }
       }
-    },
-    "v1ListEmailsResponse": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1Email"
-          },
-          "description": "The list of emails."
-        },
-        "limit": {
-          "type": "integer",
-          "format": "int32",
-          "description": "The limit applied to the request."
-        },
-        "offset": {
-          "type": "integer",
-          "format": "int32",
-          "description": "The offset applied to the request."
-        },
-        "totalCount": {
-          "type": "integer",
-          "format": "int32",
-          "description": "Total count of emails in this category."
-        },
-        "category": {
-          "$ref": "#/definitions/v1EmailCategory",
-          "description": "The category that was queried."
-        }
-      },
-      "description": "ListEmailsResponse returns a page of emails."
     },
     "v1ListUsersResponse": {
       "type": "object",
@@ -1560,7 +1292,7 @@
       "properties": {
         "from": {
           "type": "string",
-          "description": "Sender email address (must be verified)."
+          "description": "Sender email address (must be from a verified domain)."
         },
         "to": {
           "type": "array",
@@ -1600,7 +1332,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Custom key-value metadata to attach to the email."
+          "description": "Custom key-value metadata (returned in webhooks)."
         },
         "scheduledAt": {
           "type": "string",
@@ -1621,7 +1353,7 @@
         },
         "async": {
           "type": "boolean",
-          "description": "If true, queue for async processing (we handle retries).\nIf false, send synchronously and return message_id immediately.\nEmails with attachments are always async."
+          "description": "If true, queue for async processing (we handle retries).\nIf false, send synchronously and return message_id immediately.\nNote: Emails with attachments are always processed async."
         }
       },
       "description": "SendEmailRequest is the payload for sending an email."
@@ -1631,7 +1363,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the email."
+          "description": "Unique identifier for tracking this email."
         },
         "status": {
           "$ref": "#/definitions/v1EmailStatus",
@@ -1639,14 +1371,14 @@
         },
         "messageId": {
           "type": "string",
-          "description": "SES Message-ID (only present if async=false and send succeeded)."
+          "description": "SES Message-ID (only present if sync send succeeded)."
         },
         "statusMessage": {
           "type": "string",
           "description": "Human-readable status message."
         }
       },
-      "description": "SendEmailResponse contains the ID of the sent email."
+      "description": "SendEmailResponse contains the result of a send request."
     },
     "v1User": {
       "type": "object",

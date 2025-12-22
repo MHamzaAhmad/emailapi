@@ -35,25 +35,18 @@ const (
 const (
 	// EmailServiceSendEmailProcedure is the fully-qualified name of the EmailService's SendEmail RPC.
 	EmailServiceSendEmailProcedure = "/emailapi.v1.EmailService/SendEmail"
-	// EmailServiceGetEmailProcedure is the fully-qualified name of the EmailService's GetEmail RPC.
-	EmailServiceGetEmailProcedure = "/emailapi.v1.EmailService/GetEmail"
-	// EmailServiceListEmailsProcedure is the fully-qualified name of the EmailService's ListEmails RPC.
-	EmailServiceListEmailsProcedure = "/emailapi.v1.EmailService/ListEmails"
 )
 
 // EmailServiceClient is a client for the emailapi.v1.EmailService service.
 type EmailServiceClient interface {
-	// SendEmail queues an email for sending.
+	// SendEmail sends an email immediately or queues it for async processing.
 	//
-	// It supports both text and HTML content, multiple recipients (To, CC, BCC),
-	// metadata, and scheduled sending.
+	// Behavior:
+	// - async=false + no attachments: Send synchronously, return message_id
+	// - async=true OR has attachments: Queue for processing with retries
+	//
+	// Delivery status is sent to your webhook endpoint.
 	SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error)
-	// GetEmail retrieves the details of a specific email by its ID.
-	GetEmail(context.Context, *connect.Request[v1.GetEmailRequest]) (*connect.Response[v1.Email], error)
-	// ListEmails retrieves a paginated list of emails sent by the authenticated user.
-	//
-	// Results are ordered by creation time descending.
-	ListEmails(context.Context, *connect.Request[v1.ListEmailsRequest]) (*connect.Response[v1.ListEmailsResponse], error)
 }
 
 // NewEmailServiceClient constructs a client for the emailapi.v1.EmailService service. By default,
@@ -73,26 +66,12 @@ func NewEmailServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(emailServiceMethods.ByName("SendEmail")),
 			connect.WithClientOptions(opts...),
 		),
-		getEmail: connect.NewClient[v1.GetEmailRequest, v1.Email](
-			httpClient,
-			baseURL+EmailServiceGetEmailProcedure,
-			connect.WithSchema(emailServiceMethods.ByName("GetEmail")),
-			connect.WithClientOptions(opts...),
-		),
-		listEmails: connect.NewClient[v1.ListEmailsRequest, v1.ListEmailsResponse](
-			httpClient,
-			baseURL+EmailServiceListEmailsProcedure,
-			connect.WithSchema(emailServiceMethods.ByName("ListEmails")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
 // emailServiceClient implements EmailServiceClient.
 type emailServiceClient struct {
-	sendEmail  *connect.Client[v1.SendEmailRequest, v1.SendEmailResponse]
-	getEmail   *connect.Client[v1.GetEmailRequest, v1.Email]
-	listEmails *connect.Client[v1.ListEmailsRequest, v1.ListEmailsResponse]
+	sendEmail *connect.Client[v1.SendEmailRequest, v1.SendEmailResponse]
 }
 
 // SendEmail calls emailapi.v1.EmailService.SendEmail.
@@ -100,29 +79,16 @@ func (c *emailServiceClient) SendEmail(ctx context.Context, req *connect.Request
 	return c.sendEmail.CallUnary(ctx, req)
 }
 
-// GetEmail calls emailapi.v1.EmailService.GetEmail.
-func (c *emailServiceClient) GetEmail(ctx context.Context, req *connect.Request[v1.GetEmailRequest]) (*connect.Response[v1.Email], error) {
-	return c.getEmail.CallUnary(ctx, req)
-}
-
-// ListEmails calls emailapi.v1.EmailService.ListEmails.
-func (c *emailServiceClient) ListEmails(ctx context.Context, req *connect.Request[v1.ListEmailsRequest]) (*connect.Response[v1.ListEmailsResponse], error) {
-	return c.listEmails.CallUnary(ctx, req)
-}
-
 // EmailServiceHandler is an implementation of the emailapi.v1.EmailService service.
 type EmailServiceHandler interface {
-	// SendEmail queues an email for sending.
+	// SendEmail sends an email immediately or queues it for async processing.
 	//
-	// It supports both text and HTML content, multiple recipients (To, CC, BCC),
-	// metadata, and scheduled sending.
+	// Behavior:
+	// - async=false + no attachments: Send synchronously, return message_id
+	// - async=true OR has attachments: Queue for processing with retries
+	//
+	// Delivery status is sent to your webhook endpoint.
 	SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error)
-	// GetEmail retrieves the details of a specific email by its ID.
-	GetEmail(context.Context, *connect.Request[v1.GetEmailRequest]) (*connect.Response[v1.Email], error)
-	// ListEmails retrieves a paginated list of emails sent by the authenticated user.
-	//
-	// Results are ordered by creation time descending.
-	ListEmails(context.Context, *connect.Request[v1.ListEmailsRequest]) (*connect.Response[v1.ListEmailsResponse], error)
 }
 
 // NewEmailServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -138,26 +104,10 @@ func NewEmailServiceHandler(svc EmailServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(emailServiceMethods.ByName("SendEmail")),
 		connect.WithHandlerOptions(opts...),
 	)
-	emailServiceGetEmailHandler := connect.NewUnaryHandler(
-		EmailServiceGetEmailProcedure,
-		svc.GetEmail,
-		connect.WithSchema(emailServiceMethods.ByName("GetEmail")),
-		connect.WithHandlerOptions(opts...),
-	)
-	emailServiceListEmailsHandler := connect.NewUnaryHandler(
-		EmailServiceListEmailsProcedure,
-		svc.ListEmails,
-		connect.WithSchema(emailServiceMethods.ByName("ListEmails")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/emailapi.v1.EmailService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case EmailServiceSendEmailProcedure:
 			emailServiceSendEmailHandler.ServeHTTP(w, r)
-		case EmailServiceGetEmailProcedure:
-			emailServiceGetEmailHandler.ServeHTTP(w, r)
-		case EmailServiceListEmailsProcedure:
-			emailServiceListEmailsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -169,12 +119,4 @@ type UnimplementedEmailServiceHandler struct{}
 
 func (UnimplementedEmailServiceHandler) SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.EmailService.SendEmail is not implemented"))
-}
-
-func (UnimplementedEmailServiceHandler) GetEmail(context.Context, *connect.Request[v1.GetEmailRequest]) (*connect.Response[v1.Email], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.EmailService.GetEmail is not implemented"))
-}
-
-func (UnimplementedEmailServiceHandler) ListEmails(context.Context, *connect.Request[v1.ListEmailsRequest]) (*connect.Response[v1.ListEmailsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.EmailService.ListEmails is not implemented"))
 }

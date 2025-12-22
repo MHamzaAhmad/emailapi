@@ -23,47 +23,32 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// EmailStatus represents the delivery status.
+// EmailStatus represents the current processing status.
 type EmailStatus int32
 
 const (
-	EmailStatus_EMAIL_STATUS_UNSPECIFIED            EmailStatus = 0
-	EmailStatus_EMAIL_STATUS_PENDING                EmailStatus = 1
-	EmailStatus_EMAIL_STATUS_PROCESSING_ATTACHMENTS EmailStatus = 2
-	EmailStatus_EMAIL_STATUS_SCANNING_ATTACHMENTS   EmailStatus = 3
-	EmailStatus_EMAIL_STATUS_SCAN_FAILED            EmailStatus = 4
-	EmailStatus_EMAIL_STATUS_QUEUED                 EmailStatus = 5
-	EmailStatus_EMAIL_STATUS_SENT                   EmailStatus = 6
-	EmailStatus_EMAIL_STATUS_DELIVERED              EmailStatus = 7
-	EmailStatus_EMAIL_STATUS_FAILED                 EmailStatus = 8
-	EmailStatus_EMAIL_STATUS_BOUNCED                EmailStatus = 9
+	EmailStatus_EMAIL_STATUS_UNSPECIFIED EmailStatus = 0
+	EmailStatus_EMAIL_STATUS_QUEUED      EmailStatus = 1
+	EmailStatus_EMAIL_STATUS_PROCESSING  EmailStatus = 2
+	EmailStatus_EMAIL_STATUS_SENT        EmailStatus = 3
+	EmailStatus_EMAIL_STATUS_FAILED      EmailStatus = 4
 )
 
 // Enum value maps for EmailStatus.
 var (
 	EmailStatus_name = map[int32]string{
 		0: "EMAIL_STATUS_UNSPECIFIED",
-		1: "EMAIL_STATUS_PENDING",
-		2: "EMAIL_STATUS_PROCESSING_ATTACHMENTS",
-		3: "EMAIL_STATUS_SCANNING_ATTACHMENTS",
-		4: "EMAIL_STATUS_SCAN_FAILED",
-		5: "EMAIL_STATUS_QUEUED",
-		6: "EMAIL_STATUS_SENT",
-		7: "EMAIL_STATUS_DELIVERED",
-		8: "EMAIL_STATUS_FAILED",
-		9: "EMAIL_STATUS_BOUNCED",
+		1: "EMAIL_STATUS_QUEUED",
+		2: "EMAIL_STATUS_PROCESSING",
+		3: "EMAIL_STATUS_SENT",
+		4: "EMAIL_STATUS_FAILED",
 	}
 	EmailStatus_value = map[string]int32{
-		"EMAIL_STATUS_UNSPECIFIED":            0,
-		"EMAIL_STATUS_PENDING":                1,
-		"EMAIL_STATUS_PROCESSING_ATTACHMENTS": 2,
-		"EMAIL_STATUS_SCANNING_ATTACHMENTS":   3,
-		"EMAIL_STATUS_SCAN_FAILED":            4,
-		"EMAIL_STATUS_QUEUED":                 5,
-		"EMAIL_STATUS_SENT":                   6,
-		"EMAIL_STATUS_DELIVERED":              7,
-		"EMAIL_STATUS_FAILED":                 8,
-		"EMAIL_STATUS_BOUNCED":                9,
+		"EMAIL_STATUS_UNSPECIFIED": 0,
+		"EMAIL_STATUS_QUEUED":      1,
+		"EMAIL_STATUS_PROCESSING":  2,
+		"EMAIL_STATUS_SENT":        3,
+		"EMAIL_STATUS_FAILED":      4,
 	}
 )
 
@@ -94,62 +79,10 @@ func (EmailStatus) EnumDescriptor() ([]byte, []int) {
 	return file_v1_email_proto_rawDescGZIP(), []int{0}
 }
 
-// EmailCategory represents where emails are stored.
-type EmailCategory int32
-
-const (
-	EmailCategory_EMAIL_CATEGORY_UNSPECIFIED EmailCategory = 0
-	// Active emails in PostgreSQL (pending, processing, scanning, queued).
-	EmailCategory_EMAIL_CATEGORY_ACTIVE EmailCategory = 1
-	// Archived emails in ClickHouse (sent, delivered, bounced, failed).
-	EmailCategory_EMAIL_CATEGORY_ARCHIVED EmailCategory = 2
-)
-
-// Enum value maps for EmailCategory.
-var (
-	EmailCategory_name = map[int32]string{
-		0: "EMAIL_CATEGORY_UNSPECIFIED",
-		1: "EMAIL_CATEGORY_ACTIVE",
-		2: "EMAIL_CATEGORY_ARCHIVED",
-	}
-	EmailCategory_value = map[string]int32{
-		"EMAIL_CATEGORY_UNSPECIFIED": 0,
-		"EMAIL_CATEGORY_ACTIVE":      1,
-		"EMAIL_CATEGORY_ARCHIVED":    2,
-	}
-)
-
-func (x EmailCategory) Enum() *EmailCategory {
-	p := new(EmailCategory)
-	*p = x
-	return p
-}
-
-func (x EmailCategory) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (EmailCategory) Descriptor() protoreflect.EnumDescriptor {
-	return file_v1_email_proto_enumTypes[1].Descriptor()
-}
-
-func (EmailCategory) Type() protoreflect.EnumType {
-	return &file_v1_email_proto_enumTypes[1]
-}
-
-func (x EmailCategory) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use EmailCategory.Descriptor instead.
-func (EmailCategory) EnumDescriptor() ([]byte, []int) {
-	return file_v1_email_proto_rawDescGZIP(), []int{1}
-}
-
 // SendEmailRequest is the payload for sending an email.
 type SendEmailRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Sender email address (must be verified).
+	// Sender email address (must be from a verified domain).
 	From string `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
 	// List of primary recipient email addresses.
 	To []string `protobuf:"bytes,2,rep,name=to,proto3" json:"to,omitempty"`
@@ -163,7 +96,7 @@ type SendEmailRequest struct {
 	Body string `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`
 	// HTML content of the email.
 	Html string `protobuf:"bytes,7,opt,name=html,proto3" json:"html,omitempty"`
-	// Custom key-value metadata to attach to the email.
+	// Custom key-value metadata (returned in webhooks).
 	Metadata map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Optional timestamp to schedule the email for future delivery.
 	ScheduledAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=scheduled_at,json=scheduledAt,proto3" json:"scheduled_at,omitempty"`
@@ -173,7 +106,7 @@ type SendEmailRequest struct {
 	InReplyTo string `protobuf:"bytes,11,opt,name=in_reply_to,json=inReplyTo,proto3" json:"in_reply_to,omitempty"`
 	// If true, queue for async processing (we handle retries).
 	// If false, send synchronously and return message_id immediately.
-	// Emails with attachments are always async.
+	// Note: Emails with attachments are always processed async.
 	Async         bool `protobuf:"varint,12,opt,name=async,proto3" json:"async,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -398,14 +331,14 @@ func (*Attachment_Url) isAttachment_Source() {}
 
 func (*Attachment_Base64Content) isAttachment_Source() {}
 
-// SendEmailResponse contains the ID of the sent email.
+// SendEmailResponse contains the result of a send request.
 type SendEmailResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Unique identifier for the email.
+	// Unique identifier for tracking this email.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Current status of the email.
 	Status EmailStatus `protobuf:"varint,2,opt,name=status,proto3,enum=emailapi.v1.EmailStatus" json:"status,omitempty"`
-	// SES Message-ID (only present if async=false and send succeeded).
+	// SES Message-ID (only present if sync send succeeded).
 	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
 	// Human-readable status message.
 	StatusMessage string `protobuf:"bytes,4,opt,name=status_message,json=statusMessage,proto3" json:"status_message,omitempty"`
@@ -471,498 +404,6 @@ func (x *SendEmailResponse) GetStatusMessage() string {
 	return ""
 }
 
-// GetEmailRequest identifies the email to retrieve.
-type GetEmailRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The ID of the email to retrieve.
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetEmailRequest) Reset() {
-	*x = GetEmailRequest{}
-	mi := &file_v1_email_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetEmailRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetEmailRequest) ProtoMessage() {}
-
-func (x *GetEmailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_email_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetEmailRequest.ProtoReflect.Descriptor instead.
-func (*GetEmailRequest) Descriptor() ([]byte, []int) {
-	return file_v1_email_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *GetEmailRequest) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-// Email represents a single email message and its status.
-type Email struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Unique identifier for the email.
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Sender email address.
-	From string `protobuf:"bytes,2,opt,name=from,proto3" json:"from,omitempty"`
-	// Primary recipients.
-	To []string `protobuf:"bytes,3,rep,name=to,proto3" json:"to,omitempty"`
-	// CC recipients.
-	Cc []string `protobuf:"bytes,4,rep,name=cc,proto3" json:"cc,omitempty"`
-	// BCC recipients.
-	Bcc []string `protobuf:"bytes,5,rep,name=bcc,proto3" json:"bcc,omitempty"`
-	// Email subject.
-	Subject string `protobuf:"bytes,6,opt,name=subject,proto3" json:"subject,omitempty"`
-	// Plain text content.
-	Body string `protobuf:"bytes,7,opt,name=body,proto3" json:"body,omitempty"`
-	// HTML content.
-	Html string `protobuf:"bytes,8,opt,name=html,proto3" json:"html,omitempty"`
-	// Current status.
-	Status EmailStatus `protobuf:"varint,9,opt,name=status,proto3,enum=emailapi.v1.EmailStatus" json:"status,omitempty"`
-	// Provider-specific ID (e.g. SES Message ID).
-	ProviderId string `protobuf:"bytes,10,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
-	// SES Message-ID for threading.
-	MessageId string `protobuf:"bytes,11,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	// Message-ID of email this is replying to.
-	InReplyTo string `protobuf:"bytes,12,opt,name=in_reply_to,json=inReplyTo,proto3" json:"in_reply_to,omitempty"`
-	// ID of the user who sent the email.
-	UserId string `protobuf:"bytes,13,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// Custom metadata attached to the email.
-	Metadata map[string]string `protobuf:"bytes,14,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Time when the email is scheduled to be sent.
-	ScheduledAt *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=scheduled_at,json=scheduledAt,proto3" json:"scheduled_at,omitempty"`
-	// Time when the email was sent to the provider.
-	SentAt *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=sent_at,json=sentAt,proto3" json:"sent_at,omitempty"`
-	// Time when the email record was created.
-	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	// Time when the email record was last updated.
-	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	// Attachments associated with this email.
-	Attachments []*EmailAttachment `protobuf:"bytes,19,rep,name=attachments,proto3" json:"attachments,omitempty"`
-	// Error message if the email failed.
-	ErrorMessage  string `protobuf:"bytes,20,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Email) Reset() {
-	*x = Email{}
-	mi := &file_v1_email_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Email) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Email) ProtoMessage() {}
-
-func (x *Email) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_email_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Email.ProtoReflect.Descriptor instead.
-func (*Email) Descriptor() ([]byte, []int) {
-	return file_v1_email_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *Email) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *Email) GetFrom() string {
-	if x != nil {
-		return x.From
-	}
-	return ""
-}
-
-func (x *Email) GetTo() []string {
-	if x != nil {
-		return x.To
-	}
-	return nil
-}
-
-func (x *Email) GetCc() []string {
-	if x != nil {
-		return x.Cc
-	}
-	return nil
-}
-
-func (x *Email) GetBcc() []string {
-	if x != nil {
-		return x.Bcc
-	}
-	return nil
-}
-
-func (x *Email) GetSubject() string {
-	if x != nil {
-		return x.Subject
-	}
-	return ""
-}
-
-func (x *Email) GetBody() string {
-	if x != nil {
-		return x.Body
-	}
-	return ""
-}
-
-func (x *Email) GetHtml() string {
-	if x != nil {
-		return x.Html
-	}
-	return ""
-}
-
-func (x *Email) GetStatus() EmailStatus {
-	if x != nil {
-		return x.Status
-	}
-	return EmailStatus_EMAIL_STATUS_UNSPECIFIED
-}
-
-func (x *Email) GetProviderId() string {
-	if x != nil {
-		return x.ProviderId
-	}
-	return ""
-}
-
-func (x *Email) GetMessageId() string {
-	if x != nil {
-		return x.MessageId
-	}
-	return ""
-}
-
-func (x *Email) GetInReplyTo() string {
-	if x != nil {
-		return x.InReplyTo
-	}
-	return ""
-}
-
-func (x *Email) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *Email) GetMetadata() map[string]string {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
-}
-
-func (x *Email) GetScheduledAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ScheduledAt
-	}
-	return nil
-}
-
-func (x *Email) GetSentAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.SentAt
-	}
-	return nil
-}
-
-func (x *Email) GetCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return nil
-}
-
-func (x *Email) GetUpdatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.UpdatedAt
-	}
-	return nil
-}
-
-func (x *Email) GetAttachments() []*EmailAttachment {
-	if x != nil {
-		return x.Attachments
-	}
-	return nil
-}
-
-func (x *Email) GetErrorMessage() string {
-	if x != nil {
-		return x.ErrorMessage
-	}
-	return ""
-}
-
-// EmailAttachment represents an attachment's metadata.
-type EmailAttachment struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Unique identifier for the attachment.
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Original filename.
-	Filename string `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
-	// MIME content type.
-	ContentType string `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
-	// Size in bytes.
-	SizeBytes int64 `protobuf:"varint,4,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
-	// Security scan status (pending, clean, threats_found, failed).
-	ScanStatus    string `protobuf:"bytes,5,opt,name=scan_status,json=scanStatus,proto3" json:"scan_status,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *EmailAttachment) Reset() {
-	*x = EmailAttachment{}
-	mi := &file_v1_email_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EmailAttachment) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EmailAttachment) ProtoMessage() {}
-
-func (x *EmailAttachment) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_email_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EmailAttachment.ProtoReflect.Descriptor instead.
-func (*EmailAttachment) Descriptor() ([]byte, []int) {
-	return file_v1_email_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *EmailAttachment) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *EmailAttachment) GetFilename() string {
-	if x != nil {
-		return x.Filename
-	}
-	return ""
-}
-
-func (x *EmailAttachment) GetContentType() string {
-	if x != nil {
-		return x.ContentType
-	}
-	return ""
-}
-
-func (x *EmailAttachment) GetSizeBytes() int64 {
-	if x != nil {
-		return x.SizeBytes
-	}
-	return 0
-}
-
-func (x *EmailAttachment) GetScanStatus() string {
-	if x != nil {
-		return x.ScanStatus
-	}
-	return ""
-}
-
-// ListEmailsRequest filters and pagination for listing emails.
-type ListEmailsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Category to query: ACTIVE (in-progress) or ARCHIVED (completed).
-	// Default: ACTIVE
-	Category EmailCategory `protobuf:"varint,1,opt,name=category,proto3,enum=emailapi.v1.EmailCategory" json:"category,omitempty"`
-	// Maximum number of emails to return (default: 20, max: 100).
-	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
-	// Number of emails to skip.
-	Offset        int32 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListEmailsRequest) Reset() {
-	*x = ListEmailsRequest{}
-	mi := &file_v1_email_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListEmailsRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListEmailsRequest) ProtoMessage() {}
-
-func (x *ListEmailsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_email_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListEmailsRequest.ProtoReflect.Descriptor instead.
-func (*ListEmailsRequest) Descriptor() ([]byte, []int) {
-	return file_v1_email_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *ListEmailsRequest) GetCategory() EmailCategory {
-	if x != nil {
-		return x.Category
-	}
-	return EmailCategory_EMAIL_CATEGORY_UNSPECIFIED
-}
-
-func (x *ListEmailsRequest) GetLimit() int32 {
-	if x != nil {
-		return x.Limit
-	}
-	return 0
-}
-
-func (x *ListEmailsRequest) GetOffset() int32 {
-	if x != nil {
-		return x.Offset
-	}
-	return 0
-}
-
-// ListEmailsResponse returns a page of emails.
-type ListEmailsResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The list of emails.
-	Data []*Email `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
-	// The limit applied to the request.
-	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
-	// The offset applied to the request.
-	Offset int32 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
-	// Total count of emails in this category.
-	TotalCount int32 `protobuf:"varint,4,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
-	// The category that was queried.
-	Category      EmailCategory `protobuf:"varint,5,opt,name=category,proto3,enum=emailapi.v1.EmailCategory" json:"category,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListEmailsResponse) Reset() {
-	*x = ListEmailsResponse{}
-	mi := &file_v1_email_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListEmailsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListEmailsResponse) ProtoMessage() {}
-
-func (x *ListEmailsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_email_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListEmailsResponse.ProtoReflect.Descriptor instead.
-func (*ListEmailsResponse) Descriptor() ([]byte, []int) {
-	return file_v1_email_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *ListEmailsResponse) GetData() []*Email {
-	if x != nil {
-		return x.Data
-	}
-	return nil
-}
-
-func (x *ListEmailsResponse) GetLimit() int32 {
-	if x != nil {
-		return x.Limit
-	}
-	return 0
-}
-
-func (x *ListEmailsResponse) GetOffset() int32 {
-	if x != nil {
-		return x.Offset
-	}
-	return 0
-}
-
-func (x *ListEmailsResponse) GetTotalCount() int32 {
-	if x != nil {
-		return x.TotalCount
-	}
-	return 0
-}
-
-func (x *ListEmailsResponse) GetCategory() EmailCategory {
-	if x != nil {
-		return x.Category
-	}
-	return EmailCategory_EMAIL_CATEGORY_UNSPECIFIED
-}
-
 var File_v1_email_proto protoreflect.FileDescriptor
 
 const file_v1_email_proto_rawDesc = "" +
@@ -997,78 +438,15 @@ const file_v1_email_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\x0e2\x18.emailapi.v1.EmailStatusR\x06status\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x03 \x01(\tR\tmessageId\x12%\n" +
-	"\x0estatus_message\x18\x04 \x01(\tR\rstatusMessage\"!\n" +
-	"\x0fGetEmailRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x94\x06\n" +
-	"\x05Email\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04from\x18\x02 \x01(\tR\x04from\x12\x0e\n" +
-	"\x02to\x18\x03 \x03(\tR\x02to\x12\x0e\n" +
-	"\x02cc\x18\x04 \x03(\tR\x02cc\x12\x10\n" +
-	"\x03bcc\x18\x05 \x03(\tR\x03bcc\x12\x18\n" +
-	"\asubject\x18\x06 \x01(\tR\asubject\x12\x12\n" +
-	"\x04body\x18\a \x01(\tR\x04body\x12\x12\n" +
-	"\x04html\x18\b \x01(\tR\x04html\x120\n" +
-	"\x06status\x18\t \x01(\x0e2\x18.emailapi.v1.EmailStatusR\x06status\x12\x1f\n" +
-	"\vprovider_id\x18\n" +
-	" \x01(\tR\n" +
-	"providerId\x12\x1d\n" +
-	"\n" +
-	"message_id\x18\v \x01(\tR\tmessageId\x12\x1e\n" +
-	"\vin_reply_to\x18\f \x01(\tR\tinReplyTo\x12\x17\n" +
-	"\auser_id\x18\r \x01(\tR\x06userId\x12<\n" +
-	"\bmetadata\x18\x0e \x03(\v2 .emailapi.v1.Email.MetadataEntryR\bmetadata\x12=\n" +
-	"\fscheduled_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\vscheduledAt\x123\n" +
-	"\asent_at\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\x06sentAt\x129\n" +
-	"\n" +
-	"created_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
-	"\n" +
-	"updated_at\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12>\n" +
-	"\vattachments\x18\x13 \x03(\v2\x1c.emailapi.v1.EmailAttachmentR\vattachments\x12#\n" +
-	"\rerror_message\x18\x14 \x01(\tR\ferrorMessage\x1a;\n" +
-	"\rMetadataEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa0\x01\n" +
-	"\x0fEmailAttachment\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
-	"\bfilename\x18\x02 \x01(\tR\bfilename\x12!\n" +
-	"\fcontent_type\x18\x03 \x01(\tR\vcontentType\x12\x1d\n" +
-	"\n" +
-	"size_bytes\x18\x04 \x01(\x03R\tsizeBytes\x12\x1f\n" +
-	"\vscan_status\x18\x05 \x01(\tR\n" +
-	"scanStatus\"y\n" +
-	"\x11ListEmailsRequest\x126\n" +
-	"\bcategory\x18\x01 \x01(\x0e2\x1a.emailapi.v1.EmailCategoryR\bcategory\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x03 \x01(\x05R\x06offset\"\xc3\x01\n" +
-	"\x12ListEmailsResponse\x12&\n" +
-	"\x04data\x18\x01 \x03(\v2\x12.emailapi.v1.EmailR\x04data\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
-	"\x06offset\x18\x03 \x01(\x05R\x06offset\x12\x1f\n" +
-	"\vtotal_count\x18\x04 \x01(\x05R\n" +
-	"totalCount\x126\n" +
-	"\bcategory\x18\x05 \x01(\x0e2\x1a.emailapi.v1.EmailCategoryR\bcategory*\xb2\x02\n" +
+	"\x0estatus_message\x18\x04 \x01(\tR\rstatusMessage*\x91\x01\n" +
 	"\vEmailStatus\x12\x1c\n" +
-	"\x18EMAIL_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
-	"\x14EMAIL_STATUS_PENDING\x10\x01\x12'\n" +
-	"#EMAIL_STATUS_PROCESSING_ATTACHMENTS\x10\x02\x12%\n" +
-	"!EMAIL_STATUS_SCANNING_ATTACHMENTS\x10\x03\x12\x1c\n" +
-	"\x18EMAIL_STATUS_SCAN_FAILED\x10\x04\x12\x17\n" +
-	"\x13EMAIL_STATUS_QUEUED\x10\x05\x12\x15\n" +
-	"\x11EMAIL_STATUS_SENT\x10\x06\x12\x1a\n" +
-	"\x16EMAIL_STATUS_DELIVERED\x10\a\x12\x17\n" +
-	"\x13EMAIL_STATUS_FAILED\x10\b\x12\x18\n" +
-	"\x14EMAIL_STATUS_BOUNCED\x10\t*g\n" +
-	"\rEmailCategory\x12\x1e\n" +
-	"\x1aEMAIL_CATEGORY_UNSPECIFIED\x10\x00\x12\x19\n" +
-	"\x15EMAIL_CATEGORY_ACTIVE\x10\x01\x12\x1b\n" +
-	"\x17EMAIL_CATEGORY_ARCHIVED\x10\x022\xa9\x02\n" +
+	"\x18EMAIL_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x13EMAIL_STATUS_QUEUED\x10\x01\x12\x1b\n" +
+	"\x17EMAIL_STATUS_PROCESSING\x10\x02\x12\x15\n" +
+	"\x11EMAIL_STATUS_SENT\x10\x03\x12\x17\n" +
+	"\x13EMAIL_STATUS_FAILED\x10\x042o\n" +
 	"\fEmailService\x12_\n" +
-	"\tSendEmail\x12\x1d.emailapi.v1.SendEmailRequest\x1a\x1e.emailapi.v1.SendEmailResponse\"\x13\x82\xd3\xe4\x93\x02\r:\x01*\"\b/v1/send\x12U\n" +
-	"\bGetEmail\x12\x1c.emailapi.v1.GetEmailRequest\x1a\x12.emailapi.v1.Email\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/v1/emails/{id}\x12a\n" +
-	"\n" +
-	"ListEmails\x12\x1e.emailapi.v1.ListEmailsRequest\x1a\x1f.emailapi.v1.ListEmailsResponse\"\x12\x82\xd3\xe4\x93\x02\f\x12\n" +
-	"/v1/emailsB\x98\x01\n" +
+	"\tSendEmail\x12\x1d.emailapi.v1.SendEmailRequest\x1a\x1e.emailapi.v1.SendEmailResponse\"\x13\x82\xd3\xe4\x93\x02\r:\x01*\"\b/v1/sendB\x98\x01\n" +
 	"\x0fcom.emailapi.v1B\n" +
 	"EmailProtoP\x01Z,github.com/emailapi/sdk-go/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
@@ -1084,49 +462,28 @@ func file_v1_email_proto_rawDescGZIP() []byte {
 	return file_v1_email_proto_rawDescData
 }
 
-var file_v1_email_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_v1_email_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_v1_email_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_v1_email_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_v1_email_proto_goTypes = []any{
 	(EmailStatus)(0),              // 0: emailapi.v1.EmailStatus
-	(EmailCategory)(0),            // 1: emailapi.v1.EmailCategory
-	(*SendEmailRequest)(nil),      // 2: emailapi.v1.SendEmailRequest
-	(*Attachment)(nil),            // 3: emailapi.v1.Attachment
-	(*SendEmailResponse)(nil),     // 4: emailapi.v1.SendEmailResponse
-	(*GetEmailRequest)(nil),       // 5: emailapi.v1.GetEmailRequest
-	(*Email)(nil),                 // 6: emailapi.v1.Email
-	(*EmailAttachment)(nil),       // 7: emailapi.v1.EmailAttachment
-	(*ListEmailsRequest)(nil),     // 8: emailapi.v1.ListEmailsRequest
-	(*ListEmailsResponse)(nil),    // 9: emailapi.v1.ListEmailsResponse
-	nil,                           // 10: emailapi.v1.SendEmailRequest.MetadataEntry
-	nil,                           // 11: emailapi.v1.Email.MetadataEntry
-	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
+	(*SendEmailRequest)(nil),      // 1: emailapi.v1.SendEmailRequest
+	(*Attachment)(nil),            // 2: emailapi.v1.Attachment
+	(*SendEmailResponse)(nil),     // 3: emailapi.v1.SendEmailResponse
+	nil,                           // 4: emailapi.v1.SendEmailRequest.MetadataEntry
+	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_v1_email_proto_depIdxs = []int32{
-	10, // 0: emailapi.v1.SendEmailRequest.metadata:type_name -> emailapi.v1.SendEmailRequest.MetadataEntry
-	12, // 1: emailapi.v1.SendEmailRequest.scheduled_at:type_name -> google.protobuf.Timestamp
-	3,  // 2: emailapi.v1.SendEmailRequest.attachments:type_name -> emailapi.v1.Attachment
-	0,  // 3: emailapi.v1.SendEmailResponse.status:type_name -> emailapi.v1.EmailStatus
-	0,  // 4: emailapi.v1.Email.status:type_name -> emailapi.v1.EmailStatus
-	11, // 5: emailapi.v1.Email.metadata:type_name -> emailapi.v1.Email.MetadataEntry
-	12, // 6: emailapi.v1.Email.scheduled_at:type_name -> google.protobuf.Timestamp
-	12, // 7: emailapi.v1.Email.sent_at:type_name -> google.protobuf.Timestamp
-	12, // 8: emailapi.v1.Email.created_at:type_name -> google.protobuf.Timestamp
-	12, // 9: emailapi.v1.Email.updated_at:type_name -> google.protobuf.Timestamp
-	7,  // 10: emailapi.v1.Email.attachments:type_name -> emailapi.v1.EmailAttachment
-	1,  // 11: emailapi.v1.ListEmailsRequest.category:type_name -> emailapi.v1.EmailCategory
-	6,  // 12: emailapi.v1.ListEmailsResponse.data:type_name -> emailapi.v1.Email
-	1,  // 13: emailapi.v1.ListEmailsResponse.category:type_name -> emailapi.v1.EmailCategory
-	2,  // 14: emailapi.v1.EmailService.SendEmail:input_type -> emailapi.v1.SendEmailRequest
-	5,  // 15: emailapi.v1.EmailService.GetEmail:input_type -> emailapi.v1.GetEmailRequest
-	8,  // 16: emailapi.v1.EmailService.ListEmails:input_type -> emailapi.v1.ListEmailsRequest
-	4,  // 17: emailapi.v1.EmailService.SendEmail:output_type -> emailapi.v1.SendEmailResponse
-	6,  // 18: emailapi.v1.EmailService.GetEmail:output_type -> emailapi.v1.Email
-	9,  // 19: emailapi.v1.EmailService.ListEmails:output_type -> emailapi.v1.ListEmailsResponse
-	17, // [17:20] is the sub-list for method output_type
-	14, // [14:17] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	4, // 0: emailapi.v1.SendEmailRequest.metadata:type_name -> emailapi.v1.SendEmailRequest.MetadataEntry
+	5, // 1: emailapi.v1.SendEmailRequest.scheduled_at:type_name -> google.protobuf.Timestamp
+	2, // 2: emailapi.v1.SendEmailRequest.attachments:type_name -> emailapi.v1.Attachment
+	0, // 3: emailapi.v1.SendEmailResponse.status:type_name -> emailapi.v1.EmailStatus
+	1, // 4: emailapi.v1.EmailService.SendEmail:input_type -> emailapi.v1.SendEmailRequest
+	3, // 5: emailapi.v1.EmailService.SendEmail:output_type -> emailapi.v1.SendEmailResponse
+	5, // [5:6] is the sub-list for method output_type
+	4, // [4:5] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_v1_email_proto_init() }
@@ -1143,8 +500,8 @@ func file_v1_email_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_email_proto_rawDesc), len(file_v1_email_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   10,
+			NumEnums:      1,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

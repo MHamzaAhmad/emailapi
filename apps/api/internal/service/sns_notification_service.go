@@ -5,44 +5,35 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/emailapi/api/internal/domain"
-	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/sns"
 	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
-	pgrepo "github.com/emailapi/api/internal/repository/postgres"
 	"github.com/emailapi/api/internal/repository/suppression"
 )
 
 // SNSNotificationService handles all SNS notifications from SES.
-// This includes: Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay, and inbound emails.
+// This includes: Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay.
+// Uses routing table to map message_id -> user_id for webhook delivery.
 type SNSNotificationService struct {
-	pgRepo       *pgrepo.EmailRepository
 	chRepo       *chrepo.EmailRepository
 	activityRepo *chrepo.ActivityRepository
 	svixClient   svix.Client
-	s3Factory    *s3.Factory
 	suppressRepo *suppression.Repository
 	snsVerifier  *sns.Verifier
 }
 
 // NewSNSNotificationService creates a new SNSNotificationService.
 func NewSNSNotificationService(
-	pgRepo *pgrepo.EmailRepository,
 	chRepo *chrepo.EmailRepository,
 	activityRepo *chrepo.ActivityRepository,
 	svixClient svix.Client,
-	s3Factory *s3.Factory,
 	suppressRepo *suppression.Repository,
 ) *SNSNotificationService {
 	return &SNSNotificationService{
-		pgRepo:       pgRepo,
 		chRepo:       chRepo,
 		activityRepo: activityRepo,
 		svixClient:   svixClient,
-		s3Factory:    s3Factory,
 		suppressRepo: suppressRepo,
 		snsVerifier:  sns.NewVerifier(),
 	}
@@ -63,28 +54,14 @@ type SNSInput struct {
 }
 
 // SESEventNotification represents the parsed SES notification inside SNS Message.
-// Named differently from InboundEmailService.SESEventNotification to avoid conflicts.
 type SESEventNotification struct {
-	NotificationType string `json:"notificationType"`
-
-	// For Delivery notifications
-	Delivery *SESEventDelivery `json:"delivery,omitempty"`
-
-	// For Bounce notifications
-	Bounce *SESEventBounce `json:"bounce,omitempty"`
-
-	// For Complaint notifications
-	Complaint *SESEventComplaint `json:"complaint,omitempty"`
-
-	// For Send/Reject notifications
-	Send   *SESEventSend   `json:"send,omitempty"`
-	Reject *SESEventReject `json:"reject,omitempty"`
-
-	// For Received (inbound) notifications
-	Receipt *SESEventReceipt `json:"receipt,omitempty"`
-
-	// Common mail object
-	Mail SESEventMail `json:"mail"`
+	NotificationType string             `json:"notificationType"`
+	Delivery         *SESEventDelivery  `json:"delivery,omitempty"`
+	Bounce           *SESEventBounce    `json:"bounce,omitempty"`
+	Complaint        *SESEventComplaint `json:"complaint,omitempty"`
+	Send             *SESEventSend      `json:"send,omitempty"`
+	Reject           *SESEventReject    `json:"reject,omitempty"`
+	Mail             SESEventMail       `json:"mail"`
 }
 
 type SESEventMail struct {
@@ -133,17 +110,9 @@ type SESEventReject struct {
 	Reason string `json:"reason"`
 }
 
-type SESEventReceipt struct {
-	Action struct {
-		Type       string `json:"type"`
-		BucketName string `json:"bucketName"`
-		ObjectKey  string `json:"objectKey"`
-	} `json:"action"`
-}
-
 // HandleNotification processes an SNS notification from SES.
 func (s *SNSNotificationService) HandleNotification(ctx context.Context, input *SNSInput) error {
-	// 1. Verify SNS signature
+	// Verify SNS signature
 	if err := s.snsVerifier.VerifySignature(
 		input.SigningCertURL,
 		input.Signature,
@@ -159,7 +128,6 @@ func (s *SNSNotificationService) HandleNotification(ctx context.Context, input *
 		return fmt.Errorf("SNS signature verification failed: %w", err)
 	}
 
-	// 2. Handle by notification type
 	switch input.Type {
 	case "SubscriptionConfirmation":
 		return s.handleSubscriptionConfirmation(ctx, input.SubscribeURL)
@@ -209,10 +177,7 @@ func (s *SNSNotificationService) handleSESEventNotification(ctx context.Context,
 		return s.handleReject(ctx, &notification)
 	case "DeliveryDelay":
 		return s.handleDeliveryDelay(ctx, &notification)
-	case "Received":
-		return s.handleReceived(ctx, &notification)
 	default:
-		// Unknown notification type, log and ignore
 		return nil
 	}
 }
@@ -221,32 +186,25 @@ func (s *SNSNotificationService) handleSESEventNotification(ctx context.Context,
 func (s *SNSNotificationService) handleDelivery(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	// Look up email by provider message ID
-	email, err := s.pgRepo.GetEmailByMessageID(ctx, messageID)
+	// Look up routing to get user_id
+	routing, err := s.chRepo.LookupRouting(ctx, messageID)
 	if err != nil {
-		// Email not found in active emails, might already be archived
+		// Can't find routing - log and skip (might be old email)
 		return nil
 	}
 
-	// Update status to delivered
-	email.Status = domain.EmailStatusSent // or a new "delivered" status if you add one
-
-	// Archive to ClickHouse
-	if err := s.chRepo.SaveEmail(ctx, email); err != nil {
-		fmt.Printf("Warning: failed to archive email: %v\n", err)
-	}
-
 	// Log activity
-	s.chRepo.LogEmailEvent(ctx, email, "delivered")
-
-	// Delete from PostgreSQL
-	if err := s.pgRepo.Delete(ctx, email.ID); err != nil {
-		fmt.Printf("Warning: failed to delete email from PG: %v\n", err)
-	}
+	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "delivered", "success",
+		fmt.Sprintf("Delivered to %v", notification.Delivery.Recipients),
+		map[string]interface{}{
+			"message_id": messageID,
+			"recipients": notification.Delivery.Recipients,
+			"timestamp":  notification.Delivery.Timestamp,
+		})
 
 	// Send webhook to user
-	return s.sendWebhook(ctx, email.UserID, "email.delivered", map[string]interface{}{
-		"email_id":   email.ID,
+	return s.sendWebhook(ctx, routing.UserID, "email.delivered", map[string]interface{}{
+		"email_id":   routing.EmailID,
 		"message_id": messageID,
 		"recipients": notification.Delivery.Recipients,
 		"timestamp":  notification.Delivery.Timestamp,
@@ -257,13 +215,10 @@ func (s *SNSNotificationService) handleDelivery(ctx context.Context, notificatio
 func (s *SNSNotificationService) handleBounce(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	email, err := s.pgRepo.GetEmailByMessageID(ctx, messageID)
+	routing, err := s.chRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		return nil
 	}
-
-	email.Status = domain.EmailStatusFailed
-	email.ErrorMessage = fmt.Sprintf("Bounced: %s - %s", notification.Bounce.BounceType, notification.Bounce.BounceSubType)
 
 	// Add bounced recipients to suppression list
 	if s.suppressRepo != nil {
@@ -275,7 +230,7 @@ func (s *SNSNotificationService) handleBounce(ctx context.Context, notification 
 
 			if err := s.suppressRepo.Add(ctx, &suppression.Entry{
 				EmailHash:       suppression.HashEmail(recipient.EmailAddress),
-				UserID:          email.UserID,
+				UserID:          routing.UserID,
 				Reason:          reason,
 				BounceType:      notification.Bounce.BounceType,
 				SourceMessageID: messageID,
@@ -285,25 +240,24 @@ func (s *SNSNotificationService) handleBounce(ctx context.Context, notification 
 		}
 	}
 
-	// Archive to ClickHouse
-	if err := s.chRepo.SaveEmail(ctx, email); err != nil {
-		fmt.Printf("Warning: failed to archive email: %v\n", err)
-	}
-
 	// Log activity
-	s.chRepo.LogEmailEvent(ctx, email, "bounced")
-
-	// Delete from PostgreSQL
-	s.pgRepo.Delete(ctx, email.ID)
-
-	// Send webhook
 	bouncedRecipients := make([]string, len(notification.Bounce.BouncedRecipients))
 	for i, r := range notification.Bounce.BouncedRecipients {
 		bouncedRecipients[i] = r.EmailAddress
 	}
 
-	return s.sendWebhook(ctx, email.UserID, "email.bounced", map[string]interface{}{
-		"email_id":       email.ID,
+	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "bounced", "failed",
+		fmt.Sprintf("Bounce: %s - %s", notification.Bounce.BounceType, notification.Bounce.BounceSubType),
+		map[string]interface{}{
+			"message_id":     messageID,
+			"bounce_type":    notification.Bounce.BounceType,
+			"bounce_subtype": notification.Bounce.BounceSubType,
+			"recipients":     bouncedRecipients,
+		})
+
+	// Send webhook
+	return s.sendWebhook(ctx, routing.UserID, "email.bounced", map[string]interface{}{
+		"email_id":       routing.EmailID,
 		"message_id":     messageID,
 		"bounce_type":    notification.Bounce.BounceType,
 		"bounce_subtype": notification.Bounce.BounceSubType,
@@ -316,20 +270,17 @@ func (s *SNSNotificationService) handleBounce(ctx context.Context, notification 
 func (s *SNSNotificationService) handleComplaint(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	email, err := s.pgRepo.GetEmailByMessageID(ctx, messageID)
+	routing, err := s.chRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		return nil
 	}
-
-	email.Status = domain.EmailStatusFailed
-	email.ErrorMessage = fmt.Sprintf("Complaint: %s", notification.Complaint.ComplaintFeedbackType)
 
 	// Add complained recipients to suppression list (permanent)
 	if s.suppressRepo != nil {
 		for _, recipient := range notification.Complaint.ComplainedRecipients {
 			if err := s.suppressRepo.Add(ctx, &suppression.Entry{
 				EmailHash:       suppression.HashEmail(recipient.EmailAddress),
-				UserID:          email.UserID,
+				UserID:          routing.UserID,
 				Reason:          suppression.ReasonComplaint,
 				SourceMessageID: messageID,
 			}); err != nil {
@@ -338,25 +289,23 @@ func (s *SNSNotificationService) handleComplaint(ctx context.Context, notificati
 		}
 	}
 
-	// Archive to ClickHouse
-	if err := s.chRepo.SaveEmail(ctx, email); err != nil {
-		fmt.Printf("Warning: failed to archive email: %v\n", err)
-	}
-
-	// Log activity
-	s.chRepo.LogEmailEvent(ctx, email, "complained")
-
-	// Delete from PostgreSQL
-	s.pgRepo.Delete(ctx, email.ID)
-
-	// Send webhook
 	complainedRecipients := make([]string, len(notification.Complaint.ComplainedRecipients))
 	for i, r := range notification.Complaint.ComplainedRecipients {
 		complainedRecipients[i] = r.EmailAddress
 	}
 
-	return s.sendWebhook(ctx, email.UserID, "email.complained", map[string]interface{}{
-		"email_id":      email.ID,
+	// Log activity
+	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "complained", "failed",
+		fmt.Sprintf("Complaint: %s", notification.Complaint.ComplaintFeedbackType),
+		map[string]interface{}{
+			"message_id":    messageID,
+			"feedback_type": notification.Complaint.ComplaintFeedbackType,
+			"recipients":    complainedRecipients,
+		})
+
+	// Send webhook
+	return s.sendWebhook(ctx, routing.UserID, "email.complained", map[string]interface{}{
+		"email_id":      routing.EmailID,
 		"message_id":    messageID,
 		"feedback_type": notification.Complaint.ComplaintFeedbackType,
 		"recipients":    complainedRecipients,
@@ -364,17 +313,19 @@ func (s *SNSNotificationService) handleComplaint(ctx context.Context, notificati
 	})
 }
 
-// handleSend processes send confirmations (email accepted by SES).
+// handleSend processes send confirmations.
 func (s *SNSNotificationService) handleSend(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	email, err := s.pgRepo.GetEmailByMessageID(ctx, messageID)
+	routing, err := s.chRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		return nil
 	}
 
-	// Just log the activity, don't archive yet (wait for delivery/bounce/complaint)
-	s.chRepo.LogEmailEvent(ctx, email, "accepted")
+	// Log activity only
+	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "accepted", "success",
+		"Email accepted by SES",
+		map[string]interface{}{"message_id": messageID})
 
 	return nil
 }
@@ -383,21 +334,19 @@ func (s *SNSNotificationService) handleSend(ctx context.Context, notification *S
 func (s *SNSNotificationService) handleReject(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	email, err := s.pgRepo.GetEmailByMessageID(ctx, messageID)
+	routing, err := s.chRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		return nil
 	}
 
-	email.Status = domain.EmailStatusFailed
-	email.ErrorMessage = fmt.Sprintf("Rejected: %s", notification.Reject.Reason)
+	// Log activity
+	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "rejected", "failed",
+		fmt.Sprintf("Rejected: %s", notification.Reject.Reason),
+		map[string]interface{}{"message_id": messageID, "reason": notification.Reject.Reason})
 
-	// Archive to ClickHouse
-	s.chRepo.SaveEmail(ctx, email)
-	s.chRepo.LogEmailEvent(ctx, email, "rejected")
-	s.pgRepo.Delete(ctx, email.ID)
-
-	return s.sendWebhook(ctx, email.UserID, "email.rejected", map[string]interface{}{
-		"email_id":   email.ID,
+	// Send webhook
+	return s.sendWebhook(ctx, routing.UserID, "email.rejected", map[string]interface{}{
+		"email_id":   routing.EmailID,
 		"message_id": messageID,
 		"reason":     notification.Reject.Reason,
 	})
@@ -407,35 +356,21 @@ func (s *SNSNotificationService) handleReject(ctx context.Context, notification 
 func (s *SNSNotificationService) handleDeliveryDelay(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	email, err := s.pgRepo.GetEmailByMessageID(ctx, messageID)
+	routing, err := s.chRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		return nil
 	}
 
-	// Log activity but don't change status
-	s.activityRepo.LogEmail(ctx, email.UserID, email.ID, "delayed", "warning",
-		"Email delivery delayed", map[string]interface{}{
-			"message_id": messageID,
-			"timestamp":  time.Now().Format(time.RFC3339),
-		})
+	// Log activity
+	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "delayed", "warning",
+		"Email delivery delayed",
+		map[string]interface{}{"message_id": messageID})
 
-	return s.sendWebhook(ctx, email.UserID, "email.delayed", map[string]interface{}{
-		"email_id":   email.ID,
+	// Send webhook
+	return s.sendWebhook(ctx, routing.UserID, "email.delayed", map[string]interface{}{
+		"email_id":   routing.EmailID,
 		"message_id": messageID,
 	})
-}
-
-// handleReceived processes inbound emails.
-func (s *SNSNotificationService) handleReceived(ctx context.Context, notification *SESEventNotification) error {
-	if notification.Receipt == nil || notification.Receipt.Action.Type != "S3" {
-		return fmt.Errorf("expected S3 action for inbound email")
-	}
-
-	// This will be handled by the existing InboundEmailService
-	// For now, just log that we received it
-	// The actual processing logic can be moved here later
-
-	return nil
 }
 
 func (s *SNSNotificationService) sendWebhook(ctx context.Context, userID, eventType string, data map[string]interface{}) error {
