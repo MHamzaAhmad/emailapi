@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -70,19 +71,35 @@ func NewEmailWorker(
 func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) error {
 	args := job.Args
 
-	// Download attachments from S3 if present
-	var attachmentData []attachmentContent
-	for _, att := range args.AttachmentKeys {
-		data, err := w.s3Factory.Bucket(s3.BucketAttachments).Download(ctx, att.S3Key)
+	// Download attachments from S3 in parallel
+	attachmentData := make([]attachmentContent, len(args.AttachmentKeys))
+	downloadErrs := make([]error, len(args.AttachmentKeys))
+
+	var wg sync.WaitGroup
+	for i, att := range args.AttachmentKeys {
+		wg.Add(1)
+		go func(idx int, att AttachmentInfo) {
+			defer wg.Done()
+			data, err := w.s3Factory.Bucket(s3.BucketAttachments).Download(ctx, att.S3Key)
+			if err != nil {
+				downloadErrs[idx] = fmt.Errorf("failed to download attachment %s: %w", att.Filename, err)
+				return
+			}
+			attachmentData[idx] = attachmentContent{
+				Filename:    att.Filename,
+				ContentType: att.ContentType,
+				Data:        data,
+			}
+		}(i, att)
+	}
+	wg.Wait()
+
+	// Check for download errors
+	for _, err := range downloadErrs {
 		if err != nil {
 			w.logActivity(ctx, args, "failed", fmt.Sprintf("Failed to download attachment: %v", err))
-			return fmt.Errorf("failed to download attachment %s: %w", att.Filename, err)
+			return err
 		}
-		attachmentData = append(attachmentData, attachmentContent{
-			Filename:    att.Filename,
-			ContentType: att.ContentType,
-			Data:        data,
-		})
 	}
 
 	// Send via SES
@@ -100,11 +117,13 @@ func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) e
 	// Log success
 	w.logActivity(ctx, args, "sent", fmt.Sprintf("Message ID: %s", messageID))
 
-	// Clean up attachments from S3 after successful send
+	// Clean up attachments from S3 after successful send (fire-and-forget, parallel)
 	for _, att := range args.AttachmentKeys {
-		if err := w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(ctx, att.S3Key); err != nil {
-			fmt.Printf("Warning: failed to delete attachment %s from S3: %v\n", att.S3Key, err)
-		}
+		go func(key string) {
+			if err := w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(context.Background(), key); err != nil {
+				fmt.Printf("Warning: failed to delete attachment %s from S3: %v\n", key, err)
+			}
+		}(att.S3Key)
 	}
 
 	fmt.Printf("Sent email %s to %v (MsgID: %s)\n", args.EmailID, args.To, messageID)

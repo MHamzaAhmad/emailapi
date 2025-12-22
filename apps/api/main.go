@@ -126,6 +126,13 @@ func main() {
 	// Initialize suppression repository (hybrid Redis + PostgreSQL)
 	suppressionRepo := suppression.NewRepository(redisClient, store.Queries())
 
+	// Initialize cache repositories
+	const cacheTTL = 5 * time.Minute
+	domainCache := redisrepo.NewDomainCache(redisClient, cacheTTL)
+	apiKeyCache := redisrepo.NewAPIKeyCache(redisClient, cacheTTL)
+	userCache := redisrepo.NewUserCache(redisClient, cacheTTL)
+	logger.Info().Msg("✓ Initialized cache repositories")
+
 	// Sync suppression list from PostgreSQL to Redis on startup
 	go func() {
 		if err := suppressionRepo.SyncFromPostgres(context.Background()); err != nil {
@@ -188,6 +195,9 @@ func main() {
 		CHActivityRepo:      chActivityRepo,
 		SvixClient:          svixClient,
 		SuppressionRepo:     suppressionRepo,
+		DomainCache:         domainCache,
+		APIKeyCache:         apiKeyCache,
+		UserCache:           userCache,
 	})
 
 	// Start gRPC server

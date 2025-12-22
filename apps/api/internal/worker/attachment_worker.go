@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/riverqueue/river"
@@ -65,27 +66,51 @@ func NewAttachmentWorker(s3Factory *s3.Factory, riverClient RiverClient) *Attach
 func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttachmentsArgs]) error {
 	args := job.Args
 
-	// Process each attachment and upload to S3
-	var attachmentKeys []AttachmentInfo
-	for _, att := range args.Attachments {
-		content, contentType, err := w.getAttachmentContent(ctx, att)
+	// Process each attachment in parallel and upload to S3
+	attachmentKeys := make([]AttachmentInfo, len(args.Attachments))
+	errs := make([]error, len(args.Attachments))
+
+	var wg sync.WaitGroup
+	for i, att := range args.Attachments {
+		wg.Add(1)
+		go func(idx int, att AttachmentSource) {
+			defer wg.Done()
+
+			content, contentType, err := w.getAttachmentContent(ctx, att)
+			if err != nil {
+				errs[idx] = fmt.Errorf("failed to get attachment content for %s: %w", att.Filename, err)
+				return
+			}
+
+			// Generate S3 key
+			s3Key := fmt.Sprintf("attachments/%s/%s/%s", args.EmailID, uuid.New().String(), att.Filename)
+
+			// Upload to S3
+			if err := w.s3Factory.Bucket(s3.BucketAttachments).UploadAttachment(ctx, s3Key, content, contentType); err != nil {
+				errs[idx] = fmt.Errorf("failed to upload attachment %s: %w", att.Filename, err)
+				return
+			}
+
+			attachmentKeys[idx] = AttachmentInfo{
+				S3Key:       s3Key,
+				Filename:    att.Filename,
+				ContentType: contentType,
+			}
+		}(i, att)
+	}
+	wg.Wait()
+
+	// Check for any errors during parallel processing
+	for _, err := range errs {
 		if err != nil {
-			return fmt.Errorf("failed to get attachment content for %s: %w", att.Filename, err)
+			// Clean up any successfully uploaded attachments
+			for _, att := range attachmentKeys {
+				if att.S3Key != "" {
+					w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(ctx, att.S3Key)
+				}
+			}
+			return err
 		}
-
-		// Generate S3 key
-		s3Key := fmt.Sprintf("attachments/%s/%s/%s", args.EmailID, uuid.New().String(), att.Filename)
-
-		// Upload to S3
-		if err := w.s3Factory.Bucket(s3.BucketAttachments).UploadAttachment(ctx, s3Key, content, contentType); err != nil {
-			return fmt.Errorf("failed to upload attachment %s: %w", att.Filename, err)
-		}
-
-		attachmentKeys = append(attachmentKeys, AttachmentInfo{
-			S3Key:       s3Key,
-			Filename:    att.Filename,
-			ContentType: contentType,
-		})
 	}
 
 	// Enqueue the send email job with attachment info

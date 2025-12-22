@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ import (
 	internaldns "github.com/emailapi/api/internal/dns"
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/external/ses"
+	rediscache "github.com/emailapi/api/internal/repository/redis"
 )
 
 const (
@@ -30,12 +32,13 @@ type DomainService struct {
 	store            Store
 	ses              ses.Client
 	dns              *internaldns.Validator
+	cache            *rediscache.DomainCache
 	region           string
 	configurationSet string // SES configuration set for notifications
 }
 
 // NewDomainService creates a new DomainService.
-func NewDomainService(store Store, sesClient ses.Client, region, configurationSet string) *DomainService {
+func NewDomainService(store Store, sesClient ses.Client, cache *rediscache.DomainCache, region, configurationSet string) *DomainService {
 	if region == "" {
 		region = defaultRegion
 	}
@@ -43,6 +46,7 @@ func NewDomainService(store Store, sesClient ses.Client, region, configurationSe
 		store:            store,
 		ses:              sesClient,
 		dns:              internaldns.NewValidator(),
+		cache:            cache,
 		region:           region,
 		configurationSet: configurationSet,
 	}
@@ -129,12 +133,26 @@ func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*do
 		return nil, fmt.Errorf("failed to store domain: %w", err)
 	}
 
+	// Invalidate user's domain list cache
+	if s.cache != nil {
+		_ = s.cache.InvalidateByUserID(ctx, userID)
+	}
+
 	return s.buildDomainWithDetails(d), nil
 }
 
 // Get retrieves a domain by ID with authorization check.
 // Auto-refreshes if data is stale (>5 min).
 func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*domain.DomainWithDetails, error) {
+	// Try cache first
+	if s.cache != nil {
+		if cached, _ := s.cache.GetByID(ctx, domainID); cached != nil {
+			if cached.UserID == userID {
+				return s.buildDomainWithDetails(cached), nil
+			}
+		}
+	}
+
 	d, err := s.store.Domains().GetByID(ctx, domainID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get domain: %w", err)
@@ -154,20 +172,53 @@ func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*doma
 		}
 	}
 
+	// Cache the result
+	if s.cache != nil {
+		_ = s.cache.SetByID(ctx, d)
+	}
+
 	return s.buildDomainWithDetails(d), nil
 }
 
 // List retrieves all domains for a user.
 func (s *DomainService) List(ctx context.Context, userID string) ([]*domain.DomainWithDetails, error) {
+	// Try cache first
+	if s.cache != nil {
+		if cached, _ := s.cache.GetByUserID(ctx, userID); cached != nil {
+			result := make([]*domain.DomainWithDetails, len(cached))
+			var wg sync.WaitGroup
+			for i, d := range cached {
+				wg.Add(1)
+				go func(idx int, dom *domain.SendingDomain) {
+					defer wg.Done()
+					result[idx] = s.buildDomainWithDetails(dom)
+				}(i, d)
+			}
+			wg.Wait()
+			return result, nil
+		}
+	}
+
 	domains, err := s.store.Domains().GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list domains: %w", err)
 	}
 
-	result := make([]*domain.DomainWithDetails, len(domains))
-	for i, d := range domains {
-		result[i] = s.buildDomainWithDetails(d)
+	// Cache the domains list
+	if s.cache != nil {
+		_ = s.cache.SetByUserID(ctx, userID, domains)
 	}
+
+	result := make([]*domain.DomainWithDetails, len(domains))
+	var wg sync.WaitGroup
+	for i, d := range domains {
+		wg.Add(1)
+		go func(idx int, dom *domain.SendingDomain) {
+			defer wg.Done()
+			result[idx] = s.buildDomainWithDetails(dom)
+		}(i, d)
+	}
+	wg.Wait()
 
 	return result, nil
 }
@@ -200,6 +251,11 @@ func (s *DomainService) Delete(ctx context.Context, userID, domainID string) err
 	// Delete from database
 	if err := s.store.Domains().Delete(ctx, domainID); err != nil {
 		return fmt.Errorf("failed to delete domain: %w", err)
+	}
+
+	// Invalidate cache
+	if s.cache != nil {
+		_ = s.cache.InvalidateAll(ctx, domainID, userID)
 	}
 
 	return nil

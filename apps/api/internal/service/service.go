@@ -5,6 +5,7 @@ import (
 	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
+	rediscache "github.com/emailapi/api/internal/repository/redis"
 	"github.com/emailapi/api/internal/repository/suppression"
 	"github.com/emailapi/api/internal/validation"
 
@@ -31,7 +32,7 @@ type Service struct {
 // Note: DomainService requires SES client and must be set separately using SetDomainService.
 func New(store Store) *Service {
 	svc := &Service{store: store}
-	svc.APIKey = NewAPIKeyService(store)
+	svc.APIKey = NewAPIKeyService(store, nil) // Cache set via NewWithDeps
 	svc.User = NewUserService(store, svc.APIKey)
 	return svc
 }
@@ -48,12 +49,17 @@ type ServiceDeps struct {
 	CHActivityRepo      *chrepo.ActivityRepository
 	SvixClient          svix.Client
 	SuppressionRepo     *suppression.Repository
+	// Cache repositories
+	DomainCache *rediscache.DomainCache
+	APIKeyCache *rediscache.APIKeyCache
+	UserCache   *rediscache.UserCache
 }
 
 // NewWithDeps creates a new Service with all dependencies.
 func NewWithDeps(deps ServiceDeps) *Service {
 	svc := New(deps.Store)
-	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.Region, deps.SESConfigurationSet)
+	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.DomainCache, deps.Region, deps.SESConfigurationSet)
+	svc.APIKey = NewAPIKeyService(deps.Store, deps.APIKeyCache)
 
 	// Create email validator with domain checker and suppression checker
 	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo)

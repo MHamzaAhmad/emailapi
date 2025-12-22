@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/argon2"
 
 	"github.com/emailapi/api/internal/domain"
+	rediscache "github.com/emailapi/api/internal/repository/redis"
 )
 
 // Argon2id parameters for API key hashing
@@ -25,11 +26,12 @@ const (
 // APIKeyService handles API key business logic.
 type APIKeyService struct {
 	store Store
+	cache *rediscache.APIKeyCache
 }
 
 // NewAPIKeyService creates a new APIKeyService.
-func NewAPIKeyService(store Store) *APIKeyService {
-	return &APIKeyService{store: store}
+func NewAPIKeyService(store Store, cache *rediscache.APIKeyCache) *APIKeyService {
+	return &APIKeyService{store: store, cache: cache}
 }
 
 // Create creates a new API key for a user.
@@ -95,11 +97,25 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 		return nil, "", fmt.Errorf("failed to create API key: %w", err)
 	}
 
+	// Invalidate user's API keys list cache
+	if s.cache != nil {
+		_ = s.cache.InvalidateByUserID(ctx, userID)
+	}
+
 	return apiKey, rawKey, nil
 }
 
 // GetByID retrieves an API key by ID.
 func (s *APIKeyService) GetByID(ctx context.Context, userID, keyID string) (*domain.APIKey, error) {
+	// Try cache first
+	if s.cache != nil {
+		if cached, _ := s.cache.GetByID(ctx, keyID); cached != nil {
+			if cached.UserID == userID {
+				return cached, nil
+			}
+		}
+	}
+
 	apiKey, err := s.store.APIKeys().GetByID(ctx, keyID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get API key: %w", err)
@@ -110,12 +126,34 @@ func (s *APIKeyService) GetByID(ctx context.Context, userID, keyID string) (*dom
 		return nil, fmt.Errorf("API key not found")
 	}
 
+	// Cache the result
+	if s.cache != nil {
+		_ = s.cache.SetByID(ctx, apiKey)
+	}
+
 	return apiKey, nil
 }
 
 // List retrieves all API keys for a user.
 func (s *APIKeyService) List(ctx context.Context, userID string) ([]*domain.APIKey, error) {
-	return s.store.APIKeys().ListByUserID(ctx, userID)
+	// Try cache first
+	if s.cache != nil {
+		if cached, _ := s.cache.GetByUserID(ctx, userID); cached != nil {
+			return cached, nil
+		}
+	}
+
+	keys, err := s.store.APIKeys().ListByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache the result
+	if s.cache != nil {
+		_ = s.cache.SetByUserID(ctx, userID, keys)
+	}
+
+	return keys, nil
 }
 
 // Update updates an API key.
@@ -145,29 +183,53 @@ func (s *APIKeyService) Update(ctx context.Context, userID, keyID string, req *d
 		return nil, fmt.Errorf("failed to update API key: %w", err)
 	}
 
+	// Invalidate cache
+	if s.cache != nil {
+		_ = s.cache.InvalidateAll(ctx, apiKey.ID, apiKey.KeyPrefix, userID)
+	}
+
 	return apiKey, nil
 }
 
 // Delete deletes an API key.
 func (s *APIKeyService) Delete(ctx context.Context, userID, keyID string) error {
-	// Verify ownership
-	_, err := s.GetByID(ctx, userID, keyID)
+	// Verify ownership and get key for cache invalidation
+	apiKey, err := s.GetByID(ctx, userID, keyID)
 	if err != nil {
 		return err
 	}
 
-	return s.store.APIKeys().Delete(ctx, keyID)
+	if err := s.store.APIKeys().Delete(ctx, keyID); err != nil {
+		return err
+	}
+
+	// Invalidate cache
+	if s.cache != nil {
+		_ = s.cache.InvalidateAll(ctx, apiKey.ID, apiKey.KeyPrefix, userID)
+	}
+
+	return nil
 }
 
 // Revoke revokes an API key (soft delete).
 func (s *APIKeyService) Revoke(ctx context.Context, userID, keyID string) (*domain.APIKey, error) {
-	// Verify ownership
-	_, err := s.GetByID(ctx, userID, keyID)
+	// Verify ownership and get key for cache invalidation
+	apiKey, err := s.GetByID(ctx, userID, keyID)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.store.APIKeys().Revoke(ctx, keyID)
+	result, err := s.store.APIKeys().Revoke(ctx, keyID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Invalidate cache
+	if s.cache != nil {
+		_ = s.cache.InvalidateAll(ctx, apiKey.ID, apiKey.KeyPrefix, userID)
+	}
+
+	return result, nil
 }
 
 // ValidateAndGetUser validates an API key and returns the associated user.
