@@ -64,7 +64,6 @@ func NewWithDeps(deps ServiceDeps) *Service {
 		svc.Webhook = NewWebhookService(deps.SvixClient)
 		svc.InboundEmail = NewInboundEmailService(
 			deps.S3Client,
-			deps.PGEmailRepo,
 			deps.CHEmailRepo,
 			deps.SvixClient,
 			deps.S3InboundBucket,

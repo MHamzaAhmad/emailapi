@@ -344,6 +344,57 @@ func (r *EmailRepository) GetEmailByMessageID(ctx context.Context, messageID str
 	return &email, nil
 }
 
+// EmailRouting represents a routing table entry for reply lookups.
+type EmailRouting struct {
+	MessageID string
+	EmailID   string
+	UserID    string
+	FromEmail string
+	SentAt    time.Time
+}
+
+// InsertRouting adds an entry to the email_routing table.
+// This should be called when an email is successfully sent.
+func (r *EmailRepository) InsertRouting(ctx context.Context, messageID, emailID, userID, fromEmail string) error {
+	query := `
+		INSERT INTO email_routing (message_id, email_id, user_id, from_email, sent_at)
+		VALUES (?, ?, ?, ?, ?)
+	`
+
+	err := r.conn.Exec(ctx, query, messageID, emailID, userID, fromEmail, time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to insert routing entry: %w", err)
+	}
+
+	return nil
+}
+
+// LookupRouting finds the routing info for a given message_id.
+// This is the single source of truth for reply routing.
+func (r *EmailRepository) LookupRouting(ctx context.Context, messageID string) (*EmailRouting, error) {
+	query := `
+		SELECT message_id, email_id, user_id, from_email, sent_at
+		FROM email_routing
+		WHERE message_id = ?
+		LIMIT 1
+	`
+
+	row := r.conn.QueryRow(ctx, query, messageID)
+
+	var routing EmailRouting
+	if err := row.Scan(
+		&routing.MessageID,
+		&routing.EmailID,
+		&routing.UserID,
+		&routing.FromEmail,
+		&routing.SentAt,
+	); err != nil {
+		return nil, fmt.Errorf("routing not found for message ID %s: %w", messageID, err)
+	}
+
+	return &routing, nil
+}
+
 // nullableStringSlice converts a slice to a format suitable for ClickHouse Array.
 func nullableStringSlice(s []string) []string {
 	if s == nil {

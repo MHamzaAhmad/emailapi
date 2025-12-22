@@ -106,12 +106,17 @@ func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) e
 		fmt.Printf("Warning: failed to archive email to ClickHouse: %v\n", err)
 	}
 
-	// 7. Log sent event to ClickHouse
+	// 7. Write to routing table for infinite reply tracking
+	if err := w.chRepo.InsertRouting(ctx, messageID, emailID, email.UserID, email.From); err != nil {
+		fmt.Printf("Warning: failed to insert routing entry: %v\n", err)
+	}
+
+	// 8. Log sent event to ClickHouse
 	if err := w.chRepo.AddEmailEvent(ctx, email, "sent"); err != nil {
 		fmt.Printf("Warning: failed to log sent event: %v\n", err)
 	}
 
-	// 8. Delete from PostgreSQL (cleanup)
+	// 9. Delete from PostgreSQL (cleanup)
 	if err := w.pgRepo.Delete(ctx, emailID); err != nil {
 		// Log but don't fail - email was sent and archived
 		fmt.Printf("Warning: failed to delete email from PostgreSQL: %v\n", err)

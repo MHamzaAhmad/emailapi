@@ -135,6 +135,11 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 	// Success - update and return message_id
 	s.pgRepo.UpdateSent(ctx, emailID, messageID, messageID)
 
+	// Write to routing table for infinite reply tracking
+	if s.chRepo != nil {
+		_ = s.chRepo.InsertRouting(ctx, messageID, emailID, userID, email.From)
+	}
+
 	return &emailapi.SendEmailResponse{
 		Id:            emailID,
 		MessageId:     messageID,

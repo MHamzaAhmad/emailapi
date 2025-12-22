@@ -15,13 +15,11 @@ import (
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
-	pgrepo "github.com/emailapi/api/internal/repository/postgres"
 )
 
 // InboundEmailService handles inbound email processing (replies) from SNS/SES.
 type InboundEmailService struct {
 	s3Client      s3.Client
-	pgRepo        *pgrepo.EmailRepository
 	chRepo        *chrepo.EmailRepository
 	svixClient    svix.Client
 	inboundBucket string
@@ -30,14 +28,12 @@ type InboundEmailService struct {
 // NewInboundEmailService creates a new InboundEmailService.
 func NewInboundEmailService(
 	s3Client s3.Client,
-	pgRepo *pgrepo.EmailRepository,
 	chRepo *chrepo.EmailRepository,
 	svixClient svix.Client,
 	inboundBucket string,
 ) *InboundEmailService {
 	return &InboundEmailService{
 		s3Client:      s3Client,
-		pgRepo:        pgRepo,
 		chRepo:        chRepo,
 		svixClient:    svixClient,
 		inboundBucket: inboundBucket,
@@ -86,6 +82,7 @@ type InboundEmail struct {
 	Body            string   `json:"body"`
 	HTML            string   `json:"html"`
 	OriginalEmailID string   `json:"original_email_id"`
+	OriginalFrom    string   `json:"original_from"`
 	UserID          string   `json:"user_id"`
 }
 
@@ -156,20 +153,21 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 		inboundEmail.InReplyTo = inboundEmail.References[len(inboundEmail.References)-1]
 	}
 
-	originalEmail, err := s.lookupOriginalEmail(ctx, inboundEmail.InReplyTo)
+	// Use routing table as single source of truth
+	routing, err := s.chRepo.LookupRouting(ctx, inboundEmail.InReplyTo)
 	if err != nil {
-		return nil // Reply to email we didn't send
+		return nil // Reply to email we didn't send (not in our routing table)
 	}
 
-	inboundEmail.OriginalEmailID = originalEmail.ID
-	inboundEmail.UserID = originalEmail.UserID
+	inboundEmail.OriginalEmailID = routing.EmailID
+	inboundEmail.OriginalFrom = routing.FromEmail
+	inboundEmail.UserID = routing.UserID
 
 	return s.deliverWebhook(ctx, inboundEmail)
 }
 
 // parseEmail parses raw MIME email using jordan-wright/email package.
 func (s *InboundEmailService) parseEmail(rawEmail []byte) (*InboundEmail, error) {
-	// Use jordan-wright/email to parse (same library we use to build emails)
 	parsed, err := email.NewEmailFromReader(bytes.NewReader(rawEmail))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse email: %w", err)
@@ -204,28 +202,6 @@ func (s *InboundEmailService) parseEmail(rawEmail []byte) (*InboundEmail, error)
 	return inbound, nil
 }
 
-// lookupOriginalEmail finds the original email by Message-ID.
-func (s *InboundEmailService) lookupOriginalEmail(ctx context.Context, messageID string) (*originalEmailInfo, error) {
-	// Try PostgreSQL first (active emails)
-	email, err := s.pgRepo.GetEmailByMessageID(ctx, messageID)
-	if err == nil {
-		return &originalEmailInfo{ID: email.ID, UserID: email.UserID}, nil
-	}
-
-	// Try ClickHouse (archived emails)
-	archivedEmail, err := s.chRepo.GetEmailByMessageID(ctx, messageID)
-	if err == nil {
-		return &originalEmailInfo{ID: archivedEmail.ID, UserID: archivedEmail.UserID}, nil
-	}
-
-	return nil, fmt.Errorf("original email not found for message ID: %s", messageID)
-}
-
-type originalEmailInfo struct {
-	ID     string
-	UserID string
-}
-
 // deliverWebhook sends the reply notification to the user via Svix.
 func (s *InboundEmailService) deliverWebhook(ctx context.Context, email *InboundEmail) error {
 	if err := s.svixClient.EnsureApp(ctx, email.UserID, "User "+email.UserID); err != nil {
@@ -245,6 +221,7 @@ func (s *InboundEmailService) deliverWebhook(ctx context.Context, email *Inbound
 			"body":              email.Body,
 			"html":              email.HTML,
 			"original_email_id": email.OriginalEmailID,
+			"original_from":     email.OriginalFrom, // Original sender for reply-to translation
 		},
 	}
 
