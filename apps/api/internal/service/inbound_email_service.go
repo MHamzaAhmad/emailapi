@@ -163,6 +163,21 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 	inboundEmail.OriginalFrom = routing.FromEmail
 	inboundEmail.UserID = routing.UserID
 
+	// Log the reply event to ClickHouse
+	if err := s.chRepo.AddReplyEvent(
+		ctx,
+		routing.EmailID,
+		inboundEmail.MessageID,
+		routing.UserID,
+		inboundEmail.From,
+		inboundEmail.Subject,
+		map[string]string{
+			"in_reply_to": inboundEmail.InReplyTo,
+		},
+	); err != nil {
+		fmt.Printf("Warning: failed to log reply event: %v\n", err)
+	}
+
 	return s.deliverWebhook(ctx, inboundEmail)
 }
 

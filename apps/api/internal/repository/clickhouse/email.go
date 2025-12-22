@@ -53,6 +53,35 @@ func (r *EmailRepository) AddEmailEvent(ctx context.Context, email *domain.Email
 	return err
 }
 
+// AddReplyEvent logs an inbound reply event to ClickHouse.
+func (r *EmailRepository) AddReplyEvent(ctx context.Context, originalEmailID, messageID, userID, fromAddr, subject string, metadata map[string]string) error {
+	metadataJSON, err := json.Marshal(metadata)
+	if err != nil {
+		metadataJSON = []byte("{}")
+	}
+
+	query := `
+		INSERT INTO emails (
+			email_id, message_id, user_id, event_type, level, message, metadata, timestamp
+		) VALUES (
+			?, ?, ?, ?, ?, ?, ?, ?
+		)
+	`
+
+	err = r.conn.Exec(ctx, query,
+		originalEmailID,
+		messageID,
+		userID,
+		"reply_received",
+		"info",
+		fmt.Sprintf("Reply received from %s: %s", fromAddr, subject),
+		string(metadataJSON),
+		time.Now(),
+	)
+
+	return err
+}
+
 // ArchiveEmail archives a completed email from PostgreSQL to ClickHouse.
 // This is called after an email reaches a terminal state (sent, failed, bounced).
 func (r *EmailRepository) ArchiveEmail(ctx context.Context, email *domain.Email) error {

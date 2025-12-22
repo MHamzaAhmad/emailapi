@@ -13,7 +13,6 @@ function WebhooksPage() {
     const { data: user } = useCurrentUser();
     const isAuthenticated = !!user;
     const [url, setUrl] = useState<string | null>(null);
-    const [token, setToken] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -23,7 +22,6 @@ function WebhooksPage() {
             webhookService.getAppPortalAccess()
                 .then((data) => {
                     setUrl(data.url);
-                    setToken(data.token);
                 })
                 .catch((err) => {
                     console.error('Failed to get App Portal access:', err);
