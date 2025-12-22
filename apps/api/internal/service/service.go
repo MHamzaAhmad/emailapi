@@ -37,20 +37,21 @@ func New(store Store) *Service {
 
 // ServiceDeps holds dependencies for service initialization.
 type ServiceDeps struct {
-	Store       Store
-	SESClient   ses.Client
-	S3Factory   *s3.Factory
-	Region      string
-	RiverClient *river.Client[pgx.Tx]
-	PGEmailRepo *pgrepo.EmailRepository
-	CHEmailRepo *chrepo.EmailRepository
-	SvixClient  svix.Client
+	Store               Store
+	SESClient           ses.Client
+	S3Factory           *s3.Factory
+	Region              string
+	SESConfigurationSet string // SES configuration set for email event notifications
+	RiverClient         *river.Client[pgx.Tx]
+	PGEmailRepo         *pgrepo.EmailRepository
+	CHEmailRepo         *chrepo.EmailRepository
+	SvixClient          svix.Client
 }
 
 // NewWithDeps creates a new Service with all dependencies.
 func NewWithDeps(deps ServiceDeps) *Service {
 	svc := New(deps.Store)
-	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.Region)
+	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.Region, deps.SESConfigurationSet)
 
 	// Create email validator with domain checker
 	emailValidator := validation.NewEmailValidator(svc.Domain)

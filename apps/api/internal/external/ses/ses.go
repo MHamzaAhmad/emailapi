@@ -41,6 +41,10 @@ type Client interface {
 	// The mailFromDomain should be a subdomain of the identity domain.
 	PutEmailIdentityMailFromAttributes(ctx context.Context, domain, mailFromDomain string) error
 
+	// PutEmailIdentityConfigurationSetAttributes applies a configuration set to an identity.
+	// Used to enable delivery, bounce, and complaint notifications via SNS.
+	PutEmailIdentityConfigurationSetAttributes(ctx context.Context, domain, configurationSetName string) error
+
 	// SendEmail sends a raw email (with MIME content).
 	SendEmail(ctx context.Context, input *sesv2.SendEmailInput) (*sesv2.SendEmailOutput, error)
 }

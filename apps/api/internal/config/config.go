@@ -45,6 +45,9 @@ type Config struct {
 
 	// S3 bucket where SES stores inbound emails (replies)
 	S3InboundBucket string `envconfig:"S3_INBOUND_BUCKET" required:"true"`
+
+	// SES Configuration Set for email event notifications (delivery, bounce, complaint)
+	SESConfigurationSet string `envconfig:"SES_CONFIGURATION_SET" default:""`
 }
 
 // Load reads configuration from environment variables.

@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"net/mail"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jordan-wright/email"
 
+	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/sns"
 	"github.com/emailapi/api/internal/external/svix"
@@ -194,17 +196,46 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 	inboundEmail.OriginalFrom = routing.FromEmail
 	inboundEmail.UserID = routing.UserID
 
-	// Log the reply event to ClickHouse
-	if err := s.chRepo.AddReplyEvent(
+	// Create a domain.Email record for the inbound email
+	now := time.Now()
+	inboundDomainEmail := &domain.Email{
+		ID:        inboundEmail.ID,
+		UserID:    inboundEmail.UserID,
+		MessageID: inboundEmail.MessageID,
+		InReplyTo: inboundEmail.InReplyTo,
+		From:      inboundEmail.From,
+		To:        inboundEmail.To,
+		Subject:   inboundEmail.Subject,
+		Body:      inboundEmail.Body,
+		HTML:      inboundEmail.HTML,
+		Status:    domain.EmailStatusSent, // Inbound emails are already "delivered"
+		CreatedAt: now,
+		SentAt:    &now,
+		Metadata: map[string]interface{}{
+			"direction":         "inbound",
+			"original_email_id": routing.EmailID,
+			"original_from":     routing.FromEmail,
+		},
+	}
+
+	// Save inbound email to ClickHouse for archival
+	if err := s.chRepo.SaveEmail(ctx, inboundDomainEmail); err != nil {
+		fmt.Printf("Warning: failed to archive inbound email: %v\n", err)
+	}
+
+	// Add inbound email to routing table so replies to this email can be tracked
+	if err := s.chRepo.InsertRouting(ctx, inboundEmail.MessageID, inboundEmail.ID, inboundEmail.UserID, inboundEmail.From); err != nil {
+		fmt.Printf("Warning: failed to insert routing entry for inbound email: %v\n", err)
+	}
+
+	// Log the reply event to ClickHouse activity_logs
+	if err := s.chRepo.LogReplyEvent(
 		ctx,
 		routing.EmailID,
 		inboundEmail.MessageID,
 		routing.UserID,
 		inboundEmail.From,
 		inboundEmail.Subject,
-		map[string]string{
-			"in_reply_to": inboundEmail.InReplyTo,
-		},
 	); err != nil {
 		fmt.Printf("Warning: failed to log reply event: %v\n", err)
 	}

@@ -27,22 +27,24 @@ const (
 
 // DomainService handles domain business logic.
 type DomainService struct {
-	store  Store
-	ses    ses.Client
-	dns    *internaldns.Validator
-	region string
+	store            Store
+	ses              ses.Client
+	dns              *internaldns.Validator
+	region           string
+	configurationSet string // SES configuration set for notifications
 }
 
 // NewDomainService creates a new DomainService.
-func NewDomainService(store Store, sesClient ses.Client, region string) *DomainService {
+func NewDomainService(store Store, sesClient ses.Client, region, configurationSet string) *DomainService {
 	if region == "" {
 		region = defaultRegion
 	}
 	return &DomainService{
-		store:  store,
-		ses:    sesClient,
-		dns:    internaldns.NewValidator(),
-		region: region,
+		store:            store,
+		ses:              sesClient,
+		dns:              internaldns.NewValidator(),
+		region:           region,
+		configurationSet: configurationSet,
 	}
 }
 
@@ -93,6 +95,14 @@ func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*do
 		// Log warning but don't fail - MAIL FROM is optional for basic sending
 		log.Warn().Err(err).Str("domain", domainName).Msg("failed to set MAIL FROM, continuing without it")
 		mailFromDomain = ""
+	}
+
+	// Apply configuration set for email event notifications (delivery, bounce, complaint)
+	if s.configurationSet != "" {
+		if err := s.ses.PutEmailIdentityConfigurationSetAttributes(ctx, domainName, s.configurationSet); err != nil {
+			log.Warn().Err(err).Str("domain", domainName).Str("configSet", s.configurationSet).
+				Msg("failed to apply configuration set, notifications may not work")
+		}
 	}
 
 	// Create domain entity

@@ -14,10 +14,13 @@ var eventTypes = []struct {
 	Name        string
 	Description string
 }{
-	{"email.sent", "Email was successfully sent to the mail server"},
-	{"email.delivered", "Email was delivered to the recipient"},
+	{"email.sent", "Email was accepted by SES"},
+	{"email.delivered", "Email was delivered to recipient"},
 	{"email.failed", "Email sending failed"},
-	{"email.bounced", "Email bounced (recipient rejected)"},
+	{"email.bounced", "Email bounced (hard bounce)"},
+	{"email.complained", "Recipient marked email as spam"},
+	{"email.rejected", "Email was rejected by SES"},
+	{"email.delayed", "Email delivery was delayed"},
 	{"email.opened", "Email was opened by recipient"},
 	{"email.clicked", "Link in email was clicked"},
 	{"email.reply_received", "Reply to a sent email was received"},

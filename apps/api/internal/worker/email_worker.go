@@ -90,7 +90,7 @@ func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) e
 	if err != nil {
 		w.pgRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, err.Error())
 		// Log failure event
-		w.chRepo.AddEmailEvent(ctx, email, "failed")
+		w.chRepo.LogEmailEvent(ctx, email, "failed")
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 
@@ -100,10 +100,9 @@ func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) e
 	now := time.Now()
 	email.SentAt = &now
 
-	// 6. Archive to ClickHouse (full email record)
-	if err := w.chRepo.ArchiveEmail(ctx, email); err != nil {
-		// Log but don't fail the job - email was sent successfully
-		fmt.Printf("Warning: failed to archive email to ClickHouse: %v\n", err)
+	// 6. Update PostgreSQL with sent status (keep in PG until delivery confirmed)
+	if err := w.pgRepo.UpdateSent(ctx, emailID, messageID, messageID); err != nil {
+		fmt.Printf("Warning: failed to update sent status: %v\n", err)
 	}
 
 	// 7. Write to routing table for infinite reply tracking
@@ -111,16 +110,14 @@ func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) e
 		fmt.Printf("Warning: failed to insert routing entry: %v\n", err)
 	}
 
-	// 8. Log sent event to ClickHouse
-	if err := w.chRepo.AddEmailEvent(ctx, email, "sent"); err != nil {
+	// 8. Log sent event to activity_logs
+	if err := w.chRepo.LogEmailEvent(ctx, email, "sent"); err != nil {
 		fmt.Printf("Warning: failed to log sent event: %v\n", err)
 	}
 
-	// 9. Delete from PostgreSQL (cleanup)
-	if err := w.pgRepo.Delete(ctx, emailID); err != nil {
-		// Log but don't fail - email was sent and archived
-		fmt.Printf("Warning: failed to delete email from PostgreSQL: %v\n", err)
-	}
+	// NOTE: Do NOT archive or delete from PG here!
+	// Email stays in PG until we receive delivery/bounce/complaint notification from SNS
+	// At that point, SNSNotificationService will archive to CH and delete from PG
 
 	fmt.Printf("Sent email %s to %v (MsgID: %s)\n", emailID, email.To, messageID)
 	return nil

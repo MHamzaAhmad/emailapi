@@ -113,6 +113,25 @@ func (c *sesClient) PutEmailIdentityMailFromAttributes(ctx context.Context, doma
 	return nil
 }
 
+// PutEmailIdentityConfigurationSetAttributes applies a configuration set to an identity.
+func (c *sesClient) PutEmailIdentityConfigurationSetAttributes(ctx context.Context, domain, configurationSetName string) error {
+	if configurationSetName == "" {
+		return nil // No configuration set to apply
+	}
+
+	input := &sesv2.PutEmailIdentityConfigurationSetAttributesInput{
+		EmailIdentity:        aws.String(domain),
+		ConfigurationSetName: aws.String(configurationSetName),
+	}
+
+	_, err := c.client.PutEmailIdentityConfigurationSetAttributes(ctx, input)
+	if err != nil {
+		return fmt.Errorf("failed to set configuration set attributes: %w", err)
+	}
+
+	return nil
+}
+
 // SendEmail sends a raw email (with MIME content).
 func (c *sesClient) SendEmail(ctx context.Context, input *sesv2.SendEmailInput) (*sesv2.SendEmailOutput, error) {
 	output, err := c.client.SendEmail(ctx, input)

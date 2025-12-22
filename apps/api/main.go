@@ -160,14 +160,15 @@ func main() {
 
 	// Initialize service layer with new dependencies
 	svc := service.NewWithDeps(service.ServiceDeps{
-		Store:       store,
-		SESClient:   sesClient,
-		S3Factory:   s3Factory,
-		Region:      cfg.AWSRegion,
-		RiverClient: riverClient,
-		PGEmailRepo: pgEmailRepo,
-		CHEmailRepo: chRepo,
-		SvixClient:  svixClient,
+		Store:               store,
+		SESClient:           sesClient,
+		S3Factory:           s3Factory,
+		Region:              cfg.AWSRegion,
+		SESConfigurationSet: cfg.SESConfigurationSet,
+		RiverClient:         riverClient,
+		PGEmailRepo:         pgEmailRepo,
+		CHEmailRepo:         chRepo,
+		SvixClient:          svixClient,
 	})
 
 	// Start gRPC server

@@ -34,19 +34,25 @@ const (
 	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_OPENED         WebhookEventType = 5
 	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_CLICKED        WebhookEventType = 6
 	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED WebhookEventType = 7
+	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_COMPLAINED     WebhookEventType = 8
+	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_REJECTED       WebhookEventType = 9
+	WebhookEventType_WEBHOOK_EVENT_TYPE_EMAIL_DELAYED        WebhookEventType = 10
 )
 
 // Enum value maps for WebhookEventType.
 var (
 	WebhookEventType_name = map[int32]string{
-		0: "WEBHOOK_EVENT_TYPE_UNSPECIFIED",
-		1: "WEBHOOK_EVENT_TYPE_EMAIL_SENT",
-		2: "WEBHOOK_EVENT_TYPE_EMAIL_DELIVERED",
-		3: "WEBHOOK_EVENT_TYPE_EMAIL_FAILED",
-		4: "WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED",
-		5: "WEBHOOK_EVENT_TYPE_EMAIL_OPENED",
-		6: "WEBHOOK_EVENT_TYPE_EMAIL_CLICKED",
-		7: "WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED",
+		0:  "WEBHOOK_EVENT_TYPE_UNSPECIFIED",
+		1:  "WEBHOOK_EVENT_TYPE_EMAIL_SENT",
+		2:  "WEBHOOK_EVENT_TYPE_EMAIL_DELIVERED",
+		3:  "WEBHOOK_EVENT_TYPE_EMAIL_FAILED",
+		4:  "WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED",
+		5:  "WEBHOOK_EVENT_TYPE_EMAIL_OPENED",
+		6:  "WEBHOOK_EVENT_TYPE_EMAIL_CLICKED",
+		7:  "WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED",
+		8:  "WEBHOOK_EVENT_TYPE_EMAIL_COMPLAINED",
+		9:  "WEBHOOK_EVENT_TYPE_EMAIL_REJECTED",
+		10: "WEBHOOK_EVENT_TYPE_EMAIL_DELAYED",
 	}
 	WebhookEventType_value = map[string]int32{
 		"WEBHOOK_EVENT_TYPE_UNSPECIFIED":          0,
@@ -57,6 +63,9 @@ var (
 		"WEBHOOK_EVENT_TYPE_EMAIL_OPENED":         5,
 		"WEBHOOK_EVENT_TYPE_EMAIL_CLICKED":        6,
 		"WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED": 7,
+		"WEBHOOK_EVENT_TYPE_EMAIL_COMPLAINED":     8,
+		"WEBHOOK_EVENT_TYPE_EMAIL_REJECTED":       9,
+		"WEBHOOK_EVENT_TYPE_EMAIL_DELAYED":        10,
 	}
 )
 
@@ -188,7 +197,7 @@ const file_v1_webhook_proto_rawDesc = "" +
 	"\x19GetAppPortalAccessRequest\"D\n" +
 	"\x1aGetAppPortalAccessResponse\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x14\n" +
-	"\x05token\x18\x02 \x01(\tR\x05token*\xc4\x02\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token*\xba\x03\n" +
 	"\x10WebhookEventType\x12\"\n" +
 	"\x1eWEBHOOK_EVENT_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dWEBHOOK_EVENT_TYPE_EMAIL_SENT\x10\x01\x12&\n" +
@@ -197,7 +206,11 @@ const file_v1_webhook_proto_rawDesc = "" +
 	" WEBHOOK_EVENT_TYPE_EMAIL_BOUNCED\x10\x04\x12#\n" +
 	"\x1fWEBHOOK_EVENT_TYPE_EMAIL_OPENED\x10\x05\x12$\n" +
 	" WEBHOOK_EVENT_TYPE_EMAIL_CLICKED\x10\x06\x12+\n" +
-	"'WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED\x10\a2\x98\x01\n" +
+	"'WEBHOOK_EVENT_TYPE_EMAIL_REPLY_RECEIVED\x10\a\x12'\n" +
+	"#WEBHOOK_EVENT_TYPE_EMAIL_COMPLAINED\x10\b\x12%\n" +
+	"!WEBHOOK_EVENT_TYPE_EMAIL_REJECTED\x10\t\x12$\n" +
+	" WEBHOOK_EVENT_TYPE_EMAIL_DELAYED\x10\n" +
+	"2\x98\x01\n" +
 	"\x0eWebhookService\x12\x85\x01\n" +
 	"\x12GetAppPortalAccess\x12&.emailapi.v1.GetAppPortalAccessRequest\x1a'.emailapi.v1.GetAppPortalAccessResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/webhooks/portalB\x97\x01\n" +
 	"\x0fcom.emailapi.v1B\fWebhookProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"

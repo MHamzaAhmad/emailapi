@@ -11,16 +11,54 @@ import (
 	"github.com/emailapi/api/internal/domain"
 )
 
+// EmailRepository handles email-specific ClickHouse operations.
 type EmailRepository struct {
-	conn driver.Conn
+	conn         driver.Conn
+	activityRepo *ActivityRepository
 }
 
+// NewEmailRepository creates a new EmailRepository.
 func NewEmailRepository(conn driver.Conn) *EmailRepository {
-	return &EmailRepository{conn: conn}
+	return &EmailRepository{
+		conn:         conn,
+		activityRepo: NewActivityRepository(conn),
+	}
 }
 
-// AddEmailEvent inserts a new email event log into ClickHouse.
-func (r *EmailRepository) AddEmailEvent(ctx context.Context, email *domain.Email, eventType string) error {
+// LogEmailEvent logs an email-specific event to activity_logs.
+func (r *EmailRepository) LogEmailEvent(ctx context.Context, email *domain.Email, action string) error {
+	status := "success"
+	if action == "failed" || action == "bounced" || action == "complained" || action == "rejected" {
+		status = "failed"
+	}
+
+	metadata := map[string]interface{}{
+		"message_id":  email.MessageID,
+		"provider_id": email.ProviderID,
+		"from":        email.From,
+		"to":          email.To,
+	}
+
+	return r.activityRepo.LogEmail(ctx, email.UserID, email.ID, action, status,
+		fmt.Sprintf("Email %s", action), metadata)
+}
+
+// LogReplyEvent logs an inbound reply event to activity_logs.
+func (r *EmailRepository) LogReplyEvent(ctx context.Context, originalEmailID, messageID, userID, fromAddr, subject string) error {
+	metadata := map[string]interface{}{
+		"original_email_id": originalEmailID,
+		"message_id":        messageID,
+		"from":              fromAddr,
+		"subject":           subject,
+	}
+
+	return r.activityRepo.Log(ctx, userID, "email", originalEmailID, "reply_received", "success",
+		fmt.Sprintf("Reply received from %s: %s", fromAddr, subject), metadata)
+}
+
+// SaveEmail archives a completed email from PostgreSQL to ClickHouse.
+// This is called after an email reaches a terminal state (delivered, bounced, complained).
+func (r *EmailRepository) SaveEmail(ctx context.Context, email *domain.Email) error {
 	metadataJSON, err := json.Marshal(email.Metadata)
 	if err != nil {
 		metadataJSON = []byte("{}")
@@ -28,70 +66,6 @@ func (r *EmailRepository) AddEmailEvent(ctx context.Context, email *domain.Email
 
 	query := `
 		INSERT INTO emails (
-			email_id, message_id, user_id, event_type, level, message, metadata, timestamp
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
-
-	level := "info"
-	if eventType == "failed" || eventType == "bounced" {
-		level = "error"
-	}
-
-	err = r.conn.Exec(ctx, query,
-		email.ID,
-		email.MessageID,
-		email.UserID,
-		eventType,
-		level,
-		fmt.Sprintf("Email %s", eventType),
-		string(metadataJSON),
-		time.Now(),
-	)
-
-	return err
-}
-
-// AddReplyEvent logs an inbound reply event to ClickHouse.
-func (r *EmailRepository) AddReplyEvent(ctx context.Context, originalEmailID, messageID, userID, fromAddr, subject string, metadata map[string]string) error {
-	metadataJSON, err := json.Marshal(metadata)
-	if err != nil {
-		metadataJSON = []byte("{}")
-	}
-
-	query := `
-		INSERT INTO emails (
-			email_id, message_id, user_id, event_type, level, message, metadata, timestamp
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
-
-	err = r.conn.Exec(ctx, query,
-		originalEmailID,
-		messageID,
-		userID,
-		"reply_received",
-		"info",
-		fmt.Sprintf("Reply received from %s: %s", fromAddr, subject),
-		string(metadataJSON),
-		time.Now(),
-	)
-
-	return err
-}
-
-// ArchiveEmail archives a completed email from PostgreSQL to ClickHouse.
-// This is called after an email reaches a terminal state (sent, failed, bounced).
-func (r *EmailRepository) ArchiveEmail(ctx context.Context, email *domain.Email) error {
-	metadataJSON, err := json.Marshal(email.Metadata)
-	if err != nil {
-		metadataJSON = []byte("{}")
-	}
-
-	query := `
-		INSERT INTO email_archive (
 			id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
 			subject, body, html, status, provider_id, attachment_count, metadata,
 			error_message, scheduled_at, sent_at, created_at
@@ -129,62 +103,60 @@ func (r *EmailRepository) ArchiveEmail(ctx context.Context, email *domain.Email)
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to archive email: %w", err)
+		return fmt.Errorf("failed to save email: %w", err)
 	}
 
 	return nil
 }
 
-// GetEmailEvents retrieves event history for an email.
-func (r *EmailRepository) GetEmailEvents(ctx context.Context, emailID string) ([]*domain.EmailEvent, error) {
+// GetEmailActivities retrieves activity history for an email from activity_logs.
+func (r *EmailRepository) GetEmailActivities(ctx context.Context, emailID string) ([]*domain.EmailEvent, error) {
 	query := `
-		SELECT email_id, message_id, user_id, event_type, level, message, metadata, timestamp
-		FROM emails
-		WHERE email_id = ?
+		SELECT entity_id, user_id, action, status, details, metadata, timestamp
+		FROM activity_logs
+		WHERE entity_type = 'email' AND entity_id = ?
 		ORDER BY timestamp DESC
 	`
 
 	rows, err := r.conn.Query(ctx, query, emailID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query email events: %w", err)
+		return nil, fmt.Errorf("failed to query email activities: %w", err)
 	}
 	defer rows.Close()
 
 	var events []*domain.EmailEvent
 	for rows.Next() {
 		var event domain.EmailEvent
-		var eventType string
-		var level string
+		var action, status string
 		if err := rows.Scan(
 			&event.EmailID,
-			&event.MessageID,
 			&event.UserID,
-			&eventType,
-			&level,
+			&action,
+			&status,
 			&event.Message,
 			&event.Metadata,
 			&event.Timestamp,
 		); err != nil {
-			return nil, fmt.Errorf("failed to scan email event: %w", err)
+			return nil, fmt.Errorf("failed to scan email activity: %w", err)
 		}
-		event.EventType = eventType
-		event.Level = level
+		event.EventType = action
+		event.Level = status
 		events = append(events, &event)
 	}
 
 	return events, nil
 }
 
-// GetUserEmailStats retrieves aggregated stats for a user over the last N days.
+// GetUserEmailStats retrieves aggregated stats for a user over the last N days from activity_logs.
 func (r *EmailRepository) GetUserEmailStats(ctx context.Context, userID string, days int) (*domain.EmailStats, error) {
 	query := `
 		SELECT 
-			countIf(event_type = 'sent') as total_sent,
-			countIf(event_type = 'delivered') as total_delivered,
-			countIf(event_type = 'bounced') as total_bounced,
-			countIf(event_type = 'failed') as total_failed
-		FROM emails
-		WHERE user_id = ? AND date >= today() - ?
+			countIf(action = 'sent') as total_sent,
+			countIf(action = 'delivered') as total_delivered,
+			countIf(action = 'bounced') as total_bounced,
+			countIf(action = 'failed') as total_failed
+		FROM activity_logs
+		WHERE user_id = ? AND entity_type = 'email' AND date >= today() - ?
 	`
 
 	row := r.conn.QueryRow(ctx, query, userID, days)
@@ -213,7 +185,7 @@ func (r *EmailRepository) GetArchivedEmail(ctx context.Context, id string) (*dom
 		SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
 		       subject, body, html, status, provider_id, attachment_count, metadata,
 		       error_message, scheduled_at, sent_at, created_at, archived_at
-		FROM email_archive
+		FROM emails
 		WHERE id = ?
 		LIMIT 1
 	`
@@ -267,7 +239,7 @@ func (r *EmailRepository) ListArchivedEmails(ctx context.Context, userID string,
 	query := `
 		SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
 		       subject, status, provider_id, error_message, sent_at, created_at
-		FROM email_archive
+		FROM emails
 		WHERE user_id = ?
 		ORDER BY created_at DESC
 		LIMIT ? OFFSET ?
@@ -314,7 +286,7 @@ func (r *EmailRepository) ListArchivedEmails(ctx context.Context, userID string,
 
 // CountArchivedEmails counts the total archived emails for a user.
 func (r *EmailRepository) CountArchivedEmails(ctx context.Context, userID string) (int, error) {
-	query := `SELECT count() FROM email_archive WHERE user_id = ?`
+	query := `SELECT count() FROM emails WHERE user_id = ?`
 	row := r.conn.QueryRow(ctx, query, userID)
 
 	var count uint64
@@ -331,7 +303,7 @@ func (r *EmailRepository) GetEmailByMessageID(ctx context.Context, messageID str
 		SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
 		       subject, body, html, status, provider_id, message_id, in_reply_to,
 		       error_message, scheduled_at, sent_at, created_at
-		FROM email_archive
+		FROM emails
 		WHERE message_id = ?
 		LIMIT 1
 	`
