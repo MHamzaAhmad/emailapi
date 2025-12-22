@@ -3,6 +3,7 @@ package validation
 import (
 	"context"
 	"strings"
+	"sync"
 
 	emailverifier "github.com/AfterShip/email-verifier"
 	"golang.org/x/sync/errgroup"
@@ -120,36 +121,62 @@ func (v *EmailValidator) ValidateSendEmail(ctx context.Context, userID, from str
 	return nil
 }
 
-// validateAllAddresses performs all address validations (non-concurrent helper).
+// validateAllAddresses performs all address validations in parallel.
 func (v *EmailValidator) validateAllAddresses(ctx context.Context, userID, from string, to, cc, bcc []string) *ValidationErrors {
 	errors := NewValidationErrors()
+	var mu sync.Mutex
+	var wg sync.WaitGroup
 
-	// 1. Validate FROM email (domain ownership + verified for sending)
-	if err := v.validateSender(ctx, userID, from); err != nil {
+	// Helper to safely add error
+	addError := func(err *ValidationError) {
+		mu.Lock()
+		defer mu.Unlock()
 		errors.Add(err)
 	}
 
+	// 1. Validate FROM email (domain ownership + verified for sending)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := v.validateSender(ctx, userID, from); err != nil {
+			addError(err)
+		}
+	}()
+
 	// 2. Validate TO recipients
 	for i, email := range to {
-		if err := v.validateRecipient(email, formatField("to", i)); err != nil {
-			errors.Add(err)
-		}
+		wg.Add(1)
+		go func(idx int, e string) {
+			defer wg.Done()
+			if err := v.validateRecipient(e, formatField("to", idx)); err != nil {
+				addError(err)
+			}
+		}(i, email)
 	}
 
 	// 3. Validate CC recipients
 	for i, email := range cc {
-		if err := v.validateRecipient(email, formatField("cc", i)); err != nil {
-			errors.Add(err)
-		}
+		wg.Add(1)
+		go func(idx int, e string) {
+			defer wg.Done()
+			if err := v.validateRecipient(e, formatField("cc", idx)); err != nil {
+				addError(err)
+			}
+		}(i, email)
 	}
 
 	// 4. Validate BCC recipients
 	for i, email := range bcc {
-		if err := v.validateRecipient(email, formatField("bcc", i)); err != nil {
-			errors.Add(err)
-		}
+		wg.Add(1)
+		go func(idx int, e string) {
+			defer wg.Done()
+			if err := v.validateRecipient(e, formatField("bcc", idx)); err != nil {
+				addError(err)
+			}
+		}(i, email)
 	}
 
+	wg.Wait()
 	return errors
 }
 
