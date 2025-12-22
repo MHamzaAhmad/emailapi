@@ -35,6 +35,7 @@ const (
 type Email struct {
 	ID           string            `json:"id"`
 	MessageID    string            `json:"message_id,omitempty"`
+	InReplyTo    string            `json:"in_reply_to,omitempty"`
 	From         string            `json:"from"`
 	To           []string          `json:"to"`
 	Cc           []string          `json:"cc,omitempty"`

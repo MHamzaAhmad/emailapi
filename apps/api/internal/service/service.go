@@ -51,7 +51,7 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	// Create email validator with domain checker
 	emailValidator := validation.NewEmailValidator(svc.Domain)
 
-	svc.Email = NewEmailService(deps.RiverClient, deps.PGEmailRepo, deps.CHEmailRepo, emailValidator)
+	svc.Email = NewEmailService(deps.RiverClient, deps.PGEmailRepo, deps.CHEmailRepo, emailValidator, deps.SESClient)
 	svc.Internal = NewInternalService(deps.PGEmailRepo, deps.RiverClient)
 	return svc
 }

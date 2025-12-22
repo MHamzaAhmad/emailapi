@@ -45,6 +45,7 @@ func (r *EmailRepository) Create(ctx context.Context, email *domain.Email) error
 		Status:       string(email.Status),
 		Metadata:     metadataJSON,
 		ScheduledAt:  toPgTimestamp(email.ScheduledAt),
+		InReplyTo:    toPgText(email.InReplyTo),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create email: %w", err)
@@ -95,11 +96,12 @@ func (r *EmailRepository) UpdateStatus(ctx context.Context, id string, status do
 	return nil
 }
 
-// UpdateSent marks an email as sent with the provider ID.
-func (r *EmailRepository) UpdateSent(ctx context.Context, id, providerID string) error {
+// UpdateSent marks an email as sent with the provider ID and message ID.
+func (r *EmailRepository) UpdateSent(ctx context.Context, id, providerID, messageID string) error {
 	_, err := r.queries.UpdateEmailSent(ctx, db.UpdateEmailSentParams{
 		ID:         id,
 		ProviderID: toPgText(providerID),
+		MessageID:  toPgText(messageID),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update email sent: %w", err)
@@ -198,6 +200,8 @@ func dbEmailToDomain(row db.Email) *domain.Email {
 	return &domain.Email{
 		ID:           row.ID,
 		UserID:       row.UserID,
+		MessageID:    fromPgText(row.MessageID),
+		InReplyTo:    fromPgText(row.InReplyTo),
 		From:         row.FromAddress,
 		To:           row.ToAddresses,
 		Cc:           row.CcAddresses,

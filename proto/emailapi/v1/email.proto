@@ -73,6 +73,12 @@ message SendEmailRequest {
   google.protobuf.Timestamp scheduled_at = 9;
   // List of attachments.
   repeated Attachment attachments = 10;
+  // Message-ID of the email being replied to (for threading).
+  string in_reply_to = 11;
+  // If true, queue for async processing (we handle retries).
+  // If false, send synchronously and return message_id immediately.
+  // Emails with attachments are always async.
+  bool async = 12;
 }
 
 // Attachment represents a file to be attached to the email.
@@ -97,6 +103,10 @@ message SendEmailResponse {
   string id = 1;
   // Current status of the email.
   EmailStatus status = 2;
+  // SES Message-ID (only present if async=false and send succeeded).
+  string message_id = 3;
+  // Human-readable status message.
+  string status_message = 4;
 }
 
 // GetEmailRequest identifies the email to retrieve.
@@ -127,22 +137,26 @@ message Email {
   EmailStatus status = 9;
   // Provider-specific ID (e.g. SES Message ID).
   string provider_id = 10;
+  // SES Message-ID for threading.
+  string message_id = 11;
+  // Message-ID of email this is replying to.
+  string in_reply_to = 12;
   // ID of the user who sent the email.
-  string user_id = 11;
+  string user_id = 13;
   // Custom metadata attached to the email.
-  map<string, string> metadata = 12;
+  map<string, string> metadata = 14;
   // Time when the email is scheduled to be sent.
-  google.protobuf.Timestamp scheduled_at = 13;
+  google.protobuf.Timestamp scheduled_at = 15;
   // Time when the email was sent to the provider.
-  google.protobuf.Timestamp sent_at = 14;
+  google.protobuf.Timestamp sent_at = 16;
   // Time when the email record was created.
-  google.protobuf.Timestamp created_at = 15;
+  google.protobuf.Timestamp created_at = 17;
   // Time when the email record was last updated.
-  google.protobuf.Timestamp updated_at = 16;
+  google.protobuf.Timestamp updated_at = 18;
   // Attachments associated with this email.
-  repeated EmailAttachment attachments = 17;
+  repeated EmailAttachment attachments = 19;
   // Error message if the email failed.
-  string error_message = 18;
+  string error_message = 20;
 }
 
 // EmailAttachment represents an attachment's metadata.

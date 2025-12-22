@@ -44,6 +44,7 @@ type Querier interface {
 	UpdateApiKeyLastUsed(ctx context.Context, id string) error
 	UpdateAttachmentScanStatus(ctx context.Context, arg UpdateAttachmentScanStatusParams) (EmailAttachment, error)
 	UpdateDomain(ctx context.Context, arg UpdateDomainParams) error
+	UpdateEmailMessageID(ctx context.Context, arg UpdateEmailMessageIDParams) error
 	UpdateEmailSent(ctx context.Context, arg UpdateEmailSentParams) (Email, error)
 	UpdateEmailStatus(ctx context.Context, arg UpdateEmailStatusParams) (Email, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)

@@ -47,10 +47,10 @@ func (q *Queries) CountEmailsByUserID(ctx context.Context, userID string) (int64
 const createEmail = `-- name: CreateEmail :one
 INSERT INTO emails (
     id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
-    subject, body, html, status, metadata, scheduled_at
+    subject, body, html, status, metadata, scheduled_at, in_reply_to
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-) RETURNING id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses, subject, body, html, status, provider_id, metadata, scheduled_at, sent_at, error_message, created_at, updated_at
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+) RETURNING id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses, subject, body, html, status, provider_id, metadata, scheduled_at, sent_at, error_message, created_at, updated_at, message_id, in_reply_to
 `
 
 type CreateEmailParams struct {
@@ -66,6 +66,7 @@ type CreateEmailParams struct {
 	Status       string             `json:"status"`
 	Metadata     []byte             `json:"metadata"`
 	ScheduledAt  pgtype.Timestamptz `json:"scheduled_at"`
+	InReplyTo    pgtype.Text        `json:"in_reply_to"`
 }
 
 func (q *Queries) CreateEmail(ctx context.Context, arg CreateEmailParams) (Email, error) {
@@ -82,6 +83,7 @@ func (q *Queries) CreateEmail(ctx context.Context, arg CreateEmailParams) (Email
 		arg.Status,
 		arg.Metadata,
 		arg.ScheduledAt,
+		arg.InReplyTo,
 	)
 	var i Email
 	err := row.Scan(
@@ -102,6 +104,8 @@ func (q *Queries) CreateEmail(ctx context.Context, arg CreateEmailParams) (Email
 		&i.ErrorMessage,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MessageID,
+		&i.InReplyTo,
 	)
 	return i, err
 }
@@ -223,7 +227,7 @@ func (q *Queries) GetAttachmentsByEmailID(ctx context.Context, emailID string) (
 }
 
 const getEmailByID = `-- name: GetEmailByID :one
-SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses, subject, body, html, status, provider_id, metadata, scheduled_at, sent_at, error_message, created_at, updated_at FROM emails WHERE id = $1
+SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses, subject, body, html, status, provider_id, metadata, scheduled_at, sent_at, error_message, created_at, updated_at, message_id, in_reply_to FROM emails WHERE id = $1
 `
 
 func (q *Queries) GetEmailByID(ctx context.Context, id string) (Email, error) {
@@ -247,12 +251,14 @@ func (q *Queries) GetEmailByID(ctx context.Context, id string) (Email, error) {
 		&i.ErrorMessage,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MessageID,
+		&i.InReplyTo,
 	)
 	return i, err
 }
 
 const getEmailsByUserID = `-- name: GetEmailsByUserID :many
-SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses, subject, body, html, status, provider_id, metadata, scheduled_at, sent_at, error_message, created_at, updated_at FROM emails 
+SELECT id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses, subject, body, html, status, provider_id, metadata, scheduled_at, sent_at, error_message, created_at, updated_at, message_id, in_reply_to FROM emails 
 WHERE user_id = $1 
 ORDER BY created_at DESC 
 LIMIT $2 OFFSET $3
@@ -291,6 +297,8 @@ func (q *Queries) GetEmailsByUserID(ctx context.Context, arg GetEmailsByUserIDPa
 			&i.ErrorMessage,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.MessageID,
+			&i.InReplyTo,
 		); err != nil {
 			return nil, err
 		}
@@ -303,7 +311,7 @@ func (q *Queries) GetEmailsByUserID(ctx context.Context, arg GetEmailsByUserIDPa
 }
 
 const getEmailsWithPendingAttachments = `-- name: GetEmailsWithPendingAttachments :many
-SELECT DISTINCT e.id, e.user_id, e.from_address, e.to_addresses, e.cc_addresses, e.bcc_addresses, e.subject, e.body, e.html, e.status, e.provider_id, e.metadata, e.scheduled_at, e.sent_at, e.error_message, e.created_at, e.updated_at FROM emails e
+SELECT DISTINCT e.id, e.user_id, e.from_address, e.to_addresses, e.cc_addresses, e.bcc_addresses, e.subject, e.body, e.html, e.status, e.provider_id, e.metadata, e.scheduled_at, e.sent_at, e.error_message, e.created_at, e.updated_at, e.message_id, e.in_reply_to FROM emails e
 JOIN email_attachments ea ON ea.email_id = e.id
 WHERE ea.scan_status IN ('pending', 'scanning')
 ORDER BY e.created_at
@@ -336,6 +344,8 @@ func (q *Queries) GetEmailsWithPendingAttachments(ctx context.Context) ([]Email,
 			&i.ErrorMessage,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.MessageID,
+			&i.InReplyTo,
 		); err != nil {
 			return nil, err
 		}
@@ -376,20 +386,37 @@ func (q *Queries) UpdateAttachmentScanStatus(ctx context.Context, arg UpdateAtta
 	return i, err
 }
 
+const updateEmailMessageID = `-- name: UpdateEmailMessageID :exec
+UPDATE emails 
+SET message_id = $2, updated_at = NOW() 
+WHERE id = $1
+`
+
+type UpdateEmailMessageIDParams struct {
+	ID        string      `json:"id"`
+	MessageID pgtype.Text `json:"message_id"`
+}
+
+func (q *Queries) UpdateEmailMessageID(ctx context.Context, arg UpdateEmailMessageIDParams) error {
+	_, err := q.db.Exec(ctx, updateEmailMessageID, arg.ID, arg.MessageID)
+	return err
+}
+
 const updateEmailSent = `-- name: UpdateEmailSent :one
 UPDATE emails 
-SET status = 'sent', provider_id = $2, sent_at = NOW(), updated_at = NOW() 
+SET status = 'sent', provider_id = $2, message_id = $3, sent_at = NOW(), updated_at = NOW() 
 WHERE id = $1 
-RETURNING id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses, subject, body, html, status, provider_id, metadata, scheduled_at, sent_at, error_message, created_at, updated_at
+RETURNING id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses, subject, body, html, status, provider_id, metadata, scheduled_at, sent_at, error_message, created_at, updated_at, message_id, in_reply_to
 `
 
 type UpdateEmailSentParams struct {
 	ID         string      `json:"id"`
 	ProviderID pgtype.Text `json:"provider_id"`
+	MessageID  pgtype.Text `json:"message_id"`
 }
 
 func (q *Queries) UpdateEmailSent(ctx context.Context, arg UpdateEmailSentParams) (Email, error) {
-	row := q.db.QueryRow(ctx, updateEmailSent, arg.ID, arg.ProviderID)
+	row := q.db.QueryRow(ctx, updateEmailSent, arg.ID, arg.ProviderID, arg.MessageID)
 	var i Email
 	err := row.Scan(
 		&i.ID,
@@ -409,6 +436,8 @@ func (q *Queries) UpdateEmailSent(ctx context.Context, arg UpdateEmailSentParams
 		&i.ErrorMessage,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MessageID,
+		&i.InReplyTo,
 	)
 	return i, err
 }
@@ -417,7 +446,7 @@ const updateEmailStatus = `-- name: UpdateEmailStatus :one
 UPDATE emails 
 SET status = $2, error_message = $3, updated_at = NOW() 
 WHERE id = $1 
-RETURNING id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses, subject, body, html, status, provider_id, metadata, scheduled_at, sent_at, error_message, created_at, updated_at
+RETURNING id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses, subject, body, html, status, provider_id, metadata, scheduled_at, sent_at, error_message, created_at, updated_at, message_id, in_reply_to
 `
 
 type UpdateEmailStatusParams struct {
@@ -447,6 +476,8 @@ func (q *Queries) UpdateEmailStatus(ctx context.Context, arg UpdateEmailStatusPa
 		&i.ErrorMessage,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MessageID,
+		&i.InReplyTo,
 	)
 	return i, err
 }

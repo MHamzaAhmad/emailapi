@@ -1328,6 +1328,14 @@
           "type": "string",
           "description": "Provider-specific ID (e.g. SES Message ID)."
         },
+        "messageId": {
+          "type": "string",
+          "description": "SES Message-ID for threading."
+        },
+        "inReplyTo": {
+          "type": "string",
+          "description": "Message-ID of email this is replying to."
+        },
         "userId": {
           "type": "string",
           "description": "ID of the user who sent the email."
@@ -1674,6 +1682,14 @@
             "$ref": "#/definitions/v1Attachment"
           },
           "description": "List of attachments."
+        },
+        "inReplyTo": {
+          "type": "string",
+          "description": "Message-ID of the email being replied to (for threading)."
+        },
+        "async": {
+          "type": "boolean",
+          "description": "If true, queue for async processing (we handle retries).\nIf false, send synchronously and return message_id immediately.\nEmails with attachments are always async."
         }
       },
       "description": "SendEmailRequest is the payload for sending an email."
@@ -1688,6 +1704,14 @@
         "status": {
           "$ref": "#/definitions/v1EmailStatus",
           "description": "Current status of the email."
+        },
+        "messageId": {
+          "type": "string",
+          "description": "SES Message-ID (only present if async=false and send succeeded)."
+        },
+        "statusMessage": {
+          "type": "string",
+          "description": "Human-readable status message."
         }
       },
       "description": "SendEmailResponse contains the ID of the sent email."

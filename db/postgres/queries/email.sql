@@ -1,9 +1,9 @@
 -- name: CreateEmail :one
 INSERT INTO emails (
     id, user_id, from_address, to_addresses, cc_addresses, bcc_addresses,
-    subject, body, html, status, metadata, scheduled_at
+    subject, body, html, status, metadata, scheduled_at, in_reply_to
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
 ) RETURNING *;
 
 -- name: GetEmailByID :one
@@ -23,9 +23,14 @@ RETURNING *;
 
 -- name: UpdateEmailSent :one
 UPDATE emails 
-SET status = 'sent', provider_id = $2, sent_at = NOW(), updated_at = NOW() 
+SET status = 'sent', provider_id = $2, message_id = $3, sent_at = NOW(), updated_at = NOW() 
 WHERE id = $1 
 RETURNING *;
+
+-- name: UpdateEmailMessageID :exec
+UPDATE emails 
+SET message_id = $2, updated_at = NOW() 
+WHERE id = $1;
 
 -- name: DeleteEmail :exec
 DELETE FROM emails WHERE id = $1;

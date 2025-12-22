@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/email.proto.
  */
 export const file_v1_email: GenFile = /*@__PURE__*/
-  fileDesc("Cg52MS9lbWFpbC5wcm90bxILZW1haWxhcGkudjEiwgIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSPQoIbWV0YWRhdGEYCCADKAsyKy5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCgthdHRhY2htZW50cxgKIAMoCzIXLmVtYWlsYXBpLnYxLkF0dGFjaG1lbnQaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBImcKCkF0dGFjaG1lbnQSEAoIZmlsZW5hbWUYASABKAkSFAoMY29udGVudF90eXBlGAIgASgJEg0KA3VybBgDIAEoCUgAEhgKDmJhc2U2NF9jb250ZW50GAQgASgJSABCCAoGc291cmNlIkkKEVNlbmRFbWFpbFJlc3BvbnNlEgoKAmlkGAEgASgJEigKBnN0YXR1cxgCIAEoDjIYLmVtYWlsYXBpLnYxLkVtYWlsU3RhdHVzIh0KD0dldEVtYWlsUmVxdWVzdBIKCgJpZBgBIAEoCSKxBAoFRW1haWwSCgoCaWQYASABKAkSDAoEZnJvbRgCIAEoCRIKCgJ0bxgDIAMoCRIKCgJjYxgEIAMoCRILCgNiY2MYBSADKAkSDwoHc3ViamVjdBgGIAEoCRIMCgRib2R5GAcgASgJEgwKBGh0bWwYCCABKAkSKAoGc3RhdHVzGAkgASgOMhguZW1haWxhcGkudjEuRW1haWxTdGF0dXMSEwoLcHJvdmlkZXJfaWQYCiABKAkSDwoHdXNlcl9pZBgLIAEoCRIyCghtZXRhZGF0YRgMIAMoCzIgLmVtYWlsYXBpLnYxLkVtYWlsLk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GA0gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCgdzZW50X2F0GA4gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX2F0GA8gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GBAgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIxCgthdHRhY2htZW50cxgRIAMoCzIcLmVtYWlsYXBpLnYxLkVtYWlsQXR0YWNobWVudBIVCg1lcnJvcl9tZXNzYWdlGBIgASgJGi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJuCg9FbWFpbEF0dGFjaG1lbnQSCgoCaWQYASABKAkSEAoIZmlsZW5hbWUYAiABKAkSFAoMY29udGVudF90eXBlGAMgASgJEhIKCnNpemVfYnl0ZXMYBCABKAMSEwoLc2Nhbl9zdGF0dXMYBSABKAkiYAoRTGlzdEVtYWlsc1JlcXVlc3QSLAoIY2F0ZWdvcnkYASABKA4yGi5lbWFpbGFwaS52MS5FbWFpbENhdGVnb3J5Eg0KBWxpbWl0GAIgASgFEg4KBm9mZnNldBgDIAEoBSKYAQoSTGlzdEVtYWlsc1Jlc3BvbnNlEiAKBGRhdGEYASADKAsyEi5lbWFpbGFwaS52MS5FbWFpbBINCgVsaW1pdBgCIAEoBRIOCgZvZmZzZXQYAyABKAUSEwoLdG90YWxfY291bnQYBCABKAUSLAoIY2F0ZWdvcnkYBSABKA4yGi5lbWFpbGFwaS52MS5FbWFpbENhdGVnb3J5KrICCgtFbWFpbFN0YXR1cxIcChhFTUFJTF9TVEFUVVNfVU5TUEVDSUZJRUQQABIYChRFTUFJTF9TVEFUVVNfUEVORElORxABEicKI0VNQUlMX1NUQVRVU19QUk9DRVNTSU5HX0FUVEFDSE1FTlRTEAISJQohRU1BSUxfU1RBVFVTX1NDQU5OSU5HX0FUVEFDSE1FTlRTEAMSHAoYRU1BSUxfU1RBVFVTX1NDQU5fRkFJTEVEEAQSFwoTRU1BSUxfU1RBVFVTX1FVRVVFRBAFEhUKEUVNQUlMX1NUQVRVU19TRU5UEAYSGgoWRU1BSUxfU1RBVFVTX0RFTElWRVJFRBAHEhcKE0VNQUlMX1NUQVRVU19GQUlMRUQQCBIYChRFTUFJTF9TVEFUVVNfQk9VTkNFRBAJKmcKDUVtYWlsQ2F0ZWdvcnkSHgoaRU1BSUxfQ0FURUdPUllfVU5TUEVDSUZJRUQQABIZChVFTUFJTF9DQVRFR09SWV9BQ1RJVkUQARIbChdFTUFJTF9DQVRFR09SWV9BUkNISVZFRBACMqkCCgxFbWFpbFNlcnZpY2USXwoJU2VuZEVtYWlsEh0uZW1haWxhcGkudjEuU2VuZEVtYWlsUmVxdWVzdBoeLmVtYWlsYXBpLnYxLlNlbmRFbWFpbFJlc3BvbnNlIhOC0+STAg06ASoiCC92MS9zZW5kElUKCEdldEVtYWlsEhwuZW1haWxhcGkudjEuR2V0RW1haWxSZXF1ZXN0GhIuZW1haWxhcGkudjEuRW1haWwiF4LT5JMCERIPL3YxL2VtYWlscy97aWR9EmEKCkxpc3RFbWFpbHMSHi5lbWFpbGFwaS52MS5MaXN0RW1haWxzUmVxdWVzdBofLmVtYWlsYXBpLnYxLkxpc3RFbWFpbHNSZXNwb25zZSISgtPkkwIMEgovdjEvZW1haWxzQpgBCg9jb20uZW1haWxhcGkudjFCCkVtYWlsUHJvdG9QAVosZ2l0aHViLmNvbS9lbWFpbGFwaS9zZGstZ28vZ2VuL3YxO2VtYWlsYXBpdjGiAgNFWFiqAgtFbWFpbGFwaS5WMcoCC0VtYWlsYXBpXFYx4gIXRW1haWxhcGlcVjFcR1BCTWV0YWRhdGHqAgxFbWFpbGFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations, file_google_protobuf_timestamp]);
+  fileDesc("Cg52MS9lbWFpbC5wcm90bxILZW1haWxhcGkudjEi5gIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSPQoIbWV0YWRhdGEYCCADKAsyKy5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCgthdHRhY2htZW50cxgKIAMoCzIXLmVtYWlsYXBpLnYxLkF0dGFjaG1lbnQSEwoLaW5fcmVwbHlfdG8YCyABKAkSDQoFYXN5bmMYDCABKAgaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBImcKCkF0dGFjaG1lbnQSEAoIZmlsZW5hbWUYASABKAkSFAoMY29udGVudF90eXBlGAIgASgJEg0KA3VybBgDIAEoCUgAEhgKDmJhc2U2NF9jb250ZW50GAQgASgJSABCCAoGc291cmNlInUKEVNlbmRFbWFpbFJlc3BvbnNlEgoKAmlkGAEgASgJEigKBnN0YXR1cxgCIAEoDjIYLmVtYWlsYXBpLnYxLkVtYWlsU3RhdHVzEhIKCm1lc3NhZ2VfaWQYAyABKAkSFgoOc3RhdHVzX21lc3NhZ2UYBCABKAkiHQoPR2V0RW1haWxSZXF1ZXN0EgoKAmlkGAEgASgJItoECgVFbWFpbBIKCgJpZBgBIAEoCRIMCgRmcm9tGAIgASgJEgoKAnRvGAMgAygJEgoKAmNjGAQgAygJEgsKA2JjYxgFIAMoCRIPCgdzdWJqZWN0GAYgASgJEgwKBGJvZHkYByABKAkSDAoEaHRtbBgIIAEoCRIoCgZzdGF0dXMYCSABKA4yGC5lbWFpbGFwaS52MS5FbWFpbFN0YXR1cxITCgtwcm92aWRlcl9pZBgKIAEoCRISCgptZXNzYWdlX2lkGAsgASgJEhMKC2luX3JlcGx5X3RvGAwgASgJEg8KB3VzZXJfaWQYDSABKAkSMgoIbWV0YWRhdGEYDiADKAsyIC5lbWFpbGFwaS52MS5FbWFpbC5NZXRhZGF0YUVudHJ5EjAKDHNjaGVkdWxlZF9hdBgPIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKwoHc2VudF9hdBgQIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKY3JlYXRlZF9hdBgRIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgSIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoLYXR0YWNobWVudHMYEyADKAsyHC5lbWFpbGFwaS52MS5FbWFpbEF0dGFjaG1lbnQSFQoNZXJyb3JfbWVzc2FnZRgUIAEoCRovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEibgoPRW1haWxBdHRhY2htZW50EgoKAmlkGAEgASgJEhAKCGZpbGVuYW1lGAIgASgJEhQKDGNvbnRlbnRfdHlwZRgDIAEoCRISCgpzaXplX2J5dGVzGAQgASgDEhMKC3NjYW5fc3RhdHVzGAUgASgJImAKEUxpc3RFbWFpbHNSZXF1ZXN0EiwKCGNhdGVnb3J5GAEgASgOMhouZW1haWxhcGkudjEuRW1haWxDYXRlZ29yeRINCgVsaW1pdBgCIAEoBRIOCgZvZmZzZXQYAyABKAUimAEKEkxpc3RFbWFpbHNSZXNwb25zZRIgCgRkYXRhGAEgAygLMhIuZW1haWxhcGkudjEuRW1haWwSDQoFbGltaXQYAiABKAUSDgoGb2Zmc2V0GAMgASgFEhMKC3RvdGFsX2NvdW50GAQgASgFEiwKCGNhdGVnb3J5GAUgASgOMhouZW1haWxhcGkudjEuRW1haWxDYXRlZ29yeSqyAgoLRW1haWxTdGF0dXMSHAoYRU1BSUxfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGAoURU1BSUxfU1RBVFVTX1BFTkRJTkcQARInCiNFTUFJTF9TVEFUVVNfUFJPQ0VTU0lOR19BVFRBQ0hNRU5UUxACEiUKIUVNQUlMX1NUQVRVU19TQ0FOTklOR19BVFRBQ0hNRU5UUxADEhwKGEVNQUlMX1NUQVRVU19TQ0FOX0ZBSUxFRBAEEhcKE0VNQUlMX1NUQVRVU19RVUVVRUQQBRIVChFFTUFJTF9TVEFUVVNfU0VOVBAGEhoKFkVNQUlMX1NUQVRVU19ERUxJVkVSRUQQBxIXChNFTUFJTF9TVEFUVVNfRkFJTEVEEAgSGAoURU1BSUxfU1RBVFVTX0JPVU5DRUQQCSpnCg1FbWFpbENhdGVnb3J5Eh4KGkVNQUlMX0NBVEVHT1JZX1VOU1BFQ0lGSUVEEAASGQoVRU1BSUxfQ0FURUdPUllfQUNUSVZFEAESGwoXRU1BSUxfQ0FURUdPUllfQVJDSElWRUQQAjKpAgoMRW1haWxTZXJ2aWNlEl8KCVNlbmRFbWFpbBIdLmVtYWlsYXBpLnYxLlNlbmRFbWFpbFJlcXVlc3QaHi5lbWFpbGFwaS52MS5TZW5kRW1haWxSZXNwb25zZSITgtPkkwINOgEqIggvdjEvc2VuZBJVCghHZXRFbWFpbBIcLmVtYWlsYXBpLnYxLkdldEVtYWlsUmVxdWVzdBoSLmVtYWlsYXBpLnYxLkVtYWlsIheC0+STAhESDy92MS9lbWFpbHMve2lkfRJhCgpMaXN0RW1haWxzEh4uZW1haWxhcGkudjEuTGlzdEVtYWlsc1JlcXVlc3QaHy5lbWFpbGFwaS52MS5MaXN0RW1haWxzUmVzcG9uc2UiEoLT5JMCDBIKL3YxL2VtYWlsc0KYAQoPY29tLmVtYWlsYXBpLnYxQgpFbWFpbFByb3RvUAFaLGdpdGh1Yi5jb20vZW1haWxhcGkvc2RrLWdvL2dlbi92MTtlbWFpbGFwaXYxogIDRVhYqgILRW1haWxhcGkuVjHKAgtFbWFpbGFwaVxWMeICF0VtYWlsYXBpXFYxXEdQQk1ldGFkYXRh6gIMRW1haWxhcGk6OlYxYgZwcm90bzM", [file_google_api_annotations, file_google_protobuf_timestamp]);
 
 /**
  * SendEmailRequest is the payload for sending an email.
@@ -90,6 +90,22 @@ export type SendEmailRequest = Message<"emailapi.v1.SendEmailRequest"> & {
    * @generated from field: repeated emailapi.v1.Attachment attachments = 10;
    */
   attachments: Attachment[];
+
+  /**
+   * Message-ID of the email being replied to (for threading).
+   *
+   * @generated from field: string in_reply_to = 11;
+   */
+  inReplyTo: string;
+
+  /**
+   * If true, queue for async processing (we handle retries).
+   * If false, send synchronously and return message_id immediately.
+   * Emails with attachments are always async.
+   *
+   * @generated from field: bool async = 12;
+   */
+  async: boolean;
 };
 
 /**
@@ -169,6 +185,20 @@ export type SendEmailResponse = Message<"emailapi.v1.SendEmailResponse"> & {
    * @generated from field: emailapi.v1.EmailStatus status = 2;
    */
   status: EmailStatus;
+
+  /**
+   * SES Message-ID (only present if async=false and send succeeded).
+   *
+   * @generated from field: string message_id = 3;
+   */
+  messageId: string;
+
+  /**
+   * Human-readable status message.
+   *
+   * @generated from field: string status_message = 4;
+   */
+  statusMessage: string;
 };
 
 /**
@@ -276,58 +306,72 @@ export type Email = Message<"emailapi.v1.Email"> & {
   providerId: string;
 
   /**
+   * SES Message-ID for threading.
+   *
+   * @generated from field: string message_id = 11;
+   */
+  messageId: string;
+
+  /**
+   * Message-ID of email this is replying to.
+   *
+   * @generated from field: string in_reply_to = 12;
+   */
+  inReplyTo: string;
+
+  /**
    * ID of the user who sent the email.
    *
-   * @generated from field: string user_id = 11;
+   * @generated from field: string user_id = 13;
    */
   userId: string;
 
   /**
    * Custom metadata attached to the email.
    *
-   * @generated from field: map<string, string> metadata = 12;
+   * @generated from field: map<string, string> metadata = 14;
    */
   metadata: { [key: string]: string };
 
   /**
    * Time when the email is scheduled to be sent.
    *
-   * @generated from field: google.protobuf.Timestamp scheduled_at = 13;
+   * @generated from field: google.protobuf.Timestamp scheduled_at = 15;
    */
   scheduledAt?: Timestamp;
 
   /**
    * Time when the email was sent to the provider.
    *
-   * @generated from field: google.protobuf.Timestamp sent_at = 14;
+   * @generated from field: google.protobuf.Timestamp sent_at = 16;
    */
   sentAt?: Timestamp;
 
   /**
    * Time when the email record was created.
    *
-   * @generated from field: google.protobuf.Timestamp created_at = 15;
+   * @generated from field: google.protobuf.Timestamp created_at = 17;
    */
   createdAt?: Timestamp;
 
   /**
    * Time when the email record was last updated.
    *
-   * @generated from field: google.protobuf.Timestamp updated_at = 16;
+   * @generated from field: google.protobuf.Timestamp updated_at = 18;
    */
   updatedAt?: Timestamp;
 
   /**
    * Attachments associated with this email.
    *
-   * @generated from field: repeated emailapi.v1.EmailAttachment attachments = 17;
+   * @generated from field: repeated emailapi.v1.EmailAttachment attachments = 19;
    */
   attachments: EmailAttachment[];
 
   /**
    * Error message if the email failed.
    *
-   * @generated from field: string error_message = 18;
+   * @generated from field: string error_message = 20;
    */
   errorMessage: string;
 };

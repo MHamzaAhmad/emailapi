@@ -5,7 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"github.com/google/uuid"
 
 	"github.com/jackc/pgx/v5"
@@ -13,6 +17,7 @@ import (
 
 	emailapi "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/domain"
+	"github.com/emailapi/api/internal/external/ses"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	pgrepo "github.com/emailapi/api/internal/repository/postgres"
 	"github.com/emailapi/api/internal/validation"
@@ -26,6 +31,7 @@ type EmailService struct {
 	pgRepo      *pgrepo.EmailRepository
 	chRepo      *chrepo.EmailRepository
 	validator   *validation.EmailValidator
+	ses         ses.Client
 }
 
 // NewEmailService creates a new EmailService.
@@ -34,20 +40,22 @@ func NewEmailService(
 	pgRepo *pgrepo.EmailRepository,
 	chRepo *chrepo.EmailRepository,
 	validator *validation.EmailValidator,
+	sesClient ses.Client,
 ) *EmailService {
 	return &EmailService{
 		riverClient: riverClient,
 		pgRepo:      pgRepo,
 		chRepo:      chRepo,
 		validator:   validator,
+		ses:         sesClient,
 	}
 }
 
 // SendEmail handles sending an email request.
-// 1. Validates all email addresses (FROM domain ownership, TO/CC/BCC validity)
-// 2. Saves email to PostgreSQL with pending status
-// 3. Enqueues attachment processing job (if attachments) or send job (if no attachments)
-// 4. Returns immediately with email ID
+// Behavior is controlled by the async flag:
+// - async=false: Send synchronously, return message_id immediately (user handles retries)
+// - async=true: Queue for async processing (we handle retries)
+// - With attachments: Always async (must process/scan first)
 func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailRequest) (*emailapi.SendEmailResponse, error) {
 	// Get user ID from context (set by auth interceptor)
 	userID, ok := ctx.Value("user_id").(string)
@@ -70,25 +78,20 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 		metadata[k] = v
 	}
 
-	// Determine initial status
-	status := domain.EmailStatusPending
-	if len(req.Attachments) > 0 {
-		status = domain.EmailStatusProcessingAttachments
-	}
-
-	// Create email record in PostgreSQL
+	// Create email record
 	email := &domain.Email{
-		ID:       emailID,
-		UserID:   userID,
-		From:     req.From,
-		To:       req.To,
-		Cc:       req.Cc,
-		Bcc:      req.Bcc,
-		Subject:  req.Subject,
-		Body:     req.Body,
-		HTML:     req.Html,
-		Status:   status,
-		Metadata: metadata,
+		ID:        emailID,
+		UserID:    userID,
+		From:      req.From,
+		To:        req.To,
+		Cc:        req.Cc,
+		Bcc:       req.Bcc,
+		Subject:   req.Subject,
+		Body:      req.Body,
+		HTML:      req.Html,
+		InReplyTo: req.InReplyTo,
+		Status:    domain.EmailStatusPending,
+		Metadata:  metadata,
 	}
 
 	if req.ScheduledAt != nil {
@@ -96,57 +99,152 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 		email.ScheduledAt = &t
 	}
 
+	// Attachments force async
+	if len(req.Attachments) > 0 {
+		email.Status = domain.EmailStatusProcessingAttachments
+		if err := s.pgRepo.Create(ctx, email); err != nil {
+			return nil, fmt.Errorf("failed to create email: %w", err)
+		}
+		return s.queueWithAttachments(ctx, emailID, req.Attachments)
+	}
+
+	// User wants async
+	if req.Async {
+		email.Status = domain.EmailStatusQueued
+		if err := s.pgRepo.Create(ctx, email); err != nil {
+			return nil, fmt.Errorf("failed to create email: %w", err)
+		}
+		return s.queueForSend(ctx, emailID)
+	}
+
+	// Sync path: Try to send immediately with timeout
 	if err := s.pgRepo.Create(ctx, email); err != nil {
 		return nil, fmt.Errorf("failed to create email: %w", err)
 	}
 
-	// Enqueue appropriate job
-	if len(req.Attachments) > 0 {
-		// Convert attachments to worker format
-		var attachments []worker.AttachmentSource
-		for _, att := range req.Attachments {
-			source := worker.AttachmentSource{
-				Filename:    att.Filename,
-				ContentType: att.ContentType,
-			}
-			// Handle oneof source
-			switch src := att.Source.(type) {
-			case *emailapi.Attachment_Url:
-				source.URL = src.Url
-			case *emailapi.Attachment_Base64Content:
-				source.Base64Content = src.Base64Content
-			}
-			attachments = append(attachments, source)
-		}
+	sendCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
 
-		// Enqueue attachment processing job
-		_, err := s.riverClient.Insert(ctx, worker.ProcessAttachmentsArgs{
-			EmailID:     emailID,
-			Attachments: attachments,
-		}, nil)
-		if err != nil {
-			// Update status to failed
-			s.pgRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, fmt.Sprintf("Failed to enqueue attachment job: %v", err))
-			return nil, fmt.Errorf("failed to enqueue attachment job: %w", err)
-		}
-	} else {
-		// No attachments - enqueue send job directly
-		_, err := s.riverClient.Insert(ctx, worker.SendEmailArgs{
-			EmailID: emailID,
-		}, nil)
-		if err != nil {
-			s.pgRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, fmt.Sprintf("Failed to enqueue send job: %v", err))
-			return nil, fmt.Errorf("failed to enqueue send job: %w", err)
-		}
+	messageID, err := s.sendToSES(sendCtx, email)
+	if err != nil {
+		// Sync failed - return error (user handles retry)
+		s.pgRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, err.Error())
+		return nil, fmt.Errorf("send failed: %w", err)
+	}
 
-		// Update status to queued
-		s.pgRepo.UpdateStatus(ctx, emailID, domain.EmailStatusQueued, "")
+	// Success - update and return message_id
+	s.pgRepo.UpdateSent(ctx, emailID, messageID, messageID)
+
+	return &emailapi.SendEmailResponse{
+		Id:            emailID,
+		MessageId:     messageID,
+		Status:        emailapi.EmailStatus_EMAIL_STATUS_SENT,
+		StatusMessage: "Email sent successfully",
+	}, nil
+}
+
+// queueWithAttachments queues an email for attachment processing.
+func (s *EmailService) queueWithAttachments(ctx context.Context, emailID string, attachments []*emailapi.Attachment) (*emailapi.SendEmailResponse, error) {
+	var workerAttachments []worker.AttachmentSource
+	for _, att := range attachments {
+		source := worker.AttachmentSource{
+			Filename:    att.Filename,
+			ContentType: att.ContentType,
+		}
+		switch src := att.Source.(type) {
+		case *emailapi.Attachment_Url:
+			source.URL = src.Url
+		case *emailapi.Attachment_Base64Content:
+			source.Base64Content = src.Base64Content
+		}
+		workerAttachments = append(workerAttachments, source)
+	}
+
+	_, err := s.riverClient.Insert(ctx, worker.ProcessAttachmentsArgs{
+		EmailID:     emailID,
+		Attachments: workerAttachments,
+	}, nil)
+	if err != nil {
+		s.pgRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, fmt.Sprintf("Failed to enqueue: %v", err))
+		return nil, fmt.Errorf("failed to enqueue attachment job: %w", err)
 	}
 
 	return &emailapi.SendEmailResponse{
-		Id:     emailID,
-		Status: emailapi.EmailStatus_EMAIL_STATUS_PENDING,
+		Id:            emailID,
+		Status:        emailapi.EmailStatus_EMAIL_STATUS_PROCESSING_ATTACHMENTS,
+		StatusMessage: "Processing attachments before sending",
 	}, nil
+}
+
+// queueForSend queues an email for async sending.
+func (s *EmailService) queueForSend(ctx context.Context, emailID string) (*emailapi.SendEmailResponse, error) {
+	_, err := s.riverClient.Insert(ctx, worker.SendEmailArgs{
+		EmailID: emailID,
+	}, nil)
+	if err != nil {
+		s.pgRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, fmt.Sprintf("Failed to enqueue: %v", err))
+		return nil, fmt.Errorf("failed to enqueue send job: %w", err)
+	}
+
+	return &emailapi.SendEmailResponse{
+		Id:            emailID,
+		Status:        emailapi.EmailStatus_EMAIL_STATUS_QUEUED,
+		StatusMessage: "Email queued for sending",
+	}, nil
+}
+
+// sendToSES sends the email to SES and returns the message ID.
+func (s *EmailService) sendToSES(ctx context.Context, email *domain.Email) (string, error) {
+	// Build destination
+	dest := &types.Destination{
+		ToAddresses:  email.To,
+		CcAddresses:  email.Cc,
+		BccAddresses: email.Bcc,
+	}
+
+	// Build content
+	var body types.Body
+	if email.HTML != "" {
+		body.Html = &types.Content{
+			Data:    aws.String(email.HTML),
+			Charset: aws.String("UTF-8"),
+		}
+	}
+	if email.Body != "" {
+		body.Text = &types.Content{
+			Data:    aws.String(email.Body),
+			Charset: aws.String("UTF-8"),
+		}
+	}
+
+	input := &sesv2.SendEmailInput{
+		FromEmailAddress: aws.String(email.From),
+		Destination:      dest,
+		Content: &types.EmailContent{
+			Simple: &types.Message{
+				Subject: &types.Content{
+					Data:    aws.String(email.Subject),
+					Charset: aws.String("UTF-8"),
+				},
+				Body: &body,
+			},
+		},
+	}
+
+	// Add reply-to headers if present
+	if email.InReplyTo != "" {
+		input.EmailTags = append(input.EmailTags, types.MessageTag{
+			Name:  aws.String("InReplyTo"),
+			Value: aws.String(email.InReplyTo),
+		})
+	}
+
+	output, err := s.ses.SendEmail(ctx, input)
+	if err != nil {
+		return "", err
+	}
+
+	return aws.ToString(output.MessageId), nil
 }
 
 // GetEmail retrieves an email by ID using cascading lookup (PG → CH → 404).
@@ -249,6 +347,8 @@ func domainEmailToProto(email *domain.Email, attachments []*domain.EmailAttachme
 		Html:         email.HTML,
 		Status:       domainStatusToProto(email.Status),
 		ProviderId:   email.ProviderID,
+		MessageId:    email.MessageID,
+		InReplyTo:    email.InReplyTo,
 		UserId:       email.UserID,
 		ErrorMessage: email.ErrorMessage,
 	}

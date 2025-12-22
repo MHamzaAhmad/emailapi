@@ -57,6 +57,8 @@ type Email struct {
 	ErrorMessage pgtype.Text        `json:"error_message"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	MessageID    pgtype.Text        `json:"message_id"`
+	InReplyTo    pgtype.Text        `json:"in_reply_to"`
 }
 
 type EmailAttachment struct {

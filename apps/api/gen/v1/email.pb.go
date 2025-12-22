@@ -168,7 +168,13 @@ type SendEmailRequest struct {
 	// Optional timestamp to schedule the email for future delivery.
 	ScheduledAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=scheduled_at,json=scheduledAt,proto3" json:"scheduled_at,omitempty"`
 	// List of attachments.
-	Attachments   []*Attachment `protobuf:"bytes,10,rep,name=attachments,proto3" json:"attachments,omitempty"`
+	Attachments []*Attachment `protobuf:"bytes,10,rep,name=attachments,proto3" json:"attachments,omitempty"`
+	// Message-ID of the email being replied to (for threading).
+	InReplyTo string `protobuf:"bytes,11,opt,name=in_reply_to,json=inReplyTo,proto3" json:"in_reply_to,omitempty"`
+	// If true, queue for async processing (we handle retries).
+	// If false, send synchronously and return message_id immediately.
+	// Emails with attachments are always async.
+	Async         bool `protobuf:"varint,12,opt,name=async,proto3" json:"async,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -271,6 +277,20 @@ func (x *SendEmailRequest) GetAttachments() []*Attachment {
 		return x.Attachments
 	}
 	return nil
+}
+
+func (x *SendEmailRequest) GetInReplyTo() string {
+	if x != nil {
+		return x.InReplyTo
+	}
+	return ""
+}
+
+func (x *SendEmailRequest) GetAsync() bool {
+	if x != nil {
+		return x.Async
+	}
+	return false
 }
 
 // Attachment represents a file to be attached to the email.
@@ -384,7 +404,11 @@ type SendEmailResponse struct {
 	// Unique identifier for the email.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Current status of the email.
-	Status        EmailStatus `protobuf:"varint,2,opt,name=status,proto3,enum=emailapi.v1.EmailStatus" json:"status,omitempty"`
+	Status EmailStatus `protobuf:"varint,2,opt,name=status,proto3,enum=emailapi.v1.EmailStatus" json:"status,omitempty"`
+	// SES Message-ID (only present if async=false and send succeeded).
+	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// Human-readable status message.
+	StatusMessage string `protobuf:"bytes,4,opt,name=status_message,json=statusMessage,proto3" json:"status_message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -431,6 +455,20 @@ func (x *SendEmailResponse) GetStatus() EmailStatus {
 		return x.Status
 	}
 	return EmailStatus_EMAIL_STATUS_UNSPECIFIED
+}
+
+func (x *SendEmailResponse) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *SendEmailResponse) GetStatusMessage() string {
+	if x != nil {
+		return x.StatusMessage
+	}
+	return ""
 }
 
 // GetEmailRequest identifies the email to retrieve.
@@ -502,22 +540,26 @@ type Email struct {
 	Status EmailStatus `protobuf:"varint,9,opt,name=status,proto3,enum=emailapi.v1.EmailStatus" json:"status,omitempty"`
 	// Provider-specific ID (e.g. SES Message ID).
 	ProviderId string `protobuf:"bytes,10,opt,name=provider_id,json=providerId,proto3" json:"provider_id,omitempty"`
+	// SES Message-ID for threading.
+	MessageId string `protobuf:"bytes,11,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// Message-ID of email this is replying to.
+	InReplyTo string `protobuf:"bytes,12,opt,name=in_reply_to,json=inReplyTo,proto3" json:"in_reply_to,omitempty"`
 	// ID of the user who sent the email.
-	UserId string `protobuf:"bytes,11,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId string `protobuf:"bytes,13,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// Custom metadata attached to the email.
-	Metadata map[string]string `protobuf:"bytes,12,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Metadata map[string]string `protobuf:"bytes,14,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Time when the email is scheduled to be sent.
-	ScheduledAt *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=scheduled_at,json=scheduledAt,proto3" json:"scheduled_at,omitempty"`
+	ScheduledAt *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=scheduled_at,json=scheduledAt,proto3" json:"scheduled_at,omitempty"`
 	// Time when the email was sent to the provider.
-	SentAt *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=sent_at,json=sentAt,proto3" json:"sent_at,omitempty"`
+	SentAt *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=sent_at,json=sentAt,proto3" json:"sent_at,omitempty"`
 	// Time when the email record was created.
-	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	// Time when the email record was last updated.
-	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	// Attachments associated with this email.
-	Attachments []*EmailAttachment `protobuf:"bytes,17,rep,name=attachments,proto3" json:"attachments,omitempty"`
+	Attachments []*EmailAttachment `protobuf:"bytes,19,rep,name=attachments,proto3" json:"attachments,omitempty"`
 	// Error message if the email failed.
-	ErrorMessage  string `protobuf:"bytes,18,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
+	ErrorMessage  string `protobuf:"bytes,20,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -618,6 +660,20 @@ func (x *Email) GetStatus() EmailStatus {
 func (x *Email) GetProviderId() string {
 	if x != nil {
 		return x.ProviderId
+	}
+	return ""
+}
+
+func (x *Email) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *Email) GetInReplyTo() string {
+	if x != nil {
+		return x.InReplyTo
 	}
 	return ""
 }
@@ -911,7 +967,7 @@ var File_v1_email_proto protoreflect.FileDescriptor
 
 const file_v1_email_proto_rawDesc = "" +
 	"\n" +
-	"\x0ev1/email.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9a\x03\n" +
+	"\x0ev1/email.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd0\x03\n" +
 	"\x10SendEmailRequest\x12\x12\n" +
 	"\x04from\x18\x01 \x01(\tR\x04from\x12\x0e\n" +
 	"\x02to\x18\x02 \x03(\tR\x02to\x12\x0e\n" +
@@ -923,7 +979,9 @@ const file_v1_email_proto_rawDesc = "" +
 	"\bmetadata\x18\b \x03(\v2+.emailapi.v1.SendEmailRequest.MetadataEntryR\bmetadata\x12=\n" +
 	"\fscheduled_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\vscheduledAt\x129\n" +
 	"\vattachments\x18\n" +
-	" \x03(\v2\x17.emailapi.v1.AttachmentR\vattachments\x1a;\n" +
+	" \x03(\v2\x17.emailapi.v1.AttachmentR\vattachments\x12\x1e\n" +
+	"\vin_reply_to\x18\v \x01(\tR\tinReplyTo\x12\x14\n" +
+	"\x05async\x18\f \x01(\bR\x05async\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x92\x01\n" +
@@ -933,12 +991,15 @@ const file_v1_email_proto_rawDesc = "" +
 	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\x12\x12\n" +
 	"\x03url\x18\x03 \x01(\tH\x00R\x03url\x12'\n" +
 	"\x0ebase64_content\x18\x04 \x01(\tH\x00R\rbase64ContentB\b\n" +
-	"\x06source\"U\n" +
+	"\x06source\"\x9b\x01\n" +
 	"\x11SendEmailResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x120\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x18.emailapi.v1.EmailStatusR\x06status\"!\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x18.emailapi.v1.EmailStatusR\x06status\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x03 \x01(\tR\tmessageId\x12%\n" +
+	"\x0estatus_message\x18\x04 \x01(\tR\rstatusMessage\"!\n" +
 	"\x0fGetEmailRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xd5\x05\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x94\x06\n" +
 	"\x05Email\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04from\x18\x02 \x01(\tR\x04from\x12\x0e\n" +
@@ -951,17 +1012,20 @@ const file_v1_email_proto_rawDesc = "" +
 	"\x06status\x18\t \x01(\x0e2\x18.emailapi.v1.EmailStatusR\x06status\x12\x1f\n" +
 	"\vprovider_id\x18\n" +
 	" \x01(\tR\n" +
-	"providerId\x12\x17\n" +
-	"\auser_id\x18\v \x01(\tR\x06userId\x12<\n" +
-	"\bmetadata\x18\f \x03(\v2 .emailapi.v1.Email.MetadataEntryR\bmetadata\x12=\n" +
-	"\fscheduled_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\vscheduledAt\x123\n" +
-	"\asent_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\x06sentAt\x129\n" +
+	"providerId\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"message_id\x18\v \x01(\tR\tmessageId\x12\x1e\n" +
+	"\vin_reply_to\x18\f \x01(\tR\tinReplyTo\x12\x17\n" +
+	"\auser_id\x18\r \x01(\tR\x06userId\x12<\n" +
+	"\bmetadata\x18\x0e \x03(\v2 .emailapi.v1.Email.MetadataEntryR\bmetadata\x12=\n" +
+	"\fscheduled_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\vscheduledAt\x123\n" +
+	"\asent_at\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\x06sentAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12>\n" +
-	"\vattachments\x18\x11 \x03(\v2\x1c.emailapi.v1.EmailAttachmentR\vattachments\x12#\n" +
-	"\rerror_message\x18\x12 \x01(\tR\ferrorMessage\x1a;\n" +
+	"created_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12>\n" +
+	"\vattachments\x18\x13 \x03(\v2\x1c.emailapi.v1.EmailAttachmentR\vattachments\x12#\n" +
+	"\rerror_message\x18\x14 \x01(\tR\ferrorMessage\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa0\x01\n" +
