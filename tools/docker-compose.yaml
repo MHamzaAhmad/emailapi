@@ -47,16 +47,15 @@ services:
       timeout: 5s
       retries: 5
 
-  tabix:
-    image: spoonest/clickhouse-tabix-web-client:stable
-    container_name: emailapi-tabix
+  ch_ui:
+    image: ghcr.io/caioricciuti/ch-ui:latest
+    container_name: emailapi-ch-ui
     ports:
-      - "8124:80"
+      - "5521:5521"
     depends_on:
       - clickhouse
     environment:
-      CH_HOST: clickhouse
-      CH_PORT: 8123
+      CH_HOST: "http://localhost:8123"
 
   redis:
     image: redis:7-alpine
