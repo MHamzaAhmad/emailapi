@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/internal.proto.
  */
 export const file_v1_internal: GenFile = /*@__PURE__*/
-  fileDesc("ChF2MS9pbnRlcm5hbC5wcm90bxILZW1haWxhcGkudjEiaQoaR3VhcmREdXR5U2NhblJlc3VsdFJlcXVlc3QSEQoJczNfYnVja2V0GAEgASgJEg4KBnMzX2tleRgCIAEoCRITCgtzY2FuX3N0YXR1cxgDIAEoCRITCgt0aHJlYXRfbmFtZRgEIAEoCSI/ChtHdWFyZER1dHlTY2FuUmVzdWx0UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIuEBChZTTlNOb3RpZmljYXRpb25SZXF1ZXN0EgwKBHR5cGUYASABKAkSEgoKbWVzc2FnZV9pZBgCIAEoCRIRCgl0b3BpY19hcm4YAyABKAkSDwoHbWVzc2FnZRgEIAEoCRIVCg1zdWJzY3JpYmVfdXJsGAUgASgJEhEKCXRpbWVzdGFtcBgGIAEoCRIZChFzaWduYXR1cmVfdmVyc2lvbhgHIAEoCRIRCglzaWduYXR1cmUYCCABKAkSGAoQc2lnbmluZ19jZXJ0X3VybBgJIAEoCRIPCgdzdWJqZWN0GAogASgJIjsKF1NOU05vdGlmaWNhdGlvblJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSDwoHbWVzc2FnZRgCIAEoCSLKAQoMSW5ib3VuZEVtYWlsEgoKAmlkGAEgASgJEhIKCm1lc3NhZ2VfaWQYAiABKAkSEwoLaW5fcmVwbHlfdG8YAyABKAkSEgoKcmVmZXJlbmNlcxgEIAMoCRIMCgRmcm9tGAUgASgJEgoKAnRvGAYgAygJEg8KB3N1YmplY3QYByABKAkSDAoEYm9keRgIIAEoCRIMCgRodG1sGAkgASgJEhkKEW9yaWdpbmFsX2VtYWlsX2lkGAogASgJEg8KB3VzZXJfaWQYCyABKAkyvgIKD0ludGVybmFsU2VydmljZRKfAQoZSGFuZGxlR3VhcmREdXR5U2NhblJlc3VsdBInLmVtYWlsYXBpLnYxLkd1YXJkRHV0eVNjYW5SZXN1bHRSZXF1ZXN0GiguZW1haWxhcGkudjEuR3VhcmREdXR5U2NhblJlc3VsdFJlc3BvbnNlIi+C0+STAik6ASoiJC92MS9pbnRlcm5hbC93ZWJob29rcy9ndWFyZGR1dHktc2NhbhKIAQoVSGFuZGxlU05TTm90aWZpY2F0aW9uEiMuZW1haWxhcGkudjEuU05TTm90aWZpY2F0aW9uUmVxdWVzdBokLmVtYWlsYXBpLnYxLlNOU05vdGlmaWNhdGlvblJlc3BvbnNlIiSC0+STAh46ASoiGS92MS9pbnRlcm5hbC93ZWJob29rcy9zbnNCmwEKD2NvbS5lbWFpbGFwaS52MUINSW50ZXJuYWxQcm90b1ABWixnaXRodWIuY29tL2VtYWlsYXBpL3Nkay1nby9nZW4vdjE7ZW1haWxhcGl2MaICA0VYWKoCC0VtYWlsYXBpLlYxygILRW1haWxhcGlcVjHiAhdFbWFpbGFwaVxWMVxHUEJNZXRhZGF0YeoCDEVtYWlsYXBpOjpWMWIGcHJvdG8z", [file_google_api_annotations]);
+  fileDesc("ChF2MS9pbnRlcm5hbC5wcm90bxILZW1haWxhcGkudjEiaQoaR3VhcmREdXR5U2NhblJlc3VsdFJlcXVlc3QSEQoJczNfYnVja2V0GAEgASgJEg4KBnMzX2tleRgCIAEoCRITCgtzY2FuX3N0YXR1cxgDIAEoCRITCgt0aHJlYXRfbmFtZRgEIAEoCSI/ChtHdWFyZER1dHlTY2FuUmVzdWx0UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJItQCChZTTlNOb3RpZmljYXRpb25SZXF1ZXN0EhIKBHR5cGUYASABKAlSBFR5cGUSHQoKbWVzc2FnZV9pZBgCIAEoCVIJTWVzc2FnZUlkEhsKCXRvcGljX2FybhgDIAEoCVIIVG9waWNBcm4SGAoHbWVzc2FnZRgEIAEoCVIHTWVzc2FnZRIjCg1zdWJzY3JpYmVfdXJsGAUgASgJUgxTdWJzY3JpYmVVUkwSHAoJdGltZXN0YW1wGAYgASgJUglUaW1lc3RhbXASKwoRc2lnbmF0dXJlX3ZlcnNpb24YByABKAlSEFNpZ25hdHVyZVZlcnNpb24SHAoJc2lnbmF0dXJlGAggASgJUglTaWduYXR1cmUSKAoQc2lnbmluZ19jZXJ0X3VybBgJIAEoCVIOU2lnbmluZ0NlcnRVUkwSGAoHc3ViamVjdBgKIAEoCVIHU3ViamVjdCI7ChdTTlNOb3RpZmljYXRpb25SZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiygEKDEluYm91bmRFbWFpbBIKCgJpZBgBIAEoCRISCgptZXNzYWdlX2lkGAIgASgJEhMKC2luX3JlcGx5X3RvGAMgASgJEhIKCnJlZmVyZW5jZXMYBCADKAkSDAoEZnJvbRgFIAEoCRIKCgJ0bxgGIAMoCRIPCgdzdWJqZWN0GAcgASgJEgwKBGJvZHkYCCABKAkSDAoEaHRtbBgJIAEoCRIZChFvcmlnaW5hbF9lbWFpbF9pZBgKIAEoCRIPCgd1c2VyX2lkGAsgASgJMr4CCg9JbnRlcm5hbFNlcnZpY2USnwEKGUhhbmRsZUd1YXJkRHV0eVNjYW5SZXN1bHQSJy5lbWFpbGFwaS52MS5HdWFyZER1dHlTY2FuUmVzdWx0UmVxdWVzdBooLmVtYWlsYXBpLnYxLkd1YXJkRHV0eVNjYW5SZXN1bHRSZXNwb25zZSIvgtPkkwIpOgEqIiQvdjEvaW50ZXJuYWwvd2ViaG9va3MvZ3VhcmRkdXR5LXNjYW4SiAEKFUhhbmRsZVNOU05vdGlmaWNhdGlvbhIjLmVtYWlsYXBpLnYxLlNOU05vdGlmaWNhdGlvblJlcXVlc3QaJC5lbWFpbGFwaS52MS5TTlNOb3RpZmljYXRpb25SZXNwb25zZSIkgtPkkwIeOgEqIhkvdjEvaW50ZXJuYWwvd2ViaG9va3Mvc25zQpsBCg9jb20uZW1haWxhcGkudjFCDUludGVybmFsUHJvdG9QAVosZ2l0aHViLmNvbS9lbWFpbGFwaS9zZGstZ28vZ2VuL3YxO2VtYWlsYXBpdjGiAgNFWFiqAgtFbWFpbGFwaS5WMcoCC0VtYWlsYXBpXFYx4gIXRW1haWxhcGlcVjFcR1BCTWV0YWRhdGHqAgxFbWFpbGFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations]);
 
 /**
  * GuardDutyScanResultRequest contains the scan result from GuardDuty via EventBridge.
@@ -93,70 +93,70 @@ export type SNSNotificationRequest = Message<"emailapi.v1.SNSNotificationRequest
   /**
    * Type: SubscriptionConfirmation, Notification, UnsubscribeConfirmation
    *
-   * @generated from field: string type = 1;
+   * @generated from field: string type = 1 [json_name = "Type"];
    */
   type: string;
 
   /**
    * SNS message ID
    *
-   * @generated from field: string message_id = 2;
+   * @generated from field: string message_id = 2 [json_name = "MessageId"];
    */
   messageId: string;
 
   /**
    * SNS topic ARN
    *
-   * @generated from field: string topic_arn = 3;
+   * @generated from field: string topic_arn = 3 [json_name = "TopicArn"];
    */
   topicArn: string;
 
   /**
    * For Notification: SES notification JSON; For SubscriptionConfirmation: message
    *
-   * @generated from field: string message = 4;
+   * @generated from field: string message = 4 [json_name = "Message"];
    */
   message: string;
 
   /**
    * URL to confirm subscription (only for SubscriptionConfirmation)
    *
-   * @generated from field: string subscribe_url = 5;
+   * @generated from field: string subscribe_url = 5 [json_name = "SubscribeURL"];
    */
   subscribeUrl: string;
 
   /**
    * When SNS sent this
    *
-   * @generated from field: string timestamp = 6;
+   * @generated from field: string timestamp = 6 [json_name = "Timestamp"];
    */
   timestamp: string;
 
   /**
    * Signature version (1 or 2)
    *
-   * @generated from field: string signature_version = 7;
+   * @generated from field: string signature_version = 7 [json_name = "SignatureVersion"];
    */
   signatureVersion: string;
 
   /**
    * Base64-encoded signature
    *
-   * @generated from field: string signature = 8;
+   * @generated from field: string signature = 8 [json_name = "Signature"];
    */
   signature: string;
 
   /**
    * URL to the signing certificate
    *
-   * @generated from field: string signing_cert_url = 9;
+   * @generated from field: string signing_cert_url = 9 [json_name = "SigningCertURL"];
    */
   signingCertUrl: string;
 
   /**
    * Subject (optional, for some Notification types)
    *
-   * @generated from field: string subject = 10;
+   * @generated from field: string subject = 10 [json_name = "Subject"];
    */
   subject: string;
 };

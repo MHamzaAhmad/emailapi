@@ -155,25 +155,25 @@ func (x *GuardDutyScanResultResponse) GetMessage() string {
 type SNSNotificationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Type: SubscriptionConfirmation, Notification, UnsubscribeConfirmation
-	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	Type string `protobuf:"bytes,1,opt,name=type,json=Type,proto3" json:"type,omitempty"`
 	// SNS message ID
-	MessageId string `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	MessageId string `protobuf:"bytes,2,opt,name=message_id,json=MessageId,proto3" json:"message_id,omitempty"`
 	// SNS topic ARN
-	TopicArn string `protobuf:"bytes,3,opt,name=topic_arn,json=topicArn,proto3" json:"topic_arn,omitempty"`
+	TopicArn string `protobuf:"bytes,3,opt,name=topic_arn,json=TopicArn,proto3" json:"topic_arn,omitempty"`
 	// For Notification: SES notification JSON; For SubscriptionConfirmation: message
-	Message string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	Message string `protobuf:"bytes,4,opt,name=message,json=Message,proto3" json:"message,omitempty"`
 	// URL to confirm subscription (only for SubscriptionConfirmation)
-	SubscribeUrl string `protobuf:"bytes,5,opt,name=subscribe_url,json=subscribeUrl,proto3" json:"subscribe_url,omitempty"`
+	SubscribeUrl string `protobuf:"bytes,5,opt,name=subscribe_url,json=SubscribeURL,proto3" json:"subscribe_url,omitempty"`
 	// When SNS sent this
-	Timestamp string `protobuf:"bytes,6,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Timestamp string `protobuf:"bytes,6,opt,name=timestamp,json=Timestamp,proto3" json:"timestamp,omitempty"`
 	// Signature version (1 or 2)
-	SignatureVersion string `protobuf:"bytes,7,opt,name=signature_version,json=signatureVersion,proto3" json:"signature_version,omitempty"`
+	SignatureVersion string `protobuf:"bytes,7,opt,name=signature_version,json=SignatureVersion,proto3" json:"signature_version,omitempty"`
 	// Base64-encoded signature
-	Signature string `protobuf:"bytes,8,opt,name=signature,proto3" json:"signature,omitempty"`
+	Signature string `protobuf:"bytes,8,opt,name=signature,json=Signature,proto3" json:"signature,omitempty"`
 	// URL to the signing certificate
-	SigningCertUrl string `protobuf:"bytes,9,opt,name=signing_cert_url,json=signingCertUrl,proto3" json:"signing_cert_url,omitempty"`
+	SigningCertUrl string `protobuf:"bytes,9,opt,name=signing_cert_url,json=SigningCertURL,proto3" json:"signing_cert_url,omitempty"`
 	// Subject (optional, for some Notification types)
-	Subject       string `protobuf:"bytes,10,opt,name=subject,proto3" json:"subject,omitempty"`
+	Subject       string `protobuf:"bytes,10,opt,name=subject,json=Subject,proto3" json:"subject,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -485,18 +485,18 @@ const file_v1_internal_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\xd4\x02\n" +
 	"\x16SNSNotificationRequest\x12\x12\n" +
-	"\x04type\x18\x01 \x01(\tR\x04type\x12\x1d\n" +
+	"\x04type\x18\x01 \x01(\tR\x04Type\x12\x1d\n" +
 	"\n" +
-	"message_id\x18\x02 \x01(\tR\tmessageId\x12\x1b\n" +
-	"\ttopic_arn\x18\x03 \x01(\tR\btopicArn\x12\x18\n" +
-	"\amessage\x18\x04 \x01(\tR\amessage\x12#\n" +
-	"\rsubscribe_url\x18\x05 \x01(\tR\fsubscribeUrl\x12\x1c\n" +
-	"\ttimestamp\x18\x06 \x01(\tR\ttimestamp\x12+\n" +
-	"\x11signature_version\x18\a \x01(\tR\x10signatureVersion\x12\x1c\n" +
-	"\tsignature\x18\b \x01(\tR\tsignature\x12(\n" +
-	"\x10signing_cert_url\x18\t \x01(\tR\x0esigningCertUrl\x12\x18\n" +
+	"message_id\x18\x02 \x01(\tR\tMessageId\x12\x1b\n" +
+	"\ttopic_arn\x18\x03 \x01(\tR\bTopicArn\x12\x18\n" +
+	"\amessage\x18\x04 \x01(\tR\aMessage\x12#\n" +
+	"\rsubscribe_url\x18\x05 \x01(\tR\fSubscribeURL\x12\x1c\n" +
+	"\ttimestamp\x18\x06 \x01(\tR\tTimestamp\x12+\n" +
+	"\x11signature_version\x18\a \x01(\tR\x10SignatureVersion\x12\x1c\n" +
+	"\tsignature\x18\b \x01(\tR\tSignature\x12(\n" +
+	"\x10signing_cert_url\x18\t \x01(\tR\x0eSigningCertURL\x12\x18\n" +
 	"\asubject\x18\n" +
-	" \x01(\tR\asubject\"M\n" +
+	" \x01(\tR\aSubject\"M\n" +
 	"\x17SNSNotificationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\xa8\x02\n" +

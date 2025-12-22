@@ -1479,43 +1479,43 @@
     "v1SNSNotificationRequest": {
       "type": "object",
       "properties": {
-        "type": {
+        "Type": {
           "type": "string",
           "title": "Type: SubscriptionConfirmation, Notification, UnsubscribeConfirmation"
         },
-        "messageId": {
+        "MessageId": {
           "type": "string",
           "title": "SNS message ID"
         },
-        "topicArn": {
+        "TopicArn": {
           "type": "string",
           "title": "SNS topic ARN"
         },
-        "message": {
+        "Message": {
           "type": "string",
           "title": "For Notification: SES notification JSON; For SubscriptionConfirmation: message"
         },
-        "subscribeUrl": {
+        "SubscribeURL": {
           "type": "string",
           "title": "URL to confirm subscription (only for SubscriptionConfirmation)"
         },
-        "timestamp": {
+        "Timestamp": {
           "type": "string",
           "title": "When SNS sent this"
         },
-        "signatureVersion": {
+        "SignatureVersion": {
           "type": "string",
           "title": "Signature version (1 or 2)"
         },
-        "signature": {
+        "Signature": {
           "type": "string",
           "title": "Base64-encoded signature"
         },
-        "signingCertUrl": {
+        "SigningCertURL": {
           "type": "string",
           "title": "URL to the signing certificate"
         },
-        "subject": {
+        "Subject": {
           "type": "string",
           "title": "Subject (optional, for some Notification types)"
         }

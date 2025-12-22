@@ -42,6 +42,11 @@ func (i *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 			return handler(ctx, req)
 		}
 
+		// Skip auth for InternalService - they use webhook secret or SNS verification
+		if strings.HasPrefix(info.FullMethod, "/emailapi.v1.InternalService/") {
+			return handler(ctx, req)
+		}
+
 		// Extract metadata from context
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
