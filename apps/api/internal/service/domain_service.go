@@ -32,13 +32,13 @@ type DomainService struct {
 	store            Store
 	ses              ses.Client
 	dns              *internaldns.Validator
-	cache            *rediscache.DomainCache
+	cache            rediscache.DomainCacheInterface
 	region           string
 	configurationSet string // SES configuration set for notifications
 }
 
 // NewDomainService creates a new DomainService.
-func NewDomainService(store Store, sesClient ses.Client, cache *rediscache.DomainCache, region, configurationSet string) *DomainService {
+func NewDomainService(store Store, sesClient ses.Client, cache rediscache.DomainCacheInterface, region, configurationSet string) *DomainService {
 	if region == "" {
 		region = defaultRegion
 	}

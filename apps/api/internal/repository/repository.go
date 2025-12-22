@@ -1,5 +1,7 @@
 package repository
 
+//go:generate mockgen -destination=mocks/mock_repository.go -package=mocks github.com/emailapi/api/internal/repository UserRepository,APIKeyRepository,DomainRepository,EmailRepository
+
 import (
 	"context"
 

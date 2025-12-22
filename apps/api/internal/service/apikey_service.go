@@ -26,11 +26,11 @@ const (
 // APIKeyService handles API key business logic.
 type APIKeyService struct {
 	store Store
-	cache *rediscache.APIKeyCache
+	cache rediscache.APIKeyCacheInterface
 }
 
 // NewAPIKeyService creates a new APIKeyService.
-func NewAPIKeyService(store Store, cache *rediscache.APIKeyCache) *APIKeyService {
+func NewAPIKeyService(store Store, cache rediscache.APIKeyCacheInterface) *APIKeyService {
 	return &APIKeyService{store: store, cache: cache}
 }
 

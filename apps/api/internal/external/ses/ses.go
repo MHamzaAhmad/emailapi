@@ -1,5 +1,7 @@
 package ses
 
+//go:generate mockgen -destination=mocks/mock_ses.go -package=mocks github.com/emailapi/api/internal/external/ses Client
+
 import (
 	"context"
 

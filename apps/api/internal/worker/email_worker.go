@@ -52,14 +52,14 @@ type EmailWorker struct {
 	river.WorkerDefaults[SendEmailArgs]
 	sesClient ses.Client
 	s3Factory *s3.Factory
-	chRepo    *chrepo.EmailRepository
+	chRepo    chrepo.EmailRepositoryInterface
 }
 
 // NewEmailWorker creates a new EmailWorker.
 func NewEmailWorker(
 	sesClient ses.Client,
 	s3Factory *s3.Factory,
-	chRepo *chrepo.EmailRepository,
+	chRepo chrepo.EmailRepositoryInterface,
 ) *EmailWorker {
 	return &EmailWorker{
 		sesClient: sesClient,

@@ -1,5 +1,7 @@
 package s3
 
+//go:generate mockgen -destination=mocks/mock_s3.go -package=mocks github.com/emailapi/api/internal/external/s3 Client
+
 import "context"
 
 // ObjectMeta contains metadata about an S3 object.

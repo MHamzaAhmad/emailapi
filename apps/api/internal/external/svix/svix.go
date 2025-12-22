@@ -1,5 +1,7 @@
 package svix
 
+//go:generate mockgen -destination=mocks/mock_svix.go -package=mocks github.com/emailapi/api/internal/external/svix Client
+
 import "context"
 
 // Client defines the interface for Svix webhook operations.
