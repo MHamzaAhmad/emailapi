@@ -186,8 +186,10 @@ func runGRPCServer(cfg *config.Config, svc *service.Service, logger zerolog.Logg
 	// Create interceptors
 	loggingInterceptor := middleware.NewLoggingInterceptor(logger)
 	authInterceptor := middleware.NewAuthInterceptor(svc.APIKey)
+	webhookInterceptor := middleware.NewWebhookInterceptor(cfg.InternalWebhookSecret)
 
-	// Chain interceptors: logging first, then auth
+	// Chain interceptors: logging first, then webhook verification, then auth
+	// Note: webhook verification runs for internal endpoints, auth runs for API endpoints
 	chainedInterceptor := func(
 		ctx context.Context,
 		req interface{},
@@ -195,7 +197,9 @@ func runGRPCServer(cfg *config.Config, svc *service.Service, logger zerolog.Logg
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
 		return loggingInterceptor.Unary()(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
-			return authInterceptor.Unary()(ctx, req, info, handler)
+			return webhookInterceptor.Unary()(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
+				return authInterceptor.Unary()(ctx, req, info, handler)
+			})
 		})
 	}
 
@@ -300,7 +304,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 		// Set CORS headers
 		w.Header().Set("Access-Control-Allow-Origin", "*") // In production, specify exact origins
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, X-Webhook-Secret")
 		w.Header().Set("Access-Control-Expose-Headers", "Content-Length, Content-Type")
 		w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
 
