@@ -32,14 +32,14 @@ func (ProcessAttachmentsArgs) Kind() string { return "process_attachments" }
 // AttachmentWorker handles attachment processing jobs.
 type AttachmentWorker struct {
 	river.WorkerDefaults[ProcessAttachmentsArgs]
-	s3Client  s3.Client
+	s3Factory *s3.Factory
 	emailRepo *postgres.EmailRepository
 }
 
 // NewAttachmentWorker creates a new AttachmentWorker.
-func NewAttachmentWorker(s3Client s3.Client, emailRepo *postgres.EmailRepository) *AttachmentWorker {
+func NewAttachmentWorker(s3Factory *s3.Factory, emailRepo *postgres.EmailRepository) *AttachmentWorker {
 	return &AttachmentWorker{
-		s3Client:  s3Client,
+		s3Factory: s3Factory,
 		emailRepo: emailRepo,
 	}
 }
@@ -66,13 +66,13 @@ func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttac
 		s3Key := fmt.Sprintf("attachments/%s/%s/%s", emailID, uuid.New().String(), att.Filename)
 
 		// Upload to S3
-		if err := w.s3Client.UploadAttachment(ctx, s3Key, content, contentType); err != nil {
+		if err := w.s3Factory.Bucket(s3.BucketAttachments).UploadAttachment(ctx, s3Key, content, contentType); err != nil {
 			w.emailRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, fmt.Sprintf("Failed to upload attachment %s: %v", att.Filename, err))
 			return fmt.Errorf("failed to upload attachment %s: %w", att.Filename, err)
 		}
 
 		// Get object metadata for size
-		meta, err := w.s3Client.HeadObject(ctx, s3Key)
+		meta, err := w.s3Factory.Bucket(s3.BucketAttachments).HeadObject(ctx, s3Key)
 		if err != nil {
 			// Non-fatal, just use content length
 			meta = &s3.ObjectMeta{SizeBytes: int64(len(content)), ContentType: contentType}

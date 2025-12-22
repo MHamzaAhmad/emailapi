@@ -37,15 +37,14 @@ func New(store Store) *Service {
 
 // ServiceDeps holds dependencies for service initialization.
 type ServiceDeps struct {
-	Store           Store
-	SESClient       ses.Client
-	S3Client        s3.Client
-	Region          string
-	RiverClient     *river.Client[pgx.Tx]
-	PGEmailRepo     *pgrepo.EmailRepository
-	CHEmailRepo     *chrepo.EmailRepository
-	SvixClient      svix.Client
-	S3InboundBucket string
+	Store       Store
+	SESClient   ses.Client
+	S3Factory   *s3.Factory
+	Region      string
+	RiverClient *river.Client[pgx.Tx]
+	PGEmailRepo *pgrepo.EmailRepository
+	CHEmailRepo *chrepo.EmailRepository
+	SvixClient  svix.Client
 }
 
 // NewWithDeps creates a new Service with all dependencies.
@@ -63,34 +62,11 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	if deps.SvixClient != nil {
 		svc.Webhook = NewWebhookService(deps.SvixClient)
 		svc.InboundEmail = NewInboundEmailService(
-			deps.S3Client,
+			deps.S3Factory,
 			deps.CHEmailRepo,
 			deps.SvixClient,
-			deps.S3InboundBucket,
 		)
 	}
 
 	return svc
-}
-
-// NewWithSES creates a new Service with the given Store and SES client (legacy).
-// Deprecated: Use NewWithDeps for new code.
-func NewWithSES(
-	store Store,
-	sesClient ses.Client,
-	region string,
-	riverClient *river.Client[pgx.Tx],
-	s3Client s3.Client,
-	pgEmailRepo *pgrepo.EmailRepository,
-	chRepo *chrepo.EmailRepository,
-) *Service {
-	return NewWithDeps(ServiceDeps{
-		Store:       store,
-		SESClient:   sesClient,
-		S3Client:    s3Client,
-		Region:      region,
-		RiverClient: riverClient,
-		PGEmailRepo: pgEmailRepo,
-		CHEmailRepo: chRepo,
-	})
 }

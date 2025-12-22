@@ -408,7 +408,8 @@ func (r *EmailRepository) LookupRouting(ctx context.Context, messageID string) (
 		LIMIT 1
 	`
 
-	row := r.conn.QueryRow(ctx, query, messageID)
+	msgId := strings.Split(messageID, "@")[0] // Remove the domain part
+	row := r.conn.QueryRow(ctx, query, msgId)
 
 	var routing EmailRouting
 	if err := row.Scan(

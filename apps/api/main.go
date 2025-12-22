@@ -74,12 +74,14 @@ func main() {
 	}
 	logger.Info().Msg("✓ Initialized SES client")
 
-	// Initialize S3 client
-	s3Client, err := s3.NewClient(context.Background(), cfg.AWSRegion, cfg.AWSAccessKeyID, cfg.AWSSecretAccessKey, cfg.S3Bucket)
+	// Initialize S3 factory with bucket mappings
+	s3Factory, err := s3.NewFactory(context.Background(), cfg.AWSRegion, cfg.AWSAccessKeyID, cfg.AWSSecretAccessKey)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create S3 client")
+		logger.Fatal().Err(err).Msg("Failed to create S3 factory")
 	}
-	logger.Info().Msg("✓ Initialized S3 client")
+	s3Factory.RegisterBucket(s3.BucketAttachments, cfg.S3Bucket)
+	s3Factory.RegisterBucket(s3.BucketInbound, cfg.S3InboundBucket)
+	logger.Info().Msg("✓ Initialized S3 factory")
 
 	// Initialize ClickHouse
 	// Use native interface for better performance (async insert, etc.)
@@ -121,10 +123,10 @@ func main() {
 
 	workers := river.NewWorkers()
 	// Register EmailWorker with new dependencies
-	emailWorker := worker.NewEmailWorker(sesClient, s3Client, pgEmailRepo, chRepo)
+	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, pgEmailRepo, chRepo)
 	river.AddWorker(workers, emailWorker)
 	// Register AttachmentWorker
-	attachmentWorker := worker.NewAttachmentWorker(s3Client, pgEmailRepo)
+	attachmentWorker := worker.NewAttachmentWorker(s3Factory, pgEmailRepo)
 	river.AddWorker(workers, attachmentWorker)
 
 	riverClient, err := river.NewClient(riverpgxv5.New(riverPool), &river.Config{
@@ -158,15 +160,14 @@ func main() {
 
 	// Initialize service layer with new dependencies
 	svc := service.NewWithDeps(service.ServiceDeps{
-		Store:           store,
-		SESClient:       sesClient,
-		S3Client:        s3Client,
-		Region:          cfg.AWSRegion,
-		RiverClient:     riverClient,
-		PGEmailRepo:     pgEmailRepo,
-		CHEmailRepo:     chRepo,
-		SvixClient:      svixClient,
-		S3InboundBucket: cfg.S3InboundBucket,
+		Store:       store,
+		SESClient:   sesClient,
+		S3Factory:   s3Factory,
+		Region:      cfg.AWSRegion,
+		RiverClient: riverClient,
+		PGEmailRepo: pgEmailRepo,
+		CHEmailRepo: chRepo,
+		SvixClient:  svixClient,
 	})
 
 	// Start gRPC server

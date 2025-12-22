@@ -31,7 +31,7 @@ func (SendEmailArgs) Kind() string { return "send_email" }
 type EmailWorker struct {
 	river.WorkerDefaults[SendEmailArgs]
 	sesClient ses.Client
-	s3Client  s3.Client
+	s3Factory *s3.Factory
 	pgRepo    *pgrepo.EmailRepository
 	chRepo    *chrepo.EmailRepository
 }
@@ -39,13 +39,13 @@ type EmailWorker struct {
 // NewEmailWorker creates a new EmailWorker.
 func NewEmailWorker(
 	sesClient ses.Client,
-	s3Client s3.Client,
+	s3Factory *s3.Factory,
 	pgRepo *pgrepo.EmailRepository,
 	chRepo *chrepo.EmailRepository,
 ) *EmailWorker {
 	return &EmailWorker{
 		sesClient: sesClient,
-		s3Client:  s3Client,
+		s3Factory: s3Factory,
 		pgRepo:    pgRepo,
 		chRepo:    chRepo,
 	}
@@ -73,7 +73,7 @@ func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) e
 	// 3. Download attachments from S3
 	var attachmentData []attachmentContent
 	for _, att := range attachments {
-		data, err := w.s3Client.Download(ctx, att.S3Key)
+		data, err := w.s3Factory.Bucket(s3.BucketAttachments).Download(ctx, att.S3Key)
 		if err != nil {
 			w.pgRepo.UpdateStatus(ctx, emailID, domain.EmailStatusFailed, fmt.Sprintf("Failed to download attachment: %v", err))
 			return fmt.Errorf("failed to download attachment %s: %w", att.Filename, err)

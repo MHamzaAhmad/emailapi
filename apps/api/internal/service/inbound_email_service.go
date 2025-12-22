@@ -20,26 +20,23 @@ import (
 
 // InboundEmailService handles inbound email processing (replies) from SNS/SES.
 type InboundEmailService struct {
-	s3Client      s3.Client
-	chRepo        *chrepo.EmailRepository
-	svixClient    svix.Client
-	snsVerifier   *sns.Verifier
-	inboundBucket string
+	s3Factory   *s3.Factory
+	chRepo      *chrepo.EmailRepository
+	svixClient  svix.Client
+	snsVerifier *sns.Verifier
 }
 
 // NewInboundEmailService creates a new InboundEmailService.
 func NewInboundEmailService(
-	s3Client s3.Client,
+	s3Factory *s3.Factory,
 	chRepo *chrepo.EmailRepository,
 	svixClient svix.Client,
-	inboundBucket string,
 ) *InboundEmailService {
 	return &InboundEmailService{
-		s3Client:      s3Client,
-		chRepo:        chRepo,
-		svixClient:    svixClient,
-		snsVerifier:   sns.NewVerifier(),
-		inboundBucket: inboundBucket,
+		s3Factory:   s3Factory,
+		chRepo:      chRepo,
+		svixClient:  svixClient,
+		snsVerifier: sns.NewVerifier(),
 	}
 }
 
@@ -156,6 +153,7 @@ func (s *InboundEmailService) handleSubscriptionConfirmation(ctx context.Context
 func (s *InboundEmailService) handleNotification(ctx context.Context, message string) error {
 	var sesNotif SESNotification
 	if err := json.Unmarshal([]byte(message), &sesNotif); err != nil {
+		fmt.Printf("[Inbound] Failed to parse SES notification: %v\n", err)
 		return fmt.Errorf("failed to parse SES notification: %w", err)
 	}
 
@@ -168,7 +166,7 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 	}
 
 	key := sesNotif.Receipt.Action.ObjectKey
-	rawEmail, err := s.s3Client.Download(ctx, key)
+	rawEmail, err := s.s3Factory.Bucket(s3.BucketInbound).Download(ctx, key)
 	if err != nil {
 		return fmt.Errorf("failed to download email from S3: %w", err)
 	}
