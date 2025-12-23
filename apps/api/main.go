@@ -284,8 +284,11 @@ func main() {
 	)
 	mux.Handle(path, handler)
 
+	// Apply raw body capture middleware (for webhook signature verification)
+	rawBodyHandler := interceptor.RawBodyHTTPMiddleware(mux)
+
 	// CORS middleware
-	corsHandler := corsMiddleware(mux)
+	corsHandler := corsMiddleware(rawBodyHandler)
 
 	// Create HTTP server with h2c (HTTP/2 Cleartext) for gRPC support
 	srv := &http.Server{

@@ -36,15 +36,17 @@ export const useAddDomain = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: AddDomainRequest) => domainService.add(data),
+        mutationFn: (data: Omit<AddDomainRequest, '$typeName'>) => domainService.add(data),
         onSuccess: (response) => {
-            // Invalidate the list to show the new domain
-            queryClient.invalidateQueries({ queryKey: queryKeys.domains.list() });
-            // Pre-populate the domain detail cache
-            queryClient.setQueryData(
-                queryKeys.domains.detail(response.domain.id),
-                response.domain
-            );
+            if (response.domain) {
+                // Invalidate the list to show the new domain
+                queryClient.invalidateQueries({ queryKey: queryKeys.domains.list() });
+                // Pre-populate the domain detail cache
+                queryClient.setQueryData(
+                    queryKeys.domains.detail(response.domain.id),
+                    response.domain
+                );
+            }
         },
     });
 };

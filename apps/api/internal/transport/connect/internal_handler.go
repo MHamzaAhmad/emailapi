@@ -9,6 +9,8 @@ import (
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/service"
+	"github.com/emailapi/api/internal/transport/connect/interceptor"
+	"github.com/rs/zerolog/log"
 )
 
 // InternalHandler implements the Connect InternalServiceHandler.
@@ -53,7 +55,18 @@ func (h *InternalHandler) HandleClerkWebhook(
 	ctx context.Context,
 	req *connect.Request[v1.ClerkWebhookRequest],
 ) (*connect.Response[v1.ClerkWebhookResponse], error) {
-	// Connect provides headers directly from the request
+	// Import the interceptor package to access GetRawBody
+	// Get the raw body from context (captured by middleware before Connect unmarshaling)
+	rawBody := interceptor.GetRawBody(ctx)
+	if rawBody == nil {
+		log.Error().Msg("HandleClerkWebhook: No raw body in context - middleware not working?")
+		return connect.NewResponse(&v1.ClerkWebhookResponse{
+			Success: false,
+			Message: "Internal error: raw body not captured",
+		}), nil
+	}
+
+	// Collect headers
 	headers := http.Header{}
 	for k, values := range req.Header() {
 		for _, v := range values {
@@ -61,7 +74,8 @@ func (h *InternalHandler) HandleClerkWebhook(
 		}
 	}
 
-	success, message, err := h.svc.HandleClerkWebhook(ctx, req.Msg.Payload, headers)
+	// Call service with RAW body (not the unmarshaled proto payload)
+	success, message, err := h.svc.HandleClerkWebhook(ctx, rawBody, headers)
 	if err != nil {
 		return connect.NewResponse(&v1.ClerkWebhookResponse{
 			Success: false,

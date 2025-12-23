@@ -45,14 +45,13 @@ var publicProcedures = map[string]bool{
 	// Currently none - add procedures here if needed
 }
 
-// apiKeyAllowedProcedures are procedures that allow API key auth.
 var apiKeyAllowedProcedures = map[string]bool{
-	"/emailapi.v1.EmailService/SendEmail":     true,
-	"/emailapi.v1.DomainService/AddDomain":    true,
-	"/emailapi.v1.DomainService/GetDomain":    true,
-	"/emailapi.v1.DomainService/ListDomains":  true,
-	"/emailapi.v1.DomainService/VerifyDomain": true,
-	"/emailapi.v1.DomainService/DeleteDomain": true,
+	"/v1.EmailService/SendEmail":     true,
+	"/v1.DomainService/AddDomain":    true,
+	"/v1.DomainService/GetDomain":    true,
+	"/v1.DomainService/ListDomains":  true,
+	"/v1.DomainService/VerifyDomain": true,
+	"/v1.DomainService/DeleteDomain": true,
 }
 
 // NewAuthInterceptor creates an interceptor that validates Clerk JWTs and API keys.
@@ -62,12 +61,12 @@ func NewAuthInterceptor(cfg AuthConfig) connect.UnaryInterceptorFunc {
 			procedure := req.Spec().Procedure
 
 			// Skip auth for InternalService - uses webhook secret verification
-			if strings.HasPrefix(procedure, "/emailapi.v1.InternalService/") {
+			if strings.HasPrefix(procedure, "/v1.InternalService/") {
 				return next(ctx, req)
 			}
 
 			// Skip auth for SnsService - uses SNS signature verification
-			if strings.HasPrefix(procedure, "/emailapi.v1.SnsService/") {
+			if strings.HasPrefix(procedure, "/v1.SnsService/") {
 				return next(ctx, req)
 			}
 

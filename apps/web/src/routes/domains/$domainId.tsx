@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useDomain, useVerifyDomain } from '@/hooks'
-import { DomainStatus, RecordStatus, RecordType } from '@/generated/v1/domain_pb'
+import { RecordStatus, RecordType } from '@/generated/v1/domain_pb'
 import type { DnsRecord } from '@/generated/v1/domain_pb'
 
 export const Route = createFileRoute('/domains/$domainId')({
@@ -48,22 +48,7 @@ function getRecordStatusBadge(status: RecordStatus) {
     }
 }
 
-function getDomainStatusBadge(status: DomainStatus) {
-    switch (status) {
-        case DomainStatus.READY:
-            return <Badge variant="success">ready</Badge>
-        case DomainStatus.VERIFYING:
-            return <Badge variant="secondary">verifying</Badge>
-        case DomainStatus.PENDING:
-            return <Badge variant="warning">pending</Badge>
-        case DomainStatus.FAILED:
-            return <Badge variant="destructive">failed</Badge>
-        case DomainStatus.DEGRADED:
-            return <Badge variant="warning">degraded</Badge>
-        default:
-            return <Badge variant="outline">unknown</Badge>
-    }
-}
+
 
 function getRecordTypeName(recordType: RecordType): string {
     switch (recordType) {
