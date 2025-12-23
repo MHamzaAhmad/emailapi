@@ -18,14 +18,25 @@ import { WebhookService } from '@/generated/v1/webhook_pb';
 // API base URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
-// Token getter - will be set by AuthGuard component
-let getToken: (() => Promise<string | null>) | null = null;
-
 /**
- * Set the token getter function (called from AuthGuard with Clerk's getToken)
+ * Get fresh auth token from Clerk
+ * Uses the global Clerk instance to ensure we always get current session token
  */
-export const setTokenGetter = (getter: () => Promise<string | null>) => {
-    getToken = getter;
+const getAuthToken = async (): Promise<string | null> => {
+    try {
+        // Access Clerk instance from window
+        const clerk = (window as any).Clerk;
+        if (!clerk?.session) {
+            return null;
+        }
+
+        // Get fresh token from current session
+        const token = await clerk.session.getToken();
+        return token;
+    } catch (error) {
+        console.warn('Failed to get auth token from Clerk:', error);
+        return null;
+    }
 };
 
 /**
@@ -36,15 +47,9 @@ const createAuthenticatedTransport = (): Transport => {
         baseUrl: API_BASE_URL,
         interceptors: [
             (next) => async (req) => {
-                if (getToken) {
-                    try {
-                        const token = await getToken();
-                        if (token) {
-                            req.header.set('Authorization', `Bearer ${token}`);
-                        }
-                    } catch (error) {
-                        console.warn('Failed to get auth token:', error);
-                    }
+                const token = await getAuthToken();
+                if (token) {
+                    req.header.set('Authorization', `Bearer ${token}`);
                 }
                 return next(req);
             },

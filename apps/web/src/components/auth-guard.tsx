@@ -1,18 +1,10 @@
-import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from '@clerk/clerk-react'
-import { useEffect } from 'react'
-import { setTokenGetter } from '@/lib/connect'
+import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
 
 interface AuthGuardProps {
     children: React.ReactNode
 }
 
 export function AuthGuard({ children }: AuthGuardProps) {
-    const { getToken } = useAuth()
-
-    useEffect(() => {
-        setTokenGetter(getToken)
-    }, [getToken])
-
     return (
         <>
             <SignedIn>{children}</SignedIn>
