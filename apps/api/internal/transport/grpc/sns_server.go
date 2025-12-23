@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 
 	emailapiv1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/service"
@@ -76,7 +75,6 @@ func (s *SnsServer) HandleInboundSNSNotification(ctx context.Context, req *email
 		Token:            req.Token,
 	}
 
-	fmt.Println("Inbound SNS notification received:", input.Type)
 	if err := s.inboundSvc.HandleSNSNotification(ctx, input); err != nil {
 		return &emailapiv1.SNSNotificationResponse{
 			Success: false,

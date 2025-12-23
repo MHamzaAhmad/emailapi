@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -61,7 +60,6 @@ func (i *SNSInterceptor) Unary() grpc.UnaryServerInterceptor {
 			snsReq.Token,
 		); err != nil {
 			// Log the verification failure
-			fmt.Printf("SNS signature verification failed in middleware: %v\n", err)
 			return nil, status.Errorf(codes.Unauthenticated, "SNS signature verification failed: %v", err)
 		}
 

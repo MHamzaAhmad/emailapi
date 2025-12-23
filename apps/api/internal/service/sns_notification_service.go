@@ -111,8 +111,6 @@ type SESEventReject struct {
 // HandleNotification processes an SNS notification from SES.
 // Note: Signature verification is handled by the SNS middleware interceptor.
 func (s *SNSNotificationService) HandleNotification(ctx context.Context, input *SNSInput) error {
-	fmt.Println("SNS notification received:", input.Type)
-	fmt.Printf("SNS notification message: %s\n", input.Message)
 	switch input.Type {
 	case "SubscriptionConfirmation":
 		return s.handleSubscriptionConfirmation(input.SubscribeURL)
@@ -130,7 +128,6 @@ func (s *SNSNotificationService) handleSubscriptionConfirmation(subscribeURL str
 		return fmt.Errorf("missing subscribe URL")
 	}
 
-	fmt.Println("Confirming subscription: ", subscribeURL)
 	resp, err := http.Get(subscribeURL)
 	if err != nil {
 		return fmt.Errorf("failed to confirm subscription: %w", err)
@@ -150,7 +147,6 @@ func (s *SNSNotificationService) handleSESEventNotification(ctx context.Context,
 		return fmt.Errorf("failed to parse SES notification: %w", err)
 	}
 
-	fmt.Println("Notification type: ", notification.NotificationType)
 	switch notification.NotificationType {
 	case "Delivery":
 		return s.handleDelivery(ctx, &notification)
@@ -173,15 +169,12 @@ func (s *SNSNotificationService) handleSESEventNotification(ctx context.Context,
 func (s *SNSNotificationService) handleDelivery(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	fmt.Println("Delivery notification received: ", messageID)
 	// Look up routing to get user_id
 	routing, err := s.chRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		// Can't find routing - log and skip (might be old email)
 		return nil
 	}
-
-	fmt.Println("User ID: ", routing.UserID)
 
 	// Log activity
 	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "delivered", "success",
