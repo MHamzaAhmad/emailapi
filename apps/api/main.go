@@ -149,29 +149,7 @@ func main() {
 	}
 	defer riverPool.Close()
 
-	workers := river.NewWorkers()
-	// Register EmailWorker (no PG dependency - email data in job payload)
-	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, chRepo)
-	river.AddWorker(workers, emailWorker)
-
-	riverClient, err := river.NewClient(riverpgxv5.New(riverPool), &river.Config{
-		Queues: map[string]river.QueueConfig{
-			river.QueueDefault: {MaxWorkers: 100},
-		},
-		Workers: workers,
-	})
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to create River client")
-	}
-
-	// Start River client
-	if err := riverClient.Start(context.Background()); err != nil {
-		logger.Fatal().Err(err).Msg("Failed to start River client")
-	}
-	defer riverClient.Stop(context.Background())
-	logger.Info().Msg("✓ Started River client")
-
-	// Initialize Svix client
+	// Initialize Svix client first (needed for workers)
 	svixClient, err := svix.NewClient(cfg.SvixAPIKey)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create Svix client")
@@ -182,6 +160,34 @@ func main() {
 		logger.Warn().Err(err).Msg("Failed to register Svix event types")
 	}
 	logger.Info().Msg("✓ Initialized Svix client")
+
+	// Create and register workers
+	workers := river.NewWorkers()
+	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, chRepo, svixClient)
+	river.AddWorker(workers, emailWorker)
+	logger.Info().Msg("✓ Registered River workers")
+
+	// Create River client with workers
+	riverClient, err := river.NewClient(riverpgxv5.New(riverPool), &river.Config{
+		Queues: map[string]river.QueueConfig{
+			river.QueueDefault: {MaxWorkers: 100},
+		},
+		Workers: workers,
+	})
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create River client")
+	}
+
+	// Register attachment worker (needs riverClient reference)
+	attachmentWorker := worker.NewAttachmentWorker(s3Factory, riverClient)
+	river.AddWorker(workers, attachmentWorker)
+
+	// Start River client
+	if err := riverClient.Start(context.Background()); err != nil {
+		logger.Fatal().Err(err).Msg("Failed to start River client")
+	}
+	defer riverClient.Stop(context.Background())
+	logger.Info().Msg("✓ Started River client")
 
 	// Initialize service layer (no PG email repo - stateless architecture)
 	svc := service.NewWithDeps(service.ServiceDeps{

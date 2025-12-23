@@ -64,7 +64,7 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	// Create email validator with domain checker and suppression checker
 	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo)
 
-	svc.Email = NewEmailService(deps.RiverClient, deps.CHEmailRepo, emailValidator, deps.SESClient)
+	svc.Email = NewEmailService(deps.RiverClient, deps.CHEmailRepo, emailValidator, deps.SESClient, deps.SvixClient)
 	svc.Internal = NewInternalService()
 
 	// Initialize SNS notification service

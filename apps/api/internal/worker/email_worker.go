@@ -16,6 +16,7 @@ import (
 
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
+	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 )
 
@@ -36,6 +37,8 @@ type SendEmailArgs struct {
 	Metadata   map[string]string `json:"metadata,omitempty"`
 	// S3 keys of attachments (populated by attachment worker)
 	AttachmentKeys []AttachmentInfo `json:"attachment_keys,omitempty"`
+	// Optional scheduled time for email delivery
+	ScheduledAt *time.Time `json:"scheduled_at,omitempty"`
 }
 
 // AttachmentInfo contains info about an attachment stored in S3.
@@ -50,9 +53,10 @@ func (SendEmailArgs) Kind() string { return "send_email" }
 // EmailWorker handles email sending jobs.
 type EmailWorker struct {
 	river.WorkerDefaults[SendEmailArgs]
-	sesClient ses.Client
-	s3Factory *s3.Factory
-	chRepo    chrepo.EmailRepositoryInterface
+	sesClient  ses.Client
+	s3Factory  *s3.Factory
+	chRepo     chrepo.EmailRepositoryInterface
+	svixClient svix.Client
 }
 
 // NewEmailWorker creates a new EmailWorker.
@@ -60,11 +64,13 @@ func NewEmailWorker(
 	sesClient ses.Client,
 	s3Factory *s3.Factory,
 	chRepo chrepo.EmailRepositoryInterface,
+	svixClient svix.Client,
 ) *EmailWorker {
 	return &EmailWorker{
-		sesClient: sesClient,
-		s3Factory: s3Factory,
-		chRepo:    chRepo,
+		sesClient:  sesClient,
+		s3Factory:  s3Factory,
+		chRepo:     chRepo,
+		svixClient: svixClient,
 	}
 }
 
@@ -116,6 +122,9 @@ func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) e
 
 	// Log success
 	w.logActivity(ctx, args, "sent", fmt.Sprintf("Message ID: %s", messageID))
+
+	// Send webhook notification
+	w.sendWebhook(ctx, args, messageID)
 
 	// Clean up attachments from S3 after successful send (fire-and-forget, parallel)
 	for _, att := range args.AttachmentKeys {
@@ -219,10 +228,45 @@ func buildMIMEMessage(args *SendEmailArgs, attachments []attachmentContent) ([]b
 	return e.Bytes()
 }
 
-// ScheduledEmailArgs is for scheduled emails (processed at scheduled_at time).
-type ScheduledEmailArgs struct {
-	SendEmailArgs
-	ScheduledAt time.Time `json:"scheduled_at"`
-}
+// sendWebhook sends a webhook notification for email events.
+func (w *EmailWorker) sendWebhook(ctx context.Context, args SendEmailArgs, messageID string) {
+	if w.svixClient == nil {
+		return
+	}
 
-func (ScheduledEmailArgs) Kind() string { return "scheduled_email" }
+	// Ensure app exists for the user
+	if err := w.svixClient.EnsureApp(ctx, args.UserID, "User "+args.UserID); err != nil {
+		fmt.Printf("Warning: failed to ensure svix app for webhook: %v\n", err)
+		return
+	}
+
+	// Build webhook payload
+	payload := map[string]interface{}{
+		"email_id":   args.EmailID,
+		"user_id":    args.UserID,
+		"from":       args.From,
+		"to":         args.To,
+		"subject":    args.Subject,
+		"message_id": messageID,
+		"status":     "sent",
+		"timestamp":  time.Now().UTC().Format(time.RFC3339),
+	}
+
+	// Add optional fields
+	if len(args.Cc) > 0 {
+		payload["cc"] = args.Cc
+	}
+	if len(args.Bcc) > 0 {
+		payload["bcc"] = args.Bcc
+	}
+	if len(args.Metadata) > 0 {
+		payload["metadata"] = args.Metadata
+	}
+
+	// Send webhook (fire-and-forget to avoid blocking)
+	go func() {
+		if err := w.svixClient.SendMessage(context.Background(), args.UserID, "email.sent", payload); err != nil {
+			fmt.Printf("Warning: failed to send webhook for email %s: %v\n", args.EmailID, err)
+		}
+	}()
+}

@@ -98,7 +98,9 @@ type SendEmailRequest struct {
 	Html string `protobuf:"bytes,7,opt,name=html,proto3" json:"html,omitempty"`
 	// Custom key-value metadata (returned in webhooks).
 	Metadata map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Optional timestamp to schedule the email for future delivery.
+	// Optional timestamp to schedule the email for future delivery (UTC).
+	// If set, the email will be sent at this time instead of immediately.
+	// Uses UTC timezone - clients should convert local time to UTC before sending.
 	ScheduledAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=scheduled_at,json=scheduledAt,proto3" json:"scheduled_at,omitempty"`
 	// List of attachments.
 	Attachments []*Attachment `protobuf:"bytes,10,rep,name=attachments,proto3" json:"attachments,omitempty"`

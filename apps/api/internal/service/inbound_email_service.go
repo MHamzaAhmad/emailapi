@@ -243,16 +243,16 @@ func (s *InboundEmailService) deliverWebhook(ctx context.Context, email *Inbound
 	payload := map[string]interface{}{
 		"type": "email.reply_received",
 		"data": map[string]interface{}{
-			"id":                email.ID,
-			"message_id":        email.MessageID,
-			"in_reply_to":       email.InReplyTo,
-			"references":        email.References,
-			"from":              email.From,
-			"to":                email.To,
-			"subject":           email.Subject,
-			"body":              email.Body,
-			"html":              email.HTML,
-			"original_email_id": email.OriginalEmailID,
+			"id":              email.ID,
+			"message_id":      email.MessageID,
+			"in_reply_to":     email.InReplyTo,
+			"references":      email.References,
+			"from":            email.From,
+			"to":              email.To,
+			"subject":         email.Subject,
+			"body":            email.Body,
+			"html":            email.HTML,
+			"parent_email_id": email.OriginalEmailID,
 		},
 	}
 

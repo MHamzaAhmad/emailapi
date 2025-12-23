@@ -5,9 +5,11 @@ import (
 	"encoding/base64"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
 
 	"github.com/emailapi/api/internal/external/s3"
 )
@@ -30,6 +32,8 @@ type ProcessAttachmentsArgs struct {
 	Metadata   map[string]string `json:"metadata,omitempty"`
 	// Attachments to download/decode and upload to S3
 	Attachments []AttachmentSource `json:"attachments"`
+	// Optional scheduled time for email delivery
+	ScheduledAt *time.Time `json:"scheduled_at,omitempty"`
 }
 
 // AttachmentSource represents an attachment to process (from request).
@@ -51,7 +55,7 @@ type AttachmentWorker struct {
 
 // RiverClient interface for enqueueing jobs.
 type RiverClient interface {
-	Insert(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (interface{}, error)
+	Insert(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (*rivertype.JobInsertResult, error)
 }
 
 // NewAttachmentWorker creates a new AttachmentWorker.
@@ -128,9 +132,16 @@ func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttac
 		References:     args.References,
 		Metadata:       args.Metadata,
 		AttachmentKeys: attachmentKeys,
+		ScheduledAt:    args.ScheduledAt,
 	}
 
-	if _, err := w.riverClient.Insert(ctx, sendArgs, nil); err != nil {
+	// Prepare insert options
+	insertOpts := &river.InsertOpts{}
+	if args.ScheduledAt != nil {
+		insertOpts.ScheduledAt = *args.ScheduledAt
+	}
+
+	if _, err := w.riverClient.Insert(ctx, sendArgs, insertOpts); err != nil {
 		// Clean up uploaded attachments on failure
 		for _, att := range attachmentKeys {
 			w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(ctx, att.S3Key)

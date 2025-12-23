@@ -16,6 +16,7 @@ import (
 
 	emailapi "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/external/ses"
+	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/validation"
 	"github.com/emailapi/api/internal/worker"
@@ -29,6 +30,7 @@ type EmailService struct {
 	chRepo      *chrepo.EmailRepository
 	validator   *validation.EmailValidator
 	ses         ses.Client
+	svixClient  svix.Client
 }
 
 // NewEmailService creates a new EmailService.
@@ -37,12 +39,14 @@ func NewEmailService(
 	chRepo *chrepo.EmailRepository,
 	validator *validation.EmailValidator,
 	sesClient ses.Client,
+	svixClient svix.Client,
 ) *EmailService {
 	return &EmailService{
 		riverClient: riverClient,
 		chRepo:      chRepo,
 		validator:   validator,
 		ses:         sesClient,
+		svixClient:  svixClient,
 	}
 }
 
@@ -70,6 +74,11 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 	metadata := make(map[string]string)
 	for k, v := range req.Metadata {
 		metadata[k] = v
+	}
+
+	// Handle scheduled emails - queue with delay
+	if req.ScheduledAt != nil {
+		return s.queueScheduled(ctx, emailID, userID, req)
 	}
 
 	// Handle attachments - always async
@@ -100,6 +109,9 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 
 	// Log success
 	s.logActivity(ctx, userID, emailID, "sent", fmt.Sprintf("Message ID: %s", messageID), req)
+
+	// Send webhook notification
+	s.sendWebhook(ctx, userID, emailID, messageID, req, "sent")
 
 	return &emailapi.SendEmailResponse{
 		Id:            emailID,
@@ -142,6 +154,12 @@ func (s *EmailService) queueWithAttachments(ctx context.Context, emailID, userID
 		Attachments: attachments,
 	}
 
+	// Add scheduled time if present
+	if req.ScheduledAt != nil {
+		scheduledTime := req.ScheduledAt.AsTime()
+		args.ScheduledAt = &scheduledTime
+	}
+
 	_, err := s.riverClient.Insert(ctx, args, nil)
 	if err != nil {
 		s.logActivity(ctx, userID, emailID, "failed", fmt.Sprintf("Failed to enqueue: %v", err), req)
@@ -182,6 +200,47 @@ func (s *EmailService) queueForSend(ctx context.Context, emailID, userID string,
 		Id:            emailID,
 		Status:        emailapi.EmailStatus_EMAIL_STATUS_QUEUED,
 		StatusMessage: "Email queued for sending",
+	}, nil
+}
+
+// queueScheduled queues an email for scheduled delivery.
+func (s *EmailService) queueScheduled(ctx context.Context, emailID, userID string, req *emailapi.SendEmailRequest) (*emailapi.SendEmailResponse, error) {
+	// Convert protobuf timestamp to Go time
+	scheduledTime := req.ScheduledAt.AsTime()
+
+	// Validate scheduled time is in the future
+	if scheduledTime.Before(time.Now()) {
+		return nil, fmt.Errorf("scheduled_at must be in the future")
+	}
+
+	args := worker.SendEmailArgs{
+		EmailID:    emailID,
+		UserID:     userID,
+		From:       req.From,
+		To:         req.To,
+		Cc:         req.Cc,
+		Bcc:        req.Bcc,
+		Subject:    req.Subject,
+		Body:       req.Body,
+		HTML:       req.Html,
+		InReplyTo:  req.InReplyTo,
+		References: req.References,
+		Metadata:   req.Metadata,
+	}
+
+	// Queue with scheduled time
+	_, err := s.riverClient.Insert(ctx, args, &river.InsertOpts{
+		ScheduledAt: scheduledTime,
+	})
+	if err != nil {
+		s.logActivity(ctx, userID, emailID, "failed", fmt.Sprintf("Failed to schedule: %v", err), req)
+		return nil, fmt.Errorf("failed to schedule email: %w", err)
+	}
+
+	return &emailapi.SendEmailResponse{
+		Id:            emailID,
+		Status:        emailapi.EmailStatus_EMAIL_STATUS_QUEUED,
+		StatusMessage: fmt.Sprintf("Email scheduled for %s", scheduledTime.Format(time.RFC3339)),
 	}, nil
 }
 
@@ -264,4 +323,47 @@ func (s *EmailService) logActivity(ctx context.Context, userID, emailID, action,
 	}
 
 	s.chRepo.LogEmailEvent(ctx, userID, emailID, action, status, details, metadata)
+}
+
+// sendWebhook sends a webhook notification for email events.
+func (s *EmailService) sendWebhook(ctx context.Context, userID, emailID, messageID string, req *emailapi.SendEmailRequest, status string) {
+	if s.svixClient == nil {
+		return
+	}
+
+	// Ensure app exists for the user
+	if err := s.svixClient.EnsureApp(ctx, userID, "User "+userID); err != nil {
+		fmt.Printf("Warning: failed to ensure svix app for webhook: %v\n", err)
+		return
+	}
+
+	// Build webhook payload
+	payload := map[string]interface{}{
+		"email_id":   emailID,
+		"user_id":    userID,
+		"from":       req.From,
+		"to":         req.To,
+		"subject":    req.Subject,
+		"message_id": messageID,
+		"status":     status,
+		"timestamp":  time.Now().UTC().Format(time.RFC3339),
+	}
+
+	// Add optional fields
+	if len(req.Cc) > 0 {
+		payload["cc"] = req.Cc
+	}
+	if len(req.Bcc) > 0 {
+		payload["bcc"] = req.Bcc
+	}
+	if len(req.Metadata) > 0 {
+		payload["metadata"] = req.Metadata
+	}
+
+	// Send webhook (fire-and-forget to avoid blocking)
+	go func() {
+		if err := s.svixClient.SendMessage(context.Background(), userID, "email.sent", payload); err != nil {
+			fmt.Printf("Warning: failed to send webhook for email %s: %v\n", emailID, err)
+		}
+	}()
 }

@@ -52,7 +52,9 @@ message SendEmailRequest {
   string html = 7;
   // Custom key-value metadata (returned in webhooks).
   map<string, string> metadata = 8;
-  // Optional timestamp to schedule the email for future delivery.
+  // Optional timestamp to schedule the email for future delivery (UTC).
+  // If set, the email will be sent at this time instead of immediately.
+  // Uses UTC timezone - clients should convert local time to UTC before sending.
   google.protobuf.Timestamp scheduled_at = 9;
   // List of attachments.
   repeated Attachment attachments = 10;

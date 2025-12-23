@@ -1375,7 +1375,7 @@
         "scheduledAt": {
           "type": "string",
           "format": "date-time",
-          "description": "Optional timestamp to schedule the email for future delivery."
+          "description": "Optional timestamp to schedule the email for future delivery (UTC).\nIf set, the email will be sent at this time instead of immediately.\nUses UTC timezone - clients should convert local time to UTC before sending."
         },
         "attachments": {
           "type": "array",

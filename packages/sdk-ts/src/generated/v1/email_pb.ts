@@ -78,7 +78,9 @@ export type SendEmailRequest = Message<"emailapi.v1.SendEmailRequest"> & {
   metadata: { [key: string]: string };
 
   /**
-   * Optional timestamp to schedule the email for future delivery.
+   * Optional timestamp to schedule the email for future delivery (UTC).
+   * If set, the email will be sent at this time instead of immediately.
+   * Uses UTC timezone - clients should convert local time to UTC before sending.
    *
    * @generated from field: google.protobuf.Timestamp scheduled_at = 9;
    */
