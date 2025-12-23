@@ -7,7 +7,6 @@
 package emailapiv1
 
 import (
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -276,7 +275,7 @@ var File_v1_activity_proto protoreflect.FileDescriptor
 
 const file_v1_activity_proto_rawDesc = "" +
 	"\n" +
-	"\x11v1/activity.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x94\x02\n" +
+	"\x11v1/activity.proto\x12\vemailapi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x94\x02\n" +
 	"\vActivityLog\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1f\n" +
@@ -304,9 +303,9 @@ const file_v1_activity_proto_rawDesc = "" +
 	"\x18ListActivityLogsResponse\x12,\n" +
 	"\x04logs\x18\x01 \x03(\v2\x18.emailapi.v1.ActivityLogR\x04logs\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x05R\n" +
-	"totalCount2\x8d\x01\n" +
-	"\x0fActivityService\x12z\n" +
-	"\x10ListActivityLogs\x12$.emailapi.v1.ListActivityLogsRequest\x1a%.emailapi.v1.ListActivityLogsResponse\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/v1/activity-logsB\x9b\x01\n" +
+	"totalCount2t\n" +
+	"\x0fActivityService\x12a\n" +
+	"\x10ListActivityLogs\x12$.emailapi.v1.ListActivityLogsRequest\x1a%.emailapi.v1.ListActivityLogsResponse\"\x00B\x9b\x01\n" +
 	"\x0fcom.emailapi.v1B\rActivityProtoP\x01Z,github.com/emailapi/sdk-go/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
 var (

@@ -8,7 +8,7 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	v1 "github.com/emailapi/sdk-go/gen/v1"
+	v1 "github.com/emailapi/api/gen/v1"
 	http "net/http"
 	strings "strings"
 )

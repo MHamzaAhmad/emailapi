@@ -4,54 +4,27 @@ package emailapi.v1;
 
 option go_package = "github.com/emailapi/api/gen/emailapi/v1";
 
-import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 // ApiKeyService handles API key operations.
 service ApiKeyService {
   // CreateApiKey creates a new API key for the authenticated user.
-  rpc CreateApiKey(CreateApiKeyRequest) returns (CreateApiKeyResponse) {
-    option (google.api.http) = {
-      post: "/v1/api-keys"
-      body: "*"
-    };
-  }
+  rpc CreateApiKey(CreateApiKeyRequest) returns (CreateApiKeyResponse) {}
 
   // GetApiKey retrieves an API key by ID.
-  rpc GetApiKey(GetApiKeyRequest) returns (ApiKey) {
-    option (google.api.http) = {
-      get: "/v1/api-keys/{id}"
-    };
-  }
+  rpc GetApiKey(GetApiKeyRequest) returns (ApiKey) {}
 
   // ListApiKeys retrieves all API keys for the authenticated user.
-  rpc ListApiKeys(ListApiKeysRequest) returns (ListApiKeysResponse) {
-    option (google.api.http) = {
-      get: "/v1/api-keys"
-    };
-  }
+  rpc ListApiKeys(ListApiKeysRequest) returns (ListApiKeysResponse) {}
 
   // UpdateApiKey updates an API key.
-  rpc UpdateApiKey(UpdateApiKeyRequest) returns (ApiKey) {
-    option (google.api.http) = {
-      patch: "/v1/api-keys/{id}"
-      body: "*"
-    };
-  }
+  rpc UpdateApiKey(UpdateApiKeyRequest) returns (ApiKey) {}
 
   // DeleteApiKey deletes an API key.
-  rpc DeleteApiKey(DeleteApiKeyRequest) returns (DeleteApiKeyResponse) {
-    option (google.api.http) = {
-      delete: "/v1/api-keys/{id}"
-    };
-  }
+  rpc DeleteApiKey(DeleteApiKeyRequest) returns (DeleteApiKeyResponse) {}
 
   // RevokeApiKey revokes an API key (soft delete).
-  rpc RevokeApiKey(RevokeApiKeyRequest) returns (ApiKey) {
-    option (google.api.http) = {
-      post: "/v1/api-keys/{id}/revoke"
-    };
-  }
+  rpc RevokeApiKey(RevokeApiKeyRequest) returns (ApiKey) {}
 }
 
 // Environment represents the API key environment.

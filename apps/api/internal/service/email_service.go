@@ -25,7 +25,6 @@ import (
 // EmailService handles email sending operations.
 // This is a stateless, compliance-first service - no email content is stored permanently.
 type EmailService struct {
-	emailapi.UnimplementedEmailServiceServer
 	riverClient   *river.Client[pgx.Tx]
 	chRepo        *chrepo.EmailRepository
 	validator     *validation.EmailValidator

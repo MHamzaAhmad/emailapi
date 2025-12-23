@@ -7,7 +7,6 @@
 package emailapiv1
 
 import (
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -1076,7 +1075,7 @@ var File_v1_domain_proto protoreflect.FileDescriptor
 
 const file_v1_domain_proto_rawDesc = "" +
 	"\n" +
-	"\x0fv1/domain.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa1\x03\n" +
+	"\x0fv1/domain.proto\x12\vemailapi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa1\x03\n" +
 	"\x06Domain\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
 	"\x06domain\x18\x02 \x01(\tR\x06domain\x121\n" +
@@ -1162,13 +1161,13 @@ const file_v1_domain_proto_rawDesc = "" +
 	"\x11RECORD_TYPE_DMARC\x10\x03\x12\x1a\n" +
 	"\x16RECORD_TYPE_MX_INBOUND\x10\x04\x12\x1c\n" +
 	"\x18RECORD_TYPE_MAIL_FROM_MX\x10\x05\x12\x1d\n" +
-	"\x19RECORD_TYPE_MAIL_FROM_SPF\x10\x062\xa5\x04\n" +
-	"\rDomainService\x12b\n" +
-	"\tAddDomain\x12\x1d.emailapi.v1.AddDomainRequest\x1a\x1e.emailapi.v1.AddDomainResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/v1/domains\x12d\n" +
-	"\tGetDomain\x12\x1d.emailapi.v1.GetDomainRequest\x1a\x1e.emailapi.v1.GetDomainResponse\"\x18\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/domains/{id}\x12e\n" +
-	"\vListDomains\x12\x1f.emailapi.v1.ListDomainsRequest\x1a .emailapi.v1.ListDomainsResponse\"\x13\x82\xd3\xe4\x93\x02\r\x12\v/v1/domains\x12m\n" +
-	"\fDeleteDomain\x12 .emailapi.v1.DeleteDomainRequest\x1a!.emailapi.v1.DeleteDomainResponse\"\x18\x82\xd3\xe4\x93\x02\x12*\x10/v1/domains/{id}\x12t\n" +
-	"\fVerifyDomain\x12 .emailapi.v1.VerifyDomainRequest\x1a!.emailapi.v1.VerifyDomainResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\"\x17/v1/domains/{id}/verifyB\x99\x01\n" +
+	"\x19RECORD_TYPE_MAIL_FROM_SPF\x10\x062\xad\x03\n" +
+	"\rDomainService\x12L\n" +
+	"\tAddDomain\x12\x1d.emailapi.v1.AddDomainRequest\x1a\x1e.emailapi.v1.AddDomainResponse\"\x00\x12L\n" +
+	"\tGetDomain\x12\x1d.emailapi.v1.GetDomainRequest\x1a\x1e.emailapi.v1.GetDomainResponse\"\x00\x12R\n" +
+	"\vListDomains\x12\x1f.emailapi.v1.ListDomainsRequest\x1a .emailapi.v1.ListDomainsResponse\"\x00\x12U\n" +
+	"\fDeleteDomain\x12 .emailapi.v1.DeleteDomainRequest\x1a!.emailapi.v1.DeleteDomainResponse\"\x00\x12U\n" +
+	"\fVerifyDomain\x12 .emailapi.v1.VerifyDomainRequest\x1a!.emailapi.v1.VerifyDomainResponse\"\x00B\x99\x01\n" +
 	"\x0fcom.emailapi.v1B\vDomainProtoP\x01Z,github.com/emailapi/sdk-go/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
 var (

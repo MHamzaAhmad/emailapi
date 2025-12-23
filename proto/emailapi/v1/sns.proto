@@ -4,28 +4,16 @@ package emailapi.v1;
 
 option go_package = "github.com/emailapi/api/gen/emailapi/v1";
 
-import "google/api/annotations.proto";
-
 // SnsService handles notifications from Amazon SNS.
 // These endpoints are public but authenticated via SNS signature verification.
 service SnsService {
   // HandleSNSNotification processes SNS notifications for outbound email events.
   // (Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay)
-  rpc HandleSNSNotification(SNSNotificationRequest) returns (SNSNotificationResponse) {
-    option (google.api.http) = {
-      post: "/v1/webhooks/sns/notification"
-      body: "*"
-    };
-  }
+  rpc HandleSNSNotification(SNSNotificationRequest) returns (SNSNotificationResponse) {}
 
   // HandleInboundSNSNotification processes SNS notifications for inbound emails (replies).
   // This endpoint receives SES inbound email notifications when replies are received.
-  rpc HandleInboundSNSNotification(SNSNotificationRequest) returns (SNSNotificationResponse) {
-    option (google.api.http) = {
-      post: "/v1/webhooks/sns/inbound"
-      body: "*"
-    };
-  }
+  rpc HandleInboundSNSNotification(SNSNotificationRequest) returns (SNSNotificationResponse) {}
 }
 
 // SNSNotificationRequest is the raw SNS HTTP payload.

@@ -4,40 +4,21 @@ package emailapi.v1;
 
 option go_package = "github.com/emailapi/api/gen/emailapi/v1";
 
-import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 // UserService handles user operations.
 service UserService {
   // CreateUser creates a new user.
-  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
-    option (google.api.http) = {
-      post: "/v1/users"
-      body: "*"
-    };
-  }
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
 
   // GetCurrentUser retrieves the authenticated user.
-  rpc GetCurrentUser(GetCurrentUserRequest) returns (User) {
-    option (google.api.http) = {
-      get: "/v1/users/me"
-    };
-  }
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (User) {}
 
   // UpdateUser updates a user.
-  rpc UpdateUser(UpdateUserRequest) returns (User) {
-    option (google.api.http) = {
-      patch: "/v1/users/{id}"
-      body: "*"
-    };
-  }
+  rpc UpdateUser(UpdateUserRequest) returns (User) {}
 
   // ListUsers lists all users.
-  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
-    option (google.api.http) = {
-      get: "/v1/users"
-    };
-  }
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {}
 }
 
 enum UserRole {

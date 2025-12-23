@@ -7,7 +7,6 @@
 package emailapiv1
 
 import (
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -1122,7 +1121,7 @@ var File_v1_webhook_proto protoreflect.FileDescriptor
 
 const file_v1_webhook_proto_rawDesc = "" +
 	"\n" +
-	"\x10v1/webhook.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x1b\n" +
+	"\x10v1/webhook.proto\x12\vemailapi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x1b\n" +
 	"\x19GetAppPortalAccessRequest\"D\n" +
 	"\x1aGetAppPortalAccessResponse\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x14\n" +
@@ -1231,9 +1230,9 @@ const file_v1_webhook_proto_rawDesc = "" +
 	"#WEBHOOK_EVENT_TYPE_EMAIL_COMPLAINED\x10\b\x12%\n" +
 	"!WEBHOOK_EVENT_TYPE_EMAIL_REJECTED\x10\t\x12$\n" +
 	" WEBHOOK_EVENT_TYPE_EMAIL_DELAYED\x10\n" +
-	"2\x98\x01\n" +
-	"\x0eWebhookService\x12\x85\x01\n" +
-	"\x12GetAppPortalAccess\x12&.emailapi.v1.GetAppPortalAccessRequest\x1a'.emailapi.v1.GetAppPortalAccessResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/v1/webhooks/portalB\x97\x01\n" +
+	"2y\n" +
+	"\x0eWebhookService\x12g\n" +
+	"\x12GetAppPortalAccess\x12&.emailapi.v1.GetAppPortalAccessRequest\x1a'.emailapi.v1.GetAppPortalAccessResponse\"\x00B\x97\x01\n" +
 	"\x0fcom.emailapi.v1B\fWebhookProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
 var (

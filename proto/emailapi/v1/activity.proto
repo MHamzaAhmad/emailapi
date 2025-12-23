@@ -4,17 +4,12 @@ package emailapi.v1;
 
 option go_package = "github.com/emailapi/api/gen/emailapi/v1";
 
-import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 // ActivityService provides access to activity logs.
 service ActivityService {
   // ListActivityLogs retrieves activity logs with pagination and optional filters.
-  rpc ListActivityLogs(ListActivityLogsRequest) returns (ListActivityLogsResponse) {
-    option (google.api.http) = {
-      get: "/v1/activity-logs"
-    };
-  }
+  rpc ListActivityLogs(ListActivityLogsRequest) returns (ListActivityLogsResponse) {}
 }
 
 // ActivityLog represents a single activity log entry.

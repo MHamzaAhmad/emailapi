@@ -4,7 +4,6 @@ package emailapi.v1;
 
 option go_package = "github.com/emailapi/api/gen/emailapi/v1";
 
-import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 // WebhookService handles webhook operations.
@@ -13,12 +12,7 @@ import "google/protobuf/timestamp.proto";
 service WebhookService {
   // GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
   // Frontend uses this with svix-react to let users manage webhook endpoints.
-  rpc GetAppPortalAccess(GetAppPortalAccessRequest) returns (GetAppPortalAccessResponse) {
-    option (google.api.http) = {
-      post: "/v1/webhooks/portal"
-      body: "*"
-    };
-  }
+  rpc GetAppPortalAccess(GetAppPortalAccessRequest) returns (GetAppPortalAccessResponse) {}
 }
 
 // WebhookEventType defines the types of webhook events that can be delivered.

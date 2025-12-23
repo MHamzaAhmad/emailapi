@@ -4,7 +4,6 @@ package emailapi.v1;
 
 option go_package = "github.com/emailapi/api/gen/emailapi/v1";
 
-import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 // =============================================================================
@@ -17,42 +16,21 @@ service DomainService {
   // AddDomain registers a new sending domain.
   // Returns everything you need: domain info, DNS records, and next steps.
   // MAIL FROM (mail.yourdomain.com) is auto-configured.
-  rpc AddDomain(AddDomainRequest) returns (AddDomainResponse) {
-    option (google.api.http) = {
-      post: "/v1/domains"
-      body: "*"
-    };
-  }
+  rpc AddDomain(AddDomainRequest) returns (AddDomainResponse) {}
 
   // GetDomain retrieves a domain with its configuration and status.
   // Automatically refreshes from SES if data is stale (>5 min).
-  rpc GetDomain(GetDomainRequest) returns (GetDomainResponse) {
-    option (google.api.http) = {
-      get: "/v1/domains/{id}"
-    };
-  }
+  rpc GetDomain(GetDomainRequest) returns (GetDomainResponse) {}
 
   // ListDomains retrieves all domains with their status.
-  rpc ListDomains(ListDomainsRequest) returns (ListDomainsResponse) {
-    option (google.api.http) = {
-      get: "/v1/domains"
-    };
-  }
+  rpc ListDomains(ListDomainsRequest) returns (ListDomainsResponse) {}
 
   // DeleteDomain removes a domain from your account.
-  rpc DeleteDomain(DeleteDomainRequest) returns (DeleteDomainResponse) {
-    option (google.api.http) = {
-      delete: "/v1/domains/{id}"
-    };
-  }
+  rpc DeleteDomain(DeleteDomainRequest) returns (DeleteDomainResponse) {}
 
   // VerifyDomain forces a fresh check of DNS records and SES status.
   // Rate-limited to 30s between calls. Use after configuring DNS.
-  rpc VerifyDomain(VerifyDomainRequest) returns (VerifyDomainResponse) {
-    option (google.api.http) = {
-      post: "/v1/domains/{id}/verify"
-    };
-  }
+  rpc VerifyDomain(VerifyDomainRequest) returns (VerifyDomainResponse) {}
 }
 
 // =============================================================================

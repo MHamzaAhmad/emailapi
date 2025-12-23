@@ -4,7 +4,6 @@ package emailapi.v1;
 
 option go_package = "github.com/emailapi/api/gen/emailapi/v1";
 
-import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 // EmailService handles email sending operations.
@@ -17,12 +16,7 @@ service EmailService {
   // - async=true OR has attachments: Queue for processing with retries
   //
   // Delivery status is sent to your webhook endpoint.
-  rpc SendEmail(SendEmailRequest) returns (SendEmailResponse) {
-    option (google.api.http) = {
-      post: "/v1/send"
-      body: "*"
-    };
-  }
+  rpc SendEmail(SendEmailRequest) returns (SendEmailResponse) {}
 }
 
 // EmailStatus represents the current processing status.

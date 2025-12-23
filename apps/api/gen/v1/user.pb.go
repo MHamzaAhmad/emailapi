@@ -7,7 +7,6 @@
 package emailapiv1
 
 import (
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -536,7 +535,7 @@ var File_v1_user_proto protoreflect.FileDescriptor
 
 const file_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\rv1/user.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9e\x01\n" +
+	"\rv1/user.proto\x12\vemailapi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9e\x01\n" +
 	"\x11CreateUserRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12)\n" +
@@ -586,14 +585,14 @@ const file_v1_user_proto_rawDesc = "" +
 	"\bUserRole\x12\x19\n" +
 	"\x15USER_ROLE_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fUSER_ROLE_ADMIN\x10\x01\x12\x14\n" +
-	"\x10USER_ROLE_MEMBER\x10\x022\x8c\x03\n" +
-	"\vUserService\x12c\n" +
+	"\x10USER_ROLE_MEMBER\x10\x022\xba\x02\n" +
+	"\vUserService\x12O\n" +
 	"\n" +
-	"CreateUser\x12\x1e.emailapi.v1.CreateUserRequest\x1a\x1f.emailapi.v1.CreateUserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/users\x12]\n" +
-	"\x0eGetCurrentUser\x12\".emailapi.v1.GetCurrentUserRequest\x1a\x11.emailapi.v1.User\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/users/me\x12Z\n" +
+	"CreateUser\x12\x1e.emailapi.v1.CreateUserRequest\x1a\x1f.emailapi.v1.CreateUserResponse\"\x00\x12I\n" +
+	"\x0eGetCurrentUser\x12\".emailapi.v1.GetCurrentUserRequest\x1a\x11.emailapi.v1.User\"\x00\x12A\n" +
 	"\n" +
-	"UpdateUser\x12\x1e.emailapi.v1.UpdateUserRequest\x1a\x11.emailapi.v1.User\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*2\x0e/v1/users/{id}\x12]\n" +
-	"\tListUsers\x12\x1d.emailapi.v1.ListUsersRequest\x1a\x1e.emailapi.v1.ListUsersResponse\"\x11\x82\xd3\xe4\x93\x02\v\x12\t/v1/usersB\x94\x01\n" +
+	"UpdateUser\x12\x1e.emailapi.v1.UpdateUserRequest\x1a\x11.emailapi.v1.User\"\x00\x12L\n" +
+	"\tListUsers\x12\x1d.emailapi.v1.ListUsersRequest\x1a\x1e.emailapi.v1.ListUsersResponse\"\x00B\x94\x01\n" +
 	"\x0fcom.emailapi.v1B\tUserProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
 var (

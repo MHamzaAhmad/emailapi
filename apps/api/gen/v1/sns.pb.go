@@ -7,7 +7,6 @@
 package emailapiv1
 
 import (
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -217,7 +216,7 @@ var File_v1_sns_proto protoreflect.FileDescriptor
 
 const file_v1_sns_proto_rawDesc = "" +
 	"\n" +
-	"\fv1/sns.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\"\xea\x02\n" +
+	"\fv1/sns.proto\x12\vemailapi.v1\"\xea\x02\n" +
 	"\x16SNSNotificationRequest\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04Type\x12\x1d\n" +
 	"\n" +
@@ -234,11 +233,11 @@ const file_v1_sns_proto_rawDesc = "" +
 	"\x05token\x18\v \x01(\tR\x05Token\"M\n" +
 	"\x17SNSNotificationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xac\x02\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xdf\x01\n" +
 	"\n" +
-	"SnsService\x12\x8c\x01\n" +
-	"\x15HandleSNSNotification\x12#.emailapi.v1.SNSNotificationRequest\x1a$.emailapi.v1.SNSNotificationResponse\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/v1/webhooks/sns/notification\x12\x8e\x01\n" +
-	"\x1cHandleInboundSNSNotification\x12#.emailapi.v1.SNSNotificationRequest\x1a$.emailapi.v1.SNSNotificationResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/webhooks/sns/inboundB\x93\x01\n" +
+	"SnsService\x12d\n" +
+	"\x15HandleSNSNotification\x12#.emailapi.v1.SNSNotificationRequest\x1a$.emailapi.v1.SNSNotificationResponse\"\x00\x12k\n" +
+	"\x1cHandleInboundSNSNotification\x12#.emailapi.v1.SNSNotificationRequest\x1a$.emailapi.v1.SNSNotificationResponse\"\x00B\x93\x01\n" +
 	"\x0fcom.emailapi.v1B\bSnsProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
 var (

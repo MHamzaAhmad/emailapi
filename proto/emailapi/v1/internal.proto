@@ -4,29 +4,16 @@ package emailapi.v1;
 
 option go_package = "github.com/emailapi/api/gen/emailapi/v1";
 
-import "google/api/annotations.proto";
-import "google/api/httpbody.proto";
-
 // InternalService handles internal webhook endpoints.
 // These endpoints are authenticated via X-Webhook-Secret header.
 service InternalService {
   // HandleGuardDutyScanResult processes GuardDuty malware scan results from EventBridge.
-  rpc HandleGuardDutyScanResult(GuardDutyScanResultRequest) returns (GuardDutyScanResultResponse) {
-    option (google.api.http) = {
-      post: "/v1/internal/webhooks/guardduty-scan"
-      body: "*"
-    };
-  }
+  rpc HandleGuardDutyScanResult(GuardDutyScanResultRequest) returns (GuardDutyScanResultResponse) {}
 
   // HandleClerkWebhook processes Clerk user lifecycle events (signup, etc.).
   // This endpoint is authenticated via Svix signature verification.
-  // We use HttpBody to get the raw payload for verification.
-  rpc HandleClerkWebhook(google.api.HttpBody) returns (ClerkWebhookResponse) {
-    option (google.api.http) = {
-      post: "/v1/internal/webhooks/clerk"
-      body: "*"
-    };
-  }
+  // Raw payload bytes are passed via ClerkWebhookRequest for signature verification.
+  rpc HandleClerkWebhook(ClerkWebhookRequest) returns (ClerkWebhookResponse) {}
 }
 
 // GuardDutyScanResultRequest contains the scan result from GuardDuty via EventBridge.
@@ -49,8 +36,12 @@ message GuardDutyScanResultResponse {
   string message = 2;
 }
 
-// ClerkWebhookRequest is removed as we use HttpBody
-
+// ClerkWebhookRequest wraps the raw Clerk webhook payload.
+// The raw payload is needed for Svix signature verification.
+message ClerkWebhookRequest {
+  // Raw JSON payload bytes for signature verification.
+  bytes payload = 1;
+}
 
 // ClerkWebhookResponse is the response after processing Clerk webhook.
 message ClerkWebhookResponse {
@@ -59,8 +50,6 @@ message ClerkWebhookResponse {
   // Message describing the action taken.
   string message = 2;
 }
-
-
 
 // InboundEmail represents a parsed inbound email reply.
 message InboundEmail {
@@ -87,4 +76,3 @@ message InboundEmail {
   // User who sent the original email
   string user_id = 11;
 }
-

@@ -7,7 +7,6 @@
 package emailapiv1
 
 import (
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -420,7 +419,7 @@ var File_v1_email_proto protoreflect.FileDescriptor
 
 const file_v1_email_proto_rawDesc = "" +
 	"\n" +
-	"\x0ev1/email.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf0\x03\n" +
+	"\x0ev1/email.proto\x12\vemailapi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf0\x03\n" +
 	"\x10SendEmailRequest\x12\x12\n" +
 	"\x04from\x18\x01 \x01(\tR\x04from\x12\x0e\n" +
 	"\x02to\x18\x02 \x03(\tR\x02to\x12\x0e\n" +
@@ -459,9 +458,9 @@ const file_v1_email_proto_rawDesc = "" +
 	"\x13EMAIL_STATUS_QUEUED\x10\x01\x12\x1b\n" +
 	"\x17EMAIL_STATUS_PROCESSING\x10\x02\x12\x15\n" +
 	"\x11EMAIL_STATUS_SENT\x10\x03\x12\x17\n" +
-	"\x13EMAIL_STATUS_FAILED\x10\x042o\n" +
-	"\fEmailService\x12_\n" +
-	"\tSendEmail\x12\x1d.emailapi.v1.SendEmailRequest\x1a\x1e.emailapi.v1.SendEmailResponse\"\x13\x82\xd3\xe4\x93\x02\r:\x01*\"\b/v1/sendB\x95\x01\n" +
+	"\x13EMAIL_STATUS_FAILED\x10\x042\\\n" +
+	"\fEmailService\x12L\n" +
+	"\tSendEmail\x12\x1d.emailapi.v1.SendEmailRequest\x1a\x1e.emailapi.v1.SendEmailResponse\"\x00B\x95\x01\n" +
 	"\x0fcom.emailapi.v1B\n" +
 	"EmailProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 

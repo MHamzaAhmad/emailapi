@@ -7,7 +7,6 @@
 package emailapiv1
 
 import (
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -758,7 +757,7 @@ var File_v1_apikey_proto protoreflect.FileDescriptor
 
 const file_v1_apikey_proto_rawDesc = "" +
 	"\n" +
-	"\x0fv1/apikey.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd8\x03\n" +
+	"\x0fv1/apikey.proto\x12\vemailapi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd8\x03\n" +
 	"\x06ApiKey\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
@@ -820,14 +819,14 @@ const file_v1_apikey_proto_rawDesc = "" +
 	"\x11SCOPE_APIKEY_READ\x10\x05\x12\x16\n" +
 	"\x12SCOPE_APIKEY_WRITE\x10\x06\x12\x13\n" +
 	"\x0fSCOPE_USER_READ\x10\a\x12\x14\n" +
-	"\x10SCOPE_USER_WRITE\x10\b2\xff\x04\n" +
-	"\rApiKeyService\x12l\n" +
-	"\fCreateApiKey\x12 .emailapi.v1.CreateApiKeyRequest\x1a!.emailapi.v1.CreateApiKeyResponse\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/v1/api-keys\x12Z\n" +
-	"\tGetApiKey\x12\x1d.emailapi.v1.GetApiKeyRequest\x1a\x13.emailapi.v1.ApiKey\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/v1/api-keys/{id}\x12f\n" +
-	"\vListApiKeys\x12\x1f.emailapi.v1.ListApiKeysRequest\x1a .emailapi.v1.ListApiKeysResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/api-keys\x12c\n" +
-	"\fUpdateApiKey\x12 .emailapi.v1.UpdateApiKeyRequest\x1a\x13.emailapi.v1.ApiKey\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*2\x11/v1/api-keys/{id}\x12n\n" +
-	"\fDeleteApiKey\x12 .emailapi.v1.DeleteApiKeyRequest\x1a!.emailapi.v1.DeleteApiKeyResponse\"\x19\x82\xd3\xe4\x93\x02\x13*\x11/v1/api-keys/{id}\x12g\n" +
-	"\fRevokeApiKey\x12 .emailapi.v1.RevokeApiKeyRequest\x1a\x13.emailapi.v1.ApiKey\" \x82\xd3\xe4\x93\x02\x1a\"\x18/v1/api-keys/{id}/revokeB\x96\x01\n" +
+	"\x10SCOPE_USER_WRITE\x10\b2\xe6\x03\n" +
+	"\rApiKeyService\x12U\n" +
+	"\fCreateApiKey\x12 .emailapi.v1.CreateApiKeyRequest\x1a!.emailapi.v1.CreateApiKeyResponse\"\x00\x12A\n" +
+	"\tGetApiKey\x12\x1d.emailapi.v1.GetApiKeyRequest\x1a\x13.emailapi.v1.ApiKey\"\x00\x12R\n" +
+	"\vListApiKeys\x12\x1f.emailapi.v1.ListApiKeysRequest\x1a .emailapi.v1.ListApiKeysResponse\"\x00\x12G\n" +
+	"\fUpdateApiKey\x12 .emailapi.v1.UpdateApiKeyRequest\x1a\x13.emailapi.v1.ApiKey\"\x00\x12U\n" +
+	"\fDeleteApiKey\x12 .emailapi.v1.DeleteApiKeyRequest\x1a!.emailapi.v1.DeleteApiKeyResponse\"\x00\x12G\n" +
+	"\fRevokeApiKey\x12 .emailapi.v1.RevokeApiKeyRequest\x1a\x13.emailapi.v1.ApiKey\"\x00B\x96\x01\n" +
 	"\x0fcom.emailapi.v1B\vApikeyProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
 var (

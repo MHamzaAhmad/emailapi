@@ -2,32 +2,31 @@ package main
 
 import (
 	"context"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"connectrpc.com/connect"
+	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/reflection"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 
-	emailapiv1 "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/gen/v1/emailapiv1connect"
 	"github.com/emailapi/api/internal/config"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/external/svix"
-	middleware "github.com/emailapi/api/internal/middleware"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/repository/postgres"
 	redisrepo "github.com/emailapi/api/internal/repository/redis"
 	"github.com/emailapi/api/internal/repository/suppression"
 	"github.com/emailapi/api/internal/service"
-	grpctransport "github.com/emailapi/api/internal/transport/grpc"
+	connecttransport "github.com/emailapi/api/internal/transport/connect"
+	"github.com/emailapi/api/internal/transport/connect/interceptor"
 	"github.com/emailapi/api/internal/webhook"
 	worker "github.com/emailapi/api/internal/worker"
 
@@ -47,7 +46,7 @@ func main() {
 	// Set global logger
 	log.Logger = logger
 
-	logger.Info().Msg("🚀 Starting Email API server")
+	logger.Info().Msg("🚀 Starting Email API server (Connect RPC)")
 
 	// Load configuration
 	cfg, err := config.Load()
@@ -57,7 +56,6 @@ func main() {
 
 	logger.Info().
 		Str("port", cfg.Port).
-		Str("grpc_port", cfg.GRPCPort).
 		Str("env", cfg.Env).
 		Msg("Configuration loaded")
 
@@ -86,7 +84,6 @@ func main() {
 	logger.Info().Msg("✓ Initialized S3 factory")
 
 	// Initialize ClickHouse
-	// Use native interface for better performance (async insert, etc.)
 	chConn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{cfg.ClickHouseHost},
 		Auth: clickhouse.Auth{
@@ -143,7 +140,6 @@ func main() {
 	logger.Info().Msg("✓ Initialized suppression repository")
 
 	// Initialize River
-	// Create a new pgxpool for River (recommended to separate from application pool)
 	riverPool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create River connection pool")
@@ -193,7 +189,7 @@ func main() {
 	defer riverClient.Stop(context.Background())
 	logger.Info().Msg("✓ Started River client")
 
-	// Initialize service layer (no PG email repo - stateless architecture)
+	// Initialize service layer
 	svc := service.NewWithDeps(service.ServiceDeps{
 		Store:               store,
 		SESClient:           sesClient,
@@ -213,19 +209,90 @@ func main() {
 	})
 
 	// Initialize Clerk SDK with secret key
-	middleware.InitClerk(cfg.ClerkSecretKey)
+	clerk.SetKey(cfg.ClerkSecretKey)
 
-	// Start gRPC server
-	go func() {
-		if err := runGRPCServer(cfg, svc, logger); err != nil {
-			logger.Fatal().Err(err).Msg("gRPC server error")
-		}
-	}()
+	// Create Connect interceptors
+	interceptors := connect.WithInterceptors(
+		interceptor.NewLoggingInterceptor(logger),
+		interceptor.NewSNSInterceptor(),
+		interceptor.NewWebhookInterceptor(interceptor.WebhookConfig{
+			InternalWebhookSecret: cfg.InternalWebhookSecret,
+		}),
+		interceptor.NewAuthInterceptor(interceptor.AuthConfig{
+			APIKeyService:  svc.APIKey,
+			UserLookup:     svc.User,
+			ClerkSecretKey: cfg.ClerkSecretKey,
+		}),
+	)
 
-	// Start HTTP gateway server
+	// Create HTTP mux and register Connect handlers
+	mux := http.NewServeMux()
+
+	// Register all service handlers
+	path, handler := emailapiv1connect.NewUserServiceHandler(
+		connecttransport.NewUserHandler(svc.User),
+		interceptors,
+	)
+	mux.Handle(path, handler)
+
+	path, handler = emailapiv1connect.NewApiKeyServiceHandler(
+		connecttransport.NewApiKeyHandler(svc.APIKey),
+		interceptors,
+	)
+	mux.Handle(path, handler)
+
+	path, handler = emailapiv1connect.NewDomainServiceHandler(
+		connecttransport.NewDomainHandler(svc.Domain),
+		interceptors,
+	)
+	mux.Handle(path, handler)
+
+	path, handler = emailapiv1connect.NewEmailServiceHandler(
+		connecttransport.NewEmailHandler(svc.Email),
+		interceptors,
+	)
+	mux.Handle(path, handler)
+
+	path, handler = emailapiv1connect.NewInternalServiceHandler(
+		connecttransport.NewInternalHandler(svc.Internal),
+		interceptors,
+	)
+	mux.Handle(path, handler)
+
+	path, handler = emailapiv1connect.NewWebhookServiceHandler(
+		connecttransport.NewWebhookHandler(svc.Webhook),
+		interceptors,
+	)
+	mux.Handle(path, handler)
+
+	path, handler = emailapiv1connect.NewSnsServiceHandler(
+		connecttransport.NewSnsHandler(svc.SNSNotification, svc.InboundEmail),
+		interceptors,
+	)
+	mux.Handle(path, handler)
+
+	path, handler = emailapiv1connect.NewActivityServiceHandler(
+		connecttransport.NewActivityHandler(svc.Activity),
+		interceptors,
+	)
+	mux.Handle(path, handler)
+
+	// CORS middleware
+	corsHandler := corsMiddleware(mux)
+
+	// Create HTTP server with h2c (HTTP/2 Cleartext) for gRPC support
+	srv := &http.Server{
+		Addr:         ":" + cfg.Port,
+		Handler:      h2c.NewHandler(corsHandler, &http2.Server{}),
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+	}
+
+	// Start server in goroutine
 	go func() {
-		if err := runHTTPServer(cfg, logger); err != nil {
-			logger.Fatal().Err(err).Msg("HTTP server error")
+		logger.Info().Str("port", cfg.Port).Msg("🚀 Connect server listening (HTTP + gRPC + gRPC-Web)")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal().Err(err).Msg("Server error")
 		}
 	}()
 
@@ -234,150 +301,16 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Info().Msg("Shutting down servers...")
-}
+	logger.Info().Msg("Shutting down server...")
 
-// runGRPCServer starts the gRPC server on port 9090.
-func runGRPCServer(cfg *config.Config, svc *service.Service, logger zerolog.Logger) error {
-	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
-	if err != nil {
-		return err
-	}
-
-	// Create interceptors
-	loggingInterceptor := middleware.NewLoggingInterceptor(logger)
-	snsInterceptor := middleware.NewSNSInterceptor()
-	authInterceptor := middleware.NewAuthInterceptor(middleware.AuthInterceptorConfig{
-		APIKeyService:  svc.APIKey,
-		UserLookup:     svc.User,
-		ClerkSecretKey: cfg.ClerkSecretKey,
-	})
-	webhookInterceptor := middleware.NewWebhookInterceptor(cfg.InternalWebhookSecret)
-
-	// Chain interceptors: logging -> SNS verification -> webhook verification -> auth
-	// Note: SNS verification runs for SNS endpoints (public, verified by signature)
-	//       webhook verification runs for internal endpoints
-	//       auth runs for API endpoints
-	chainedInterceptor := func(
-		ctx context.Context,
-		req interface{},
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (interface{}, error) {
-		return loggingInterceptor.Unary()(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
-			return snsInterceptor.Unary()(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
-				return webhookInterceptor.Unary()(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
-					return authInterceptor.Unary()(ctx, req, info, handler)
-				})
-			})
-		})
-	}
-
-	// Create gRPC server with chained interceptors
-	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(chainedInterceptor),
-	)
-
-	// Register services
-	emailapiv1.RegisterUserServiceServer(grpcServer, grpctransport.NewUserServer(svc.User))
-	emailapiv1.RegisterApiKeyServiceServer(grpcServer, grpctransport.NewApiKeyServer(svc.APIKey))
-	emailapiv1.RegisterDomainServiceServer(grpcServer, grpctransport.NewDomainServer(svc.Domain))
-	emailapiv1.RegisterEmailServiceServer(grpcServer, grpctransport.NewEmailServer(svc.Email))
-	emailapiv1.RegisterInternalServiceServer(grpcServer, grpctransport.NewInternalServer(svc.Internal))
-	emailapiv1.RegisterWebhookServiceServer(grpcServer, grpctransport.NewWebhookServer(svc.Webhook))
-	emailapiv1.RegisterSnsServiceServer(grpcServer, grpctransport.NewSnsServer(svc.SNSNotification, svc.InboundEmail))
-	emailapiv1.RegisterActivityServiceServer(grpcServer, grpctransport.NewActivityServer(svc.Activity))
-
-	// Enable reflection for grpcurl
-	reflection.Register(grpcServer)
-
-	logger.Info().Str("port", cfg.GRPCPort).Msg("📡 gRPC server listening")
-	return grpcServer.Serve(lis)
-}
-
-// runHTTPServer starts the gRPC-Gateway HTTP server on port 8080.
-func runHTTPServer(cfg *config.Config, logger zerolog.Logger) error {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	mux := runtime.NewServeMux()
-	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-
-	// Register HTTP handlers that proxy to gRPC
-	grpcEndpoint := "localhost:" + cfg.GRPCPort
-
-	if err := emailapiv1.RegisterUserServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
-		return err
-	}
-	if err := emailapiv1.RegisterApiKeyServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
-		return err
-	}
-	if err := emailapiv1.RegisterDomainServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
-		return err
-	}
-	if err := emailapiv1.RegisterEmailServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
-		return err
-	}
-	if err := emailapiv1.RegisterInternalServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
-		return err
-	}
-	if err := emailapiv1.RegisterWebhookServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
-		return err
-	}
-	if err := emailapiv1.RegisterSnsServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
-		return err
-	}
-	if err := emailapiv1.RegisterActivityServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts); err != nil {
-		return err
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Fatal().Err(err).Msg("Server forced to shutdown")
 	}
 
-	// Chain middlewares: CORS -> Logging -> gRPC-Gateway
-	handler := corsMiddleware(httpLoggingMiddleware(mux, logger))
-
-	srv := &http.Server{
-		Addr:         ":" + cfg.Port,
-		Handler:      handler,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-	}
-
-	logger.Info().Str("port", cfg.Port).Msg("🌐 HTTP server listening (gRPC-Gateway)")
-	return srv.ListenAndServe()
-}
-
-// httpLoggingMiddleware logs HTTP requests.
-func httpLoggingMiddleware(next http.Handler, logger zerolog.Logger) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		// Wrap response writer to capture status code
-		ww := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
-
-		// Call next handler
-		next.ServeHTTP(ww, r)
-
-		// Log the request
-		duration := time.Since(start)
-		logger.Info().
-			Str("method", r.Method).
-			Str("path", r.URL.Path).
-			Int("status", ww.statusCode).
-			Dur("duration", duration).
-			Str("remote_addr", r.RemoteAddr).
-			Msg("HTTP request")
-	})
-}
-
-// responseWriter wraps http.ResponseWriter to capture status code.
-type responseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (rw *responseWriter) WriteHeader(code int) {
-	rw.statusCode = code
-	rw.ResponseWriter.WriteHeader(code)
+	logger.Info().Msg("Server stopped")
 }
 
 // corsMiddleware adds CORS headers to allow cross-origin requests from the frontend.
@@ -386,8 +319,8 @@ func corsMiddleware(next http.Handler) http.Handler {
 		// Set CORS headers
 		w.Header().Set("Access-Control-Allow-Origin", "*") // In production, specify exact origins
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, X-Webhook-Secret")
-		w.Header().Set("Access-Control-Expose-Headers", "Content-Length, Content-Type")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, X-Webhook-Secret, Connect-Protocol-Version, Connect-Timeout-Ms, Grpc-Timeout, X-Grpc-Web, X-User-Agent")
+		w.Header().Set("Access-Control-Expose-Headers", "Content-Length, Content-Type, Grpc-Status, Grpc-Message")
 		w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
 
 		// Handle preflight requests

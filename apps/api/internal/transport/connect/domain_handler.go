@@ -1,73 +1,84 @@
-package grpc
+package connect
 
 import (
 	"context"
+	"errors"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	emailapiv1 "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/gen/v1/emailapiv1connect"
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/service"
+	"github.com/emailapi/api/internal/transport/connect/interceptor"
 )
 
-// DomainServer implements the DomainService gRPC server.
-type DomainServer struct {
-	emailapiv1.UnimplementedDomainServiceServer
+// DomainHandler implements the Connect DomainServiceHandler.
+type DomainHandler struct {
+	emailapiv1connect.UnimplementedDomainServiceHandler
 	svc *service.DomainService
 }
 
-// NewDomainServer creates a new DomainServer.
-func NewDomainServer(svc *service.DomainService) *DomainServer {
-	return &DomainServer{svc: svc}
+// NewDomainHandler creates a new DomainHandler.
+func NewDomainHandler(svc *service.DomainService) *DomainHandler {
+	return &DomainHandler{svc: svc}
 }
 
 // AddDomain handles adding a new domain.
-func (s *DomainServer) AddDomain(ctx context.Context, req *emailapiv1.AddDomainRequest) (*emailapiv1.AddDomainResponse, error) {
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
+func (h *DomainHandler) AddDomain(
+	ctx context.Context,
+	req *connect.Request[emailapiv1.AddDomainRequest],
+) (*connect.Response[emailapiv1.AddDomainResponse], error) {
+	userID := interceptor.GetUserID(ctx)
+	if userID == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
 	}
 
-	details, err := s.svc.Add(ctx, userID, req.Domain)
+	details, err := h.svc.Add(ctx, userID, req.Msg.Domain)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to add domain: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	return &emailapiv1.AddDomainResponse{
+	return connect.NewResponse(&emailapiv1.AddDomainResponse{
 		Domain:  toProtoDomain(details),
 		Message: "Domain added. Configure the DNS records below to start sending emails.",
-	}, nil
+	}), nil
 }
 
 // GetDomain handles retrieving a domain.
-func (s *DomainServer) GetDomain(ctx context.Context, req *emailapiv1.GetDomainRequest) (*emailapiv1.GetDomainResponse, error) {
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
+func (h *DomainHandler) GetDomain(
+	ctx context.Context,
+	req *connect.Request[emailapiv1.GetDomainRequest],
+) (*connect.Response[emailapiv1.GetDomainResponse], error) {
+	userID := interceptor.GetUserID(ctx)
+	if userID == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
 	}
 
-	details, err := s.svc.Get(ctx, userID, req.Id)
+	details, err := h.svc.Get(ctx, userID, req.Msg.Id)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "domain not found or access denied")
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("domain not found or access denied"))
 	}
 
-	return &emailapiv1.GetDomainResponse{
+	return connect.NewResponse(&emailapiv1.GetDomainResponse{
 		Domain: toProtoDomain(details),
-	}, nil
+	}), nil
 }
 
 // ListDomains handles listing all domains for a user.
-func (s *DomainServer) ListDomains(ctx context.Context, req *emailapiv1.ListDomainsRequest) (*emailapiv1.ListDomainsResponse, error) {
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
+func (h *DomainHandler) ListDomains(
+	ctx context.Context,
+	req *connect.Request[emailapiv1.ListDomainsRequest],
+) (*connect.Response[emailapiv1.ListDomainsResponse], error) {
+	userID := interceptor.GetUserID(ctx)
+	if userID == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
 	}
 
-	domains, err := s.svc.List(ctx, userID)
+	domains, err := h.svc.List(ctx, userID)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list domains: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	protoDomains := make([]*emailapiv1.Domain, len(domains))
@@ -75,37 +86,43 @@ func (s *DomainServer) ListDomains(ctx context.Context, req *emailapiv1.ListDoma
 		protoDomains[i] = toProtoDomain(d)
 	}
 
-	return &emailapiv1.ListDomainsResponse{
+	return connect.NewResponse(&emailapiv1.ListDomainsResponse{
 		Data: protoDomains,
-	}, nil
+	}), nil
 }
 
 // DeleteDomain handles deleting a domain.
-func (s *DomainServer) DeleteDomain(ctx context.Context, req *emailapiv1.DeleteDomainRequest) (*emailapiv1.DeleteDomainResponse, error) {
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
+func (h *DomainHandler) DeleteDomain(
+	ctx context.Context,
+	req *connect.Request[emailapiv1.DeleteDomainRequest],
+) (*connect.Response[emailapiv1.DeleteDomainResponse], error) {
+	userID := interceptor.GetUserID(ctx)
+	if userID == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
 	}
 
-	if err := s.svc.Delete(ctx, userID, req.Id); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete domain: %v", err)
+	if err := h.svc.Delete(ctx, userID, req.Msg.Id); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	return &emailapiv1.DeleteDomainResponse{
+	return connect.NewResponse(&emailapiv1.DeleteDomainResponse{
 		Message: "Domain deleted.",
-	}, nil
+	}), nil
 }
 
 // VerifyDomain handles verifying a domain status with rate limiting.
-func (s *DomainServer) VerifyDomain(ctx context.Context, req *emailapiv1.VerifyDomainRequest) (*emailapiv1.VerifyDomainResponse, error) {
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
+func (h *DomainHandler) VerifyDomain(
+	ctx context.Context,
+	req *connect.Request[emailapiv1.VerifyDomainRequest],
+) (*connect.Response[emailapiv1.VerifyDomainResponse], error) {
+	userID := interceptor.GetUserID(ctx)
+	if userID == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
 	}
 
-	result, err := s.svc.Verify(ctx, userID, req.Id)
+	result, err := h.svc.Verify(ctx, userID, req.Msg.Id)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to verify domain: %v", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	resp := &emailapiv1.VerifyDomainResponse{
@@ -116,7 +133,7 @@ func (s *DomainServer) VerifyDomain(ctx context.Context, req *emailapiv1.VerifyD
 	if result.NextRetryAt != nil {
 		resp.NextRetryAt = timestamppb.New(*result.NextRetryAt)
 	}
-	return resp, nil
+	return connect.NewResponse(resp), nil
 }
 
 // ============================================================================

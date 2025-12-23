@@ -4,16 +4,13 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv1";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv1";
-import { file_google_api_annotations } from "../google/api/annotations_pb";
-import type { HttpBodySchema } from "../google/api/httpbody_pb";
-import { file_google_api_httpbody } from "../google/api/httpbody_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file v1/internal.proto.
  */
 export const file_v1_internal: GenFile = /*@__PURE__*/
-  fileDesc("ChF2MS9pbnRlcm5hbC5wcm90bxILZW1haWxhcGkudjEiaQoaR3VhcmREdXR5U2NhblJlc3VsdFJlcXVlc3QSEQoJczNfYnVja2V0GAEgASgJEg4KBnMzX2tleRgCIAEoCRITCgtzY2FuX3N0YXR1cxgDIAEoCRITCgt0aHJlYXRfbmFtZRgEIAEoCSI/ChtHdWFyZER1dHlTY2FuUmVzdWx0UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIjgKFENsZXJrV2ViaG9va1Jlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSDwoHbWVzc2FnZRgCIAEoCSLKAQoMSW5ib3VuZEVtYWlsEgoKAmlkGAEgASgJEhIKCm1lc3NhZ2VfaWQYAiABKAkSEwoLaW5fcmVwbHlfdG8YAyABKAkSEgoKcmVmZXJlbmNlcxgEIAMoCRIMCgRmcm9tGAUgASgJEgoKAnRvGAYgAygJEg8KB3N1YmplY3QYByABKAkSDAoEYm9keRgIIAEoCRIMCgRodG1sGAkgASgJEhkKEW9yaWdpbmFsX2VtYWlsX2lkGAogASgJEg8KB3VzZXJfaWQYCyABKAkyqgIKD0ludGVybmFsU2VydmljZRKfAQoZSGFuZGxlR3VhcmREdXR5U2NhblJlc3VsdBInLmVtYWlsYXBpLnYxLkd1YXJkRHV0eVNjYW5SZXN1bHRSZXF1ZXN0GiguZW1haWxhcGkudjEuR3VhcmREdXR5U2NhblJlc3VsdFJlc3BvbnNlIi+C0+STAik6ASoiJC92MS9pbnRlcm5hbC93ZWJob29rcy9ndWFyZGR1dHktc2NhbhJ1ChJIYW5kbGVDbGVya1dlYmhvb2sSFC5nb29nbGUuYXBpLkh0dHBCb2R5GiEuZW1haWxhcGkudjEuQ2xlcmtXZWJob29rUmVzcG9uc2UiJoLT5JMCIDoBKiIbL3YxL2ludGVybmFsL3dlYmhvb2tzL2NsZXJrQpsBCg9jb20uZW1haWxhcGkudjFCDUludGVybmFsUHJvdG9QAVosZ2l0aHViLmNvbS9lbWFpbGFwaS9zZGstZ28vZ2VuL3YxO2VtYWlsYXBpdjGiAgNFWFiqAgtFbWFpbGFwaS5WMcoCC0VtYWlsYXBpXFYx4gIXRW1haWxhcGlcVjFcR1BCTWV0YWRhdGHqAgxFbWFpbGFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations, file_google_api_httpbody]);
+  fileDesc("ChF2MS9pbnRlcm5hbC5wcm90bxILZW1haWxhcGkudjEiaQoaR3VhcmREdXR5U2NhblJlc3VsdFJlcXVlc3QSEQoJczNfYnVja2V0GAEgASgJEg4KBnMzX2tleRgCIAEoCRITCgtzY2FuX3N0YXR1cxgDIAEoCRITCgt0aHJlYXRfbmFtZRgEIAEoCSI/ChtHdWFyZER1dHlTY2FuUmVzdWx0UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIiYKE0NsZXJrV2ViaG9va1JlcXVlc3QSDwoHcGF5bG9hZBgBIAEoDCI4ChRDbGVya1dlYmhvb2tSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiygEKDEluYm91bmRFbWFpbBIKCgJpZBgBIAEoCRISCgptZXNzYWdlX2lkGAIgASgJEhMKC2luX3JlcGx5X3RvGAMgASgJEhIKCnJlZmVyZW5jZXMYBCADKAkSDAoEZnJvbRgFIAEoCRIKCgJ0bxgGIAMoCRIPCgdzdWJqZWN0GAcgASgJEgwKBGJvZHkYCCABKAkSDAoEaHRtbBgJIAEoCRIZChFvcmlnaW5hbF9lbWFpbF9pZBgKIAEoCRIPCgd1c2VyX2lkGAsgASgJMuABCg9JbnRlcm5hbFNlcnZpY2UScAoZSGFuZGxlR3VhcmREdXR5U2NhblJlc3VsdBInLmVtYWlsYXBpLnYxLkd1YXJkRHV0eVNjYW5SZXN1bHRSZXF1ZXN0GiguZW1haWxhcGkudjEuR3VhcmREdXR5U2NhblJlc3VsdFJlc3BvbnNlIgASWwoSSGFuZGxlQ2xlcmtXZWJob29rEiAuZW1haWxhcGkudjEuQ2xlcmtXZWJob29rUmVxdWVzdBohLmVtYWlsYXBpLnYxLkNsZXJrV2ViaG9va1Jlc3BvbnNlIgBCmwEKD2NvbS5lbWFpbGFwaS52MUINSW50ZXJuYWxQcm90b1ABWixnaXRodWIuY29tL2VtYWlsYXBpL3Nkay1nby9nZW4vdjE7ZW1haWxhcGl2MaICA0VYWKoCC0VtYWlsYXBpLlYxygILRW1haWxhcGlcVjHiAhdFbWFpbGFwaVxWMVxHUEJNZXRhZGF0YeoCDEVtYWlsYXBpOjpWMWIGcHJvdG8z");
 
 /**
  * GuardDutyScanResultRequest contains the scan result from GuardDuty via EventBridge.
@@ -86,6 +83,28 @@ export const GuardDutyScanResultResponseSchema: GenMessage<GuardDutyScanResultRe
   messageDesc(file_v1_internal, 1);
 
 /**
+ * ClerkWebhookRequest wraps the raw Clerk webhook payload.
+ * The raw payload is needed for Svix signature verification.
+ *
+ * @generated from message emailapi.v1.ClerkWebhookRequest
+ */
+export type ClerkWebhookRequest = Message<"emailapi.v1.ClerkWebhookRequest"> & {
+  /**
+   * Raw JSON payload bytes for signature verification.
+   *
+   * @generated from field: bytes payload = 1;
+   */
+  payload: Uint8Array;
+};
+
+/**
+ * Describes the message emailapi.v1.ClerkWebhookRequest.
+ * Use `create(ClerkWebhookRequestSchema)` to create a new message.
+ */
+export const ClerkWebhookRequestSchema: GenMessage<ClerkWebhookRequest> = /*@__PURE__*/
+  messageDesc(file_v1_internal, 2);
+
+/**
  * ClerkWebhookResponse is the response after processing Clerk webhook.
  *
  * @generated from message emailapi.v1.ClerkWebhookResponse
@@ -111,7 +130,7 @@ export type ClerkWebhookResponse = Message<"emailapi.v1.ClerkWebhookResponse"> &
  * Use `create(ClerkWebhookResponseSchema)` to create a new message.
  */
 export const ClerkWebhookResponseSchema: GenMessage<ClerkWebhookResponse> = /*@__PURE__*/
-  messageDesc(file_v1_internal, 2);
+  messageDesc(file_v1_internal, 3);
 
 /**
  * InboundEmail represents a parsed inbound email reply.
@@ -202,7 +221,7 @@ export type InboundEmail = Message<"emailapi.v1.InboundEmail"> & {
  * Use `create(InboundEmailSchema)` to create a new message.
  */
 export const InboundEmailSchema: GenMessage<InboundEmail> = /*@__PURE__*/
-  messageDesc(file_v1_internal, 3);
+  messageDesc(file_v1_internal, 4);
 
 /**
  * InternalService handles internal webhook endpoints.
@@ -224,13 +243,13 @@ export const InternalService: GenService<{
   /**
    * HandleClerkWebhook processes Clerk user lifecycle events (signup, etc.).
    * This endpoint is authenticated via Svix signature verification.
-   * We use HttpBody to get the raw payload for verification.
+   * Raw payload bytes are passed via ClerkWebhookRequest for signature verification.
    *
    * @generated from rpc emailapi.v1.InternalService.HandleClerkWebhook
    */
   handleClerkWebhook: {
     methodKind: "unary";
-    input: typeof HttpBodySchema;
+    input: typeof ClerkWebhookRequestSchema;
     output: typeof ClerkWebhookResponseSchema;
   },
 }> = /*@__PURE__*/
