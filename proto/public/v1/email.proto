@@ -5,6 +5,7 @@ package v1;
 option go_package = "github.com/emailapi/api/gen/v1";
 
 import "google/protobuf/timestamp.proto";
+import "v1/events.proto";
 
 // EmailService handles email sending operations.
 // This is a stateless, compliance-first API - no email content is stored.
@@ -17,6 +18,11 @@ service EmailService {
   //
   // Delivery status is sent to your webhook endpoint.
   rpc SendEmail(SendEmailRequest) returns (SendEmailResponse) {}
+
+  // StreamEvents streams email events to the client in real-time.
+  // Alternative to webhooks for consuming events.
+  // Use cursor to resume from a specific position.
+  rpc StreamEvents(StreamEventsRequest) returns (stream Event) {}
 }
 
 // EmailStatus represents the current processing status.
@@ -88,4 +94,18 @@ message SendEmailResponse {
   string message_id = 3;
   // Human-readable status message.
   string status_message = 4;
+}
+
+// StreamEventsRequest is the request for streaming events.
+message StreamEventsRequest {
+  // Cursor position to start from (event ID).
+  // Empty string means start from latest events.
+  // Use "0" to start from the beginning of the stream.
+  string cursor = 1;
+  
+  // Optional: Filter by event types.
+  repeated EventType event_types = 2;
+  
+  // Number of events to batch (1-100, default: 10).
+  int32 batch_size = 3;
 }

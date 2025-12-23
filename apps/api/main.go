@@ -17,6 +17,7 @@ import (
 
 	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/config"
+	"github.com/emailapi/api/internal/eventstream"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/external/svix"
@@ -158,8 +159,13 @@ func main() {
 	}
 	logger.Info().Msg("✓ Initialized Svix client")
 
-	// Create webhook sender from Svix client
-	webhookSender := webhook.NewSender(svixClient)
+	// Create event stream publisher and consumer
+	eventPublisher := eventstream.NewPublisher(redisClient)
+	eventConsumer := eventstream.NewConsumer(redisClient)
+	logger.Info().Msg("✓ Initialized event stream")
+
+	// Create webhook sender with event stream publisher
+	webhookSender := webhook.NewSender(svixClient, eventPublisher)
 
 	// Create and register workers
 	workers := river.NewWorkers()
@@ -205,6 +211,7 @@ func main() {
 		DomainCache:         domainCache,
 		APIKeyCache:         apiKeyCache,
 		UserCache:           userCache,
+		EventConsumer:       eventConsumer,
 		ClerkWebhookSecret:  cfg.ClerkWebhookSecret,
 	})
 

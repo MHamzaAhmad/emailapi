@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: v1/activity.proto
 
-package emailapiv1
+package v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -275,7 +275,7 @@ var File_v1_activity_proto protoreflect.FileDescriptor
 
 const file_v1_activity_proto_rawDesc = "" +
 	"\n" +
-	"\x11v1/activity.proto\x12\vemailapi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x94\x02\n" +
+	"\x11v1/activity.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x94\x02\n" +
 	"\vActivityLog\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1f\n" +
@@ -299,14 +299,14 @@ const file_v1_activity_proto_rawDesc = "" +
 	"\f_entity_typeB\t\n" +
 	"\a_actionB\r\n" +
 	"\v_start_timeB\v\n" +
-	"\t_end_time\"i\n" +
-	"\x18ListActivityLogsResponse\x12,\n" +
-	"\x04logs\x18\x01 \x03(\v2\x18.emailapi.v1.ActivityLogR\x04logs\x12\x1f\n" +
+	"\t_end_time\"`\n" +
+	"\x18ListActivityLogsResponse\x12#\n" +
+	"\x04logs\x18\x01 \x03(\v2\x0f.v1.ActivityLogR\x04logs\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x05R\n" +
-	"totalCount2t\n" +
-	"\x0fActivityService\x12a\n" +
-	"\x10ListActivityLogs\x12$.emailapi.v1.ListActivityLogsRequest\x1a%.emailapi.v1.ListActivityLogsResponse\"\x00B\x9b\x01\n" +
-	"\x0fcom.emailapi.v1B\rActivityProtoP\x01Z,github.com/emailapi/sdk-go/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
+	"totalCount2b\n" +
+	"\x0fActivityService\x12O\n" +
+	"\x10ListActivityLogs\x12\x1b.v1.ListActivityLogsRequest\x1a\x1c.v1.ListActivityLogsResponse\"\x00B_\n" +
+	"\x06com.v1B\rActivityProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (
 	file_v1_activity_proto_rawDescOnce sync.Once
@@ -322,16 +322,16 @@ func file_v1_activity_proto_rawDescGZIP() []byte {
 
 var file_v1_activity_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_v1_activity_proto_goTypes = []any{
-	(*ActivityLog)(nil),              // 0: emailapi.v1.ActivityLog
-	(*ListActivityLogsRequest)(nil),  // 1: emailapi.v1.ListActivityLogsRequest
-	(*ListActivityLogsResponse)(nil), // 2: emailapi.v1.ListActivityLogsResponse
+	(*ActivityLog)(nil),              // 0: v1.ActivityLog
+	(*ListActivityLogsRequest)(nil),  // 1: v1.ListActivityLogsRequest
+	(*ListActivityLogsResponse)(nil), // 2: v1.ListActivityLogsResponse
 	(*timestamppb.Timestamp)(nil),    // 3: google.protobuf.Timestamp
 }
 var file_v1_activity_proto_depIdxs = []int32{
-	3, // 0: emailapi.v1.ActivityLog.timestamp:type_name -> google.protobuf.Timestamp
-	0, // 1: emailapi.v1.ListActivityLogsResponse.logs:type_name -> emailapi.v1.ActivityLog
-	1, // 2: emailapi.v1.ActivityService.ListActivityLogs:input_type -> emailapi.v1.ListActivityLogsRequest
-	2, // 3: emailapi.v1.ActivityService.ListActivityLogs:output_type -> emailapi.v1.ListActivityLogsResponse
+	3, // 0: v1.ActivityLog.timestamp:type_name -> google.protobuf.Timestamp
+	0, // 1: v1.ListActivityLogsResponse.logs:type_name -> v1.ActivityLog
+	1, // 2: v1.ActivityService.ListActivityLogs:input_type -> v1.ListActivityLogsRequest
+	2, // 3: v1.ActivityService.ListActivityLogs:output_type -> v1.ListActivityLogsResponse
 	3, // [3:4] is the sub-list for method output_type
 	2, // [2:3] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name

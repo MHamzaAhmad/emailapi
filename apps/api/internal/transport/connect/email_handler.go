@@ -43,3 +43,42 @@ func (h *EmailHandler) SendEmail(
 
 	return connect.NewResponse(result), nil
 }
+
+// StreamEvents streams email events to the client.
+func (h *EmailHandler) StreamEvents(
+	ctx context.Context,
+	req *connect.Request[v1.StreamEventsRequest],
+	stream *connect.ServerStream[v1.Event],
+) error {
+	userID := interceptor.GetUserID(ctx)
+	if userID == "" {
+		return connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+	}
+
+	batchSize := req.Msg.BatchSize
+	if batchSize <= 0 {
+		batchSize = 10
+	}
+	if batchSize > 100 {
+		batchSize = 100
+	}
+
+	events, err := h.svc.StreamEvents(ctx, userID, req.Msg.Cursor, req.Msg.EventTypes, batchSize)
+	if err != nil {
+		return connect.NewError(connect.CodeInternal, err)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case event, ok := <-events:
+			if !ok {
+				return nil // Channel closed
+			}
+			if err := stream.Send(event); err != nil {
+				return err
+			}
+		}
+	}
+}

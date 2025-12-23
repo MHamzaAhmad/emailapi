@@ -56,6 +56,39 @@ func (c *Client) SetNX(ctx context.Context, key, value string, ttl time.Duration
 	return c.rdb.SetNX(ctx, key, value, ttl).Result()
 }
 
+// =============================================================================
+// Redis Streams Operations
+// =============================================================================
+
+// XAdd adds an entry to a stream and returns the generated ID.
+func (c *Client) XAdd(ctx context.Context, stream string, values map[string]interface{}) (string, error) {
+	return c.rdb.XAdd(ctx, &redis.XAddArgs{
+		Stream: stream,
+		Values: values,
+	}).Result()
+}
+
+// XRead reads entries from streams with blocking support.
+// Pass 0 for block to not block, or a duration to block for new entries.
+func (c *Client) XRead(ctx context.Context, streams []string, count int64, block time.Duration) ([]redis.XStream, error) {
+	return c.rdb.XRead(ctx, &redis.XReadArgs{
+		Streams: streams,
+		Count:   count,
+		Block:   block,
+	}).Result()
+}
+
+// XTrimMaxLenApprox trims a stream to approximately maxLen entries.
+// Uses approximate trimming for efficiency.
+func (c *Client) XTrimMaxLenApprox(ctx context.Context, stream string, maxLen int64) error {
+	return c.rdb.XTrimMaxLenApprox(ctx, stream, maxLen, 0).Err()
+}
+
+// Underlying returns the raw redis client for advanced operations.
+func (c *Client) Underlying() *redis.Client {
+	return c.rdb
+}
+
 // Close closes the Redis connection.
 func (c *Client) Close() error {
 	return c.rdb.Close()

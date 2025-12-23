@@ -415,11 +415,77 @@ func (x *SendEmailResponse) GetStatusMessage() string {
 	return ""
 }
 
+// StreamEventsRequest is the request for streaming events.
+type StreamEventsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Cursor position to start from (event ID).
+	// Empty string means start from latest events.
+	// Use "0" to start from the beginning of the stream.
+	Cursor string `protobuf:"bytes,1,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	// Optional: Filter by event types.
+	EventTypes []EventType `protobuf:"varint,2,rep,packed,name=event_types,json=eventTypes,proto3,enum=v1.EventType" json:"event_types,omitempty"`
+	// Number of events to batch (1-100, default: 10).
+	BatchSize     int32 `protobuf:"varint,3,opt,name=batch_size,json=batchSize,proto3" json:"batch_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamEventsRequest) Reset() {
+	*x = StreamEventsRequest{}
+	mi := &file_v1_email_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamEventsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamEventsRequest) ProtoMessage() {}
+
+func (x *StreamEventsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_email_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamEventsRequest.ProtoReflect.Descriptor instead.
+func (*StreamEventsRequest) Descriptor() ([]byte, []int) {
+	return file_v1_email_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *StreamEventsRequest) GetCursor() string {
+	if x != nil {
+		return x.Cursor
+	}
+	return ""
+}
+
+func (x *StreamEventsRequest) GetEventTypes() []EventType {
+	if x != nil {
+		return x.EventTypes
+	}
+	return nil
+}
+
+func (x *StreamEventsRequest) GetBatchSize() int32 {
+	if x != nil {
+		return x.BatchSize
+	}
+	return 0
+}
+
 var File_v1_email_proto protoreflect.FileDescriptor
 
 const file_v1_email_proto_rawDesc = "" +
 	"\n" +
-	"\x0ev1/email.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xde\x03\n" +
+	"\x0ev1/email.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0fv1/events.proto\"\xde\x03\n" +
 	"\x10SendEmailRequest\x12\x12\n" +
 	"\x04from\x18\x01 \x01(\tR\x04from\x12\x0e\n" +
 	"\x02to\x18\x02 \x03(\tR\x02to\x12\x0e\n" +
@@ -452,15 +518,22 @@ const file_v1_email_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\x0e2\x0f.v1.EmailStatusR\x06status\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x03 \x01(\tR\tmessageId\x12%\n" +
-	"\x0estatus_message\x18\x04 \x01(\tR\rstatusMessage*\x91\x01\n" +
+	"\x0estatus_message\x18\x04 \x01(\tR\rstatusMessage\"|\n" +
+	"\x13StreamEventsRequest\x12\x16\n" +
+	"\x06cursor\x18\x01 \x01(\tR\x06cursor\x12.\n" +
+	"\vevent_types\x18\x02 \x03(\x0e2\r.v1.EventTypeR\n" +
+	"eventTypes\x12\x1d\n" +
+	"\n" +
+	"batch_size\x18\x03 \x01(\x05R\tbatchSize*\x91\x01\n" +
 	"\vEmailStatus\x12\x1c\n" +
 	"\x18EMAIL_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13EMAIL_STATUS_QUEUED\x10\x01\x12\x1b\n" +
 	"\x17EMAIL_STATUS_PROCESSING\x10\x02\x12\x15\n" +
 	"\x11EMAIL_STATUS_SENT\x10\x03\x12\x17\n" +
-	"\x13EMAIL_STATUS_FAILED\x10\x042J\n" +
+	"\x13EMAIL_STATUS_FAILED\x10\x042\x82\x01\n" +
 	"\fEmailService\x12:\n" +
-	"\tSendEmail\x12\x14.v1.SendEmailRequest\x1a\x15.v1.SendEmailResponse\"\x00B\\\n" +
+	"\tSendEmail\x12\x14.v1.SendEmailRequest\x1a\x15.v1.SendEmailResponse\"\x00\x126\n" +
+	"\fStreamEvents\x12\x17.v1.StreamEventsRequest\x1a\t.v1.Event\"\x000\x01B\\\n" +
 	"\x06com.v1B\n" +
 	"EmailProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
@@ -477,27 +550,33 @@ func file_v1_email_proto_rawDescGZIP() []byte {
 }
 
 var file_v1_email_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_v1_email_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_v1_email_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_v1_email_proto_goTypes = []any{
 	(EmailStatus)(0),              // 0: v1.EmailStatus
 	(*SendEmailRequest)(nil),      // 1: v1.SendEmailRequest
 	(*Attachment)(nil),            // 2: v1.Attachment
 	(*SendEmailResponse)(nil),     // 3: v1.SendEmailResponse
-	nil,                           // 4: v1.SendEmailRequest.MetadataEntry
-	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
+	(*StreamEventsRequest)(nil),   // 4: v1.StreamEventsRequest
+	nil,                           // 5: v1.SendEmailRequest.MetadataEntry
+	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
+	(EventType)(0),                // 7: v1.EventType
+	(*Event)(nil),                 // 8: v1.Event
 }
 var file_v1_email_proto_depIdxs = []int32{
-	4, // 0: v1.SendEmailRequest.metadata:type_name -> v1.SendEmailRequest.MetadataEntry
-	5, // 1: v1.SendEmailRequest.scheduled_at:type_name -> google.protobuf.Timestamp
+	5, // 0: v1.SendEmailRequest.metadata:type_name -> v1.SendEmailRequest.MetadataEntry
+	6, // 1: v1.SendEmailRequest.scheduled_at:type_name -> google.protobuf.Timestamp
 	2, // 2: v1.SendEmailRequest.attachments:type_name -> v1.Attachment
 	0, // 3: v1.SendEmailResponse.status:type_name -> v1.EmailStatus
-	1, // 4: v1.EmailService.SendEmail:input_type -> v1.SendEmailRequest
-	3, // 5: v1.EmailService.SendEmail:output_type -> v1.SendEmailResponse
-	5, // [5:6] is the sub-list for method output_type
-	4, // [4:5] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	7, // 4: v1.StreamEventsRequest.event_types:type_name -> v1.EventType
+	1, // 5: v1.EmailService.SendEmail:input_type -> v1.SendEmailRequest
+	4, // 6: v1.EmailService.StreamEvents:input_type -> v1.StreamEventsRequest
+	3, // 7: v1.EmailService.SendEmail:output_type -> v1.SendEmailResponse
+	8, // 8: v1.EmailService.StreamEvents:output_type -> v1.Event
+	7, // [7:9] is the sub-list for method output_type
+	5, // [5:7] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_v1_email_proto_init() }
@@ -505,6 +584,7 @@ func file_v1_email_proto_init() {
 	if File_v1_email_proto != nil {
 		return
 	}
+	file_v1_events_proto_init()
 	file_v1_email_proto_msgTypes[1].OneofWrappers = []any{
 		(*Attachment_Url)(nil),
 		(*Attachment_Base64Content)(nil),
@@ -515,7 +595,7 @@ func file_v1_email_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_email_proto_rawDesc), len(file_v1_email_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

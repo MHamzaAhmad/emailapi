@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/emailapi/api/internal/eventstream"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/external/svix"
@@ -56,6 +57,8 @@ type ServiceDeps struct {
 	DomainCache *rediscache.DomainCache
 	APIKeyCache *rediscache.APIKeyCache
 	UserCache   *rediscache.UserCache
+	// Event streaming
+	EventConsumer eventstream.Consumer
 	// Clerk configuration
 	ClerkWebhookSecret string
 }
@@ -69,7 +72,7 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	// Create email validator with domain checker and suppression checker
 	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo)
 
-	svc.Email = NewEmailService(deps.RiverClient, deps.CHEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender)
+	svc.Email = NewEmailService(deps.RiverClient, deps.CHEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer)
 	svc.Internal = NewInternalService(InternalServiceConfig{
 		UserService:        svc.User,
 		ClerkWebhookSecret: deps.ClerkWebhookSecret,

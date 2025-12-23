@@ -15,6 +15,7 @@ import (
 	"github.com/riverqueue/river"
 
 	emailapi "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/internal/eventstream"
 	"github.com/emailapi/api/internal/external/ses"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/validation"
@@ -30,6 +31,7 @@ type EmailService struct {
 	validator     *validation.EmailValidator
 	ses           ses.Client
 	webhookSender webhook.Sender
+	eventConsumer eventstream.Consumer
 }
 
 // NewEmailService creates a new EmailService.
@@ -39,6 +41,7 @@ func NewEmailService(
 	validator *validation.EmailValidator,
 	sesClient ses.Client,
 	webhookSender webhook.Sender,
+	eventConsumer eventstream.Consumer,
 ) *EmailService {
 	return &EmailService{
 		riverClient:   riverClient,
@@ -46,6 +49,7 @@ func NewEmailService(
 		validator:     validator,
 		ses:           sesClient,
 		webhookSender: webhookSender,
+		eventConsumer: eventConsumer,
 	}
 }
 
@@ -343,4 +347,12 @@ func (s *EmailService) sendWebhook(ctx context.Context, userID, emailID, message
 	}
 
 	s.webhookSender.SendEmailSent(ctx, userID, event)
+}
+
+// StreamEvents returns a channel of events for the user starting from cursor.
+func (s *EmailService) StreamEvents(ctx context.Context, userID, cursor string, eventTypes []emailapi.EventType, batchSize int32) (<-chan *emailapi.Event, error) {
+	if s.eventConsumer == nil {
+		return nil, fmt.Errorf("event streaming not configured")
+	}
+	return s.eventConsumer.Subscribe(ctx, userID, cursor, eventTypes, batchSize)
 }
