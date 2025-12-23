@@ -9,10 +9,20 @@ import "google/api/annotations.proto";
 // SnsService handles notifications from Amazon SNS.
 // These endpoints are public but authenticated via SNS signature verification.
 service SnsService {
-  // HandleSNSNotification processes SNS notifications.
+  // HandleSNSNotification processes SNS notifications for outbound email events.
+  // (Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay)
   rpc HandleSNSNotification(SNSNotificationRequest) returns (SNSNotificationResponse) {
     option (google.api.http) = {
-      post: "/v1/webhooks/sns"
+      post: "/v1/webhooks/sns/notification"
+      body: "*"
+    };
+  }
+
+  // HandleInboundSNSNotification processes SNS notifications for inbound emails (replies).
+  // This endpoint receives SES inbound email notifications when replies are received.
+  rpc HandleInboundSNSNotification(SNSNotificationRequest) returns (SNSNotificationResponse) {
+    option (google.api.http) = {
+      post: "/v1/webhooks/sns/inbound"
       body: "*"
     };
   }
@@ -40,6 +50,8 @@ message SNSNotificationRequest {
   string signing_cert_url = 9 [json_name = "SigningCertURL"];
   // Subject (optional, for some Notification types)
   string subject = 10 [json_name = "Subject"];
+  // Token (required for SubscriptionConfirmation/UnsubscribeConfirmation)
+  string token = 11 [json_name = "Token"];
 }
 
 // SNSNotificationResponse is the response after processing SNS notification.

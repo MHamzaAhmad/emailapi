@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/emailapi/api/internal/external/sns"
 	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/repository/suppression"
@@ -20,7 +19,6 @@ type SNSNotificationService struct {
 	activityRepo *chrepo.ActivityRepository
 	svixClient   svix.Client
 	suppressRepo *suppression.Repository
-	snsVerifier  *sns.Verifier
 }
 
 // NewSNSNotificationService creates a new SNSNotificationService.
@@ -35,7 +33,6 @@ func NewSNSNotificationService(
 		activityRepo: activityRepo,
 		svixClient:   svixClient,
 		suppressRepo: suppressRepo,
-		snsVerifier:  sns.NewVerifier(),
 	}
 }
 
@@ -51,6 +48,7 @@ type SNSInput struct {
 	Signature        string
 	SigningCertURL   string
 	Subject          string
+	Token            string // For SubscriptionConfirmation/UnsubscribeConfirmation
 }
 
 // SESEventNotification represents the parsed SES notification inside SNS Message.
@@ -111,26 +109,11 @@ type SESEventReject struct {
 }
 
 // HandleNotification processes an SNS notification from SES.
+// Note: Signature verification is handled by the SNS middleware interceptor.
 func (s *SNSNotificationService) HandleNotification(ctx context.Context, input *SNSInput) error {
-	// Verify SNS signature
-	if err := s.snsVerifier.VerifySignature(
-		input.SigningCertURL,
-		input.Signature,
-		input.SignatureVersion,
-		input.Type,
-		input.Message,
-		input.MessageID,
-		input.Timestamp,
-		input.TopicArn,
-		input.SubscribeURL,
-		input.Subject,
-	); err != nil {
-		return fmt.Errorf("SNS signature verification failed: %w", err)
-	}
-
 	switch input.Type {
 	case "SubscriptionConfirmation":
-		return s.handleSubscriptionConfirmation(ctx, input.SubscribeURL)
+		return s.handleSubscriptionConfirmation(input.SubscribeURL)
 	case "Notification":
 		return s.handleSESEventNotification(ctx, input.Message)
 	case "UnsubscribeConfirmation":
@@ -140,11 +123,12 @@ func (s *SNSNotificationService) HandleNotification(ctx context.Context, input *
 	}
 }
 
-func (s *SNSNotificationService) handleSubscriptionConfirmation(ctx context.Context, subscribeURL string) error {
+func (s *SNSNotificationService) handleSubscriptionConfirmation(subscribeURL string) error {
 	if subscribeURL == "" {
 		return fmt.Errorf("missing subscribe URL")
 	}
 
+	fmt.Println("Confirming subscription: ", subscribeURL)
 	resp, err := http.Get(subscribeURL)
 	if err != nil {
 		return fmt.Errorf("failed to confirm subscription: %w", err)

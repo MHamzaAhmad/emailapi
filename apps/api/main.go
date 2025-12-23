@@ -231,11 +231,14 @@ func runGRPCServer(cfg *config.Config, svc *service.Service, logger zerolog.Logg
 
 	// Create interceptors
 	loggingInterceptor := middleware.NewLoggingInterceptor(logger)
+	snsInterceptor := middleware.NewSNSInterceptor()
 	authInterceptor := middleware.NewAuthInterceptor(svc.APIKey)
 	webhookInterceptor := middleware.NewWebhookInterceptor(cfg.InternalWebhookSecret)
 
-	// Chain interceptors: logging first, then webhook verification, then auth
-	// Note: webhook verification runs for internal endpoints, auth runs for API endpoints
+	// Chain interceptors: logging -> SNS verification -> webhook verification -> auth
+	// Note: SNS verification runs for SNS endpoints (public, verified by signature)
+	//       webhook verification runs for internal endpoints
+	//       auth runs for API endpoints
 	chainedInterceptor := func(
 		ctx context.Context,
 		req interface{},
@@ -243,8 +246,10 @@ func runGRPCServer(cfg *config.Config, svc *service.Service, logger zerolog.Logg
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
 		return loggingInterceptor.Unary()(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
-			return webhookInterceptor.Unary()(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
-				return authInterceptor.Unary()(ctx, req, info, handler)
+			return snsInterceptor.Unary()(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
+				return webhookInterceptor.Unary()(ctx, req, info, func(ctx context.Context, req interface{}) (interface{}, error) {
+					return authInterceptor.Unary()(ctx, req, info, handler)
+				})
 			})
 		})
 	}
@@ -261,7 +266,7 @@ func runGRPCServer(cfg *config.Config, svc *service.Service, logger zerolog.Logg
 	emailapiv1.RegisterEmailServiceServer(grpcServer, grpctransport.NewEmailServer(svc.Email))
 	emailapiv1.RegisterInternalServiceServer(grpcServer, grpctransport.NewInternalServer(svc.Internal))
 	emailapiv1.RegisterWebhookServiceServer(grpcServer, grpctransport.NewWebhookServer(svc.Webhook))
-	emailapiv1.RegisterSnsServiceServer(grpcServer, grpctransport.NewSnsServer(svc.SNSNotification))
+	emailapiv1.RegisterSnsServiceServer(grpcServer, grpctransport.NewSnsServer(svc.SNSNotification, svc.InboundEmail))
 
 	// Enable reflection for grpcurl
 	reflection.Register(grpcServer)

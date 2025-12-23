@@ -44,7 +44,9 @@ type SNSNotificationRequest struct {
 	// URL to the signing certificate
 	SigningCertUrl string `protobuf:"bytes,9,opt,name=signing_cert_url,json=SigningCertURL,proto3" json:"signing_cert_url,omitempty"`
 	// Subject (optional, for some Notification types)
-	Subject       string `protobuf:"bytes,10,opt,name=subject,json=Subject,proto3" json:"subject,omitempty"`
+	Subject string `protobuf:"bytes,10,opt,name=subject,json=Subject,proto3" json:"subject,omitempty"`
+	// Token (required for SubscriptionConfirmation/UnsubscribeConfirmation)
+	Token         string `protobuf:"bytes,11,opt,name=token,json=Token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -149,6 +151,13 @@ func (x *SNSNotificationRequest) GetSubject() string {
 	return ""
 }
 
+func (x *SNSNotificationRequest) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
 // SNSNotificationResponse is the response after processing SNS notification.
 type SNSNotificationResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -208,7 +217,7 @@ var File_v1_sns_proto protoreflect.FileDescriptor
 
 const file_v1_sns_proto_rawDesc = "" +
 	"\n" +
-	"\fv1/sns.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\"\xd4\x02\n" +
+	"\fv1/sns.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\"\xea\x02\n" +
 	"\x16SNSNotificationRequest\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04Type\x12\x1d\n" +
 	"\n" +
@@ -221,13 +230,15 @@ const file_v1_sns_proto_rawDesc = "" +
 	"\tsignature\x18\b \x01(\tR\tSignature\x12(\n" +
 	"\x10signing_cert_url\x18\t \x01(\tR\x0eSigningCertURL\x12\x18\n" +
 	"\asubject\x18\n" +
-	" \x01(\tR\aSubject\"M\n" +
+	" \x01(\tR\aSubject\x12\x14\n" +
+	"\x05token\x18\v \x01(\tR\x05Token\"M\n" +
 	"\x17SNSNotificationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\x8d\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xac\x02\n" +
 	"\n" +
-	"SnsService\x12\x7f\n" +
-	"\x15HandleSNSNotification\x12#.emailapi.v1.SNSNotificationRequest\x1a$.emailapi.v1.SNSNotificationResponse\"\x1b\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/webhooks/snsB\x96\x01\n" +
+	"SnsService\x12\x8c\x01\n" +
+	"\x15HandleSNSNotification\x12#.emailapi.v1.SNSNotificationRequest\x1a$.emailapi.v1.SNSNotificationResponse\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/v1/webhooks/sns/notification\x12\x8e\x01\n" +
+	"\x1cHandleInboundSNSNotification\x12#.emailapi.v1.SNSNotificationRequest\x1a$.emailapi.v1.SNSNotificationResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/webhooks/sns/inboundB\x96\x01\n" +
 	"\x0fcom.emailapi.v1B\bSnsProtoP\x01Z,github.com/emailapi/sdk-go/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
 var (
@@ -249,9 +260,11 @@ var file_v1_sns_proto_goTypes = []any{
 }
 var file_v1_sns_proto_depIdxs = []int32{
 	0, // 0: emailapi.v1.SnsService.HandleSNSNotification:input_type -> emailapi.v1.SNSNotificationRequest
-	1, // 1: emailapi.v1.SnsService.HandleSNSNotification:output_type -> emailapi.v1.SNSNotificationResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	0, // 1: emailapi.v1.SnsService.HandleInboundSNSNotification:input_type -> emailapi.v1.SNSNotificationRequest
+	1, // 2: emailapi.v1.SnsService.HandleSNSNotification:output_type -> emailapi.v1.SNSNotificationResponse
+	1, // 3: emailapi.v1.SnsService.HandleInboundSNSNotification:output_type -> emailapi.v1.SNSNotificationResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name

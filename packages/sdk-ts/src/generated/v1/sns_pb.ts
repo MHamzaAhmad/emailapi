@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/sns.proto.
  */
 export const file_v1_sns: GenFile = /*@__PURE__*/
-  fileDesc("Cgx2MS9zbnMucHJvdG8SC2VtYWlsYXBpLnYxItQCChZTTlNOb3RpZmljYXRpb25SZXF1ZXN0EhIKBHR5cGUYASABKAlSBFR5cGUSHQoKbWVzc2FnZV9pZBgCIAEoCVIJTWVzc2FnZUlkEhsKCXRvcGljX2FybhgDIAEoCVIIVG9waWNBcm4SGAoHbWVzc2FnZRgEIAEoCVIHTWVzc2FnZRIjCg1zdWJzY3JpYmVfdXJsGAUgASgJUgxTdWJzY3JpYmVVUkwSHAoJdGltZXN0YW1wGAYgASgJUglUaW1lc3RhbXASKwoRc2lnbmF0dXJlX3ZlcnNpb24YByABKAlSEFNpZ25hdHVyZVZlcnNpb24SHAoJc2lnbmF0dXJlGAggASgJUglTaWduYXR1cmUSKAoQc2lnbmluZ19jZXJ0X3VybBgJIAEoCVIOU2lnbmluZ0NlcnRVUkwSGAoHc3ViamVjdBgKIAEoCVIHU3ViamVjdCI7ChdTTlNOb3RpZmljYXRpb25SZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkyjQEKClNuc1NlcnZpY2USfwoVSGFuZGxlU05TTm90aWZpY2F0aW9uEiMuZW1haWxhcGkudjEuU05TTm90aWZpY2F0aW9uUmVxdWVzdBokLmVtYWlsYXBpLnYxLlNOU05vdGlmaWNhdGlvblJlc3BvbnNlIhuC0+STAhU6ASoiEC92MS93ZWJob29rcy9zbnNClgEKD2NvbS5lbWFpbGFwaS52MUIIU25zUHJvdG9QAVosZ2l0aHViLmNvbS9lbWFpbGFwaS9zZGstZ28vZ2VuL3YxO2VtYWlsYXBpdjGiAgNFWFiqAgtFbWFpbGFwaS5WMcoCC0VtYWlsYXBpXFYx4gIXRW1haWxhcGlcVjFcR1BCTWV0YWRhdGHqAgxFbWFpbGFwaTo6VjFiBnByb3RvMw", [file_google_api_annotations]);
+  fileDesc("Cgx2MS9zbnMucHJvdG8SC2VtYWlsYXBpLnYxIuoCChZTTlNOb3RpZmljYXRpb25SZXF1ZXN0EhIKBHR5cGUYASABKAlSBFR5cGUSHQoKbWVzc2FnZV9pZBgCIAEoCVIJTWVzc2FnZUlkEhsKCXRvcGljX2FybhgDIAEoCVIIVG9waWNBcm4SGAoHbWVzc2FnZRgEIAEoCVIHTWVzc2FnZRIjCg1zdWJzY3JpYmVfdXJsGAUgASgJUgxTdWJzY3JpYmVVUkwSHAoJdGltZXN0YW1wGAYgASgJUglUaW1lc3RhbXASKwoRc2lnbmF0dXJlX3ZlcnNpb24YByABKAlSEFNpZ25hdHVyZVZlcnNpb24SHAoJc2lnbmF0dXJlGAggASgJUglTaWduYXR1cmUSKAoQc2lnbmluZ19jZXJ0X3VybBgJIAEoCVIOU2lnbmluZ0NlcnRVUkwSGAoHc3ViamVjdBgKIAEoCVIHU3ViamVjdBIUCgV0b2tlbhgLIAEoCVIFVG9rZW4iOwoXU05TTm90aWZpY2F0aW9uUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJMqwCCgpTbnNTZXJ2aWNlEowBChVIYW5kbGVTTlNOb3RpZmljYXRpb24SIy5lbWFpbGFwaS52MS5TTlNOb3RpZmljYXRpb25SZXF1ZXN0GiQuZW1haWxhcGkudjEuU05TTm90aWZpY2F0aW9uUmVzcG9uc2UiKILT5JMCIjoBKiIdL3YxL3dlYmhvb2tzL3Nucy9ub3RpZmljYXRpb24SjgEKHEhhbmRsZUluYm91bmRTTlNOb3RpZmljYXRpb24SIy5lbWFpbGFwaS52MS5TTlNOb3RpZmljYXRpb25SZXF1ZXN0GiQuZW1haWxhcGkudjEuU05TTm90aWZpY2F0aW9uUmVzcG9uc2UiI4LT5JMCHToBKiIYL3YxL3dlYmhvb2tzL3Nucy9pbmJvdW5kQpYBCg9jb20uZW1haWxhcGkudjFCCFNuc1Byb3RvUAFaLGdpdGh1Yi5jb20vZW1haWxhcGkvc2RrLWdvL2dlbi92MTtlbWFpbGFwaXYxogIDRVhYqgILRW1haWxhcGkuVjHKAgtFbWFpbGFwaVxWMeICF0VtYWlsYXBpXFYxXEdQQk1ldGFkYXRh6gIMRW1haWxhcGk6OlYxYgZwcm90bzM", [file_google_api_annotations]);
 
 /**
  * SNSNotificationRequest is the raw SNS HTTP payload.
@@ -88,6 +88,13 @@ export type SNSNotificationRequest = Message<"emailapi.v1.SNSNotificationRequest
    * @generated from field: string subject = 10 [json_name = "Subject"];
    */
   subject: string;
+
+  /**
+   * Token (required for SubscriptionConfirmation/UnsubscribeConfirmation)
+   *
+   * @generated from field: string token = 11 [json_name = "Token"];
+   */
+  token: string;
 };
 
 /**
@@ -133,11 +140,23 @@ export const SNSNotificationResponseSchema: GenMessage<SNSNotificationResponse> 
  */
 export const SnsService: GenService<{
   /**
-   * HandleSNSNotification processes SNS notifications.
+   * HandleSNSNotification processes SNS notifications for outbound email events.
+   * (Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay)
    *
    * @generated from rpc emailapi.v1.SnsService.HandleSNSNotification
    */
   handleSNSNotification: {
+    methodKind: "unary";
+    input: typeof SNSNotificationRequestSchema;
+    output: typeof SNSNotificationResponseSchema;
+  },
+  /**
+   * HandleInboundSNSNotification processes SNS notifications for inbound emails (replies).
+   * This endpoint receives SES inbound email notifications when replies are received.
+   *
+   * @generated from rpc emailapi.v1.SnsService.HandleInboundSNSNotification
+   */
+  handleInboundSNSNotification: {
     methodKind: "unary";
     input: typeof SNSNotificationRequestSchema;
     output: typeof SNSNotificationResponseSchema;

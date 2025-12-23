@@ -42,8 +42,13 @@ func (i *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 			return handler(ctx, req)
 		}
 
-		// Skip auth for InternalService - they use webhook secret or SNS verification
+		// Skip auth for InternalService - they use webhook secret verification
 		if strings.HasPrefix(info.FullMethod, "/emailapi.v1.InternalService/") {
+			return handler(ctx, req)
+		}
+
+		// Skip auth for SnsService - they use SNS signature verification
+		if strings.HasPrefix(info.FullMethod, "/emailapi.v1.SnsService/") {
 			return handler(ctx, req)
 		}
 

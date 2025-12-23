@@ -608,9 +608,43 @@
         ]
       }
     },
-    "/v1/webhooks/sns": {
+    "/v1/webhooks/sns/inbound": {
       "post": {
-        "summary": "HandleSNSNotification processes SNS notifications.",
+        "summary": "HandleInboundSNSNotification processes SNS notifications for inbound emails (replies).\nThis endpoint receives SES inbound email notifications when replies are received.",
+        "operationId": "SnsService_HandleInboundSNSNotification",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SNSNotificationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "SNSNotificationRequest is the raw SNS HTTP payload.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1SNSNotificationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SnsService"
+        ]
+      }
+    },
+    "/v1/webhooks/sns/notification": {
+      "post": {
+        "summary": "HandleSNSNotification processes SNS notifications for outbound email events.\n(Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay)",
         "operationId": "SnsService_HandleSNSNotification",
         "responses": {
           "200": {
@@ -1253,6 +1287,10 @@
         "Subject": {
           "type": "string",
           "title": "Subject (optional, for some Notification types)"
+        },
+        "Token": {
+          "type": "string",
+          "title": "Token (required for SubscriptionConfirmation/UnsubscribeConfirmation)"
         }
       },
       "description": "SNSNotificationRequest is the raw SNS HTTP payload."

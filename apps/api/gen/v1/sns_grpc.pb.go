@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SnsService_HandleSNSNotification_FullMethodName = "/emailapi.v1.SnsService/HandleSNSNotification"
+	SnsService_HandleSNSNotification_FullMethodName        = "/emailapi.v1.SnsService/HandleSNSNotification"
+	SnsService_HandleInboundSNSNotification_FullMethodName = "/emailapi.v1.SnsService/HandleInboundSNSNotification"
 )
 
 // SnsServiceClient is the client API for SnsService service.
@@ -29,8 +30,12 @@ const (
 // SnsService handles notifications from Amazon SNS.
 // These endpoints are public but authenticated via SNS signature verification.
 type SnsServiceClient interface {
-	// HandleSNSNotification processes SNS notifications.
+	// HandleSNSNotification processes SNS notifications for outbound email events.
+	// (Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay)
 	HandleSNSNotification(ctx context.Context, in *SNSNotificationRequest, opts ...grpc.CallOption) (*SNSNotificationResponse, error)
+	// HandleInboundSNSNotification processes SNS notifications for inbound emails (replies).
+	// This endpoint receives SES inbound email notifications when replies are received.
+	HandleInboundSNSNotification(ctx context.Context, in *SNSNotificationRequest, opts ...grpc.CallOption) (*SNSNotificationResponse, error)
 }
 
 type snsServiceClient struct {
@@ -51,6 +56,16 @@ func (c *snsServiceClient) HandleSNSNotification(ctx context.Context, in *SNSNot
 	return out, nil
 }
 
+func (c *snsServiceClient) HandleInboundSNSNotification(ctx context.Context, in *SNSNotificationRequest, opts ...grpc.CallOption) (*SNSNotificationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SNSNotificationResponse)
+	err := c.cc.Invoke(ctx, SnsService_HandleInboundSNSNotification_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SnsServiceServer is the server API for SnsService service.
 // All implementations must embed UnimplementedSnsServiceServer
 // for forward compatibility.
@@ -58,8 +73,12 @@ func (c *snsServiceClient) HandleSNSNotification(ctx context.Context, in *SNSNot
 // SnsService handles notifications from Amazon SNS.
 // These endpoints are public but authenticated via SNS signature verification.
 type SnsServiceServer interface {
-	// HandleSNSNotification processes SNS notifications.
+	// HandleSNSNotification processes SNS notifications for outbound email events.
+	// (Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay)
 	HandleSNSNotification(context.Context, *SNSNotificationRequest) (*SNSNotificationResponse, error)
+	// HandleInboundSNSNotification processes SNS notifications for inbound emails (replies).
+	// This endpoint receives SES inbound email notifications when replies are received.
+	HandleInboundSNSNotification(context.Context, *SNSNotificationRequest) (*SNSNotificationResponse, error)
 	mustEmbedUnimplementedSnsServiceServer()
 }
 
@@ -72,6 +91,9 @@ type UnimplementedSnsServiceServer struct{}
 
 func (UnimplementedSnsServiceServer) HandleSNSNotification(context.Context, *SNSNotificationRequest) (*SNSNotificationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method HandleSNSNotification not implemented")
+}
+func (UnimplementedSnsServiceServer) HandleInboundSNSNotification(context.Context, *SNSNotificationRequest) (*SNSNotificationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HandleInboundSNSNotification not implemented")
 }
 func (UnimplementedSnsServiceServer) mustEmbedUnimplementedSnsServiceServer() {}
 func (UnimplementedSnsServiceServer) testEmbeddedByValue()                    {}
@@ -112,6 +134,24 @@ func _SnsService_HandleSNSNotification_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SnsService_HandleInboundSNSNotification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SNSNotificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SnsServiceServer).HandleInboundSNSNotification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SnsService_HandleInboundSNSNotification_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SnsServiceServer).HandleInboundSNSNotification(ctx, req.(*SNSNotificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SnsService_ServiceDesc is the grpc.ServiceDesc for SnsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -122,6 +162,10 @@ var SnsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "HandleSNSNotification",
 			Handler:    _SnsService_HandleSNSNotification_Handler,
+		},
+		{
+			MethodName: "HandleInboundSNSNotification",
+			Handler:    _SnsService_HandleInboundSNSNotification_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

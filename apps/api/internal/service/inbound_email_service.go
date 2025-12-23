@@ -13,17 +13,15 @@ import (
 	"github.com/jordan-wright/email"
 
 	"github.com/emailapi/api/internal/external/s3"
-	"github.com/emailapi/api/internal/external/sns"
 	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 )
 
 // InboundEmailService handles inbound email processing (replies) from SNS/SES.
 type InboundEmailService struct {
-	s3Factory   *s3.Factory
-	chRepo      *chrepo.EmailRepository
-	svixClient  svix.Client
-	snsVerifier *sns.Verifier
+	s3Factory  *s3.Factory
+	chRepo     *chrepo.EmailRepository
+	svixClient svix.Client
 }
 
 // NewInboundEmailService creates a new InboundEmailService.
@@ -33,10 +31,9 @@ func NewInboundEmailService(
 	svixClient svix.Client,
 ) *InboundEmailService {
 	return &InboundEmailService{
-		s3Factory:   s3Factory,
-		chRepo:      chRepo,
-		svixClient:  svixClient,
-		snsVerifier: sns.NewVerifier(),
+		s3Factory:  s3Factory,
+		chRepo:     chRepo,
+		svixClient: svixClient,
 	}
 }
 
@@ -97,26 +94,12 @@ type SNSNotificationInput struct {
 	Signature        string
 	SigningCertURL   string
 	Subject          string
+	Token            string // For SubscriptionConfirmation/UnsubscribeConfirmation
 }
 
-// HandleSNSNotification processes SNS notifications from SES.
+// HandleSNSNotification processes SNS notifications from SES for inbound emails.
+// Note: Signature verification is handled by the SNS middleware interceptor.
 func (s *InboundEmailService) HandleSNSNotification(ctx context.Context, input *SNSNotificationInput) error {
-	// Verify SNS signature first
-	if err := s.snsVerifier.VerifySignature(
-		input.SigningCertURL,
-		input.Signature,
-		input.SignatureVersion,
-		input.Type,
-		input.Message,
-		input.MessageID,
-		input.Timestamp,
-		input.TopicArn,
-		input.SubscribeURL,
-		input.Subject,
-	); err != nil {
-		return fmt.Errorf("SNS signature verification failed: %w", err)
-	}
-
 	switch input.Type {
 	case "SubscriptionConfirmation":
 		return s.handleSubscriptionConfirmation(ctx, input.SubscribeURL)

@@ -2,15 +2,19 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	emailapiv1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/external/sns"
 )
 
 // SNSInterceptor is a gRPC unary interceptor that validates AWS SNS message signatures.
+// This middleware performs signature verification before the request reaches the service layer.
 type SNSInterceptor struct {
 	verifier *sns.Verifier
 }
@@ -31,41 +35,37 @@ func (i *SNSInterceptor) Unary() grpc.UnaryServerInterceptor {
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
 		// Only verify SNS notification methods
-		if !strings.HasSuffix(info.FullMethod, "/HandleSNSNotification") {
+		if !strings.Contains(info.FullMethod, "SnsService/Handle") {
 			return handler(ctx, req)
 		}
 
-		// Extract SNS headers from metadata for verification
-		md, ok := metadata.FromIncomingContext(ctx)
+		// Type assert to SNS request
+		snsReq, ok := req.(*emailapiv1.SNSNotificationRequest)
 		if !ok {
-			// No metadata - let the service handle verification
+			// Not an SNS request, pass through
 			return handler(ctx, req)
 		}
 
-		// Check if this looks like an SNS request by looking for the SNS message type header
-		// AWS SNS sends x-amz-sns-message-type header
-		messageTypes := md.Get("x-amz-sns-message-type")
-		if len(messageTypes) == 0 {
-			// Not an SNS request from the header perspective, proceed to service
-			// The service layer may still verify via the request body
-			return handler(ctx, req)
+		// Verify the SNS signature
+		if err := i.verifier.VerifySignature(
+			snsReq.SigningCertUrl,
+			snsReq.Signature,
+			snsReq.SignatureVersion,
+			snsReq.Type,
+			snsReq.Message,
+			snsReq.MessageId,
+			snsReq.Timestamp,
+			snsReq.TopicArn,
+			snsReq.SubscribeUrl,
+			snsReq.Subject,
+			snsReq.Token,
+		); err != nil {
+			// Log the verification failure
+			fmt.Printf("SNS signature verification failed in middleware: %v\n", err)
+			return nil, status.Errorf(codes.Unauthenticated, "SNS signature verification failed: %v", err)
 		}
 
-		// For SNS requests, we can validate at service level since the signature fields
-		// are in the request body, not the headers. The middleware just logs and passes through.
-		// Full verification happens in the service layer using the Verifier.
-
-		// Add a flag to context indicating SNS request was detected
-		ctx = context.WithValue(ctx, "sns_message_type", messageTypes[0])
-
+		// Signature is valid, proceed to handler
 		return handler(ctx, req)
 	}
-}
-
-// GetSNSMessageType extracts the SNS message type from context if set by middleware.
-func GetSNSMessageType(ctx context.Context) string {
-	if msgType, ok := ctx.Value("sns_message_type").(string); ok {
-		return msgType
-	}
-	return ""
 }
