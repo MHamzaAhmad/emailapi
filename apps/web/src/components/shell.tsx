@@ -98,7 +98,7 @@ export function Shell({ children }: ShellProps) {
             {/* Breadcrumbs & Content */}
             <main className="flex-1">
                 <div className="mx-auto max-w-7xl px-4 md:px-6 py-6 font-sans">
-                    {currentPath !== '/dashboard' && (
+                    {currentPath !== '/dashboard' && !currentPath.startsWith('/domains') && (
                         <div className="mb-6 flex items-center text-sm text-muted-foreground/80">
                             <Link to="/dashboard" className="hover:text-foreground transition-colors hover:underline underline-offset-4">Dashboard</Link>
                             {breadcrumbs.length > 0 && breadcrumbs[0].href !== '/dashboard' && (

@@ -1,22 +1,22 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-    GlobeIcon,
-    ArrowLeftIcon,
-    CopyIcon,
-    CheckmarkCircleIcon,
-    ClockIcon,
+    ArrowLeft02Icon,
+    Copy01Icon,
+    CheckmarkCircle01Icon,
+    Clock01Icon,
     AlertCircleIcon,
     RefreshIcon,
-    InformationCircleIcon,
     Loading01Icon,
 } from '@hugeicons/core-free-icons'
-import { useState } from 'react'
-import { Shell, PageHeader } from '@/components/shell'
+import { useState, useMemo } from 'react'
+import { ColumnDef } from '@tanstack/react-table'
+import { Shell } from '@/components/shell'
 import { AuthGuard } from '@/components/auth-guard'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
+import { DataTable } from '@/components/ui/data-table'
 import { useDomain, useVerifyDomain } from '@/hooks'
 import { RecordStatus, RecordType } from '@/generated/v1/domain_pb'
 import type { DnsRecord } from '@/generated/v1/domain_pb'
@@ -34,21 +34,20 @@ function DomainDetailPage() {
 }
 
 function getRecordStatusBadge(status: RecordStatus) {
+    const className = "text-[10px] px-2 py-0.5 uppercase tracking-wider font-medium"
     switch (status) {
         case RecordStatus.FOUND:
-            return <Badge variant="success">found</Badge>
+            return <Badge variant="success" className={className}>Found</Badge>
         case RecordStatus.PENDING:
-            return <Badge variant="warning">pending</Badge>
+            return <Badge variant="warning" className={className}>Pending</Badge>
         case RecordStatus.MISSING:
-            return <Badge variant="destructive">missing</Badge>
+            return <Badge variant="destructive" className={className}>Missing</Badge>
         case RecordStatus.MISMATCH:
-            return <Badge variant="destructive">mismatch</Badge>
+            return <Badge variant="destructive" className={className}>Mismatch</Badge>
         default:
-            return <Badge variant="outline">unknown</Badge>
+            return <Badge variant="outline" className={className}>Unknown</Badge>
     }
 }
-
-
 
 function getRecordTypeName(recordType: RecordType): string {
     switch (recordType) {
@@ -59,128 +58,39 @@ function getRecordTypeName(recordType: RecordType): string {
         case RecordType.DMARC:
             return 'DMARC'
         case RecordType.MX_INBOUND:
-            return 'MX INBOUND'
+            return 'MX Inbound'
         case RecordType.MAIL_FROM_MX:
-            return 'MAIL FROM MX'
+            return 'Mail From MX'
         case RecordType.MAIL_FROM_SPF:
-            return 'MAIL FROM SPF'
+            return 'Mail From SPF'
         default:
-            return 'UNKNOWN'
+            return 'Unknown'
     }
 }
 
-function DnsRecordCard({ record }: { record: DnsRecord }) {
-    const [copied, setCopied] = useState<string | null>(null)
+function CopyButton({ text }: { text: string }) {
+    const [copied, setCopied] = useState(false)
 
-    const handleCopy = async (text: string, field: string) => {
+    const handleCopy = async () => {
         await navigator.clipboard.writeText(text)
-        setCopied(field)
-        setTimeout(() => setCopied(null), 2000)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
     }
 
     return (
-        <Card>
-            <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <CardTitle className="text-xs">
-                            {getRecordTypeName(record.recordType)}
-                        </CardTitle>
-                        {getRecordStatusBadge(record.status)}
-                    </div>
-                    <span className="text-2xs text-muted-foreground">{record.type} Record</span>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-                {/* Host/Name */}
-                <div>
-                    <div className="flex items-center justify-between mb-1">
-                        <label className="text-2xs text-muted-foreground">Host</label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <code className="flex-1 px-2 py-1.5 bg-muted rounded text-xs font-mono break-all">
-                            {record.name}
-                        </code>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleCopy(record.name, 'name')}
-                        >
-                            <HugeiconsIcon
-                                icon={copied === 'name' ? CheckmarkCircleIcon : CopyIcon}
-                                size={14}
-                                strokeWidth={1.5}
-                            />
-                        </Button>
-                    </div>
-                    {record.nameShort && (
-                        <div className="flex items-center gap-2 mt-1.5">
-                            <span className="text-2xs text-muted-foreground">Short:</span>
-                            <code className="text-2xs font-mono">{record.nameShort}</code>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="ml-auto h-5 px-1.5 text-2xs"
-                                onClick={() => handleCopy(record.nameShort, 'nameShort')}
-                            >
-                                Copy
-                            </Button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Value */}
-                <div>
-                    <label className="block text-2xs text-muted-foreground mb-1">Value</label>
-                    <div className="flex items-center gap-2">
-                        <code className="flex-1 px-2 py-1.5 bg-muted rounded text-xs font-mono break-all">
-                            {record.value}
-                        </code>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleCopy(record.value, 'value')}
-                        >
-                            <HugeiconsIcon
-                                icon={copied === 'value' ? CheckmarkCircleIcon : CopyIcon}
-                                size={14}
-                                strokeWidth={1.5}
-                            />
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Discovered Value (if mismatch) */}
-                {record.status === RecordStatus.MISMATCH && record.discoveredValue && (
-                    <div className="p-2 bg-destructive/10 border border-destructive/30 rounded">
-                        <label className="block text-2xs text-destructive mb-1 font-medium">
-                            FOUND IN DNS (MISMATCH):
-                        </label>
-                        <code className="block text-2xs font-mono break-all text-destructive">
-                            {record.discoveredValue}
-                        </code>
-                    </div>
-                )}
-
-                {/* Priority for MX */}
-                {record.priority !== undefined && record.priority > 0 && (
-                    <div>
-                        <label className="block text-2xs text-muted-foreground mb-1">Priority</label>
-                        <span className="text-xs">{record.priority}</span>
-                    </div>
-                )}
-
-                {/* Instructions */}
-                {record.instructions && (
-                    <div className="p-2 bg-blue-500/10 border border-blue-500/30 rounded">
-                        <div className="flex items-start gap-2">
-                            <HugeiconsIcon icon={InformationCircleIcon} size={14} strokeWidth={1.5} className="text-blue-400 mt-0.5" />
-                            <p className="text-2xs text-blue-300">{record.instructions}</p>
-                        </div>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+        <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 ml-1 flex-shrink-0 text-muted-foreground hover:text-foreground"
+            onClick={handleCopy}
+            title="Copy value"
+        >
+            <HugeiconsIcon
+                icon={copied ? CheckmarkCircle01Icon : Copy01Icon}
+                size={12}
+                strokeWidth={1.5}
+            />
+        </Button>
     )
 }
 
@@ -188,6 +98,74 @@ function DomainDetailContent() {
     const { domainId } = Route.useParams()
     const { data: domain, isLoading } = useDomain(domainId)
     const verifyMutation = useVerifyDomain()
+
+    const records = useMemo(() => {
+        if (!domain?.records) return []
+        const { dkimRecords, spfRecord, dmarcRecord, mxRecords, mailFromRecords } = domain.records
+        const list: DnsRecord[] = []
+        if (dkimRecords) list.push(...dkimRecords)
+        if (spfRecord) list.push(spfRecord)
+        if (dmarcRecord) list.push(dmarcRecord)
+        if (mxRecords) list.push(...mxRecords)
+        if (mailFromRecords) list.push(...mailFromRecords)
+        return list
+    }, [domain])
+
+    const columns = useMemo<ColumnDef<DnsRecord>[]>(
+        () => [
+            {
+                accessorKey: 'recordType',
+                header: 'Type',
+                cell: ({ row }) => (
+                    <div className="font-medium text-xs whitespace-nowrap">
+                        {getRecordTypeName(row.original.recordType)}
+                    </div>
+                ),
+            },
+            {
+                accessorKey: 'name',
+                header: 'Host',
+                cell: ({ row }) => (
+                    <div className="flex items-center group max-w-[200px] sm:max-w-[300px]">
+                        <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono truncate">
+                            {row.original.name}
+                        </code>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <CopyButton text={row.original.name} />
+                        </div>
+                    </div>
+                ),
+            },
+            {
+                accessorKey: 'value',
+                header: 'Value',
+                cell: ({ row }) => (
+                    <div className="flex flex-col gap-1 min-w-0 max-w-[300px] sm:max-w-[400px]">
+                        <div className="flex items-center group">
+                            <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono truncate block flex-1">
+                                {row.original.value}
+                            </code>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <CopyButton text={row.original.value} />
+                            </div>
+                        </div>
+                        {row.original.status === RecordStatus.MISMATCH && row.original.discoveredValue && (
+                            <div className="text-2xs text-destructive flex items-center gap-1">
+                                <HugeiconsIcon icon={AlertCircleIcon} size={10} />
+                                <span className="font-mono truncate">Found: {row.original.discoveredValue}</span>
+                            </div>
+                        )}
+                    </div>
+                ),
+            },
+            {
+                accessorKey: 'status',
+                header: 'Status',
+                cell: ({ row }) => getRecordStatusBadge(row.original.status),
+            },
+        ],
+        []
+    )
 
     if (isLoading) {
         return (
@@ -205,7 +183,7 @@ function DomainDetailContent() {
             <Shell>
                 <div className="mb-4">
                     <Link to="/domains" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
-                        <HugeiconsIcon icon={ArrowLeftIcon} size={14} strokeWidth={1.5} />
+                        <HugeiconsIcon icon={ArrowLeft02Icon} size={14} strokeWidth={1.5} />
                         Back to Domains
                     </Link>
                 </div>
@@ -219,37 +197,40 @@ function DomainDetailContent() {
         )
     }
 
-    const { records, summary } = domain
+    const { summary } = domain
 
     return (
         <Shell>
-            {/* Back link */}
-            <div className="mb-4">
-                <Link to="/domains" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
-                    <HugeiconsIcon icon={ArrowLeftIcon} size={14} strokeWidth={1.5} />
-                    Back to Domains
-                </Link>
+            {/* Header Actions */}
+            <div className="flex flex-col gap-6 mb-8 mt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <Link to="/domains" className="flex items-center justify-center h-8 w-8 rounded-md border border-border/40 bg-background hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground">
+                            <HugeiconsIcon icon={ArrowLeft02Icon} size={16} strokeWidth={1.5} />
+                        </Link>
+                        <div>
+                            <div className="text-sm font-medium leading-none">{domain.domain}</div>
+                            <div className="text-2xs text-muted-foreground mt-1">Region: {domain.region}</div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            onClick={() => verifyMutation.mutate(domainId)}
+                            disabled={verifyMutation.isPending}
+                            className="h-8 shadow-sm"
+                        >
+                            <HugeiconsIcon
+                                icon={RefreshIcon}
+                                size={12}
+                                strokeWidth={1.5}
+                                className={verifyMutation.isPending ? 'animate-spin' : ''}
+                            />
+                            {verifyMutation.isPending ? 'Verifying...' : 'Verify'}
+                        </Button>
+                    </div>
+                </div>
             </div>
-
-            <PageHeader
-                title={domain.domain}
-                description={`Region: ${domain.region}`}
-                actions={
-                    <Button
-                        size="sm"
-                        onClick={() => verifyMutation.mutate(domainId)}
-                        disabled={verifyMutation.isPending}
-                    >
-                        <HugeiconsIcon
-                            icon={RefreshIcon}
-                            size={12}
-                            strokeWidth={1.5}
-                            className={verifyMutation.isPending ? 'animate-spin' : ''}
-                        />
-                        {verifyMutation.isPending ? 'Verifying...' : 'Verify'}
-                    </Button>
-                }
-            />
 
             {/* Status Summary */}
             <Card className="mb-6">
@@ -260,22 +241,22 @@ function DomainDetailContent() {
                                 {summary?.canSend ? "Ready to send" : "Verification required"}
                             </div>
                             <div className="text-2xs text-muted-foreground mt-0.5">
-                                {summary?.message}
+                                {summary?.message || "Please configure the DNS records below to verify your domain."}
                             </div>
                         </div>
                         {summary?.canSend ? (
-                            <Badge variant="success">
-                                <HugeiconsIcon icon={CheckmarkCircleIcon} size={10} strokeWidth={1.5} />
+                            <Badge variant="success" className="h-6">
+                                <HugeiconsIcon icon={CheckmarkCircle01Icon} size={12} strokeWidth={1.5} className="mr-1" />
                                 Active
                             </Badge>
                         ) : summary?.nextAction === 'CONFIGURE_DNS' ? (
-                            <Badge variant="warning">
-                                <HugeiconsIcon icon={AlertCircleIcon} size={10} strokeWidth={1.5} />
+                            <Badge variant="warning" className="h-6">
+                                <HugeiconsIcon icon={AlertCircleIcon} size={12} strokeWidth={1.5} className="mr-1" />
                                 Action Required
                             </Badge>
                         ) : (
-                            <Badge variant="secondary">
-                                <HugeiconsIcon icon={ClockIcon} size={10} strokeWidth={1.5} />
+                            <Badge variant="secondary" className="h-6">
+                                <HugeiconsIcon icon={Clock01Icon} size={12} strokeWidth={1.5} className="mr-1" />
                                 Waiting
                             </Badge>
                         )}
@@ -283,74 +264,18 @@ function DomainDetailContent() {
                 </CardContent>
             </Card>
 
-            {/* DKIM Records */}
-            {records?.dkimRecords && records.dkimRecords.length > 0 && (
-                <div className="mb-6">
-                    <h2 className="text-sm font-medium mb-2">
-                        DKIM Records ({records.dkimRecords.length})
-                    </h2>
-                    <p className="text-2xs text-muted-foreground mb-3">
-                        Add all {records.dkimRecords.length} CNAME records to authenticate your emails.
-                    </p>
-                    <div className="space-y-3">
-                        {records.dkimRecords.map((record, index) => (
-                            <DnsRecordCard key={index} record={record} />
-                        ))}
-                    </div>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold">DNS Records</h2>
                 </div>
-            )}
-
-            {/* SPF Record */}
-            {records?.spfRecord && (
-                <div className="mb-6">
-                    <h2 className="text-sm font-medium mb-2">SPF Record</h2>
-                    <p className="text-2xs text-muted-foreground mb-3">
-                        Authorizes us to send emails on your behalf.
-                    </p>
-                    <DnsRecordCard record={records.spfRecord} />
+                <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
+                    <DataTable
+                        columns={columns}
+                        data={records}
+                        isLoading={isLoading}
+                    />
                 </div>
-            )}
-
-            {/* DMARC Record */}
-            {records?.dmarcRecord && (
-                <div className="mb-6">
-                    <h2 className="text-sm font-medium mb-2">DMARC Record</h2>
-                    <p className="text-2xs text-muted-foreground mb-3">
-                        Defines how recipients handle authentication failures.
-                    </p>
-                    <DnsRecordCard record={records.dmarcRecord} />
-                </div>
-            )}
-
-            {/* MX Records */}
-            {records?.mxRecords && records.mxRecords.length > 0 && (
-                <div className="mb-6">
-                    <h2 className="text-sm font-medium mb-2">MX Records</h2>
-                    <p className="text-2xs text-muted-foreground mb-3">
-                        Required to receive inbound emails.
-                    </p>
-                    <div className="space-y-3">
-                        {records.mxRecords.map((record, index) => (
-                            <DnsRecordCard key={index} record={record} />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* MAIL FROM Records */}
-            {records?.mailFromRecords && records.mailFromRecords.length > 0 && (
-                <div className="mb-6">
-                    <h2 className="text-sm font-medium mb-2">MAIL FROM Records</h2>
-                    <p className="text-2xs text-muted-foreground mb-3">
-                        Custom MAIL FROM for improved deliverability.
-                    </p>
-                    <div className="space-y-3">
-                        {records.mailFromRecords.map((record, index) => (
-                            <DnsRecordCard key={index} record={record} />
-                        ))}
-                    </div>
-                </div>
-            )}
+            </div>
         </Shell>
     )
 }

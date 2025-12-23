@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
     Add01Icon,
@@ -7,13 +7,14 @@ import {
     RefreshIcon,
     Delete01Icon,
 } from '@hugeicons/core-free-icons'
-import { Shell, PageHeader } from '@/components/shell'
+import { ColumnDef } from '@tanstack/react-table'
+import { Shell } from '@/components/shell'
 import { AuthGuard } from '@/components/auth-guard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { DataTable } from '@/components/ui/data-table'
 import {
     Dialog,
     DialogContent,
@@ -40,19 +41,20 @@ function DomainsPage() {
 }
 
 function getStatusBadge(status: DomainStatus) {
+    const className = "text-[10px] px-2 py-0.5 uppercase tracking-wider font-medium"
     switch (status) {
         case DomainStatus.READY:
-            return <Badge variant="success">ready</Badge>
+            return <Badge variant="success" className={className}>Ready</Badge>
         case DomainStatus.VERIFYING:
-            return <Badge variant="secondary">verifying</Badge>
+            return <Badge variant="secondary" className={className}>Verifying</Badge>
         case DomainStatus.PENDING:
-            return <Badge variant="warning">pending</Badge>
+            return <Badge variant="warning" className={className}>Pending</Badge>
         case DomainStatus.FAILED:
-            return <Badge variant="destructive">failed</Badge>
+            return <Badge variant="destructive" className={className}>Failed</Badge>
         case DomainStatus.DEGRADED:
-            return <Badge variant="warning">degraded</Badge>
+            return <Badge variant="warning" className={className}>Degraded</Badge>
         default:
-            return <Badge variant="outline">unknown</Badge>
+            return <Badge variant="outline" className={className}>Unknown</Badge>
     }
 }
 
@@ -82,116 +84,136 @@ function DomainsContent() {
         await deleteMutation.mutateAsync(id)
     }
 
+    const columns = useMemo<ColumnDef<Domain>[]>(
+        () => [
+            {
+                accessorKey: 'domain',
+                header: 'Domain',
+                cell: ({ row }) => (
+                    <div>
+                        <div className="font-medium text-xs">{row.original.domain}</div>
+                        {row.original.summary?.message && (
+                            <div className="text-2xs text-muted-foreground line-clamp-1">
+                                {row.original.summary.message}
+                            </div>
+                        )}
+                    </div>
+                ),
+            },
+            {
+                accessorKey: 'region',
+                header: 'Region',
+                cell: ({ row }) => (
+                    <div className="text-xs text-muted-foreground">{row.original.region}</div>
+                ),
+            },
+            {
+                accessorKey: 'status',
+                header: 'Status',
+                cell: ({ row }) => getStatusBadge(row.original.status),
+            },
+            {
+                id: 'actions',
+                cell: ({ row }) => (
+                    <div className="flex items-center justify-end gap-1">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => verifyMutation.mutate(row.original.id)}
+                            disabled={verifyMutation.isPending}
+                            title="Verify"
+                        >
+                            <HugeiconsIcon
+                                icon={RefreshIcon}
+                                size={14}
+                                strokeWidth={1.5}
+                                className={verifyMutation.isPending ? 'animate-spin' : ''}
+                            />
+                        </Button>
+                        <Link
+                            to="/domains/$domainId"
+                            params={{ domainId: row.original.id }}
+                        >
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="View DNS">
+                                <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={1.5} />
+                            </Button>
+                        </Link>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDelete(row.original.id)}
+                            disabled={deleteMutation.isPending}
+                            title="Delete"
+                        >
+                            <HugeiconsIcon icon={Delete01Icon} size={14} strokeWidth={1.5} />
+                        </Button>
+                    </div>
+                ),
+            },
+        ],
+        [verifyMutation, deleteMutation]
+    )
+
     return (
         <Shell>
-            <PageHeader
-                title="Domains"
-                description="Manage your sending domains"
-                actions={
-                    <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                        <DialogTrigger asChild>
-                            <Button size="sm">
-                                <HugeiconsIcon icon={Add01Icon} size={12} strokeWidth={1.5} />
-                                Add domain
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Add Domain</DialogTitle>
-                                <DialogDescription>
-                                    Enter your root domain without subdomains.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-3">
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="domain">Domain</Label>
-                                    <Input
-                                        id="domain"
-                                        placeholder="example.com"
-                                        value={newDomain}
-                                        onChange={(e) => setNewDomain(e.target.value)}
-                                    />
+            {/* Header Actions */}
+            <div className="flex flex-col gap-6 mb-8 mt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div /> {/* Spacer for left side align if needed later */}
+                    <div className="flex items-center gap-2">
+                        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                            <DialogTrigger asChild>
+                                <Button size="lg" className="h-8 shadow-sm">
+                                    <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} />
+                                    Add domain
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Add Domain</DialogTitle>
+                                    <DialogDescription>
+                                        Enter your root domain without subdomains.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-3">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="domain">Domain</Label>
+                                        <Input
+                                            id="domain"
+                                            placeholder="example.com"
+                                            value={newDomain}
+                                            onChange={(e) => setNewDomain(e.target.value)}
+                                            className="h-9"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsAddOpen(false)}>
-                                    Cancel
-                                </Button>
-                                <Button
-                                    onClick={handleAdd}
-                                    disabled={!newDomain.trim() || addMutation.isPending}
-                                >
-                                    {addMutation.isPending ? 'Adding...' : 'Add'}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                }
-            />
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setIsAddOpen(false)} className="h-8">
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        onClick={handleAdd}
+                                        disabled={!newDomain.trim() || addMutation.isPending}
+                                        className="h-8"
+                                    >
+                                        {addMutation.isPending ? 'Adding...' : 'Add'}
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                </div>
+            </div>
 
-            <Card>
-                <CardContent className="p-0">
-                    {isLoading ? (
-                        <div className="p-4 text-center text-xs text-muted-foreground">
-                            Loading...
-                        </div>
-                    ) : !domains?.length ? (
-                        <div className="p-4 text-center text-xs text-muted-foreground">
-                            No domains yet. Add one to get started.
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-border">
-                            {domains.map((domain: Domain) => (
-                                <div key={domain.id} className="flex items-center justify-between px-3 py-2.5">
-                                    <div className="flex items-center gap-3">
-                                        <div>
-                                            <div className="text-xs font-medium">{domain.domain}</div>
-                                            <div className="text-2xs text-muted-foreground">
-                                                {domain.summary?.message || `Region: ${domain.region}`}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {getStatusBadge(domain.status)}
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => verifyMutation.mutate(domain.id)}
-                                            disabled={verifyMutation.isPending}
-                                            title="Verify"
-                                        >
-                                            <HugeiconsIcon
-                                                icon={RefreshIcon}
-                                                size={14}
-                                                strokeWidth={1.5}
-                                                className={verifyMutation.isPending ? 'animate-spin' : ''}
-                                            />
-                                        </Button>
-                                        <Link
-                                            to="/domains/$domainId"
-                                            params={{ domainId: domain.id }}
-                                        >
-                                            <Button variant="ghost" size="icon" title="View DNS">
-                                                <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={1.5} />
-                                            </Button>
-                                        </Link>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleDelete(domain.id)}
-                                            disabled={deleteMutation.isPending}
-                                            title="Delete"
-                                            className="text-destructive hover:text-destructive"
-                                        >
-                                            <HugeiconsIcon icon={Delete01Icon} size={14} strokeWidth={1.5} />
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+            <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
+                <DataTable
+                    columns={columns}
+                    data={domains || []}
+                    isLoading={isLoading}
+                />
+            </div>
         </Shell>
     )
 }
