@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/argon2"
 
 	"github.com/emailapi/api/internal/domain"
+	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	rediscache "github.com/emailapi/api/internal/repository/redis"
 )
 
@@ -25,13 +26,14 @@ const (
 
 // APIKeyService handles API key business logic.
 type APIKeyService struct {
-	store Store
-	cache rediscache.APIKeyCacheInterface
+	store    Store
+	cache    rediscache.APIKeyCacheInterface
+	activity chrepo.ActivityRepositoryInterface
 }
 
 // NewAPIKeyService creates a new APIKeyService.
-func NewAPIKeyService(store Store, cache rediscache.APIKeyCacheInterface) *APIKeyService {
-	return &APIKeyService{store: store, cache: cache}
+func NewAPIKeyService(store Store, cache rediscache.APIKeyCacheInterface, activity chrepo.ActivityRepositoryInterface) *APIKeyService {
+	return &APIKeyService{store: store, cache: cache, activity: activity}
 }
 
 // Create creates a new API key for a user.
@@ -100,6 +102,11 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 	// Invalidate user's API keys list cache
 	if s.cache != nil {
 		_ = s.cache.InvalidateByUserID(ctx, userID)
+	}
+
+	// Log activity
+	if s.activity != nil {
+		_ = s.activity.LogAPIKey(ctx, userID, apiKey.ID, "create", "success", fmt.Sprintf("API Key %s created", apiKey.Name))
 	}
 
 	return apiKey, rawKey, nil
@@ -208,6 +215,11 @@ func (s *APIKeyService) Delete(ctx context.Context, userID, keyID string) error 
 		_ = s.cache.InvalidateAll(ctx, apiKey.ID, apiKey.KeyPrefix, userID)
 	}
 
+	// Log activity
+	if s.activity != nil {
+		_ = s.activity.LogAPIKey(ctx, userID, apiKey.ID, "delete", "success", fmt.Sprintf("API Key %s deleted", apiKey.Name))
+	}
+
 	return nil
 }
 
@@ -227,6 +239,11 @@ func (s *APIKeyService) Revoke(ctx context.Context, userID, keyID string) (*doma
 	// Invalidate cache
 	if s.cache != nil {
 		_ = s.cache.InvalidateAll(ctx, apiKey.ID, apiKey.KeyPrefix, userID)
+	}
+
+	// Log activity
+	if s.activity != nil {
+		_ = s.activity.LogAPIKey(ctx, userID, apiKey.ID, "revoke", "success", fmt.Sprintf("API Key %s revoked", apiKey.Name))
 	}
 
 	return result, nil

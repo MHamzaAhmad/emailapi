@@ -35,7 +35,7 @@ type Service struct {
 // Note: DomainService requires SES client and must be set separately using SetDomainService.
 func New(store Store) *Service {
 	svc := &Service{store: store}
-	svc.APIKey = NewAPIKeyService(store, nil) // Cache set via NewWithDeps
+	svc.APIKey = NewAPIKeyService(store, nil, nil) // Cache and Activity set via NewWithDeps
 	svc.User = NewUserService(store, svc.APIKey)
 	return svc
 }
@@ -66,8 +66,8 @@ type ServiceDeps struct {
 // NewWithDeps creates a new Service with all dependencies.
 func NewWithDeps(deps ServiceDeps) *Service {
 	svc := New(deps.Store)
-	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.DomainCache, deps.Region, deps.SESConfigurationSet)
-	svc.APIKey = NewAPIKeyService(deps.Store, deps.APIKeyCache)
+	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.DomainCache, deps.CHActivityRepo, deps.Region, deps.SESConfigurationSet)
+	svc.APIKey = NewAPIKeyService(deps.Store, deps.APIKeyCache, deps.CHActivityRepo)
 
 	// Create email validator with domain checker and suppression checker
 	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo)

@@ -13,6 +13,7 @@ import (
 	internaldns "github.com/emailapi/api/internal/dns"
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/external/ses"
+	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	rediscache "github.com/emailapi/api/internal/repository/redis"
 )
 
@@ -33,12 +34,13 @@ type DomainService struct {
 	ses              ses.Client
 	dns              *internaldns.Validator
 	cache            rediscache.DomainCacheInterface
+	activity         chrepo.ActivityRepositoryInterface
 	region           string
 	configurationSet string // SES configuration set for notifications
 }
 
 // NewDomainService creates a new DomainService.
-func NewDomainService(store Store, sesClient ses.Client, cache rediscache.DomainCacheInterface, region, configurationSet string) *DomainService {
+func NewDomainService(store Store, sesClient ses.Client, cache rediscache.DomainCacheInterface, activity chrepo.ActivityRepositoryInterface, region, configurationSet string) *DomainService {
 	if region == "" {
 		region = defaultRegion
 	}
@@ -47,6 +49,7 @@ func NewDomainService(store Store, sesClient ses.Client, cache rediscache.Domain
 		ses:              sesClient,
 		dns:              internaldns.NewValidator(),
 		cache:            cache,
+		activity:         activity,
 		region:           region,
 		configurationSet: configurationSet,
 	}
@@ -136,6 +139,11 @@ func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*do
 	// Invalidate user's domain list cache
 	if s.cache != nil {
 		_ = s.cache.InvalidateByUserID(ctx, userID)
+	}
+
+	// Log activity
+	if s.activity != nil {
+		_ = s.activity.LogDomain(ctx, userID, d.ID, "create", "success", fmt.Sprintf("Domain %s created", domainName))
 	}
 
 	return s.buildDomainWithDetails(d), nil
@@ -258,6 +266,11 @@ func (s *DomainService) Delete(ctx context.Context, userID, domainID string) err
 		_ = s.cache.InvalidateAll(ctx, domainID, userID)
 	}
 
+	// Log activity
+	if s.activity != nil {
+		_ = s.activity.LogDomain(ctx, userID, domainID, "delete", "success", fmt.Sprintf("Domain %s deleted", d.Domain))
+	}
+
 	return nil
 }
 
@@ -308,6 +321,15 @@ func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*d
 	// Save updated status
 	if err := s.store.Domains().Update(ctx, d); err != nil {
 		return nil, fmt.Errorf("failed to update domain: %w", err)
+	}
+
+	// Log verification activity
+	if s.activity != nil {
+		status := "success"
+		if d.Status == domain.DomainStatusFailed {
+			status = "failed"
+		}
+		_ = s.activity.LogDomain(ctx, userID, domainID, "verify", status, fmt.Sprintf("Domain verification: %s", d.Status))
 	}
 
 	return &domain.VerifyResult{
