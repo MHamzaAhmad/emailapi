@@ -5,6 +5,7 @@ package emailapi.v1;
 option go_package = "github.com/emailapi/api/gen/emailapi/v1";
 
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 // WebhookService handles webhook operations.
 // Webhook endpoints are managed via Svix App Portal - this service only provides
@@ -45,4 +46,157 @@ message GetAppPortalAccessResponse {
   string url = 1;
   // Token for the portal session.
   string token = 2;
+}
+
+// =============================================================================
+// Webhook Event Payloads
+// These types define the structure of webhook payloads delivered to user endpoints.
+// =============================================================================
+
+// WebhookEvent is the envelope for all webhook events.
+// All webhook payloads follow this structure.
+message WebhookEvent {
+  // Event type identifier (e.g., "email.sent", "email.delivered").
+  string event_type = 1;
+  // Timestamp when the event occurred.
+  google.protobuf.Timestamp timestamp = 2;
+  // Event-specific payload.
+  oneof payload {
+    EmailSentEvent email_sent = 10;
+    EmailDeliveredEvent email_delivered = 11;
+    EmailBouncedEvent email_bounced = 12;
+    EmailComplainedEvent email_complained = 13;
+    EmailRejectedEvent email_rejected = 14;
+    EmailDelayedEvent email_delayed = 15;
+    EmailReplyReceivedEvent email_reply_received = 16;
+    EmailFailedEvent email_failed = 17;
+  }
+}
+
+// EmailSentEvent is sent when an email is accepted for delivery.
+message EmailSentEvent {
+  // Our internal email ID for tracking.
+  string email_id = 1;
+  // User who sent the email.
+  string user_id = 2;
+  // SES Message-ID.
+  string message_id = 3;
+  // Sender email address.
+  string from = 4;
+  // Primary recipients.
+  repeated string to = 5;
+  // CC recipients.
+  repeated string cc = 6;
+  // BCC recipients.
+  repeated string bcc = 7;
+  // Email subject.
+  string subject = 8;
+  // Custom metadata passed with the email.
+  map<string, string> metadata = 9;
+}
+
+// EmailDeliveredEvent is sent when an email is delivered to the recipient's mailbox.
+message EmailDeliveredEvent {
+  // Our internal email ID.
+  string email_id = 1;
+  // User who sent the email.
+  string user_id = 2;
+  // SES Message-ID.
+  string message_id = 3;
+  // Recipients who received the email.
+  repeated string recipients = 4;
+  // SMTP response from the recipient's mail server.
+  string smtp_response = 5;
+}
+
+// EmailBouncedEvent is sent when an email bounces.
+message EmailBouncedEvent {
+  // Our internal email ID.
+  string email_id = 1;
+  // User who sent the email.
+  string user_id = 2;
+  // SES Message-ID.
+  string message_id = 3;
+  // Type of bounce: "Permanent" or "Transient".
+  string bounce_type = 4;
+  // Subtype providing more detail (e.g., "General", "NoEmail").
+  string bounce_subtype = 5;
+  // Recipients who bounced.
+  repeated string recipients = 6;
+  // Diagnostic codes for each bounced recipient.
+  repeated string diagnostic_codes = 7;
+}
+
+// EmailComplainedEvent is sent when a recipient marks the email as spam.
+message EmailComplainedEvent {
+  // Our internal email ID.
+  string email_id = 1;
+  // User who sent the email.
+  string user_id = 2;
+  // SES Message-ID.
+  string message_id = 3;
+  // Type of complaint feedback.
+  string feedback_type = 4;
+  // Recipients who complained.
+  repeated string recipients = 5;
+}
+
+// EmailRejectedEvent is sent when SES rejects the email.
+message EmailRejectedEvent {
+  // Our internal email ID.
+  string email_id = 1;
+  // User who sent the email.
+  string user_id = 2;
+  // SES Message-ID.
+  string message_id = 3;
+  // Reason for rejection.
+  string reason = 4;
+}
+
+// EmailDelayedEvent is sent when email delivery is delayed.
+message EmailDelayedEvent {
+  // Our internal email ID.
+  string email_id = 1;
+  // User who sent the email.
+  string user_id = 2;
+  // SES Message-ID.
+  string message_id = 3;
+  // Type of delay.
+  string delay_type = 4;
+}
+
+// EmailFailedEvent is sent when email sending fails permanently.
+message EmailFailedEvent {
+  // Our internal email ID.
+  string email_id = 1;
+  // User who sent the email.
+  string user_id = 2;
+  // Error message describing the failure.
+  string error = 3;
+}
+
+// EmailReplyReceivedEvent is sent when a reply to a sent email is received.
+message EmailReplyReceivedEvent {
+  // ID of this inbound email.
+  string id = 1;
+  // User who owns the original email.
+  string user_id = 2;
+  // Message-ID of this reply.
+  string message_id = 3;
+  // Message-ID of the email being replied to.
+  string in_reply_to = 4;
+  // Full thread reference chain.
+  repeated string references = 5;
+  // Sender of the reply.
+  string from = 6;
+  // Recipients of the reply.
+  repeated string to = 7;
+  // Subject of the reply.
+  string subject = 8;
+  // Plain text body.
+  string body = 9;
+  // HTML body.
+  string html = 10;
+  // Our email ID of the original email being replied to.
+  string parent_email_id = 11;
 }

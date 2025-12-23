@@ -6,33 +6,34 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/emailapi/api/internal/external/svix"
+	emailapiv1 "github.com/emailapi/api/gen/v1"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/repository/suppression"
+	"github.com/emailapi/api/internal/webhook"
 )
 
 // SNSNotificationService handles all SNS notifications from SES.
 // This includes: Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay.
 // Uses routing table to map message_id -> user_id for webhook delivery.
 type SNSNotificationService struct {
-	chRepo       *chrepo.EmailRepository
-	activityRepo *chrepo.ActivityRepository
-	svixClient   svix.Client
-	suppressRepo *suppression.Repository
+	chRepo        *chrepo.EmailRepository
+	activityRepo  *chrepo.ActivityRepository
+	webhookSender webhook.Sender
+	suppressRepo  *suppression.Repository
 }
 
 // NewSNSNotificationService creates a new SNSNotificationService.
 func NewSNSNotificationService(
 	chRepo *chrepo.EmailRepository,
 	activityRepo *chrepo.ActivityRepository,
-	svixClient svix.Client,
+	webhookSender webhook.Sender,
 	suppressRepo *suppression.Repository,
 ) *SNSNotificationService {
 	return &SNSNotificationService{
-		chRepo:       chRepo,
-		activityRepo: activityRepo,
-		svixClient:   svixClient,
-		suppressRepo: suppressRepo,
+		chRepo:        chRepo,
+		activityRepo:  activityRepo,
+		webhookSender: webhookSender,
+		suppressRepo:  suppressRepo,
 	}
 }
 
@@ -186,12 +187,17 @@ func (s *SNSNotificationService) handleDelivery(ctx context.Context, notificatio
 		})
 
 	// Send webhook to user
-	return s.sendWebhook(ctx, routing.UserID, "email.delivered", map[string]interface{}{
-		"email_id":   routing.EmailID,
-		"message_id": messageID,
-		"recipients": notification.Delivery.Recipients,
-		"timestamp":  notification.Delivery.Timestamp,
-	})
+	if s.webhookSender != nil {
+		event := &emailapiv1.EmailDeliveredEvent{
+			EmailId:      routing.EmailID,
+			UserId:       routing.UserID,
+			MessageId:    messageID,
+			Recipients:   notification.Delivery.Recipients,
+			SmtpResponse: notification.Delivery.SMTPResponse,
+		}
+		s.webhookSender.SendEmailDelivered(ctx, routing.UserID, event)
+	}
+	return nil
 }
 
 // handleBounce processes email bounces.
@@ -239,14 +245,25 @@ func (s *SNSNotificationService) handleBounce(ctx context.Context, notification 
 		})
 
 	// Send webhook
-	return s.sendWebhook(ctx, routing.UserID, "email.bounced", map[string]interface{}{
-		"email_id":       routing.EmailID,
-		"message_id":     messageID,
-		"bounce_type":    notification.Bounce.BounceType,
-		"bounce_subtype": notification.Bounce.BounceSubType,
-		"recipients":     bouncedRecipients,
-		"timestamp":      notification.Bounce.Timestamp,
-	})
+	if s.webhookSender != nil {
+		// Collect diagnostic codes
+		diagnosticCodes := make([]string, len(notification.Bounce.BouncedRecipients))
+		for i, r := range notification.Bounce.BouncedRecipients {
+			diagnosticCodes[i] = r.DiagnosticCode
+		}
+
+		event := &emailapiv1.EmailBouncedEvent{
+			EmailId:         routing.EmailID,
+			UserId:          routing.UserID,
+			MessageId:       messageID,
+			BounceType:      notification.Bounce.BounceType,
+			BounceSubtype:   notification.Bounce.BounceSubType,
+			Recipients:      bouncedRecipients,
+			DiagnosticCodes: diagnosticCodes,
+		}
+		s.webhookSender.SendEmailBounced(ctx, routing.UserID, event)
+	}
+	return nil
 }
 
 // handleComplaint processes spam complaints.
@@ -287,13 +304,17 @@ func (s *SNSNotificationService) handleComplaint(ctx context.Context, notificati
 		})
 
 	// Send webhook
-	return s.sendWebhook(ctx, routing.UserID, "email.complained", map[string]interface{}{
-		"email_id":      routing.EmailID,
-		"message_id":    messageID,
-		"feedback_type": notification.Complaint.ComplaintFeedbackType,
-		"recipients":    complainedRecipients,
-		"timestamp":     notification.Complaint.Timestamp,
-	})
+	if s.webhookSender != nil {
+		event := &emailapiv1.EmailComplainedEvent{
+			EmailId:      routing.EmailID,
+			UserId:       routing.UserID,
+			MessageId:    messageID,
+			FeedbackType: notification.Complaint.ComplaintFeedbackType,
+			Recipients:   complainedRecipients,
+		}
+		s.webhookSender.SendEmailComplained(ctx, routing.UserID, event)
+	}
+	return nil
 }
 
 // handleSend processes send confirmations.
@@ -328,11 +349,16 @@ func (s *SNSNotificationService) handleReject(ctx context.Context, notification 
 		map[string]interface{}{"message_id": messageID, "reason": notification.Reject.Reason})
 
 	// Send webhook
-	return s.sendWebhook(ctx, routing.UserID, "email.rejected", map[string]interface{}{
-		"email_id":   routing.EmailID,
-		"message_id": messageID,
-		"reason":     notification.Reject.Reason,
-	})
+	if s.webhookSender != nil {
+		event := &emailapiv1.EmailRejectedEvent{
+			EmailId:   routing.EmailID,
+			UserId:    routing.UserID,
+			MessageId: messageID,
+			Reason:    notification.Reject.Reason,
+		}
+		s.webhookSender.SendEmailRejected(ctx, routing.UserID, event)
+	}
+	return nil
 }
 
 // handleDeliveryDelay logs delivery delays.
@@ -350,31 +376,13 @@ func (s *SNSNotificationService) handleDeliveryDelay(ctx context.Context, notifi
 		map[string]interface{}{"message_id": messageID})
 
 	// Send webhook
-	return s.sendWebhook(ctx, routing.UserID, "email.delayed", map[string]interface{}{
-		"email_id":   routing.EmailID,
-		"message_id": messageID,
-	})
-}
-
-func (s *SNSNotificationService) sendWebhook(ctx context.Context, userID, eventType string, data map[string]interface{}) error {
-	if s.svixClient == nil {
-		return nil
+	if s.webhookSender != nil {
+		event := &emailapiv1.EmailDelayedEvent{
+			EmailId:   routing.EmailID,
+			UserId:    routing.UserID,
+			MessageId: messageID,
+		}
+		s.webhookSender.SendEmailDelayed(ctx, routing.UserID, event)
 	}
-
-	if err := s.svixClient.EnsureApp(ctx, userID, "User "+userID); err != nil {
-		fmt.Println("Failed to ensure svix app: ", err)
-		return fmt.Errorf("failed to ensure svix app: %w", err)
-	}
-
-	payload := map[string]interface{}{
-		"type": eventType,
-		"data": data,
-	}
-
-	if err := s.svixClient.SendMessage(ctx, userID, eventType, payload); err != nil {
-		fmt.Println("Failed to send webhook: ", err)
-		return fmt.Errorf("failed to send webhook: %w", err)
-	}
-
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 	rediscache "github.com/emailapi/api/internal/repository/redis"
 	"github.com/emailapi/api/internal/repository/suppression"
 	"github.com/emailapi/api/internal/validation"
+	"github.com/emailapi/api/internal/webhook"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
@@ -47,7 +48,8 @@ type ServiceDeps struct {
 	RiverClient         *river.Client[pgx.Tx]
 	CHEmailRepo         *chrepo.EmailRepository
 	CHActivityRepo      *chrepo.ActivityRepository
-	SvixClient          svix.Client
+	SvixClient          svix.Client // Used for WebhookService (portal access)
+	WebhookSender       webhook.Sender
 	SuppressionRepo     *suppression.Repository
 	// Cache repositories
 	DomainCache *rediscache.DomainCache
@@ -64,24 +66,26 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	// Create email validator with domain checker and suppression checker
 	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo)
 
-	svc.Email = NewEmailService(deps.RiverClient, deps.CHEmailRepo, emailValidator, deps.SESClient, deps.SvixClient)
+	svc.Email = NewEmailService(deps.RiverClient, deps.CHEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender)
 	svc.Internal = NewInternalService()
 
 	// Initialize SNS notification service
 	svc.SNSNotification = NewSNSNotificationService(
 		deps.CHEmailRepo,
 		deps.CHActivityRepo,
-		deps.SvixClient,
+		deps.WebhookSender,
 		deps.SuppressionRepo,
 	)
 
 	// Initialize Svix-dependent services if client is available
 	if deps.SvixClient != nil {
 		svc.Webhook = NewWebhookService(deps.SvixClient)
+	}
+	if deps.WebhookSender != nil {
 		svc.InboundEmail = NewInboundEmailService(
 			deps.S3Factory,
 			deps.CHEmailRepo,
-			deps.SvixClient,
+			deps.WebhookSender,
 		)
 	}
 

@@ -28,6 +28,7 @@ import (
 	"github.com/emailapi/api/internal/repository/suppression"
 	"github.com/emailapi/api/internal/service"
 	grpctransport "github.com/emailapi/api/internal/transport/grpc"
+	"github.com/emailapi/api/internal/webhook"
 	worker "github.com/emailapi/api/internal/worker"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -161,9 +162,12 @@ func main() {
 	}
 	logger.Info().Msg("✓ Initialized Svix client")
 
+	// Create webhook sender from Svix client
+	webhookSender := webhook.NewSender(svixClient)
+
 	// Create and register workers
 	workers := river.NewWorkers()
-	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, chRepo, svixClient)
+	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, chRepo, webhookSender)
 	river.AddWorker(workers, emailWorker)
 	logger.Info().Msg("✓ Registered River workers")
 
@@ -200,6 +204,7 @@ func main() {
 		CHEmailRepo:         chRepo,
 		CHActivityRepo:      chActivityRepo,
 		SvixClient:          svixClient,
+		WebhookSender:       webhookSender,
 		SuppressionRepo:     suppressionRepo,
 		DomainCache:         domainCache,
 		APIKeyCache:         apiKeyCache,

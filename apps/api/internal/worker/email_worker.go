@@ -14,10 +14,11 @@ import (
 	"github.com/jordan-wright/email"
 	"github.com/riverqueue/river"
 
+	emailapiv1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
-	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
+	"github.com/emailapi/api/internal/webhook"
 )
 
 // SendEmailArgs contains all email data embedded in the job payload.
@@ -53,10 +54,10 @@ func (SendEmailArgs) Kind() string { return "send_email" }
 // EmailWorker handles email sending jobs.
 type EmailWorker struct {
 	river.WorkerDefaults[SendEmailArgs]
-	sesClient  ses.Client
-	s3Factory  *s3.Factory
-	chRepo     chrepo.EmailRepositoryInterface
-	svixClient svix.Client
+	sesClient     ses.Client
+	s3Factory     *s3.Factory
+	chRepo        chrepo.EmailRepositoryInterface
+	webhookSender webhook.Sender
 }
 
 // NewEmailWorker creates a new EmailWorker.
@@ -64,13 +65,13 @@ func NewEmailWorker(
 	sesClient ses.Client,
 	s3Factory *s3.Factory,
 	chRepo chrepo.EmailRepositoryInterface,
-	svixClient svix.Client,
+	webhookSender webhook.Sender,
 ) *EmailWorker {
 	return &EmailWorker{
-		sesClient:  sesClient,
-		s3Factory:  s3Factory,
-		chRepo:     chRepo,
-		svixClient: svixClient,
+		sesClient:     sesClient,
+		s3Factory:     s3Factory,
+		chRepo:        chRepo,
+		webhookSender: webhookSender,
 	}
 }
 
@@ -230,43 +231,21 @@ func buildMIMEMessage(args *SendEmailArgs, attachments []attachmentContent) ([]b
 
 // sendWebhook sends a webhook notification for email events.
 func (w *EmailWorker) sendWebhook(ctx context.Context, args SendEmailArgs, messageID string) {
-	if w.svixClient == nil {
+	if w.webhookSender == nil {
 		return
 	}
 
-	// Ensure app exists for the user
-	if err := w.svixClient.EnsureApp(ctx, args.UserID, "User "+args.UserID); err != nil {
-		fmt.Printf("Warning: failed to ensure svix app for webhook: %v\n", err)
-		return
+	event := &emailapiv1.EmailSentEvent{
+		EmailId:   args.EmailID,
+		UserId:    args.UserID,
+		MessageId: messageID,
+		From:      args.From,
+		To:        args.To,
+		Cc:        args.Cc,
+		Bcc:       args.Bcc,
+		Subject:   args.Subject,
+		Metadata:  args.Metadata,
 	}
 
-	// Build webhook payload
-	payload := map[string]interface{}{
-		"email_id":   args.EmailID,
-		"user_id":    args.UserID,
-		"from":       args.From,
-		"to":         args.To,
-		"subject":    args.Subject,
-		"message_id": messageID,
-		"status":     "sent",
-		"timestamp":  time.Now().UTC().Format(time.RFC3339),
-	}
-
-	// Add optional fields
-	if len(args.Cc) > 0 {
-		payload["cc"] = args.Cc
-	}
-	if len(args.Bcc) > 0 {
-		payload["bcc"] = args.Bcc
-	}
-	if len(args.Metadata) > 0 {
-		payload["metadata"] = args.Metadata
-	}
-
-	// Send webhook (fire-and-forget to avoid blocking)
-	go func() {
-		if err := w.svixClient.SendMessage(context.Background(), args.UserID, "email.sent", payload); err != nil {
-			fmt.Printf("Warning: failed to send webhook for email %s: %v\n", args.EmailID, err)
-		}
-	}()
+	w.webhookSender.SendEmailSent(ctx, args.UserID, event)
 }

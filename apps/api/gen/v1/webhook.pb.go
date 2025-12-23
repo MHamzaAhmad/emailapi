@@ -10,6 +10,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -189,15 +190,1035 @@ func (x *GetAppPortalAccessResponse) GetToken() string {
 	return ""
 }
 
+// WebhookEvent is the envelope for all webhook events.
+// All webhook payloads follow this structure.
+type WebhookEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Event type identifier (e.g., "email.sent", "email.delivered").
+	EventType string `protobuf:"bytes,1,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
+	// Timestamp when the event occurred.
+	Timestamp *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	// Event-specific payload.
+	//
+	// Types that are valid to be assigned to Payload:
+	//
+	//	*WebhookEvent_EmailSent
+	//	*WebhookEvent_EmailDelivered
+	//	*WebhookEvent_EmailBounced
+	//	*WebhookEvent_EmailComplained
+	//	*WebhookEvent_EmailRejected
+	//	*WebhookEvent_EmailDelayed
+	//	*WebhookEvent_EmailReplyReceived
+	//	*WebhookEvent_EmailFailed
+	Payload       isWebhookEvent_Payload `protobuf_oneof:"payload"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WebhookEvent) Reset() {
+	*x = WebhookEvent{}
+	mi := &file_v1_webhook_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WebhookEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WebhookEvent) ProtoMessage() {}
+
+func (x *WebhookEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_webhook_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WebhookEvent.ProtoReflect.Descriptor instead.
+func (*WebhookEvent) Descriptor() ([]byte, []int) {
+	return file_v1_webhook_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *WebhookEvent) GetEventType() string {
+	if x != nil {
+		return x.EventType
+	}
+	return ""
+}
+
+func (x *WebhookEvent) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
+}
+
+func (x *WebhookEvent) GetPayload() isWebhookEvent_Payload {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *WebhookEvent) GetEmailSent() *EmailSentEvent {
+	if x != nil {
+		if x, ok := x.Payload.(*WebhookEvent_EmailSent); ok {
+			return x.EmailSent
+		}
+	}
+	return nil
+}
+
+func (x *WebhookEvent) GetEmailDelivered() *EmailDeliveredEvent {
+	if x != nil {
+		if x, ok := x.Payload.(*WebhookEvent_EmailDelivered); ok {
+			return x.EmailDelivered
+		}
+	}
+	return nil
+}
+
+func (x *WebhookEvent) GetEmailBounced() *EmailBouncedEvent {
+	if x != nil {
+		if x, ok := x.Payload.(*WebhookEvent_EmailBounced); ok {
+			return x.EmailBounced
+		}
+	}
+	return nil
+}
+
+func (x *WebhookEvent) GetEmailComplained() *EmailComplainedEvent {
+	if x != nil {
+		if x, ok := x.Payload.(*WebhookEvent_EmailComplained); ok {
+			return x.EmailComplained
+		}
+	}
+	return nil
+}
+
+func (x *WebhookEvent) GetEmailRejected() *EmailRejectedEvent {
+	if x != nil {
+		if x, ok := x.Payload.(*WebhookEvent_EmailRejected); ok {
+			return x.EmailRejected
+		}
+	}
+	return nil
+}
+
+func (x *WebhookEvent) GetEmailDelayed() *EmailDelayedEvent {
+	if x != nil {
+		if x, ok := x.Payload.(*WebhookEvent_EmailDelayed); ok {
+			return x.EmailDelayed
+		}
+	}
+	return nil
+}
+
+func (x *WebhookEvent) GetEmailReplyReceived() *EmailReplyReceivedEvent {
+	if x != nil {
+		if x, ok := x.Payload.(*WebhookEvent_EmailReplyReceived); ok {
+			return x.EmailReplyReceived
+		}
+	}
+	return nil
+}
+
+func (x *WebhookEvent) GetEmailFailed() *EmailFailedEvent {
+	if x != nil {
+		if x, ok := x.Payload.(*WebhookEvent_EmailFailed); ok {
+			return x.EmailFailed
+		}
+	}
+	return nil
+}
+
+type isWebhookEvent_Payload interface {
+	isWebhookEvent_Payload()
+}
+
+type WebhookEvent_EmailSent struct {
+	EmailSent *EmailSentEvent `protobuf:"bytes,10,opt,name=email_sent,json=emailSent,proto3,oneof"`
+}
+
+type WebhookEvent_EmailDelivered struct {
+	EmailDelivered *EmailDeliveredEvent `protobuf:"bytes,11,opt,name=email_delivered,json=emailDelivered,proto3,oneof"`
+}
+
+type WebhookEvent_EmailBounced struct {
+	EmailBounced *EmailBouncedEvent `protobuf:"bytes,12,opt,name=email_bounced,json=emailBounced,proto3,oneof"`
+}
+
+type WebhookEvent_EmailComplained struct {
+	EmailComplained *EmailComplainedEvent `protobuf:"bytes,13,opt,name=email_complained,json=emailComplained,proto3,oneof"`
+}
+
+type WebhookEvent_EmailRejected struct {
+	EmailRejected *EmailRejectedEvent `protobuf:"bytes,14,opt,name=email_rejected,json=emailRejected,proto3,oneof"`
+}
+
+type WebhookEvent_EmailDelayed struct {
+	EmailDelayed *EmailDelayedEvent `protobuf:"bytes,15,opt,name=email_delayed,json=emailDelayed,proto3,oneof"`
+}
+
+type WebhookEvent_EmailReplyReceived struct {
+	EmailReplyReceived *EmailReplyReceivedEvent `protobuf:"bytes,16,opt,name=email_reply_received,json=emailReplyReceived,proto3,oneof"`
+}
+
+type WebhookEvent_EmailFailed struct {
+	EmailFailed *EmailFailedEvent `protobuf:"bytes,17,opt,name=email_failed,json=emailFailed,proto3,oneof"`
+}
+
+func (*WebhookEvent_EmailSent) isWebhookEvent_Payload() {}
+
+func (*WebhookEvent_EmailDelivered) isWebhookEvent_Payload() {}
+
+func (*WebhookEvent_EmailBounced) isWebhookEvent_Payload() {}
+
+func (*WebhookEvent_EmailComplained) isWebhookEvent_Payload() {}
+
+func (*WebhookEvent_EmailRejected) isWebhookEvent_Payload() {}
+
+func (*WebhookEvent_EmailDelayed) isWebhookEvent_Payload() {}
+
+func (*WebhookEvent_EmailReplyReceived) isWebhookEvent_Payload() {}
+
+func (*WebhookEvent_EmailFailed) isWebhookEvent_Payload() {}
+
+// EmailSentEvent is sent when an email is accepted for delivery.
+type EmailSentEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Our internal email ID for tracking.
+	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	// User who sent the email.
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// SES Message-ID.
+	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// Sender email address.
+	From string `protobuf:"bytes,4,opt,name=from,proto3" json:"from,omitempty"`
+	// Primary recipients.
+	To []string `protobuf:"bytes,5,rep,name=to,proto3" json:"to,omitempty"`
+	// CC recipients.
+	Cc []string `protobuf:"bytes,6,rep,name=cc,proto3" json:"cc,omitempty"`
+	// BCC recipients.
+	Bcc []string `protobuf:"bytes,7,rep,name=bcc,proto3" json:"bcc,omitempty"`
+	// Email subject.
+	Subject string `protobuf:"bytes,8,opt,name=subject,proto3" json:"subject,omitempty"`
+	// Custom metadata passed with the email.
+	Metadata      map[string]string `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EmailSentEvent) Reset() {
+	*x = EmailSentEvent{}
+	mi := &file_v1_webhook_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EmailSentEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EmailSentEvent) ProtoMessage() {}
+
+func (x *EmailSentEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_webhook_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EmailSentEvent.ProtoReflect.Descriptor instead.
+func (*EmailSentEvent) Descriptor() ([]byte, []int) {
+	return file_v1_webhook_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *EmailSentEvent) GetEmailId() string {
+	if x != nil {
+		return x.EmailId
+	}
+	return ""
+}
+
+func (x *EmailSentEvent) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *EmailSentEvent) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *EmailSentEvent) GetFrom() string {
+	if x != nil {
+		return x.From
+	}
+	return ""
+}
+
+func (x *EmailSentEvent) GetTo() []string {
+	if x != nil {
+		return x.To
+	}
+	return nil
+}
+
+func (x *EmailSentEvent) GetCc() []string {
+	if x != nil {
+		return x.Cc
+	}
+	return nil
+}
+
+func (x *EmailSentEvent) GetBcc() []string {
+	if x != nil {
+		return x.Bcc
+	}
+	return nil
+}
+
+func (x *EmailSentEvent) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *EmailSentEvent) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+// EmailDeliveredEvent is sent when an email is delivered to the recipient's mailbox.
+type EmailDeliveredEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Our internal email ID.
+	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	// User who sent the email.
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// SES Message-ID.
+	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// Recipients who received the email.
+	Recipients []string `protobuf:"bytes,4,rep,name=recipients,proto3" json:"recipients,omitempty"`
+	// SMTP response from the recipient's mail server.
+	SmtpResponse  string `protobuf:"bytes,5,opt,name=smtp_response,json=smtpResponse,proto3" json:"smtp_response,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EmailDeliveredEvent) Reset() {
+	*x = EmailDeliveredEvent{}
+	mi := &file_v1_webhook_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EmailDeliveredEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EmailDeliveredEvent) ProtoMessage() {}
+
+func (x *EmailDeliveredEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_webhook_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EmailDeliveredEvent.ProtoReflect.Descriptor instead.
+func (*EmailDeliveredEvent) Descriptor() ([]byte, []int) {
+	return file_v1_webhook_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *EmailDeliveredEvent) GetEmailId() string {
+	if x != nil {
+		return x.EmailId
+	}
+	return ""
+}
+
+func (x *EmailDeliveredEvent) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *EmailDeliveredEvent) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *EmailDeliveredEvent) GetRecipients() []string {
+	if x != nil {
+		return x.Recipients
+	}
+	return nil
+}
+
+func (x *EmailDeliveredEvent) GetSmtpResponse() string {
+	if x != nil {
+		return x.SmtpResponse
+	}
+	return ""
+}
+
+// EmailBouncedEvent is sent when an email bounces.
+type EmailBouncedEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Our internal email ID.
+	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	// User who sent the email.
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// SES Message-ID.
+	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// Type of bounce: "Permanent" or "Transient".
+	BounceType string `protobuf:"bytes,4,opt,name=bounce_type,json=bounceType,proto3" json:"bounce_type,omitempty"`
+	// Subtype providing more detail (e.g., "General", "NoEmail").
+	BounceSubtype string `protobuf:"bytes,5,opt,name=bounce_subtype,json=bounceSubtype,proto3" json:"bounce_subtype,omitempty"`
+	// Recipients who bounced.
+	Recipients []string `protobuf:"bytes,6,rep,name=recipients,proto3" json:"recipients,omitempty"`
+	// Diagnostic codes for each bounced recipient.
+	DiagnosticCodes []string `protobuf:"bytes,7,rep,name=diagnostic_codes,json=diagnosticCodes,proto3" json:"diagnostic_codes,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *EmailBouncedEvent) Reset() {
+	*x = EmailBouncedEvent{}
+	mi := &file_v1_webhook_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EmailBouncedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EmailBouncedEvent) ProtoMessage() {}
+
+func (x *EmailBouncedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_webhook_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EmailBouncedEvent.ProtoReflect.Descriptor instead.
+func (*EmailBouncedEvent) Descriptor() ([]byte, []int) {
+	return file_v1_webhook_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *EmailBouncedEvent) GetEmailId() string {
+	if x != nil {
+		return x.EmailId
+	}
+	return ""
+}
+
+func (x *EmailBouncedEvent) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *EmailBouncedEvent) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *EmailBouncedEvent) GetBounceType() string {
+	if x != nil {
+		return x.BounceType
+	}
+	return ""
+}
+
+func (x *EmailBouncedEvent) GetBounceSubtype() string {
+	if x != nil {
+		return x.BounceSubtype
+	}
+	return ""
+}
+
+func (x *EmailBouncedEvent) GetRecipients() []string {
+	if x != nil {
+		return x.Recipients
+	}
+	return nil
+}
+
+func (x *EmailBouncedEvent) GetDiagnosticCodes() []string {
+	if x != nil {
+		return x.DiagnosticCodes
+	}
+	return nil
+}
+
+// EmailComplainedEvent is sent when a recipient marks the email as spam.
+type EmailComplainedEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Our internal email ID.
+	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	// User who sent the email.
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// SES Message-ID.
+	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// Type of complaint feedback.
+	FeedbackType string `protobuf:"bytes,4,opt,name=feedback_type,json=feedbackType,proto3" json:"feedback_type,omitempty"`
+	// Recipients who complained.
+	Recipients    []string `protobuf:"bytes,5,rep,name=recipients,proto3" json:"recipients,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EmailComplainedEvent) Reset() {
+	*x = EmailComplainedEvent{}
+	mi := &file_v1_webhook_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EmailComplainedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EmailComplainedEvent) ProtoMessage() {}
+
+func (x *EmailComplainedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_webhook_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EmailComplainedEvent.ProtoReflect.Descriptor instead.
+func (*EmailComplainedEvent) Descriptor() ([]byte, []int) {
+	return file_v1_webhook_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *EmailComplainedEvent) GetEmailId() string {
+	if x != nil {
+		return x.EmailId
+	}
+	return ""
+}
+
+func (x *EmailComplainedEvent) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *EmailComplainedEvent) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *EmailComplainedEvent) GetFeedbackType() string {
+	if x != nil {
+		return x.FeedbackType
+	}
+	return ""
+}
+
+func (x *EmailComplainedEvent) GetRecipients() []string {
+	if x != nil {
+		return x.Recipients
+	}
+	return nil
+}
+
+// EmailRejectedEvent is sent when SES rejects the email.
+type EmailRejectedEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Our internal email ID.
+	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	// User who sent the email.
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// SES Message-ID.
+	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// Reason for rejection.
+	Reason        string `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EmailRejectedEvent) Reset() {
+	*x = EmailRejectedEvent{}
+	mi := &file_v1_webhook_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EmailRejectedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EmailRejectedEvent) ProtoMessage() {}
+
+func (x *EmailRejectedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_webhook_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EmailRejectedEvent.ProtoReflect.Descriptor instead.
+func (*EmailRejectedEvent) Descriptor() ([]byte, []int) {
+	return file_v1_webhook_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *EmailRejectedEvent) GetEmailId() string {
+	if x != nil {
+		return x.EmailId
+	}
+	return ""
+}
+
+func (x *EmailRejectedEvent) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *EmailRejectedEvent) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *EmailRejectedEvent) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+// EmailDelayedEvent is sent when email delivery is delayed.
+type EmailDelayedEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Our internal email ID.
+	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	// User who sent the email.
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// SES Message-ID.
+	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// Type of delay.
+	DelayType     string `protobuf:"bytes,4,opt,name=delay_type,json=delayType,proto3" json:"delay_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EmailDelayedEvent) Reset() {
+	*x = EmailDelayedEvent{}
+	mi := &file_v1_webhook_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EmailDelayedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EmailDelayedEvent) ProtoMessage() {}
+
+func (x *EmailDelayedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_webhook_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EmailDelayedEvent.ProtoReflect.Descriptor instead.
+func (*EmailDelayedEvent) Descriptor() ([]byte, []int) {
+	return file_v1_webhook_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *EmailDelayedEvent) GetEmailId() string {
+	if x != nil {
+		return x.EmailId
+	}
+	return ""
+}
+
+func (x *EmailDelayedEvent) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *EmailDelayedEvent) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *EmailDelayedEvent) GetDelayType() string {
+	if x != nil {
+		return x.DelayType
+	}
+	return ""
+}
+
+// EmailFailedEvent is sent when email sending fails permanently.
+type EmailFailedEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Our internal email ID.
+	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	// User who sent the email.
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// Error message describing the failure.
+	Error         string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EmailFailedEvent) Reset() {
+	*x = EmailFailedEvent{}
+	mi := &file_v1_webhook_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EmailFailedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EmailFailedEvent) ProtoMessage() {}
+
+func (x *EmailFailedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_webhook_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EmailFailedEvent.ProtoReflect.Descriptor instead.
+func (*EmailFailedEvent) Descriptor() ([]byte, []int) {
+	return file_v1_webhook_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *EmailFailedEvent) GetEmailId() string {
+	if x != nil {
+		return x.EmailId
+	}
+	return ""
+}
+
+func (x *EmailFailedEvent) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *EmailFailedEvent) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+// EmailReplyReceivedEvent is sent when a reply to a sent email is received.
+type EmailReplyReceivedEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// ID of this inbound email.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// User who owns the original email.
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// Message-ID of this reply.
+	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// Message-ID of the email being replied to.
+	InReplyTo string `protobuf:"bytes,4,opt,name=in_reply_to,json=inReplyTo,proto3" json:"in_reply_to,omitempty"`
+	// Full thread reference chain.
+	References []string `protobuf:"bytes,5,rep,name=references,proto3" json:"references,omitempty"`
+	// Sender of the reply.
+	From string `protobuf:"bytes,6,opt,name=from,proto3" json:"from,omitempty"`
+	// Recipients of the reply.
+	To []string `protobuf:"bytes,7,rep,name=to,proto3" json:"to,omitempty"`
+	// Subject of the reply.
+	Subject string `protobuf:"bytes,8,opt,name=subject,proto3" json:"subject,omitempty"`
+	// Plain text body.
+	Body string `protobuf:"bytes,9,opt,name=body,proto3" json:"body,omitempty"`
+	// HTML body.
+	Html string `protobuf:"bytes,10,opt,name=html,proto3" json:"html,omitempty"`
+	// Our email ID of the original email being replied to.
+	ParentEmailId string `protobuf:"bytes,11,opt,name=parent_email_id,json=parentEmailId,proto3" json:"parent_email_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EmailReplyReceivedEvent) Reset() {
+	*x = EmailReplyReceivedEvent{}
+	mi := &file_v1_webhook_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EmailReplyReceivedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EmailReplyReceivedEvent) ProtoMessage() {}
+
+func (x *EmailReplyReceivedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_webhook_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EmailReplyReceivedEvent.ProtoReflect.Descriptor instead.
+func (*EmailReplyReceivedEvent) Descriptor() ([]byte, []int) {
+	return file_v1_webhook_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *EmailReplyReceivedEvent) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *EmailReplyReceivedEvent) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *EmailReplyReceivedEvent) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *EmailReplyReceivedEvent) GetInReplyTo() string {
+	if x != nil {
+		return x.InReplyTo
+	}
+	return ""
+}
+
+func (x *EmailReplyReceivedEvent) GetReferences() []string {
+	if x != nil {
+		return x.References
+	}
+	return nil
+}
+
+func (x *EmailReplyReceivedEvent) GetFrom() string {
+	if x != nil {
+		return x.From
+	}
+	return ""
+}
+
+func (x *EmailReplyReceivedEvent) GetTo() []string {
+	if x != nil {
+		return x.To
+	}
+	return nil
+}
+
+func (x *EmailReplyReceivedEvent) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *EmailReplyReceivedEvent) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+func (x *EmailReplyReceivedEvent) GetHtml() string {
+	if x != nil {
+		return x.Html
+	}
+	return ""
+}
+
+func (x *EmailReplyReceivedEvent) GetParentEmailId() string {
+	if x != nil {
+		return x.ParentEmailId
+	}
+	return ""
+}
+
 var File_v1_webhook_proto protoreflect.FileDescriptor
 
 const file_v1_webhook_proto_rawDesc = "" +
 	"\n" +
-	"\x10v1/webhook.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\"\x1b\n" +
+	"\x10v1/webhook.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x1b\n" +
 	"\x19GetAppPortalAccessRequest\"D\n" +
 	"\x1aGetAppPortalAccessResponse\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x14\n" +
-	"\x05token\x18\x02 \x01(\tR\x05token*\xba\x03\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token\"\xc3\x05\n" +
+	"\fWebhookEvent\x12\x1d\n" +
+	"\n" +
+	"event_type\x18\x01 \x01(\tR\teventType\x128\n" +
+	"\ttimestamp\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12<\n" +
+	"\n" +
+	"email_sent\x18\n" +
+	" \x01(\v2\x1b.emailapi.v1.EmailSentEventH\x00R\temailSent\x12K\n" +
+	"\x0femail_delivered\x18\v \x01(\v2 .emailapi.v1.EmailDeliveredEventH\x00R\x0eemailDelivered\x12E\n" +
+	"\remail_bounced\x18\f \x01(\v2\x1e.emailapi.v1.EmailBouncedEventH\x00R\femailBounced\x12N\n" +
+	"\x10email_complained\x18\r \x01(\v2!.emailapi.v1.EmailComplainedEventH\x00R\x0femailComplained\x12H\n" +
+	"\x0eemail_rejected\x18\x0e \x01(\v2\x1f.emailapi.v1.EmailRejectedEventH\x00R\remailRejected\x12E\n" +
+	"\remail_delayed\x18\x0f \x01(\v2\x1e.emailapi.v1.EmailDelayedEventH\x00R\femailDelayed\x12X\n" +
+	"\x14email_reply_received\x18\x10 \x01(\v2$.emailapi.v1.EmailReplyReceivedEventH\x00R\x12emailReplyReceived\x12B\n" +
+	"\femail_failed\x18\x11 \x01(\v2\x1d.emailapi.v1.EmailFailedEventH\x00R\vemailFailedB\t\n" +
+	"\apayload\"\xc7\x02\n" +
+	"\x0eEmailSentEvent\x12\x19\n" +
+	"\bemail_id\x18\x01 \x01(\tR\aemailId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x03 \x01(\tR\tmessageId\x12\x12\n" +
+	"\x04from\x18\x04 \x01(\tR\x04from\x12\x0e\n" +
+	"\x02to\x18\x05 \x03(\tR\x02to\x12\x0e\n" +
+	"\x02cc\x18\x06 \x03(\tR\x02cc\x12\x10\n" +
+	"\x03bcc\x18\a \x03(\tR\x03bcc\x12\x18\n" +
+	"\asubject\x18\b \x01(\tR\asubject\x12E\n" +
+	"\bmetadata\x18\t \x03(\v2).emailapi.v1.EmailSentEvent.MetadataEntryR\bmetadata\x1a;\n" +
+	"\rMetadataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xad\x01\n" +
+	"\x13EmailDeliveredEvent\x12\x19\n" +
+	"\bemail_id\x18\x01 \x01(\tR\aemailId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x03 \x01(\tR\tmessageId\x12\x1e\n" +
+	"\n" +
+	"recipients\x18\x04 \x03(\tR\n" +
+	"recipients\x12#\n" +
+	"\rsmtp_response\x18\x05 \x01(\tR\fsmtpResponse\"\xf9\x01\n" +
+	"\x11EmailBouncedEvent\x12\x19\n" +
+	"\bemail_id\x18\x01 \x01(\tR\aemailId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x03 \x01(\tR\tmessageId\x12\x1f\n" +
+	"\vbounce_type\x18\x04 \x01(\tR\n" +
+	"bounceType\x12%\n" +
+	"\x0ebounce_subtype\x18\x05 \x01(\tR\rbounceSubtype\x12\x1e\n" +
+	"\n" +
+	"recipients\x18\x06 \x03(\tR\n" +
+	"recipients\x12)\n" +
+	"\x10diagnostic_codes\x18\a \x03(\tR\x0fdiagnosticCodes\"\xae\x01\n" +
+	"\x14EmailComplainedEvent\x12\x19\n" +
+	"\bemail_id\x18\x01 \x01(\tR\aemailId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x03 \x01(\tR\tmessageId\x12#\n" +
+	"\rfeedback_type\x18\x04 \x01(\tR\ffeedbackType\x12\x1e\n" +
+	"\n" +
+	"recipients\x18\x05 \x03(\tR\n" +
+	"recipients\"\x7f\n" +
+	"\x12EmailRejectedEvent\x12\x19\n" +
+	"\bemail_id\x18\x01 \x01(\tR\aemailId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x03 \x01(\tR\tmessageId\x12\x16\n" +
+	"\x06reason\x18\x04 \x01(\tR\x06reason\"\x85\x01\n" +
+	"\x11EmailDelayedEvent\x12\x19\n" +
+	"\bemail_id\x18\x01 \x01(\tR\aemailId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x03 \x01(\tR\tmessageId\x12\x1d\n" +
+	"\n" +
+	"delay_type\x18\x04 \x01(\tR\tdelayType\"\\\n" +
+	"\x10EmailFailedEvent\x12\x19\n" +
+	"\bemail_id\x18\x01 \x01(\tR\aemailId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\xaf\x02\n" +
+	"\x17EmailReplyReceivedEvent\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x03 \x01(\tR\tmessageId\x12\x1e\n" +
+	"\vin_reply_to\x18\x04 \x01(\tR\tinReplyTo\x12\x1e\n" +
+	"\n" +
+	"references\x18\x05 \x03(\tR\n" +
+	"references\x12\x12\n" +
+	"\x04from\x18\x06 \x01(\tR\x04from\x12\x0e\n" +
+	"\x02to\x18\a \x03(\tR\x02to\x12\x18\n" +
+	"\asubject\x18\b \x01(\tR\asubject\x12\x12\n" +
+	"\x04body\x18\t \x01(\tR\x04body\x12\x12\n" +
+	"\x04html\x18\n" +
+	" \x01(\tR\x04html\x12&\n" +
+	"\x0fparent_email_id\x18\v \x01(\tR\rparentEmailId*\xba\x03\n" +
 	"\x10WebhookEventType\x12\"\n" +
 	"\x1eWEBHOOK_EVENT_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dWEBHOOK_EVENT_TYPE_EMAIL_SENT\x10\x01\x12&\n" +
@@ -228,20 +1249,41 @@ func file_v1_webhook_proto_rawDescGZIP() []byte {
 }
 
 var file_v1_webhook_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_v1_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_v1_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_v1_webhook_proto_goTypes = []any{
 	(WebhookEventType)(0),              // 0: emailapi.v1.WebhookEventType
 	(*GetAppPortalAccessRequest)(nil),  // 1: emailapi.v1.GetAppPortalAccessRequest
 	(*GetAppPortalAccessResponse)(nil), // 2: emailapi.v1.GetAppPortalAccessResponse
+	(*WebhookEvent)(nil),               // 3: emailapi.v1.WebhookEvent
+	(*EmailSentEvent)(nil),             // 4: emailapi.v1.EmailSentEvent
+	(*EmailDeliveredEvent)(nil),        // 5: emailapi.v1.EmailDeliveredEvent
+	(*EmailBouncedEvent)(nil),          // 6: emailapi.v1.EmailBouncedEvent
+	(*EmailComplainedEvent)(nil),       // 7: emailapi.v1.EmailComplainedEvent
+	(*EmailRejectedEvent)(nil),         // 8: emailapi.v1.EmailRejectedEvent
+	(*EmailDelayedEvent)(nil),          // 9: emailapi.v1.EmailDelayedEvent
+	(*EmailFailedEvent)(nil),           // 10: emailapi.v1.EmailFailedEvent
+	(*EmailReplyReceivedEvent)(nil),    // 11: emailapi.v1.EmailReplyReceivedEvent
+	nil,                                // 12: emailapi.v1.EmailSentEvent.MetadataEntry
+	(*timestamppb.Timestamp)(nil),      // 13: google.protobuf.Timestamp
 }
 var file_v1_webhook_proto_depIdxs = []int32{
-	1, // 0: emailapi.v1.WebhookService.GetAppPortalAccess:input_type -> emailapi.v1.GetAppPortalAccessRequest
-	2, // 1: emailapi.v1.WebhookService.GetAppPortalAccess:output_type -> emailapi.v1.GetAppPortalAccessResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	13, // 0: emailapi.v1.WebhookEvent.timestamp:type_name -> google.protobuf.Timestamp
+	4,  // 1: emailapi.v1.WebhookEvent.email_sent:type_name -> emailapi.v1.EmailSentEvent
+	5,  // 2: emailapi.v1.WebhookEvent.email_delivered:type_name -> emailapi.v1.EmailDeliveredEvent
+	6,  // 3: emailapi.v1.WebhookEvent.email_bounced:type_name -> emailapi.v1.EmailBouncedEvent
+	7,  // 4: emailapi.v1.WebhookEvent.email_complained:type_name -> emailapi.v1.EmailComplainedEvent
+	8,  // 5: emailapi.v1.WebhookEvent.email_rejected:type_name -> emailapi.v1.EmailRejectedEvent
+	9,  // 6: emailapi.v1.WebhookEvent.email_delayed:type_name -> emailapi.v1.EmailDelayedEvent
+	11, // 7: emailapi.v1.WebhookEvent.email_reply_received:type_name -> emailapi.v1.EmailReplyReceivedEvent
+	10, // 8: emailapi.v1.WebhookEvent.email_failed:type_name -> emailapi.v1.EmailFailedEvent
+	12, // 9: emailapi.v1.EmailSentEvent.metadata:type_name -> emailapi.v1.EmailSentEvent.MetadataEntry
+	1,  // 10: emailapi.v1.WebhookService.GetAppPortalAccess:input_type -> emailapi.v1.GetAppPortalAccessRequest
+	2,  // 11: emailapi.v1.WebhookService.GetAppPortalAccess:output_type -> emailapi.v1.GetAppPortalAccessResponse
+	11, // [11:12] is the sub-list for method output_type
+	10, // [10:11] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_v1_webhook_proto_init() }
@@ -249,13 +1291,23 @@ func file_v1_webhook_proto_init() {
 	if File_v1_webhook_proto != nil {
 		return
 	}
+	file_v1_webhook_proto_msgTypes[2].OneofWrappers = []any{
+		(*WebhookEvent_EmailSent)(nil),
+		(*WebhookEvent_EmailDelivered)(nil),
+		(*WebhookEvent_EmailBounced)(nil),
+		(*WebhookEvent_EmailComplained)(nil),
+		(*WebhookEvent_EmailRejected)(nil),
+		(*WebhookEvent_EmailDelayed)(nil),
+		(*WebhookEvent_EmailReplyReceived)(nil),
+		(*WebhookEvent_EmailFailed)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_webhook_proto_rawDesc), len(file_v1_webhook_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   2,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

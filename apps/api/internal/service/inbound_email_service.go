@@ -12,28 +12,29 @@ import (
 	"github.com/google/uuid"
 	"github.com/jordan-wright/email"
 
+	emailapiv1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/external/s3"
-	"github.com/emailapi/api/internal/external/svix"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
+	"github.com/emailapi/api/internal/webhook"
 )
 
 // InboundEmailService handles inbound email processing (replies) from SNS/SES.
 type InboundEmailService struct {
-	s3Factory  *s3.Factory
-	chRepo     *chrepo.EmailRepository
-	svixClient svix.Client
+	s3Factory     *s3.Factory
+	chRepo        *chrepo.EmailRepository
+	webhookSender webhook.Sender
 }
 
 // NewInboundEmailService creates a new InboundEmailService.
 func NewInboundEmailService(
 	s3Factory *s3.Factory,
 	chRepo *chrepo.EmailRepository,
-	svixClient svix.Client,
+	webhookSender webhook.Sender,
 ) *InboundEmailService {
 	return &InboundEmailService{
-		s3Factory:  s3Factory,
-		chRepo:     chRepo,
-		svixClient: svixClient,
+		s3Factory:     s3Factory,
+		chRepo:        chRepo,
+		webhookSender: webhookSender,
 	}
 }
 
@@ -234,32 +235,27 @@ func (s *InboundEmailService) parseEmail(rawEmail []byte) (*InboundEmail, error)
 	return inbound, nil
 }
 
-// deliverWebhook sends the reply notification to the user via Svix.
+// deliverWebhook sends the reply notification to the user via webhook.Sender.
 func (s *InboundEmailService) deliverWebhook(ctx context.Context, email *InboundEmail) error {
-	if err := s.svixClient.EnsureApp(ctx, email.UserID, "User "+email.UserID); err != nil {
-		return fmt.Errorf("failed to ensure svix app: %w", err)
+	if s.webhookSender == nil {
+		return nil
 	}
 
-	payload := map[string]interface{}{
-		"type": "email.reply_received",
-		"data": map[string]interface{}{
-			"id":              email.ID,
-			"message_id":      email.MessageID,
-			"in_reply_to":     email.InReplyTo,
-			"references":      email.References,
-			"from":            email.From,
-			"to":              email.To,
-			"subject":         email.Subject,
-			"body":            email.Body,
-			"html":            email.HTML,
-			"parent_email_id": email.OriginalEmailID,
-		},
+	event := &emailapiv1.EmailReplyReceivedEvent{
+		Id:            email.ID,
+		UserId:        email.UserID,
+		MessageId:     email.MessageID,
+		InReplyTo:     email.InReplyTo,
+		References:    email.References,
+		From:          email.From,
+		To:            email.To,
+		Subject:       email.Subject,
+		Body:          email.Body,
+		Html:          email.HTML,
+		ParentEmailId: email.OriginalEmailID,
 	}
 
-	if err := s.svixClient.SendMessage(ctx, email.UserID, "email.reply_received", payload); err != nil {
-		return fmt.Errorf("failed to send webhook: %w", err)
-	}
-
+	s.webhookSender.SendEmailReplyReceived(ctx, email.UserID, event)
 	return nil
 }
 
