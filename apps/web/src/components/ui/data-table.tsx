@@ -39,21 +39,52 @@ interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
     searchKey?: string
+    pageCount?: number
+    pageIndex?: number
+    pageSize?: number
+    onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
+    manualPagination?: boolean
+    isLoading?: boolean
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
     searchKey,
+    pageCount,
+    pageIndex = 0,
+    pageSize = 10,
+    onPaginationChange,
+    manualPagination = false,
+    isLoading = false,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
     const [rowSelection, setRowSelection] = React.useState({})
+    const [internalPagination, setInternalPagination] = React.useState({
+        pageIndex: 0,
+        pageSize: 10,
+    })
+
+    const pagination = manualPagination
+        ? { pageIndex, pageSize }
+        : internalPagination
+
+    const handlePaginationChange = (updater: any) => {
+        if (manualPagination && onPaginationChange) {
+            const nextState = typeof updater === 'function' ? updater(pagination) : updater
+            onPaginationChange(nextState)
+        } else {
+            setInternalPagination(updater)
+        }
+    }
 
     const table = useReactTable({
         data,
         columns,
+        pageCount: manualPagination ? pageCount : undefined,
+        manualPagination,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         getCoreRowModel: getCoreRowModel(),
@@ -62,11 +93,13 @@ export function DataTable<TData, TValue>({
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
+        onPaginationChange: handlePaginationChange,
         state: {
             sorting,
             columnFilters,
             columnVisibility,
             rowSelection,
+            pagination,
         },
     })
 
@@ -131,7 +164,13 @@ export function DataTable<TData, TValue>({
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {table.getRowModel().rows?.length ? (
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                    Loading...
+                                </TableCell>
+                            </TableRow>
+                        ) : table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}
@@ -162,8 +201,14 @@ export function DataTable<TData, TValue>({
             </div>
             <div className="flex items-center justify-end space-x-2 py-4">
                 <div className="flex-1 text-sm text-muted-foreground">
-                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                    {table.getFilteredRowModel().rows.length} row(s) selected.
+                    {manualPagination ? (
+                        <>Page {pagination.pageIndex + 1} of {table.getPageCount()}</>
+                    ) : (
+                        <>
+                            {table.getFilteredSelectedRowModel().rows.length} of{" "}
+                            {table.getFilteredRowModel().rows.length} row(s) selected.
+                        </>
+                    )}
                 </div>
                 <div className="space-x-2">
                     <Button
@@ -187,3 +232,4 @@ export function DataTable<TData, TValue>({
         </div>
     )
 }
+

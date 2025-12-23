@@ -5,6 +5,7 @@ package emailapi.v1;
 option go_package = "github.com/emailapi/api/gen/emailapi/v1";
 
 import "google/api/annotations.proto";
+import "google/api/httpbody.proto";
 
 // InternalService handles internal webhook endpoints.
 // These endpoints are authenticated via X-Webhook-Secret header.
@@ -19,7 +20,8 @@ service InternalService {
 
   // HandleClerkWebhook processes Clerk user lifecycle events (signup, etc.).
   // This endpoint is authenticated via Svix signature verification.
-  rpc HandleClerkWebhook(ClerkWebhookRequest) returns (ClerkWebhookResponse) {
+  // We use HttpBody to get the raw payload for verification.
+  rpc HandleClerkWebhook(google.api.HttpBody) returns (ClerkWebhookResponse) {
     option (google.api.http) = {
       post: "/v1/internal/webhooks/clerk"
       body: "*"
@@ -47,16 +49,8 @@ message GuardDutyScanResultResponse {
   string message = 2;
 }
 
-// ClerkWebhookRequest contains the raw Clerk webhook payload.
-// Clerk webhooks use Svix for signing, so we need the raw payload for verification.
-message ClerkWebhookRequest {
-  // Raw JSON payload from Clerk (we parse this server-side after verifying Svix signature)
-  string payload = 1;
-  // Svix webhook headers for signature verification
-  string svix_id = 2;
-  string svix_timestamp = 3;
-  string svix_signature = 4;
-}
+// ClerkWebhookRequest is removed as we use HttpBody
+
 
 // ClerkWebhookResponse is the response after processing Clerk webhook.
 message ClerkWebhookResponse {

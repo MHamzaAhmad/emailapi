@@ -1,32 +1,19 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useUser } from '@clerk/clerk-react'
+import { createFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
     PlusSignIcon,
     FilterHorizontalIcon,
-    Search01Icon,
-    MoreHorizontalIcon,
-    CheckmarkCircle01Icon,
-    AlertCircleIcon,
-    Clock01Icon,
-    ArrowRight01Icon
 } from '@hugeicons/core-free-icons'
 import { Shell } from '@/components/shell'
 import { AuthGuard } from '@/components/auth-guard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from "@tanstack/react-table"
-import { Switch } from "@/components/ui/switch"
+import { useActivityLogs } from '@/hooks'
+import { ActivityLog } from '@/types'
+import { formatDate } from '@/lib/utils'
 
 export const Route = createFileRoute('/dashboard')(
     {
@@ -42,93 +29,73 @@ function DashboardPage() {
     )
 }
 
-// Define Event Type
-type Event = {
-    id: string
-    type: string
-    target: string
-    status: 'success' | 'failed' | 'pending'
-    latency: string
-    created_at: string
-}
-
-const data: Event[] = [
-    { id: 'evt_8f2a1b', type: 'Email Dispatch', target: 'user@example.com', status: 'success', latency: '124ms', created_at: '2 mins ago' },
-    { id: 'evt_9k3b2c', type: 'Email Dispatch', target: 'hello@company.com', status: 'success', latency: '156ms', created_at: '5 mins ago' },
-    { id: 'evt_2p4l5d', type: 'Webhook', target: 'https://api.acme.inc/wh', status: 'failed', latency: '42ms', created_at: '12 mins ago' },
-    { id: 'evt_7m9x0e', type: 'Health Check', target: 'us-east-cluster', status: 'success', latency: '12ms', created_at: '15 mins ago' },
-    { id: 'evt_1z8q9f', type: 'Email Dispatch', target: 'billing@client.io', status: 'pending', latency: '-', created_at: 'Just now' },
-    { id: 'evt_3w5r7g', type: 'API Key Created', target: 'System', status: 'success', latency: '24ms', created_at: '1 hour ago' },
-]
-
-const columns: ColumnDef<Event>[] = [
+const columns: ColumnDef<ActivityLog>[] = [
     {
-        accessorKey: "id",
-        header: "Event ID",
-        cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">{row.getValue("id")}</span>,
+        accessorKey: "timestamp",
+        header: "Time",
+        cell: ({ row }) => <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(row.getValue("timestamp"))}</span>,
     },
     {
-        accessorKey: "type",
+        accessorKey: "entity_type",
         header: "Type",
-        cell: ({ row }) => <span className="font-medium text-xs">{row.getValue("type")}</span>,
+        cell: ({ row }) => <span className="capitalize font-medium text-xs">{(row.getValue("entity_type") as string).replace('_', ' ')}</span>,
     },
     {
-        accessorKey: "target",
-        header: "Target / Recipient",
-        cell: ({ row }) => <span className="text-xs text-muted-foreground font-mono">{row.getValue("target")}</span>,
+        accessorKey: "entity_id",
+        header: "Entity ID",
+        cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">{row.getValue("entity_id")}</span>,
+    },
+    {
+        accessorKey: "action",
+        header: "Action",
+        cell: ({ row }) => <span className="capitalize text-xs font-medium">{row.getValue("action")}</span>,
     },
     {
         accessorKey: "status",
         header: "Status",
         cell: ({ row }) => {
             const status = row.getValue("status") as string
+            const getVariant = (s: string) => {
+                switch (s) {
+                    case 'success':
+                    case 'delivered':
+                        return 'success'
+                    case 'failed':
+                    case 'bounced':
+                        return 'destructive'
+                    case 'pending':
+                        return 'warning'
+                    default:
+                        return 'outline'
+                }
+            }
             return (
-                <div className="flex items-center gap-2">
-                    <Switch checked={status === 'success'} className="scale-75 data-[state=checked]:bg-emerald-500" />
-                    <span className={`text-[10px] font-medium uppercase tracking-wide ${status === 'success' ? 'text-emerald-600' :
-                        status === 'failed' ? 'text-red-500' : 'text-amber-500'
-                        }`}>
-                        {status}
-                    </span>
-                </div>
+                <Badge variant={getVariant(status)} className="text-[10px] px-2 py-0 uppercase tracking-wider">
+                    {status}
+                </Badge>
             )
         },
     },
     {
-        accessorKey: "latency",
-        header: "Latency",
-        cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">{row.getValue("latency")}</span>,
-    },
-    {
-        accessorKey: "created_at",
-        header: "Time",
-        cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.getValue("created_at")}</span>,
-    },
-    {
-        id: "actions",
-        cell: ({ row }) => {
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <HugeiconsIcon icon={MoreHorizontalIcon} size={16} />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Replay Event</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )
-        },
+        accessorKey: "details",
+        header: "Details",
+        cell: ({ row }) => <span className="text-xs text-muted-foreground truncate max-w-[200px] block" title={row.getValue("details")}>{row.getValue("details")}</span>,
     },
 ]
 
 function DashboardContent() {
-    const { user } = useUser()
+    const [pagination, setPagination] = useState({
+        pageIndex: 0,
+        pageSize: 10,
+    })
+
+    const { data, isLoading } = useActivityLogs({
+        page_size: pagination.pageSize,
+        offset: pagination.pageIndex * pagination.pageSize,
+    })
+
+    const totalCount = data?.total_count || 0
+    const pageCount = Math.ceil(totalCount / pagination.pageSize)
 
     return (
         <Shell>
@@ -151,17 +118,25 @@ function DashboardContent() {
                         </Button>
                     </div>
                 </div>
-
-
             </div>
 
             {/* Main Content - Data Table */}
             <div className="space-y-4">
-                <DataTable columns={columns} data={data} searchKey="target" />
+                <DataTable
+                    columns={columns}
+                    data={data?.logs || []}
+                    isLoading={isLoading}
+                    manualPagination={true}
+                    pageCount={pageCount}
+                    pageIndex={pagination.pageIndex}
+                    pageSize={pagination.pageSize}
+                    onPaginationChange={setPagination}
+                    searchKey="entity_id"
+                />
             </div>
 
             <div className="mt-4 text-xs text-muted-foreground">
-                Showing {data.length} of {data.length} events
+                Showing {data?.logs.length || 0} of {totalCount} events
             </div>
         </Shell>
     )

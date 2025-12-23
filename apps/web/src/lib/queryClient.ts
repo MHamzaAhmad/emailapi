@@ -80,6 +80,12 @@ export const queryKeys = {
         all: ['webhooks'] as const,
         portal: () => [...queryKeys.webhooks.all, 'portal'] as const,
     },
+
+    // Activity keys
+    activity: {
+        all: ['activity'] as const,
+        list: (params?: any) => [...queryKeys.activity.all, 'list', params] as const,
+    },
 } as const;
 
 export default getQueryClient;

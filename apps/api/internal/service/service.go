@@ -25,6 +25,7 @@ type Service struct {
 	Email           *EmailService
 	Internal        *InternalService
 	Webhook         *WebhookService
+	Activity        *ActivityService
 	InboundEmail    *InboundEmailService
 	SNSNotification *SNSNotificationService
 }
@@ -81,6 +82,9 @@ func NewWithDeps(deps ServiceDeps) *Service {
 		deps.WebhookSender,
 		deps.SuppressionRepo,
 	)
+
+	// Initialize Activity service
+	svc.Activity = NewActivityService(deps.CHActivityRepo)
 
 	// Initialize Svix-dependent services if client is available
 	if deps.SvixClient != nil {

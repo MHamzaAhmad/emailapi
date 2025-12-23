@@ -24,6 +24,27 @@ type EmailRepositoryInterface interface {
 	Ping(ctx context.Context) error
 }
 
+// ActivityFilters defines optional filters for querying activity logs.
+type ActivityFilters struct {
+	EntityType string // Optional: filter by entity type (email, domain, api_key)
+	Action     string // Optional: filter by action
+	StartTime  *int64 // Optional: Unix timestamp for start range
+	EndTime    *int64 // Optional: Unix timestamp for end range
+}
+
+// ActivityLog represents a single activity log entry from ClickHouse.
+type ActivityLog struct {
+	ID         string                 `json:"id"`
+	UserID     string                 `json:"user_id"`
+	EntityType string                 `json:"entity_type"`
+	EntityID   string                 `json:"entity_id"`
+	Action     string                 `json:"action"`
+	Status     string                 `json:"status"`
+	Details    string                 `json:"details"`
+	Metadata   map[string]interface{} `json:"metadata"`
+	Timestamp  int64                  `json:"timestamp"` // Unix milliseconds
+}
+
 // ActivityRepositoryInterface defines the interface for ClickHouse activity operations.
 type ActivityRepositoryInterface interface {
 	// Log inserts a generic activity log entry into ClickHouse.
@@ -37,6 +58,10 @@ type ActivityRepositoryInterface interface {
 
 	// LogAPIKey is a convenience method for logging API key-related activities.
 	LogAPIKey(ctx context.Context, userID, apiKeyID, action, status, details string) error
+
+	// List retrieves activity logs with pagination and optional filters.
+	// Returns logs, total count, and error.
+	List(ctx context.Context, userID string, filters ActivityFilters, limit, offset int) ([]ActivityLog, int, error)
 
 	// Ping ensures the database connection is valid.
 	Ping(ctx context.Context) error

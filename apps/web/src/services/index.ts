@@ -4,3 +4,4 @@ export { apiKeyService } from './apiKeyService';
 export { domainService } from './domainService';
 export { emailService } from './emailService';
 export { webhookService } from './webhookService';
+export { activityService } from './activityService';

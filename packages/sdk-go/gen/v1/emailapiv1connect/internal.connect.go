@@ -9,6 +9,7 @@ import (
 	context "context"
 	errors "errors"
 	v1 "github.com/emailapi/sdk-go/gen/v1"
+	httpbody "google.golang.org/genproto/googleapis/api/httpbody"
 	http "net/http"
 	strings "strings"
 )
@@ -47,7 +48,8 @@ type InternalServiceClient interface {
 	HandleGuardDutyScanResult(context.Context, *connect.Request[v1.GuardDutyScanResultRequest]) (*connect.Response[v1.GuardDutyScanResultResponse], error)
 	// HandleClerkWebhook processes Clerk user lifecycle events (signup, etc.).
 	// This endpoint is authenticated via Svix signature verification.
-	HandleClerkWebhook(context.Context, *connect.Request[v1.ClerkWebhookRequest]) (*connect.Response[v1.ClerkWebhookResponse], error)
+	// We use HttpBody to get the raw payload for verification.
+	HandleClerkWebhook(context.Context, *connect.Request[httpbody.HttpBody]) (*connect.Response[v1.ClerkWebhookResponse], error)
 }
 
 // NewInternalServiceClient constructs a client for the emailapi.v1.InternalService service. By
@@ -67,7 +69,7 @@ func NewInternalServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(internalServiceMethods.ByName("HandleGuardDutyScanResult")),
 			connect.WithClientOptions(opts...),
 		),
-		handleClerkWebhook: connect.NewClient[v1.ClerkWebhookRequest, v1.ClerkWebhookResponse](
+		handleClerkWebhook: connect.NewClient[httpbody.HttpBody, v1.ClerkWebhookResponse](
 			httpClient,
 			baseURL+InternalServiceHandleClerkWebhookProcedure,
 			connect.WithSchema(internalServiceMethods.ByName("HandleClerkWebhook")),
@@ -79,7 +81,7 @@ func NewInternalServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 // internalServiceClient implements InternalServiceClient.
 type internalServiceClient struct {
 	handleGuardDutyScanResult *connect.Client[v1.GuardDutyScanResultRequest, v1.GuardDutyScanResultResponse]
-	handleClerkWebhook        *connect.Client[v1.ClerkWebhookRequest, v1.ClerkWebhookResponse]
+	handleClerkWebhook        *connect.Client[httpbody.HttpBody, v1.ClerkWebhookResponse]
 }
 
 // HandleGuardDutyScanResult calls emailapi.v1.InternalService.HandleGuardDutyScanResult.
@@ -88,7 +90,7 @@ func (c *internalServiceClient) HandleGuardDutyScanResult(ctx context.Context, r
 }
 
 // HandleClerkWebhook calls emailapi.v1.InternalService.HandleClerkWebhook.
-func (c *internalServiceClient) HandleClerkWebhook(ctx context.Context, req *connect.Request[v1.ClerkWebhookRequest]) (*connect.Response[v1.ClerkWebhookResponse], error) {
+func (c *internalServiceClient) HandleClerkWebhook(ctx context.Context, req *connect.Request[httpbody.HttpBody]) (*connect.Response[v1.ClerkWebhookResponse], error) {
 	return c.handleClerkWebhook.CallUnary(ctx, req)
 }
 
@@ -98,7 +100,8 @@ type InternalServiceHandler interface {
 	HandleGuardDutyScanResult(context.Context, *connect.Request[v1.GuardDutyScanResultRequest]) (*connect.Response[v1.GuardDutyScanResultResponse], error)
 	// HandleClerkWebhook processes Clerk user lifecycle events (signup, etc.).
 	// This endpoint is authenticated via Svix signature verification.
-	HandleClerkWebhook(context.Context, *connect.Request[v1.ClerkWebhookRequest]) (*connect.Response[v1.ClerkWebhookResponse], error)
+	// We use HttpBody to get the raw payload for verification.
+	HandleClerkWebhook(context.Context, *connect.Request[httpbody.HttpBody]) (*connect.Response[v1.ClerkWebhookResponse], error)
 }
 
 // NewInternalServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -139,6 +142,6 @@ func (UnimplementedInternalServiceHandler) HandleGuardDutyScanResult(context.Con
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.InternalService.HandleGuardDutyScanResult is not implemented"))
 }
 
-func (UnimplementedInternalServiceHandler) HandleClerkWebhook(context.Context, *connect.Request[v1.ClerkWebhookRequest]) (*connect.Response[v1.ClerkWebhookResponse], error) {
+func (UnimplementedInternalServiceHandler) HandleClerkWebhook(context.Context, *connect.Request[httpbody.HttpBody]) (*connect.Response[v1.ClerkWebhookResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.InternalService.HandleClerkWebhook is not implemented"))
 }

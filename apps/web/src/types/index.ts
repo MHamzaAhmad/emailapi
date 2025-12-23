@@ -5,3 +5,4 @@ export * from './apiKey';
 export * from './domain';
 export * from './email';
 export * from './webhook';
+export * from './activity';

@@ -2,6 +2,10 @@ package grpc
 
 import (
 	"context"
+	"net/http"
+
+	"google.golang.org/genproto/googleapis/api/httpbody"
+	"google.golang.org/grpc/metadata"
 
 	emailapiv1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/service"
@@ -44,15 +48,21 @@ func (s *InternalServer) HandleGuardDutyScanResult(ctx context.Context, req *ema
 }
 
 // HandleClerkWebhook processes Clerk user lifecycle events.
-func (s *InternalServer) HandleClerkWebhook(ctx context.Context, req *emailapiv1.ClerkWebhookRequest) (*emailapiv1.ClerkWebhookResponse, error) {
-	result := &service.ClerkWebhookRequest{
-		Payload:       req.Payload,
-		SvixID:        req.SvixId,
-		SvixTimestamp: req.SvixTimestamp,
-		SvixSignature: req.SvixSignature,
+func (s *InternalServer) HandleClerkWebhook(ctx context.Context, req *httpbody.HttpBody) (*emailapiv1.ClerkWebhookResponse, error) {
+	// Extract headers from metadata
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = metadata.New(nil)
 	}
 
-	success, message, err := s.svc.HandleClerkWebhook(ctx, result)
+	headers := http.Header{}
+	for k, v := range md {
+		for _, val := range v {
+			headers.Add(k, val)
+		}
+	}
+
+	success, message, err := s.svc.HandleClerkWebhook(ctx, req.Data, headers)
 	if err != nil {
 		return &emailapiv1.ClerkWebhookResponse{
 			Success: false,

@@ -8,6 +8,7 @@ package emailapiv1
 
 import (
 	context "context"
+	httpbody "google.golang.org/genproto/googleapis/api/httpbody"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -34,7 +35,8 @@ type InternalServiceClient interface {
 	HandleGuardDutyScanResult(ctx context.Context, in *GuardDutyScanResultRequest, opts ...grpc.CallOption) (*GuardDutyScanResultResponse, error)
 	// HandleClerkWebhook processes Clerk user lifecycle events (signup, etc.).
 	// This endpoint is authenticated via Svix signature verification.
-	HandleClerkWebhook(ctx context.Context, in *ClerkWebhookRequest, opts ...grpc.CallOption) (*ClerkWebhookResponse, error)
+	// We use HttpBody to get the raw payload for verification.
+	HandleClerkWebhook(ctx context.Context, in *httpbody.HttpBody, opts ...grpc.CallOption) (*ClerkWebhookResponse, error)
 }
 
 type internalServiceClient struct {
@@ -55,7 +57,7 @@ func (c *internalServiceClient) HandleGuardDutyScanResult(ctx context.Context, i
 	return out, nil
 }
 
-func (c *internalServiceClient) HandleClerkWebhook(ctx context.Context, in *ClerkWebhookRequest, opts ...grpc.CallOption) (*ClerkWebhookResponse, error) {
+func (c *internalServiceClient) HandleClerkWebhook(ctx context.Context, in *httpbody.HttpBody, opts ...grpc.CallOption) (*ClerkWebhookResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ClerkWebhookResponse)
 	err := c.cc.Invoke(ctx, InternalService_HandleClerkWebhook_FullMethodName, in, out, cOpts...)
@@ -76,7 +78,8 @@ type InternalServiceServer interface {
 	HandleGuardDutyScanResult(context.Context, *GuardDutyScanResultRequest) (*GuardDutyScanResultResponse, error)
 	// HandleClerkWebhook processes Clerk user lifecycle events (signup, etc.).
 	// This endpoint is authenticated via Svix signature verification.
-	HandleClerkWebhook(context.Context, *ClerkWebhookRequest) (*ClerkWebhookResponse, error)
+	// We use HttpBody to get the raw payload for verification.
+	HandleClerkWebhook(context.Context, *httpbody.HttpBody) (*ClerkWebhookResponse, error)
 	mustEmbedUnimplementedInternalServiceServer()
 }
 
@@ -90,7 +93,7 @@ type UnimplementedInternalServiceServer struct{}
 func (UnimplementedInternalServiceServer) HandleGuardDutyScanResult(context.Context, *GuardDutyScanResultRequest) (*GuardDutyScanResultResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method HandleGuardDutyScanResult not implemented")
 }
-func (UnimplementedInternalServiceServer) HandleClerkWebhook(context.Context, *ClerkWebhookRequest) (*ClerkWebhookResponse, error) {
+func (UnimplementedInternalServiceServer) HandleClerkWebhook(context.Context, *httpbody.HttpBody) (*ClerkWebhookResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method HandleClerkWebhook not implemented")
 }
 func (UnimplementedInternalServiceServer) mustEmbedUnimplementedInternalServiceServer() {}
@@ -133,7 +136,7 @@ func _InternalService_HandleGuardDutyScanResult_Handler(srv interface{}, ctx con
 }
 
 func _InternalService_HandleClerkWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClerkWebhookRequest)
+	in := new(httpbody.HttpBody)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -145,7 +148,7 @@ func _InternalService_HandleClerkWebhook_Handler(srv interface{}, ctx context.Co
 		FullMethod: InternalService_HandleClerkWebhook_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InternalServiceServer).HandleClerkWebhook(ctx, req.(*ClerkWebhookRequest))
+		return srv.(InternalServiceServer).HandleClerkWebhook(ctx, req.(*httpbody.HttpBody))
 	}
 	return interceptor(ctx, in, info, handler)
 }

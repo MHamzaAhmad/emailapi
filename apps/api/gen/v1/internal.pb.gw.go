@@ -16,6 +16,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
+	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -64,7 +65,7 @@ func local_request_InternalService_HandleGuardDutyScanResult_0(ctx context.Conte
 
 func request_InternalService_HandleClerkWebhook_0(ctx context.Context, marshaler runtime.Marshaler, client InternalServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq ClerkWebhookRequest
+		protoReq httpbody.HttpBody
 		metadata runtime.ServerMetadata
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
@@ -79,7 +80,7 @@ func request_InternalService_HandleClerkWebhook_0(ctx context.Context, marshaler
 
 func local_request_InternalService_HandleClerkWebhook_0(ctx context.Context, marshaler runtime.Marshaler, server InternalServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq ClerkWebhookRequest
+		protoReq httpbody.HttpBody
 		metadata runtime.ServerMetadata
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {

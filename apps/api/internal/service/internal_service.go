@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"net/http"
+
 	"github.com/rs/zerolog/log"
 	svix "github.com/svix/svix-webhooks/go"
 
@@ -49,14 +51,6 @@ func (s *InternalService) HandleGuardDutyScanResult(ctx context.Context, result 
 	return nil
 }
 
-// ClerkWebhookRequest represents the incoming Clerk webhook request.
-type ClerkWebhookRequest struct {
-	Payload       string `json:"payload"`        // Raw JSON payload
-	SvixID        string `json:"svix_id"`        // Svix-Id header
-	SvixTimestamp string `json:"svix_timestamp"` // Svix-Timestamp header
-	SvixSignature string `json:"svix_signature"` // Svix-Signature header
-}
-
 // ClerkWebhookPayload represents the Clerk webhook event structure.
 type ClerkWebhookPayload struct {
 	Type   string          `json:"type"`
@@ -77,7 +71,7 @@ type ClerkUserCreatedData struct {
 }
 
 // HandleClerkWebhook processes Clerk user lifecycle events.
-func (s *InternalService) HandleClerkWebhook(ctx context.Context, req *ClerkWebhookRequest) (bool, string, error) {
+func (s *InternalService) HandleClerkWebhook(ctx context.Context, payload []byte, headers http.Header) (bool, string, error) {
 	// Verify Svix webhook signature
 	wh, err := svix.NewWebhook(s.clerkWebhookSecret)
 	if err != nil {
@@ -85,13 +79,7 @@ func (s *InternalService) HandleClerkWebhook(ctx context.Context, req *ClerkWebh
 		return false, "", fmt.Errorf("webhook verification setup failed: %w", err)
 	}
 
-	headers := map[string][]string{
-		"svix-id":        {req.SvixID},
-		"svix-timestamp": {req.SvixTimestamp},
-		"svix-signature": {req.SvixSignature},
-	}
-
-	err = wh.Verify([]byte(req.Payload), headers)
+	err = wh.Verify(payload, headers)
 	if err != nil {
 		log.Warn().Err(err).Msg("Clerk webhook signature verification failed")
 		return false, "", fmt.Errorf("webhook signature verification failed: %w", err)
@@ -99,7 +87,7 @@ func (s *InternalService) HandleClerkWebhook(ctx context.Context, req *ClerkWebh
 
 	// Parse the webhook event (payload is verified, use original)
 	var event ClerkWebhookPayload
-	if err := json.Unmarshal([]byte(req.Payload), &event); err != nil {
+	if err := json.Unmarshal(payload, &event); err != nil {
 		log.Error().Err(err).Msg("Failed to parse Clerk webhook payload")
 		return false, "", fmt.Errorf("failed to parse webhook payload: %w", err)
 	}

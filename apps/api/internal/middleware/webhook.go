@@ -36,6 +36,11 @@ func (i *WebhookInterceptor) Unary() grpc.UnaryServerInterceptor {
 			return handler(ctx, req)
 		}
 
+		// Skip verification for Clerk webhook (uses Svix verification instead)
+		if strings.HasSuffix(info.FullMethod, "HandleClerkWebhook") {
+			return handler(ctx, req)
+		}
+
 		// Extract metadata from context
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
