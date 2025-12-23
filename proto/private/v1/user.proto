@@ -37,7 +37,6 @@ message CreateUserRequest {
 message CreateUserResponse {
   User user = 1;
   string message = 2;
-  string api_key = 3;
 }
 
 message GetCurrentUserRequest {}

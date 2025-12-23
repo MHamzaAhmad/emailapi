@@ -12,7 +12,7 @@ gen: proto gen-sqlc
 
 proto:
 	cd proto && buf dep update && buf generate
-	cd proto && buf generate --template buf.gen.sdk.yaml
+	cd proto && buf generate --template buf.gen.yaml
 
 gen-sqlc:
 	cd tools && sqlc generate

@@ -22,6 +22,17 @@ func (q *Queries) CountActiveApiKeysByUserID(ctx context.Context, userID string)
 	return count, err
 }
 
+const countApiKeysByUserID = `-- name: CountApiKeysByUserID :one
+SELECT COUNT(*) FROM api_keys WHERE user_id = $1
+`
+
+func (q *Queries) CountApiKeysByUserID(ctx context.Context, userID string) (int64, error) {
+	row := q.db.QueryRow(ctx, countApiKeysByUserID, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createApiKey = `-- name: CreateApiKey :one
 INSERT INTO api_keys (id, user_id, name, key_hash, key_prefix, scopes, environment, is_active, expires_at, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -187,6 +198,66 @@ func (q *Queries) ListApiKeysByUserID(ctx context.Context, userID string) ([]Lis
 	var items []ListApiKeysByUserIDRow
 	for rows.Next() {
 		var i ListApiKeysByUserIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.KeyPrefix,
+			&i.Scopes,
+			&i.Environment,
+			&i.IsActive,
+			&i.LastUsedAt,
+			&i.ExpiresAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listApiKeysByUserIDPaginated = `-- name: ListApiKeysByUserIDPaginated :many
+SELECT id, user_id, name, key_prefix, scopes, environment, is_active, last_used_at, expires_at, created_at, updated_at
+FROM api_keys
+WHERE user_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type ListApiKeysByUserIDPaginatedParams struct {
+	UserID string `json:"user_id"`
+	Limit  int32  `json:"limit"`
+	Offset int32  `json:"offset"`
+}
+
+type ListApiKeysByUserIDPaginatedRow struct {
+	ID          string             `json:"id"`
+	UserID      string             `json:"user_id"`
+	Name        string             `json:"name"`
+	KeyPrefix   string             `json:"key_prefix"`
+	Scopes      []string           `json:"scopes"`
+	Environment string             `json:"environment"`
+	IsActive    bool               `json:"is_active"`
+	LastUsedAt  pgtype.Timestamptz `json:"last_used_at"`
+	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) ListApiKeysByUserIDPaginated(ctx context.Context, arg ListApiKeysByUserIDPaginatedParams) ([]ListApiKeysByUserIDPaginatedRow, error) {
+	rows, err := q.db.Query(ctx, listApiKeysByUserIDPaginated, arg.UserID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListApiKeysByUserIDPaginatedRow
+	for rows.Next() {
+		var i ListApiKeysByUserIDPaginatedRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,

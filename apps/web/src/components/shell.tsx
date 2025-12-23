@@ -98,28 +98,6 @@ export function Shell({ children }: ShellProps) {
             {/* Breadcrumbs & Content */}
             <main className="flex-1">
                 <div className="mx-auto max-w-7xl px-4 md:px-6 py-6 font-sans">
-                    {currentPath !== '/dashboard' && !currentPath.startsWith('/domains') && (
-                        <div className="mb-6 flex items-center text-sm text-muted-foreground/80">
-                            <Link to="/dashboard" className="hover:text-foreground transition-colors hover:underline underline-offset-4">Dashboard</Link>
-                            {breadcrumbs.length > 0 && breadcrumbs[0].href !== '/dashboard' && (
-                                <>
-                                    <span className="mx-2 text-muted-foreground/30">/</span>
-                                    {breadcrumbs.filter(b => b.href !== '/dashboard').map((crumb, i, arr) => (
-                                        <div key={crumb.href} className="flex items-center">
-                                            {crumb.isLast ? (
-                                                <span className="font-medium text-foreground">{crumb.title}</span>
-                                            ) : (
-                                                <Link to={crumb.href} className="hover:text-foreground transition-colors hover:underline underline-offset-4">
-                                                    {crumb.title}
-                                                </Link>
-                                            )}
-                                            {i < arr.length - 1 && <span className="mx-2 text-muted-foreground/30">/</span>}
-                                        </div>
-                                    ))}
-                                </>
-                            )}
-                        </div>
-                    )}
 
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out fill-mode-backwards">
                         {children}

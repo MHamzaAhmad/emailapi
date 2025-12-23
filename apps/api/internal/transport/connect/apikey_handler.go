@@ -85,7 +85,11 @@ func (h *ApiKeyHandler) ListApiKeys(
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
 	}
 
-	apiKeys, err := h.svc.List(ctx, userID)
+	// Extract pagination params from request
+	page := int(req.Msg.Page)
+	pageSize := int(req.Msg.PageSize)
+
+	apiKeys, total, err := h.svc.List(ctx, userID, page, pageSize)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -96,7 +100,8 @@ func (h *ApiKeyHandler) ListApiKeys(
 	}
 
 	return connect.NewResponse(&v1.ListApiKeysResponse{
-		Data: protoKeys,
+		Data:  protoKeys,
+		Total: int32(total),
 	}), nil
 }
 

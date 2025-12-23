@@ -42,3 +42,13 @@ DELETE FROM api_keys WHERE id = $1;
 
 -- name: CountActiveApiKeysByUserID :one
 SELECT COUNT(*) FROM api_keys WHERE user_id = $1 AND is_active = true;
+
+-- name: ListApiKeysByUserIDPaginated :many
+SELECT id, user_id, name, key_prefix, scopes, environment, is_active, last_used_at, expires_at, created_at, updated_at
+FROM api_keys
+WHERE user_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: CountApiKeysByUserID :one
+SELECT COUNT(*) FROM api_keys WHERE user_id = $1;

@@ -36,7 +36,7 @@ func (h *UserHandler) CreateUser(
 		Role:  toRole(req.Msg.Role),
 	}
 
-	user, apiKey, err := h.svc.Create(ctx, domainReq)
+	user, err := h.svc.Create(ctx, domainReq)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
@@ -44,7 +44,6 @@ func (h *UserHandler) CreateUser(
 	return connect.NewResponse(&v1.CreateUserResponse{
 		User:    toProtoUser(user),
 		Message: "User created successfully.",
-		ApiKey:  apiKey,
 	}), nil
 }
 

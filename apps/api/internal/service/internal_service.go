@@ -150,7 +150,7 @@ func (s *InternalService) handleUserCreated(ctx context.Context, data json.RawMe
 		ExternalID: &externalID,
 	}
 
-	user, apiKey, err := s.userService.Create(ctx, createReq)
+	user, err := s.userService.Create(ctx, createReq)
 	if err != nil {
 		log.Error().Err(err).Str("clerk_user_id", userData.ID).Str("email", primaryEmail).Msg("Failed to create user from Clerk webhook")
 		return false, "", fmt.Errorf("failed to create user: %w", err)
@@ -160,7 +160,6 @@ func (s *InternalService) handleUserCreated(ctx context.Context, data json.RawMe
 		Str("user_id", user.ID).
 		Str("clerk_user_id", userData.ID).
 		Str("email", primaryEmail).
-		Str("api_key_prefix", apiKey[:10]+"...").
 		Msg("Created new user from Clerk webhook")
 
 	return true, fmt.Sprintf("user created: %s", user.ID), nil

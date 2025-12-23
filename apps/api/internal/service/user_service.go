@@ -24,18 +24,18 @@ func NewUserService(store Store, apiKey *APIKeyService) *UserService {
 }
 
 // Create creates a new user.
-func (s *UserService) Create(ctx context.Context, req *domain.CreateUserRequest) (*domain.User, string, error) {
+func (s *UserService) Create(ctx context.Context, req *domain.CreateUserRequest) (*domain.User, error) {
 	// Check if user already exists by email
 	existing, _ := s.store.Users().GetByEmail(ctx, req.Email)
 	if existing != nil {
-		return nil, "", fmt.Errorf("user with email already exists")
+		return nil, fmt.Errorf("user with email already exists")
 	}
 
 	// Check if user exists by external_id (Clerk ID)
 	if req.ExternalID != nil && *req.ExternalID != "" {
 		existingExt, _ := s.store.Users().GetByExternalID(ctx, *req.ExternalID)
 		if existingExt != nil {
-			return nil, "", fmt.Errorf("user with external_id already exists")
+			return nil, fmt.Errorf("user with external_id already exists")
 		}
 	}
 
@@ -55,25 +55,10 @@ func (s *UserService) Create(ctx context.Context, req *domain.CreateUserRequest)
 	}
 
 	if err := s.store.Users().Create(ctx, user); err != nil {
-		return nil, "", fmt.Errorf("failed to create user: %w", err)
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Automatically create an API key for the new user
-	createKeyReq := &domain.CreateAPIKeyRequest{
-		Name:        "Default Key",
-		Scopes:      []domain.Scope{domain.ScopeEmailSend, domain.ScopeEmailRead, domain.ScopeDomainRead, domain.ScopeDomainWrite, domain.ScopeApiKeyRead, domain.ScopeApiKeyWrite, domain.ScopeUserRead, domain.ScopeUserWrite},
-		Environment: domain.EnvLive,
-	}
-
-	_, rawKey, err := s.apiKey.Create(ctx, user.ID, createKeyReq)
-	if err != nil {
-		// Log error but don't fail user creation?
-		// For now, let's fail it or just return empty key if it fails, but better to fail so user knows something went wrong.
-		// Since we just created the user, ideally we should rollback, but for this simple implementation we'll just error out.
-		return nil, "", fmt.Errorf("failed to create initial api key: %w", err)
-	}
-
-	return user, rawKey, nil
+	return user, nil
 }
 
 // GetByID retrieves a user by ID.

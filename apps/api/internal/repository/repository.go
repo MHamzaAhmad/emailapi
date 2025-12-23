@@ -46,8 +46,11 @@ type APIKeyRepository interface {
 	// GetByPrefix retrieves an API key by its prefix.
 	GetByPrefix(ctx context.Context, keyPrefix string) (*domain.APIKey, error)
 
-	// ListByUserID retrieves all API keys for a user.
-	ListByUserID(ctx context.Context, userID string) ([]*domain.APIKey, error)
+	// ListByUserID retrieves all API keys for a user with pagination.
+	ListByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.APIKey, error)
+
+	// CountByUserID returns the total number of API keys for a user.
+	CountByUserID(ctx context.Context, userID string) (int, error)
 
 	// Update updates an existing API key.
 	Update(ctx context.Context, apiKey *domain.APIKey) error

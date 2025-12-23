@@ -1,46 +1,53 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiKeyService } from '@/services';
+import { useMemo } from 'react';
+import { apiKeyClient } from '@/lib/connect';
 import { queryKeys } from '@/lib/queryClient';
 import type {
     ApiKey,
     CreateApiKeyRequest,
-    UpdateApiKeyRequest,
-    ListApiKeysResponse,
-} from '@/types';
+    UpdateApiKeyRequest
+} from '@/generated/v1/apikey_pb';
+import { ListApiKeysResponse } from '@/generated/v1/apikey_pb';
 
 /**
  * Hook to list all API keys
  */
-export const useApiKeys = () => {
+export const useAPIKeys = (page = 1, pageSize = 10) => {
     return useQuery({
-        queryKey: queryKeys.apiKeys.list(),
-        queryFn: apiKeyService.list,
-        select: (data: ListApiKeysResponse) => data.data,
+        queryKey: [...queryKeys.apiKeys.list(), page, pageSize],
+        queryFn: async () => {
+            return apiKeyClient().listApiKeys({
+                page,
+                pageSize,
+            });
+        },
     });
 };
 
 /**
  * Hook to get a single API key by ID
  */
-export const useApiKey = (id: string) => {
+export const useAPIKey = (id: string) => {
     return useQuery({
         queryKey: queryKeys.apiKeys.detail(id),
-        queryFn: () => apiKeyService.get(id),
+        queryFn: async () => {
+            return apiKeyClient().getApiKey({ id });
+        },
         enabled: !!id,
     });
 };
 
 /**
  * Hook to create a new API key
- * Returns the raw key which should be shown to user immediately
  */
-export const useCreateApiKey = () => {
+export const useCreateAPIKey = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: CreateApiKeyRequest) => apiKeyService.create(data),
+        mutationFn: async (data: Omit<CreateApiKeyRequest, '$typeName'>) => {
+            return apiKeyClient().createApiKey(data);
+        },
         onSuccess: () => {
-            // Invalidate the list to show the new key
             queryClient.invalidateQueries({ queryKey: queryKeys.apiKeys.list() });
         },
     });
@@ -49,54 +56,49 @@ export const useCreateApiKey = () => {
 /**
  * Hook to update an API key
  */
-export const useUpdateApiKey = () => {
+export const useUpdateAPIKey = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: UpdateApiKeyRequest }) =>
-            apiKeyService.update(id, data),
-        onSuccess: (updatedKey, variables) => {
-            // Update the specific key in cache
-            queryClient.setQueryData<ApiKey>(
-                queryKeys.apiKeys.detail(variables.id),
-                updatedKey
-            );
-            // Invalidate the list
+        mutationFn: async (data: Omit<UpdateApiKeyRequest, '$typeName'>) => {
+            return apiKeyClient().updateApiKey(data);
+        },
+        onSuccess: (response) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.apiKeys.list() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.apiKeys.detail(response.id) });
+        },
+    });
+};
+
+/**
+ * Hook to delete an API key
+ */
+export const useDeleteAPIKey = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: string) => {
+            return apiKeyClient().deleteApiKey({ id });
+        },
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.apiKeys.list() });
         },
     });
 };
 
 /**
- * Hook to delete an API key permanently
+ * Hook to revoke an API key
  */
-export const useDeleteApiKey = () => {
+export const useRevokeAPIKey = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (id: string) => apiKeyService.delete(id),
-        onSuccess: (_, id) => {
-            // Remove from cache
-            queryClient.removeQueries({ queryKey: queryKeys.apiKeys.detail(id) });
-            // Invalidate the list
-            queryClient.invalidateQueries({ queryKey: queryKeys.apiKeys.list() });
+        mutationFn: async (id: string) => {
+            return apiKeyClient().revokeApiKey({ id });
         },
-    });
-};
-
-/**
- * Hook to revoke an API key (soft delete)
- */
-export const useRevokeApiKey = () => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: (id: string) => apiKeyService.revoke(id),
-        onSuccess: (revokedKey, id) => {
-            // Update the cache with revoked state
-            queryClient.setQueryData<ApiKey>(queryKeys.apiKeys.detail(id), revokedKey);
-            // Invalidate the list to reflect the change
+        onSuccess: (response) => {
             queryClient.invalidateQueries({ queryKey: queryKeys.apiKeys.list() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.apiKeys.detail(response.id) });
         },
     });
 };

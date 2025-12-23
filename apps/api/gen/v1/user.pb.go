@@ -143,7 +143,6 @@ type CreateUserResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
 	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	ApiKey        string                 `protobuf:"bytes,3,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -188,13 +187,6 @@ func (x *CreateUserResponse) GetUser() *User {
 func (x *CreateUserResponse) GetMessage() string {
 	if x != nil {
 		return x.Message
-	}
-	return ""
-}
-
-func (x *CreateUserResponse) GetApiKey() string {
-	if x != nil {
-		return x.ApiKey
 	}
 	return ""
 }
@@ -542,11 +534,10 @@ const file_v1_user_proto_rawDesc = "" +
 	"\x04role\x18\x03 \x01(\x0e2\f.v1.UserRoleR\x04role\x12$\n" +
 	"\vexternal_id\x18\x04 \x01(\tH\x00R\n" +
 	"externalId\x88\x01\x01B\x0e\n" +
-	"\f_external_id\"e\n" +
+	"\f_external_id\"L\n" +
 	"\x12CreateUserResponse\x12\x1c\n" +
 	"\x04user\x18\x01 \x01(\v2\b.v1.UserR\x04user\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12\x17\n" +
-	"\aapi_key\x18\x03 \x01(\tR\x06apiKey\"\x17\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x17\n" +
 	"\x15GetCurrentUserRequest\"\xab\x02\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +

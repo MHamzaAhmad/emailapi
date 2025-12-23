@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	CountActiveApiKeysByUserID(ctx context.Context, userID string) (int64, error)
+	CountApiKeysByUserID(ctx context.Context, userID string) (int64, error)
 	CountDomainsByUserID(ctx context.Context, userID string) (int64, error)
 	CountSuppressionsByUser(ctx context.Context, userID string) (int64, error)
 	CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error)
@@ -38,6 +39,7 @@ type Querier interface {
 	InsertSuppression(ctx context.Context, arg InsertSuppressionParams) error
 	ListActiveSuppressions(ctx context.Context) ([]ListActiveSuppressionsRow, error)
 	ListApiKeysByUserID(ctx context.Context, userID string) ([]ListApiKeysByUserIDRow, error)
+	ListApiKeysByUserIDPaginated(ctx context.Context, arg ListApiKeysByUserIDPaginatedParams) ([]ListApiKeysByUserIDPaginatedRow, error)
 	ListSuppressionsByUser(ctx context.Context, arg ListSuppressionsByUserParams) ([]ListSuppressionsByUserRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error)
 	RevokeApiKey(ctx context.Context, id string) (ApiKey, error)

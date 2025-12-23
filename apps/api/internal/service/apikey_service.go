@@ -141,26 +141,56 @@ func (s *APIKeyService) GetByID(ctx context.Context, userID, keyID string) (*dom
 	return apiKey, nil
 }
 
-// List retrieves all API keys for a user.
-func (s *APIKeyService) List(ctx context.Context, userID string) ([]*domain.APIKey, error) {
-	// Try cache first
-	if s.cache != nil {
+// List retrieves all API keys for a user with pagination.
+// Uses cache for unpaginated requests (page <= 1, pageSize >= 100) for performance.
+func (s *APIKeyService) List(ctx context.Context, userID string, page, pageSize int) ([]*domain.APIKey, int, error) {
+	// Default pagination if not specified
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 100
+	}
+
+	// Use cache for "list all" requests (first page with large page size)
+	// This optimizes the common case of loading API keys in UI
+	useCache := page == 1 && pageSize >= 100
+
+	if useCache && s.cache != nil {
 		if cached, _ := s.cache.GetByUserID(ctx, userID); cached != nil {
-			return cached, nil
+			// Return cached results (limited to pageSize for consistency)
+			limit := len(cached)
+			if pageSize < limit {
+				limit = pageSize
+			}
+
+			result := make([]*domain.APIKey, limit)
+			for i := 0; i < limit; i++ {
+				result[i] = cached[i]
+			}
+			return result, len(cached), nil
 		}
 	}
 
-	keys, err := s.store.APIKeys().ListByUserID(ctx, userID)
+	offset := (page - 1) * pageSize
+
+	keys, err := s.store.APIKeys().ListByUserID(ctx, userID, pageSize, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	// Cache the result
-	if s.cache != nil {
+	// Get total count for pagination
+	total, err := s.store.APIKeys().CountByUserID(ctx, userID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count API keys: %w", err)
+	}
+
+	// Cache the result for first page
+	if useCache && s.cache != nil && page == 1 {
 		_ = s.cache.SetByUserID(ctx, userID, keys)
 	}
 
-	return keys, nil
+	return keys, total, nil
 }
 
 // Update updates an API key.

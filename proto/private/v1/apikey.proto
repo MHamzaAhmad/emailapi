@@ -102,12 +102,19 @@ message GetApiKeyRequest {
 }
 
 // ListApiKeysRequest is the request to list API keys.
-message ListApiKeysRequest {}
+message ListApiKeysRequest {
+  // Page number for pagination (starts at 1).
+  int32 page = 1;
+  // Number of items per page.
+  int32 page_size = 2;
+}
 
 // ListApiKeysResponse is the response for listing API keys.
 message ListApiKeysResponse {
   // The list of API keys.
   repeated ApiKey data = 1;
+  // Total number of API keys matching the query.
+  int32 total = 2;
 }
 
 // UpdateApiKeyRequest is the request to update an API key.

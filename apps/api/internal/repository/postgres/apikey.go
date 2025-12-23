@@ -82,9 +82,13 @@ func (r *APIKeyRepository) GetByPrefix(ctx context.Context, keyPrefix string) (*
 	return dbApiKeyToDomain(row), nil
 }
 
-// ListByUserID retrieves all API keys for a user using sqlc.
-func (r *APIKeyRepository) ListByUserID(ctx context.Context, userID string) ([]*domain.APIKey, error) {
-	rows, err := r.queries.ListApiKeysByUserID(ctx, userID)
+// ListByUserID retrieves all API keys for a user with pagination using sqlc.
+func (r *APIKeyRepository) ListByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.APIKey, error) {
+	rows, err := r.queries.ListApiKeysByUserIDPaginated(ctx, db.ListApiKeysByUserIDPaginatedParams{
+		UserID: userID,
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list API keys: %w", err)
 	}
@@ -94,6 +98,15 @@ func (r *APIKeyRepository) ListByUserID(ctx context.Context, userID string) ([]*
 		apiKeys[i] = dbListApiKeyRowToDomain(row)
 	}
 	return apiKeys, nil
+}
+
+// CountByUserID counts the total number of API keys for a user.
+func (r *APIKeyRepository) CountByUserID(ctx context.Context, userID string) (int, error) {
+	count, err := r.queries.CountApiKeysByUserID(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count API keys: %w", err)
+	}
+	return int(count), nil
 }
 
 // Update updates an existing API key using sqlc.
@@ -185,8 +198,8 @@ func dbApiKeyToDomain(row db.ApiKey) *domain.APIKey {
 	return apiKey
 }
 
-// dbListApiKeyRowToDomain converts a sqlc ListApiKeysByUserIDRow to domain.APIKey.
-func dbListApiKeyRowToDomain(row db.ListApiKeysByUserIDRow) *domain.APIKey {
+// dbListApiKeyRowToDomain converts a sqlc ListApiKeysByUserIDPaginatedRow to domain.APIKey.
+func dbListApiKeyRowToDomain(row db.ListApiKeysByUserIDPaginatedRow) *domain.APIKey {
 	scopes := make([]domain.Scope, len(row.Scopes))
 	for i, s := range row.Scopes {
 		scopes[i] = domain.Scope(s)

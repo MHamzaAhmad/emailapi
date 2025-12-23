@@ -461,7 +461,11 @@ func (x *GetApiKeyRequest) GetId() string {
 
 // ListApiKeysRequest is the request to list API keys.
 type ListApiKeysRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Page number for pagination (starts at 1).
+	Page int32 `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
+	// Number of items per page.
+	PageSize      int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -496,11 +500,27 @@ func (*ListApiKeysRequest) Descriptor() ([]byte, []int) {
 	return file_v1_apikey_proto_rawDescGZIP(), []int{4}
 }
 
+func (x *ListApiKeysRequest) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListApiKeysRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
 // ListApiKeysResponse is the response for listing API keys.
 type ListApiKeysResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The list of API keys.
-	Data          []*ApiKey `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
+	Data []*ApiKey `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
+	// Total number of API keys matching the query.
+	Total         int32 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -540,6 +560,13 @@ func (x *ListApiKeysResponse) GetData() []*ApiKey {
 		return x.Data
 	}
 	return nil
+}
+
+func (x *ListApiKeysResponse) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
 }
 
 // UpdateApiKeyRequest is the request to update an API key.
@@ -788,11 +815,14 @@ const file_v1_apikey_proto_rawDesc = "" +
 	"\araw_key\x18\x02 \x01(\tR\x06rawKey\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\"\"\n" +
 	"\x10GetApiKeyRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x14\n" +
-	"\x12ListApiKeysRequest\"5\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"E\n" +
+	"\x12ListApiKeysRequest\x12\x12\n" +
+	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\"K\n" +
 	"\x13ListApiKeysResponse\x12\x1e\n" +
 	"\x04data\x18\x01 \x03(\v2\n" +
-	".v1.ApiKeyR\x04data\"\xd5\x01\n" +
+	".v1.ApiKeyR\x04data\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\"\xd5\x01\n" +
 	"\x13UpdateApiKeyRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12!\n" +
