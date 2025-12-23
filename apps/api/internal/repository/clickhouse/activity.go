@@ -122,7 +122,7 @@ func (r *ActivityRepository) List(ctx context.Context, userID string, filters Ac
 	args = append(args, limit, offset)
 
 	// Get total count first
-	var totalCount int
+	var totalCount uint64
 	row := r.conn.QueryRow(ctx, countQuery, countArgs...)
 	if err := row.Scan(&totalCount); err != nil {
 		return nil, 0, err
@@ -169,5 +169,5 @@ func (r *ActivityRepository) List(ctx context.Context, userID string, filters Ac
 		return nil, 0, err
 	}
 
-	return logs, totalCount, nil
+	return logs, int(totalCount), nil
 }

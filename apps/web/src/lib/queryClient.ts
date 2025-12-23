@@ -1,5 +1,4 @@
 import { QueryClient } from '@tanstack/react-query';
-import type { ApiError } from '@/types';
 
 // Create a query client with default options
 export const createQueryClient = () =>
@@ -12,9 +11,12 @@ export const createQueryClient = () =>
                 gcTime: 1000 * 60 * 30,
                 // Retry failed queries 3 times with exponential backoff
                 retry: (failureCount, error) => {
-                    // Don't retry on 4xx errors (client errors)
-                    const apiError = error as ApiError;
-                    if (apiError.code?.startsWith('4')) {
+                    // Don't retry on client errors (Connect codes that map to 4xx)
+                    // Connect codes: 3=InvalidArgument, 5=NotFound, 6=AlreadyExists, 
+                    // 7=PermissionDenied, 16=Unauthenticated, 9=FailedPrecondition
+                    const connectError = error as { code?: number };
+                    const nonRetryableCodes = [3, 5, 6, 7, 9, 16];
+                    if (typeof connectError.code === 'number' && nonRetryableCodes.includes(connectError.code)) {
                         return false;
                     }
                     return failureCount < 3;

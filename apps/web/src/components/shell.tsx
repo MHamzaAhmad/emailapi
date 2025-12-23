@@ -11,16 +11,7 @@ import {
     Book02Icon,
     Settings01Icon
 } from '@hugeicons/core-free-icons'
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 
 interface ShellProps {
     children: React.ReactNode
@@ -47,15 +38,15 @@ export function Shell({ children }: ShellProps) {
     })
 
     return (
-        <div className="min-h-screen bg-background flex flex-col">
-            {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-                <div className="mx-auto flex h-14 max-w-7xl items-center px-4 md:px-6 gap-6">
-                    <Link to="/" className="flex items-center gap-2.5 font-bold tracking-tight mr-4">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                            <HugeiconsIcon icon={PackageIcon} size={16} />
+        <div className="min-h-screen bg-background flex flex-col font-sans">
+            {/* Top Navigation Bar - Ultra Minimal */}
+            <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+                <div className="mx-auto flex h-14 max-w-7xl items-center px-4 md:px-6 gap-4">
+                    <Link to="/" className="flex items-center gap-2 font-bold tracking-tight text-foreground/90 hover:text-foreground transition-colors mr-6">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
+                            <HugeiconsIcon icon={PackageIcon} size={14} strokeWidth={2.5} />
                         </div>
-                        <span className="hidden md:inline-block">emailapi</span>
+                        <span className="hidden md:inline-block text-sm">emailapi</span>
                     </Link>
 
                     <nav className="flex items-center gap-1">
@@ -66,14 +57,13 @@ export function Shell({ children }: ShellProps) {
                                     key={item.href}
                                     to={item.href}
                                     className={`
-                                        flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                                        flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200
                                         ${isActive
-                                            ? 'bg-secondary text-foreground shadow-sm'
+                                            ? 'bg-secondary text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/10'
                                             : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                                         }
                                     `}
                                 >
-                                    {/* <HugeiconsIcon icon={item.icon} size={14} className={isActive ? 'text-foreground' : ''} /> */}
                                     <span>{item.title}</span>
                                 </Link>
                             )
@@ -82,23 +72,22 @@ export function Shell({ children }: ShellProps) {
 
                     <div className="flex-1" />
 
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-muted-foreground" asChild>
+                    <div className="flex items-center gap-3">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" asChild>
                             <Link to="/docs">
-                                <HugeiconsIcon icon={Book02Icon} size={14} />
-                                <span>Docs</span>
+                                <HugeiconsIcon icon={Book02Icon} size={16} />
                             </Link>
                         </Button>
-                        <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-muted-foreground w-8 px-0" asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" asChild>
                             <Link to="/settings">
                                 <HugeiconsIcon icon={Settings01Icon} size={16} />
                             </Link>
                         </Button>
-                        <Separator orientation="vertical" className="h-4" />
+                        <div className="h-4 w-[1px] bg-border/60 mx-1" />
                         <UserButton
                             appearance={{
                                 elements: {
-                                    avatarBox: "h-8 w-8 rounded-lg"
+                                    avatarBox: "h-7 w-7 rounded-full ring-2 ring-background hover:ring-muted transition-all"
                                 }
                             }}
                         />
@@ -108,38 +97,31 @@ export function Shell({ children }: ShellProps) {
 
             {/* Breadcrumbs & Content */}
             <main className="flex-1">
-                <div className="mx-auto max-w-7xl px-4 md:px-6 py-6">
-                    {breadcrumbs.length > 0 && (
-                        <div className="mb-6">
-                            <Breadcrumb>
-                                <BreadcrumbList>
-                                    <BreadcrumbItem>
-                                        <BreadcrumbLink asChild>
-                                            <Link to="/dashboard">Dashboard</Link>
-                                        </BreadcrumbLink>
-                                    </BreadcrumbItem>
-                                    {breadcrumbs.length > 0 && breadcrumbs[0].href !== '/dashboard' && <BreadcrumbSeparator />}
-
-                                    {breadcrumbs.filter(b => b.href !== '/dashboard').map((crumb) => (
-                                        <BreadcrumbItem key={crumb.href}>
+                <div className="mx-auto max-w-7xl px-4 md:px-6 py-6 font-sans">
+                    {currentPath !== '/dashboard' && (
+                        <div className="mb-6 flex items-center text-sm text-muted-foreground/80">
+                            <Link to="/dashboard" className="hover:text-foreground transition-colors hover:underline underline-offset-4">Dashboard</Link>
+                            {breadcrumbs.length > 0 && breadcrumbs[0].href !== '/dashboard' && (
+                                <>
+                                    <span className="mx-2 text-muted-foreground/30">/</span>
+                                    {breadcrumbs.filter(b => b.href !== '/dashboard').map((crumb, i, arr) => (
+                                        <div key={crumb.href} className="flex items-center">
                                             {crumb.isLast ? (
-                                                <BreadcrumbPage>{crumb.title}</BreadcrumbPage>
+                                                <span className="font-medium text-foreground">{crumb.title}</span>
                                             ) : (
-                                                <>
-                                                    <BreadcrumbLink asChild>
-                                                        <Link to={crumb.href}>{crumb.title}</Link>
-                                                    </BreadcrumbLink>
-                                                    <BreadcrumbSeparator />
-                                                </>
+                                                <Link to={crumb.href} className="hover:text-foreground transition-colors hover:underline underline-offset-4">
+                                                    {crumb.title}
+                                                </Link>
                                             )}
-                                        </BreadcrumbItem>
+                                            {i < arr.length - 1 && <span className="mx-2 text-muted-foreground/30">/</span>}
+                                        </div>
                                     ))}
-                                </BreadcrumbList>
-                            </Breadcrumb>
+                                </>
+                            )}
                         </div>
                     )}
 
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out fill-mode-backwards">
                         {children}
                     </div>
                 </div>
