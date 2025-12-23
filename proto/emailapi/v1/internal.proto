@@ -17,7 +17,14 @@ service InternalService {
     };
   }
 
-
+  // HandleClerkWebhook processes Clerk user lifecycle events (signup, etc.).
+  // This endpoint is authenticated via Svix signature verification.
+  rpc HandleClerkWebhook(ClerkWebhookRequest) returns (ClerkWebhookResponse) {
+    option (google.api.http) = {
+      post: "/v1/internal/webhooks/clerk"
+      body: "*"
+    };
+  }
 }
 
 // GuardDutyScanResultRequest contains the scan result from GuardDuty via EventBridge.
@@ -35,6 +42,25 @@ message GuardDutyScanResultRequest {
 // GuardDutyScanResultResponse is the response after processing scan result.
 message GuardDutyScanResultResponse {
   // Whether the result was processed successfully.
+  bool success = 1;
+  // Message describing the action taken.
+  string message = 2;
+}
+
+// ClerkWebhookRequest contains the raw Clerk webhook payload.
+// Clerk webhooks use Svix for signing, so we need the raw payload for verification.
+message ClerkWebhookRequest {
+  // Raw JSON payload from Clerk (we parse this server-side after verifying Svix signature)
+  string payload = 1;
+  // Svix webhook headers for signature verification
+  string svix_id = 2;
+  string svix_timestamp = 3;
+  string svix_signature = 4;
+}
+
+// ClerkWebhookResponse is the response after processing Clerk webhook.
+message ClerkWebhookResponse {
+  // Whether the webhook was processed successfully.
   bool success = 1;
   // Message describing the action taken.
   string message = 2;

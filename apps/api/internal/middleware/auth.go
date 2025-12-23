@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/clerk/clerk-sdk-go/v2"
+	"github.com/clerk/clerk-sdk-go/v2/jwt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -12,24 +14,72 @@ import (
 	"github.com/emailapi/api/internal/service"
 )
 
-// AuthInterceptor is a gRPC unary interceptor that validates API keys.
-type AuthInterceptor struct {
-	apiKeyService *service.APIKeyService
-	// Public methods that don't require authentication
-	publicMethods map[string]bool
+// AuthMethod indicates how the request was authenticated.
+type AuthMethod string
+
+const (
+	AuthMethodClerk  AuthMethod = "clerk"
+	AuthMethodAPIKey AuthMethod = "api_key"
+)
+
+// Context keys for auth information.
+type contextKey string
+
+const (
+	ContextKeyUserID     contextKey = "user_id"
+	ContextKeyAuthMethod contextKey = "auth_method"
+	ContextKeyAPIKeyID   contextKey = "api_key_id"
+)
+
+// UserLookup interface for looking up users by external ID.
+type UserLookup interface {
+	GetByExternalID(ctx context.Context, externalID string) (userID string, err error)
 }
 
-// NewAuthInterceptor creates a new auth interceptor.
-func NewAuthInterceptor(apiKeyService *service.APIKeyService) *AuthInterceptor {
+// AuthInterceptor is a gRPC unary interceptor that validates Clerk JWTs and API keys.
+type AuthInterceptor struct {
+	apiKeyService  *service.APIKeyService
+	userLookup     UserLookup
+	clerkSecretKey string
+	publicMethods  map[string]bool
+	apiKeyAllowed  map[string]bool // Services that allow API key auth in addition to Clerk
+}
+
+// AuthInterceptorConfig holds configuration for the auth interceptor.
+type AuthInterceptorConfig struct {
+	APIKeyService  *service.APIKeyService
+	UserLookup     UserLookup
+	ClerkSecretKey string
+}
+
+// NewAuthInterceptor creates a new auth interceptor with Clerk JWT + API key support.
+func NewAuthInterceptor(cfg AuthInterceptorConfig) *AuthInterceptor {
 	return &AuthInterceptor{
-		apiKeyService: apiKeyService,
-		publicMethods: map[string]bool{
-			"/emailapi.v1.UserService/CreateUser": true, // Allow user creation without auth
+		apiKeyService:  cfg.APIKeyService,
+		userLookup:     cfg.UserLookup,
+		clerkSecretKey: cfg.ClerkSecretKey,
+		publicMethods:  map[string]bool{
+			// CreateUser is no longer public - users are created via Clerk webhook
+		},
+		apiKeyAllowed: map[string]bool{
+			// EmailService and DomainService allow API key auth for programmatic access
+			"/emailapi.v1.EmailService/SendEmail":        true,
+			"/emailapi.v1.EmailService/SendEmailAsync":   true,
+			"/emailapi.v1.EmailService/GetEmail":         true,
+			"/emailapi.v1.DomainService/CreateDomain":    true,
+			"/emailapi.v1.DomainService/GetDomain":       true,
+			"/emailapi.v1.DomainService/ListDomains":     true,
+			"/emailapi.v1.DomainService/VerifyDomain":    true,
+			"/emailapi.v1.DomainService/DeleteDomain":    true,
+			"/emailapi.v1.DomainService/RefreshDNS":      true,
+			"/emailapi.v1.DomainService/SetMailFrom":     true,
+			"/emailapi.v1.DomainService/GetRoutingRules": true,
+			"/emailapi.v1.DomainService/SetRoutingRules": true,
 		},
 	}
 }
 
-// Unary returns a gRPC unary server interceptor that validates API keys.
+// Unary returns a gRPC unary server interceptor that validates auth.
 func (i *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -37,18 +87,18 @@ func (i *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		// Check if this is a public method
-		if i.publicMethods[info.FullMethod] {
-			return handler(ctx, req)
-		}
-
-		// Skip auth for InternalService - they use webhook secret verification
+		// Skip auth for InternalService - uses webhook secret verification
 		if strings.HasPrefix(info.FullMethod, "/emailapi.v1.InternalService/") {
 			return handler(ctx, req)
 		}
 
-		// Skip auth for SnsService - they use SNS signature verification
+		// Skip auth for SnsService - uses SNS signature verification
 		if strings.HasPrefix(info.FullMethod, "/emailapi.v1.SnsService/") {
+			return handler(ctx, req)
+		}
+
+		// Check if this is a public method
+		if i.publicMethods[info.FullMethod] {
 			return handler(ctx, req)
 		}
 
@@ -75,47 +125,103 @@ func (i *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 			return nil, status.Error(codes.Unauthenticated, "empty authorization token")
 		}
 
-		// Validate API key and get user
-		user, apiKey, err := i.apiKeyService.ValidateAndGetUser(ctx, token)
-		if err != nil {
-			return nil, status.Errorf(codes.Unauthenticated, "invalid API key: %v", err)
+		// Determine if token looks like an API key (starts with em_)
+		isAPIKey := strings.HasPrefix(token, "em_")
+
+		if isAPIKey {
+			// Check if this endpoint allows API key auth
+			if !i.apiKeyAllowed[info.FullMethod] {
+				return nil, status.Error(codes.Unauthenticated, "this endpoint requires Clerk authentication, API keys not allowed")
+			}
+
+			// Validate API key
+			user, apiKey, err := i.apiKeyService.ValidateAndGetUser(ctx, token)
+			if err != nil {
+				return nil, status.Errorf(codes.Unauthenticated, "invalid API key: %v", err)
+			}
+
+			// Add auth info to context
+			ctx = context.WithValue(ctx, ContextKeyUserID, user.ID)
+			ctx = context.WithValue(ctx, ContextKeyAuthMethod, AuthMethodAPIKey)
+			ctx = context.WithValue(ctx, ContextKeyAPIKeyID, apiKey.ID)
+
+			return handler(ctx, req)
 		}
 
-		// Add user_id to context
-		ctx = context.WithValue(ctx, "user_id", user.ID)
-		ctx = context.WithValue(ctx, "api_key_id", apiKey.ID)
+		// Try Clerk JWT verification
+		claims, err := jwt.Verify(ctx, &jwt.VerifyParams{
+			Token: token,
+		})
+		if err != nil {
+			// If Clerk verification fails AND this endpoint allows API keys,
+			// try API key auth as fallback (in case token format detection failed)
+			if i.apiKeyAllowed[info.FullMethod] {
+				user, apiKey, apiKeyErr := i.apiKeyService.ValidateAndGetUser(ctx, token)
+				if apiKeyErr == nil {
+					ctx = context.WithValue(ctx, ContextKeyUserID, user.ID)
+					ctx = context.WithValue(ctx, ContextKeyAuthMethod, AuthMethodAPIKey)
+					ctx = context.WithValue(ctx, ContextKeyAPIKeyID, apiKey.ID)
+					return handler(ctx, req)
+				}
+			}
+			return nil, status.Errorf(codes.Unauthenticated, "invalid Clerk token: %v", err)
+		}
 
-		// Call the handler with the new context
+		// Extract Clerk user ID (subject claim)
+		clerkUserID := claims.Subject
+		if clerkUserID == "" {
+			return nil, status.Error(codes.Unauthenticated, "missing subject in Clerk token")
+		}
+
+		// Look up internal user by Clerk external_id
+		userID, err := i.userLookup.GetByExternalID(ctx, clerkUserID)
+		if err != nil {
+			return nil, status.Errorf(codes.Unauthenticated, "user not found for Clerk ID %s: %v", clerkUserID, err)
+		}
+
+		// Add auth info to context
+		ctx = context.WithValue(ctx, ContextKeyUserID, userID)
+		ctx = context.WithValue(ctx, ContextKeyAuthMethod, AuthMethodClerk)
+
 		return handler(ctx, req)
 	}
-}
-
-// HTTPMiddleware returns an HTTP middleware that copies Authorization header to gRPC metadata.
-func HTTPMiddleware() func(next grpc.UnaryHandler) grpc.UnaryHandler {
-	return func(next grpc.UnaryHandler) grpc.UnaryHandler {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			// This is handled by the gateway automatically
-			// The gateway copies HTTP headers to gRPC metadata
-			return next(ctx, req)
-		}
-	}
-}
-
-// MetadataAnnotator is used by grpc-gateway to copy HTTP headers to gRPC metadata.
-func MetadataAnnotator(ctx context.Context, req interface{}) metadata.MD {
-	md := metadata.MD{}
-
-	// The grpc-gateway already handles this automatically for most headers
-	// This is just for custom headers if needed
-
-	return md
 }
 
 // GetUserID extracts the user ID from the context.
 // Returns empty string if not found.
 func GetUserID(ctx context.Context) string {
+	if userID, ok := ctx.Value(ContextKeyUserID).(string); ok {
+		return userID
+	}
+	// Backwards compatibility with old "user_id" key
 	if userID, ok := ctx.Value("user_id").(string); ok {
 		return userID
 	}
 	return ""
+}
+
+// GetAuthMethod extracts the auth method from the context.
+func GetAuthMethod(ctx context.Context) AuthMethod {
+	if method, ok := ctx.Value(ContextKeyAuthMethod).(AuthMethod); ok {
+		return method
+	}
+	return ""
+}
+
+// GetAPIKeyID extracts the API key ID from the context (only set for API key auth).
+func GetAPIKeyID(ctx context.Context) string {
+	if apiKeyID, ok := ctx.Value(ContextKeyAPIKeyID).(string); ok {
+		return apiKeyID
+	}
+	// Backwards compatibility
+	if apiKeyID, ok := ctx.Value("api_key_id").(string); ok {
+		return apiKeyID
+	}
+	return ""
+}
+
+// InitClerk initializes the global Clerk client with the secret key.
+// This must be called before using Clerk JWT verification.
+func InitClerk(secretKey string) {
+	clerk.SetKey(secretKey)
 }

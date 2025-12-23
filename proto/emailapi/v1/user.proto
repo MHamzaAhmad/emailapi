@@ -50,6 +50,7 @@ message CreateUserRequest {
   string email = 1;
   string name = 2;
   UserRole role = 3;
+  optional string external_id = 4; // Clerk user ID (set via webhook)
 }
 
 message CreateUserResponse {
@@ -68,6 +69,7 @@ message User {
   bool is_active = 5;
   google.protobuf.Timestamp created_at = 6;
   google.protobuf.Timestamp updated_at = 7;
+  optional string external_id = 8; // Clerk user ID
 }
 
 message UpdateUserRequest {

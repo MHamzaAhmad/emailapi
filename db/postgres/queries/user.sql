@@ -1,15 +1,19 @@
 -- name: CreateUser :one
-INSERT INTO users (id, email, name, role, is_active, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO users (id, email, name, role, is_active, external_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING *;
 
 -- name: GetUserByID :one
-SELECT id, email, name, role, is_active, created_at, updated_at
+SELECT id, email, name, role, is_active, external_id, created_at, updated_at
 FROM users WHERE id = $1;
 
 -- name: GetUserByEmail :one
-SELECT id, email, name, role, is_active, created_at, updated_at
+SELECT id, email, name, role, is_active, external_id, created_at, updated_at
 FROM users WHERE email = $1;
+
+-- name: GetUserByExternalID :one
+SELECT id, email, name, role, is_active, external_id, created_at, updated_at
+FROM users WHERE external_id = $1;
 
 -- name: UpdateUser :one
 UPDATE users SET
@@ -17,7 +21,8 @@ UPDATE users SET
     name = $3,
     role = $4,
     is_active = $5,
-    updated_at = $6
+    external_id = $6,
+    updated_at = $7
 WHERE id = $1
 RETURNING *;
 
@@ -25,7 +30,7 @@ RETURNING *;
 DELETE FROM users WHERE id = $1;
 
 -- name: ListUsers :many
-SELECT id, email, name, role, is_active, created_at, updated_at
+SELECT id, email, name, role, is_active, external_id, created_at, updated_at
 FROM users
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;

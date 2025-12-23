@@ -14,26 +14,29 @@ const (
 
 // User represents a user entity in the system.
 type User struct {
-	ID        string    `json:"id"`
-	Email     string    `json:"email"`
-	Name      string    `json:"name"`
-	Role      UserRole  `json:"role"`
-	IsActive  bool      `json:"is_active"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID         string    `json:"id"`
+	Email      string    `json:"email"`
+	Name       string    `json:"name"`
+	Role       UserRole  `json:"role"`
+	IsActive   bool      `json:"is_active"`
+	ExternalID *string   `json:"external_id,omitempty"` // Clerk user ID
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 // CreateUserRequest represents a request to create a new user.
 type CreateUserRequest struct {
-	Email string   `json:"email" binding:"required,email"`
-	Name  string   `json:"name" binding:"required"`
-	Role  UserRole `json:"role,omitempty"`
+	Email      string   `json:"email" binding:"required,email"`
+	Name       string   `json:"name" binding:"required"`
+	Role       UserRole `json:"role,omitempty"`
+	ExternalID *string  `json:"external_id,omitempty"` // Clerk user ID (set via webhook)
 }
 
 // UpdateUserRequest represents a request to update a user.
 type UpdateUserRequest struct {
-	Email    *string   `json:"email,omitempty" binding:"omitempty,email"`
-	Name     *string   `json:"name,omitempty"`
-	Role     *UserRole `json:"role,omitempty"`
-	IsActive *bool     `json:"is_active,omitempty"`
+	Email      *string   `json:"email,omitempty" binding:"omitempty,email"`
+	Name       *string   `json:"name,omitempty"`
+	Role       *UserRole `json:"role,omitempty"`
+	IsActive   *bool     `json:"is_active,omitempty"`
+	ExternalID *string   `json:"external_id,omitempty"`
 }

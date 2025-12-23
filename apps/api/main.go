@@ -209,7 +209,11 @@ func main() {
 		DomainCache:         domainCache,
 		APIKeyCache:         apiKeyCache,
 		UserCache:           userCache,
+		ClerkWebhookSecret:  cfg.ClerkWebhookSecret,
 	})
+
+	// Initialize Clerk SDK with secret key
+	middleware.InitClerk(cfg.ClerkSecretKey)
 
 	// Start gRPC server
 	go func() {
@@ -243,7 +247,11 @@ func runGRPCServer(cfg *config.Config, svc *service.Service, logger zerolog.Logg
 	// Create interceptors
 	loggingInterceptor := middleware.NewLoggingInterceptor(logger)
 	snsInterceptor := middleware.NewSNSInterceptor()
-	authInterceptor := middleware.NewAuthInterceptor(svc.APIKey)
+	authInterceptor := middleware.NewAuthInterceptor(middleware.AuthInterceptorConfig{
+		APIKeyService:  svc.APIKey,
+		UserLookup:     svc.User,
+		ClerkSecretKey: cfg.ClerkSecretKey,
+	})
 	webhookInterceptor := middleware.NewWebhookInterceptor(cfg.InternalWebhookSecret)
 
 	// Chain interceptors: logging -> SNS verification -> webhook verification -> auth

@@ -148,7 +148,7 @@ func toProtoUserRole(r domain.UserRole) emailapiv1.UserRole {
 }
 
 func toProtoUser(u *domain.User) *emailapiv1.User {
-	return &emailapiv1.User{
+	user := &emailapiv1.User{
 		Id:        u.ID,
 		Email:     u.Email,
 		Name:      u.Name,
@@ -157,4 +157,8 @@ func toProtoUser(u *domain.User) *emailapiv1.User {
 		CreatedAt: timestamppb.New(u.CreatedAt),
 		UpdatedAt: timestamppb.New(u.UpdatedAt),
 	}
+	if u.ExternalID != nil {
+		user.ExternalId = u.ExternalID
+	}
+	return user
 }

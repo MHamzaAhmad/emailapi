@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.94.0
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.59.0
+	github.com/clerk/clerk-sdk-go/v2 v2.5.0
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
 	github.com/jackc/pgx/v5 v5.7.6
@@ -19,6 +20,7 @@ require (
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/riverqueue/river v0.28.0
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.28.0
+	github.com/riverqueue/river/rivertype v0.28.0
 	github.com/rs/zerolog v1.34.0
 	github.com/svix/svix-webhooks v1.83.0
 	golang.org/x/crypto v0.46.0
@@ -52,6 +54,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.7.1 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/hbollon/go-edlib v1.6.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -64,7 +67,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/riverqueue/river/riverdriver v0.28.0 // indirect
 	github.com/riverqueue/river/rivershared v0.28.0 // indirect
-	github.com/riverqueue/river/rivertype v0.28.0 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect

@@ -55,6 +55,8 @@ type ServiceDeps struct {
 	DomainCache *rediscache.DomainCache
 	APIKeyCache *rediscache.APIKeyCache
 	UserCache   *rediscache.UserCache
+	// Clerk configuration
+	ClerkWebhookSecret string
 }
 
 // NewWithDeps creates a new Service with all dependencies.
@@ -67,7 +69,10 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo)
 
 	svc.Email = NewEmailService(deps.RiverClient, deps.CHEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender)
-	svc.Internal = NewInternalService()
+	svc.Internal = NewInternalService(InternalServiceConfig{
+		UserService:        svc.User,
+		ClerkWebhookSecret: deps.ClerkWebhookSecret,
+	})
 
 	// Initialize SNS notification service
 	svc.SNSNotification = NewSNSNotificationService(

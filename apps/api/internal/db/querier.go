@@ -11,53 +11,37 @@ import (
 )
 
 type Querier interface {
-	CheckAllAttachmentsScanned(ctx context.Context, emailID string) (CheckAllAttachmentsScannedRow, error)
 	CountActiveApiKeysByUserID(ctx context.Context, userID string) (int64, error)
-	CountEmailsByUserID(ctx context.Context, userID string) (int64, error)
 	CountSuppressionsByUser(ctx context.Context, userID string) (int64, error)
 	CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error)
 	CreateDomain(ctx context.Context, arg CreateDomainParams) error
-	CreateEmail(ctx context.Context, arg CreateEmailParams) (Email, error)
-	CreateEmailAttachment(ctx context.Context, arg CreateEmailAttachmentParams) (EmailAttachment, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteApiKey(ctx context.Context, id string) error
-	DeleteAttachmentsByEmailID(ctx context.Context, emailID string) error
 	DeleteDomain(ctx context.Context, id string) error
-	DeleteEmail(ctx context.Context, id string) error
 	DeleteExpiredSuppressions(ctx context.Context) (int64, error)
 	DeleteSuppressionByHash(ctx context.Context, emailHash string) error
 	DeleteUser(ctx context.Context, id string) error
 	GetApiKeyByHash(ctx context.Context, keyHash string) (ApiKey, error)
 	GetApiKeyByID(ctx context.Context, id string) (ApiKey, error)
 	GetApiKeyByPrefix(ctx context.Context, keyPrefix string) (ApiKey, error)
-	GetAttachmentByS3Key(ctx context.Context, s3Key string) (EmailAttachment, error)
-	GetAttachmentsByEmailID(ctx context.Context, emailID string) ([]EmailAttachment, error)
 	GetDomainByID(ctx context.Context, id string) (Domain, error)
 	GetDomainByName(ctx context.Context, arg GetDomainByNameParams) (Domain, error)
 	GetDomainsByUserID(ctx context.Context, userID string) ([]Domain, error)
-	GetEmailByID(ctx context.Context, id string) (Email, error)
-	GetEmailByMessageID(ctx context.Context, messageID pgtype.Text) (Email, error)
-	GetEmailsByUserID(ctx context.Context, arg GetEmailsByUserIDParams) ([]Email, error)
-	GetEmailsWithPendingAttachments(ctx context.Context) ([]Email, error)
 	// Get domains that need verification refresh (never verified or older than threshold)
 	GetStaleDomains(ctx context.Context, limit int32) ([]Domain, error)
 	GetSuppressionByHash(ctx context.Context, emailHash string) (SuppressionList, error)
-	GetUserByEmail(ctx context.Context, email string) (User, error)
-	GetUserByID(ctx context.Context, id string) (User, error)
-	GetUserIDByMessageID(ctx context.Context, messageID pgtype.Text) (string, error)
+	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
+	GetUserByExternalID(ctx context.Context, externalID pgtype.Text) (GetUserByExternalIDRow, error)
+	GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error)
 	InsertSuppression(ctx context.Context, arg InsertSuppressionParams) error
 	ListActiveSuppressions(ctx context.Context) ([]ListActiveSuppressionsRow, error)
 	ListApiKeysByUserID(ctx context.Context, userID string) ([]ListApiKeysByUserIDRow, error)
 	ListSuppressionsByUser(ctx context.Context, arg ListSuppressionsByUserParams) ([]ListSuppressionsByUserRow, error)
-	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error)
 	RevokeApiKey(ctx context.Context, id string) (ApiKey, error)
 	UpdateApiKey(ctx context.Context, arg UpdateApiKeyParams) (ApiKey, error)
 	UpdateApiKeyLastUsed(ctx context.Context, id string) error
-	UpdateAttachmentScanStatus(ctx context.Context, arg UpdateAttachmentScanStatusParams) (EmailAttachment, error)
 	UpdateDomain(ctx context.Context, arg UpdateDomainParams) error
-	UpdateEmailMessageID(ctx context.Context, arg UpdateEmailMessageIDParams) error
-	UpdateEmailSent(ctx context.Context, arg UpdateEmailSentParams) (Email, error)
-	UpdateEmailStatus(ctx context.Context, arg UpdateEmailStatusParams) (Email, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 

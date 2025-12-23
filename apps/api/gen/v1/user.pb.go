@@ -77,6 +77,7 @@ type CreateUserRequest struct {
 	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Role          UserRole               `protobuf:"varint,3,opt,name=role,proto3,enum=emailapi.v1.UserRole" json:"role,omitempty"`
+	ExternalId    *string                `protobuf:"bytes,4,opt,name=external_id,json=externalId,proto3,oneof" json:"external_id,omitempty"` // Clerk user ID (set via webhook)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -130,6 +131,13 @@ func (x *CreateUserRequest) GetRole() UserRole {
 		return x.Role
 	}
 	return UserRole_USER_ROLE_UNSPECIFIED
+}
+
+func (x *CreateUserRequest) GetExternalId() string {
+	if x != nil && x.ExternalId != nil {
+		return *x.ExternalId
+	}
+	return ""
 }
 
 type CreateUserResponse struct {
@@ -237,6 +245,7 @@ type User struct {
 	IsActive      bool                   `protobuf:"varint,5,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	ExternalId    *string                `protobuf:"bytes,8,opt,name=external_id,json=externalId,proto3,oneof" json:"external_id,omitempty"` // Clerk user ID
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -318,6 +327,13 @@ func (x *User) GetUpdatedAt() *timestamppb.Timestamp {
 		return x.UpdatedAt
 	}
 	return nil
+}
+
+func (x *User) GetExternalId() string {
+	if x != nil && x.ExternalId != nil {
+		return *x.ExternalId
+	}
+	return ""
 }
 
 type UpdateUserRequest struct {
@@ -520,16 +536,19 @@ var File_v1_user_proto protoreflect.FileDescriptor
 
 const file_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\rv1/user.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"h\n" +
+	"\rv1/user.proto\x12\vemailapi.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9e\x01\n" +
 	"\x11CreateUserRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12)\n" +
-	"\x04role\x18\x03 \x01(\x0e2\x15.emailapi.v1.UserRoleR\x04role\"n\n" +
+	"\x04role\x18\x03 \x01(\x0e2\x15.emailapi.v1.UserRoleR\x04role\x12$\n" +
+	"\vexternal_id\x18\x04 \x01(\tH\x00R\n" +
+	"externalId\x88\x01\x01B\x0e\n" +
+	"\f_external_id\"n\n" +
 	"\x12CreateUserResponse\x12%\n" +
 	"\x04user\x18\x01 \x01(\v2\x11.emailapi.v1.UserR\x04user\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x17\n" +
 	"\aapi_key\x18\x03 \x01(\tR\x06apiKey\"\x17\n" +
-	"\x15GetCurrentUserRequest\"\xfe\x01\n" +
+	"\x15GetCurrentUserRequest\"\xb4\x02\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
@@ -539,7 +558,10 @@ const file_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xd3\x01\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12$\n" +
+	"\vexternal_id\x18\b \x01(\tH\x00R\n" +
+	"externalId\x88\x01\x01B\x0e\n" +
+	"\f_external_id\"\xd3\x01\n" +
 	"\x11UpdateUserRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\x05email\x18\x02 \x01(\tH\x00R\x05email\x88\x01\x01\x12\x17\n" +
@@ -627,6 +649,8 @@ func file_v1_user_proto_init() {
 	if File_v1_user_proto != nil {
 		return
 	}
+	file_v1_user_proto_msgTypes[0].OneofWrappers = []any{}
+	file_v1_user_proto_msgTypes[3].OneofWrappers = []any{}
 	file_v1_user_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

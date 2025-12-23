@@ -42,3 +42,26 @@ func (s *InternalServer) HandleGuardDutyScanResult(ctx context.Context, req *ema
 		Message: "Scan result processed successfully",
 	}, nil
 }
+
+// HandleClerkWebhook processes Clerk user lifecycle events.
+func (s *InternalServer) HandleClerkWebhook(ctx context.Context, req *emailapiv1.ClerkWebhookRequest) (*emailapiv1.ClerkWebhookResponse, error) {
+	result := &service.ClerkWebhookRequest{
+		Payload:       req.Payload,
+		SvixID:        req.SvixId,
+		SvixTimestamp: req.SvixTimestamp,
+		SvixSignature: req.SvixSignature,
+	}
+
+	success, message, err := s.svc.HandleClerkWebhook(ctx, result)
+	if err != nil {
+		return &emailapiv1.ClerkWebhookResponse{
+			Success: false,
+			Message: err.Error(),
+		}, nil
+	}
+
+	return &emailapiv1.ClerkWebhookResponse{
+		Success: success,
+		Message: message,
+	}, nil
+}

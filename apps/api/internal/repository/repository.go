@@ -19,6 +19,9 @@ type UserRepository interface {
 	// GetByEmail retrieves a user by their email.
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
 
+	// GetByExternalID retrieves a user by their Clerk external ID.
+	GetByExternalID(ctx context.Context, externalID string) (*domain.User, error)
+
 	// Update updates an existing user.
 	Update(ctx context.Context, user *domain.User) error
 

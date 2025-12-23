@@ -25,10 +25,18 @@ func NewUserService(store Store, apiKey *APIKeyService) *UserService {
 
 // Create creates a new user.
 func (s *UserService) Create(ctx context.Context, req *domain.CreateUserRequest) (*domain.User, string, error) {
-	// Check if user already exists
+	// Check if user already exists by email
 	existing, _ := s.store.Users().GetByEmail(ctx, req.Email)
 	if existing != nil {
 		return nil, "", fmt.Errorf("user with email already exists")
+	}
+
+	// Check if user exists by external_id (Clerk ID)
+	if req.ExternalID != nil && *req.ExternalID != "" {
+		existingExt, _ := s.store.Users().GetByExternalID(ctx, *req.ExternalID)
+		if existingExt != nil {
+			return nil, "", fmt.Errorf("user with external_id already exists")
+		}
 	}
 
 	// Set default role
@@ -38,11 +46,12 @@ func (s *UserService) Create(ctx context.Context, req *domain.CreateUserRequest)
 	}
 
 	user := &domain.User{
-		ID:       uuid.New().String(),
-		Email:    req.Email,
-		Name:     req.Name,
-		Role:     role,
-		IsActive: true,
+		ID:         uuid.New().String(),
+		Email:      req.Email,
+		Name:       req.Name,
+		Role:       role,
+		IsActive:   true,
+		ExternalID: req.ExternalID,
 	}
 
 	if err := s.store.Users().Create(ctx, user); err != nil {
@@ -77,6 +86,16 @@ func (s *UserService) GetByEmail(ctx context.Context, email string) (*domain.Use
 	return s.store.Users().GetByEmail(ctx, email)
 }
 
+// GetByExternalID retrieves a user by their Clerk external ID.
+// Returns the internal user ID and error.
+func (s *UserService) GetByExternalID(ctx context.Context, externalID string) (string, error) {
+	user, err := s.store.Users().GetByExternalID(ctx, externalID)
+	if err != nil {
+		return "", err
+	}
+	return user.ID, nil
+}
+
 // Update updates a user.
 func (s *UserService) Update(ctx context.Context, id string, req *domain.UpdateUserRequest) (*domain.User, error) {
 	user, err := s.store.Users().GetByID(ctx, id)
@@ -95,6 +114,9 @@ func (s *UserService) Update(ctx context.Context, id string, req *domain.UpdateU
 	}
 	if req.IsActive != nil {
 		user.IsActive = *req.IsActive
+	}
+	if req.ExternalID != nil {
+		user.ExternalID = req.ExternalID
 	}
 
 	if err := s.store.Users().Update(ctx, user); err != nil {

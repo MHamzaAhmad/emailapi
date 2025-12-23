@@ -150,6 +150,133 @@ func (x *GuardDutyScanResultResponse) GetMessage() string {
 	return ""
 }
 
+// ClerkWebhookRequest contains the raw Clerk webhook payload.
+// Clerk webhooks use Svix for signing, so we need the raw payload for verification.
+type ClerkWebhookRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Raw JSON payload from Clerk (we parse this server-side after verifying Svix signature)
+	Payload string `protobuf:"bytes,1,opt,name=payload,proto3" json:"payload,omitempty"`
+	// Svix webhook headers for signature verification
+	SvixId        string `protobuf:"bytes,2,opt,name=svix_id,json=svixId,proto3" json:"svix_id,omitempty"`
+	SvixTimestamp string `protobuf:"bytes,3,opt,name=svix_timestamp,json=svixTimestamp,proto3" json:"svix_timestamp,omitempty"`
+	SvixSignature string `protobuf:"bytes,4,opt,name=svix_signature,json=svixSignature,proto3" json:"svix_signature,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClerkWebhookRequest) Reset() {
+	*x = ClerkWebhookRequest{}
+	mi := &file_v1_internal_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClerkWebhookRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClerkWebhookRequest) ProtoMessage() {}
+
+func (x *ClerkWebhookRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_internal_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClerkWebhookRequest.ProtoReflect.Descriptor instead.
+func (*ClerkWebhookRequest) Descriptor() ([]byte, []int) {
+	return file_v1_internal_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ClerkWebhookRequest) GetPayload() string {
+	if x != nil {
+		return x.Payload
+	}
+	return ""
+}
+
+func (x *ClerkWebhookRequest) GetSvixId() string {
+	if x != nil {
+		return x.SvixId
+	}
+	return ""
+}
+
+func (x *ClerkWebhookRequest) GetSvixTimestamp() string {
+	if x != nil {
+		return x.SvixTimestamp
+	}
+	return ""
+}
+
+func (x *ClerkWebhookRequest) GetSvixSignature() string {
+	if x != nil {
+		return x.SvixSignature
+	}
+	return ""
+}
+
+// ClerkWebhookResponse is the response after processing Clerk webhook.
+type ClerkWebhookResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Whether the webhook was processed successfully.
+	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	// Message describing the action taken.
+	Message       string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClerkWebhookResponse) Reset() {
+	*x = ClerkWebhookResponse{}
+	mi := &file_v1_internal_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClerkWebhookResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClerkWebhookResponse) ProtoMessage() {}
+
+func (x *ClerkWebhookResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_internal_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClerkWebhookResponse.ProtoReflect.Descriptor instead.
+func (*ClerkWebhookResponse) Descriptor() ([]byte, []int) {
+	return file_v1_internal_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ClerkWebhookResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ClerkWebhookResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 // InboundEmail represents a parsed inbound email reply.
 type InboundEmail struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -181,7 +308,7 @@ type InboundEmail struct {
 
 func (x *InboundEmail) Reset() {
 	*x = InboundEmail{}
-	mi := &file_v1_internal_proto_msgTypes[2]
+	mi := &file_v1_internal_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -193,7 +320,7 @@ func (x *InboundEmail) String() string {
 func (*InboundEmail) ProtoMessage() {}
 
 func (x *InboundEmail) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_internal_proto_msgTypes[2]
+	mi := &file_v1_internal_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -206,7 +333,7 @@ func (x *InboundEmail) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InboundEmail.ProtoReflect.Descriptor instead.
 func (*InboundEmail) Descriptor() ([]byte, []int) {
-	return file_v1_internal_proto_rawDescGZIP(), []int{2}
+	return file_v1_internal_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *InboundEmail) GetId() string {
@@ -300,6 +427,14 @@ const file_v1_internal_proto_rawDesc = "" +
 	"threatName\"Q\n" +
 	"\x1bGuardDutyScanResultResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x96\x01\n" +
+	"\x13ClerkWebhookRequest\x12\x18\n" +
+	"\apayload\x18\x01 \x01(\tR\apayload\x12\x17\n" +
+	"\asvix_id\x18\x02 \x01(\tR\x06svixId\x12%\n" +
+	"\x0esvix_timestamp\x18\x03 \x01(\tR\rsvixTimestamp\x12%\n" +
+	"\x0esvix_signature\x18\x04 \x01(\tR\rsvixSignature\"J\n" +
+	"\x14ClerkWebhookResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\xa8\x02\n" +
 	"\fInboundEmail\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
@@ -316,9 +451,10 @@ const file_v1_internal_proto_rawDesc = "" +
 	"\x04html\x18\t \x01(\tR\x04html\x12*\n" +
 	"\x11original_email_id\x18\n" +
 	" \x01(\tR\x0foriginalEmailId\x12\x17\n" +
-	"\auser_id\x18\v \x01(\tR\x06userId2\xb3\x01\n" +
+	"\auser_id\x18\v \x01(\tR\x06userId2\xb7\x02\n" +
 	"\x0fInternalService\x12\x9f\x01\n" +
-	"\x19HandleGuardDutyScanResult\x12'.emailapi.v1.GuardDutyScanResultRequest\x1a(.emailapi.v1.GuardDutyScanResultResponse\"/\x82\xd3\xe4\x93\x02):\x01*\"$/v1/internal/webhooks/guardduty-scanB\x98\x01\n" +
+	"\x19HandleGuardDutyScanResult\x12'.emailapi.v1.GuardDutyScanResultRequest\x1a(.emailapi.v1.GuardDutyScanResultResponse\"/\x82\xd3\xe4\x93\x02):\x01*\"$/v1/internal/webhooks/guardduty-scan\x12\x81\x01\n" +
+	"\x12HandleClerkWebhook\x12 .emailapi.v1.ClerkWebhookRequest\x1a!.emailapi.v1.ClerkWebhookResponse\"&\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/v1/internal/webhooks/clerkB\x98\x01\n" +
 	"\x0fcom.emailapi.v1B\rInternalProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
 
 var (
@@ -333,17 +469,21 @@ func file_v1_internal_proto_rawDescGZIP() []byte {
 	return file_v1_internal_proto_rawDescData
 }
 
-var file_v1_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_v1_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_v1_internal_proto_goTypes = []any{
 	(*GuardDutyScanResultRequest)(nil),  // 0: emailapi.v1.GuardDutyScanResultRequest
 	(*GuardDutyScanResultResponse)(nil), // 1: emailapi.v1.GuardDutyScanResultResponse
-	(*InboundEmail)(nil),                // 2: emailapi.v1.InboundEmail
+	(*ClerkWebhookRequest)(nil),         // 2: emailapi.v1.ClerkWebhookRequest
+	(*ClerkWebhookResponse)(nil),        // 3: emailapi.v1.ClerkWebhookResponse
+	(*InboundEmail)(nil),                // 4: emailapi.v1.InboundEmail
 }
 var file_v1_internal_proto_depIdxs = []int32{
 	0, // 0: emailapi.v1.InternalService.HandleGuardDutyScanResult:input_type -> emailapi.v1.GuardDutyScanResultRequest
-	1, // 1: emailapi.v1.InternalService.HandleGuardDutyScanResult:output_type -> emailapi.v1.GuardDutyScanResultResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: emailapi.v1.InternalService.HandleClerkWebhook:input_type -> emailapi.v1.ClerkWebhookRequest
+	1, // 2: emailapi.v1.InternalService.HandleGuardDutyScanResult:output_type -> emailapi.v1.GuardDutyScanResultResponse
+	3, // 3: emailapi.v1.InternalService.HandleClerkWebhook:output_type -> emailapi.v1.ClerkWebhookResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -360,7 +500,7 @@ func file_v1_internal_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_internal_proto_rawDesc), len(file_v1_internal_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -48,6 +48,10 @@ type Config struct {
 
 	// SES Configuration Set for email event notifications (delivery, bounce, complaint)
 	SESConfigurationSet string `envconfig:"SES_CONFIGURATION_SET" default:""`
+
+	// Clerk Configuration (for verifying Clerk JWTs and webhook signatures)
+	ClerkSecretKey     string `envconfig:"CLERK_SECRET_KEY" required:"true"`
+	ClerkWebhookSecret string `envconfig:"CLERK_WEBHOOK_SECRET" required:"true"`
 }
 
 // Load reads configuration from environment variables.
