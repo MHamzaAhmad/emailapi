@@ -1,95 +1,101 @@
 @import 'tailwindcss';
 
-/* Inter font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Premium Typography - Outfit */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+@plugin 'tailwindcss-animate';
+
 
 @custom-variant dark (&:is(.dark *));
 
 /* =============================================================================
-   Minimal Developer Theme - Black/White/Red
+   Premium Minimalist Theme (Geist Inspired)
    ============================================================================= */
 
 :root {
-  /* Light mode (default) */
+  /* Light Mode - Crisp, clean, high contrast where it matters */
   --background: 0 0% 100%;
-  --foreground: 0 0% 4%;
+  --foreground: 240 10% 3.9%;
+
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 4%;
+  --card-foreground: 240 10% 3.9%;
+
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 4%;
-  --primary: 0 0% 9%;
+  --popover-foreground: 240 10% 3.9%;
+
+  --primary: 240 5.9% 10%;
   --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 96%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 0 0% 96%;
-  --muted-foreground: 0 0% 45%;
-  --accent: 0 0% 96%;
-  --accent-foreground: 0 0% 9%;
-  --destructive: 0 84% 60%;
+
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+
+  --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 90%;
-  --input: 0 0% 90%;
-  --ring: 0 0% 4%;
-  --radius: 0.375rem;
+
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 240 10% 3.9%;
+
+  --radius: 0.6rem;
+  /* Tighter radius for a more technical/utility feel */
 
   /* Sidebar */
-  --sidebar: 0 0% 98%;
-  --sidebar-foreground: 0 0% 4%;
-  --sidebar-primary: 0 0% 9%;
+  --sidebar-background: 0 0% 98%;
+  --sidebar-foreground: 240 5.3% 26.1%;
+  --sidebar-primary: 240 5.9% 10%;
   --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 0 0% 96%;
-  --sidebar-accent-foreground: 0 0% 9%;
-  --sidebar-border: 0 0% 90%;
-  --sidebar-ring: 0 0% 4%;
+  --sidebar-accent: 240 4.8% 95.9%;
+  --sidebar-accent-foreground: 240 5.9% 10%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-ring: 217.2 91.2% 59.8%;
 }
 
 .dark {
-  /* Dark mode - pure black background */
-  --background: 0 0% 0%;
-  --foreground: 0 0% 98%;
+  /* Dark Mode - Deep, rich, technical */
+  --background: 20 14.3% 4.1%;
+  /* Slightly warm deep gray/black */
+  --foreground: 60 9.1% 97.8%;
 
-  /* Card - slightly lighter than pure black */
-  --card: 0 0% 4%;
-  --card-foreground: 0 0% 98%;
+  --card: 20 14.3% 4.1%;
+  --card-foreground: 60 9.1% 97.8%;
 
-  /* Popover */
-  --popover: 0 0% 4%;
-  --popover-foreground: 0 0% 98%;
+  --popover: 20 14.3% 4.1%;
+  --popover-foreground: 60 9.1% 97.8%;
 
-  /* Primary - white on dark */
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 9%;
+  --primary: 60 9.1% 97.8%;
+  --primary-foreground: 24 9.8% 10%;
 
-  /* Secondary - subtle dark gray */
-  --secondary: 0 0% 10%;
-  --secondary-foreground: 0 0% 98%;
+  --secondary: 12 6.5% 15.1%;
+  --secondary-foreground: 60 9.1% 97.8%;
 
-  /* Muted */
-  --muted: 0 0% 10%;
-  --muted-foreground: 0 0% 55%;
+  --muted: 12 6.5% 15.1%;
+  --muted-foreground: 24 5.4% 63.9%;
 
-  /* Accent */
-  --accent: 0 0% 10%;
-  --accent-foreground: 0 0% 98%;
+  --accent: 12 6.5% 15.1%;
+  --accent-foreground: 60 9.1% 97.8%;
 
-  /* Destructive - red */
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 60 9.1% 97.8%;
 
-  /* Borders - subtle */
-  --border: 0 0% 14%;
-  --input: 0 0% 14%;
-  --ring: 0 0% 30%;
+  --border: 12 6.5% 15.1%;
+  --input: 12 6.5% 15.1%;
+  --ring: 24 5.7% 82.9%;
 
-  /* Sidebar - slightly different from main bg */
-  --sidebar: 0 0% 2%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-primary: 0 0% 98%;
-  --sidebar-primary-foreground: 0 0% 9%;
-  --sidebar-accent: 0 0% 8%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-border: 0 0% 14%;
-  --sidebar-ring: 0 0% 30%;
+  /* Sidebar */
+  --sidebar-background: 20 14.3% 4.1%;
+  --sidebar-foreground: 240 4.8% 95.9%;
+  --sidebar-primary: 224.3 76.3% 48%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 12 6.5% 15.1%;
+  --sidebar-accent-foreground: 240 4.8% 95.9%;
+  --sidebar-border: 12 6.5% 15.1%;
+  --sidebar-ring: 217.2 91.2% 59.8%;
 }
 
 @theme inline {
@@ -112,7 +118,8 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  --color-sidebar: hsl(var(--sidebar));
+
+  --color-sidebar: hsl(var(--sidebar-background));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar-primary: hsl(var(--sidebar-primary));
   --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
@@ -120,76 +127,23 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
+
   --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
+  --radius-md: calc(var(--radius));
   --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-    font-size: 13px;
-    line-height: 1.5;
-  }
-
-  code,
-  pre {
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: 12px;
-  }
-}
-
-/* =============================================================================
-   Typography Scale - Smaller, Developer-focused
-   ============================================================================= */
-
-@layer utilities {
-  .text-2xs {
-    font-size: 0.6875rem;
-    /* 11px */
-    line-height: 1rem;
-  }
-}
-
-/* =============================================================================
-   Component Overrides - GitHub-like minimal styling
-   ============================================================================= */
-
-@layer components {
-
-  /* Small buttons */
-  .btn-sm {
-    @apply h-7 px-2 text-xs rounded-md font-medium;
-  }
-
-  /* Subtle hover states */
-  .hover-subtle {
-    @apply transition-colors hover:bg-accent;
-  }
-
-  /* Sidebar nav item */
-  .nav-item {
-    @apply flex items-center gap-2 px-2 py-1.5 text-xs rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors;
-  }
-
-  .nav-item-active {
-    @apply text-foreground bg-accent;
-  }
-
-  /* Stat card */
-  .stat-card {
-    @apply p-3 rounded-md border border-border bg-card;
-  }
-
-  /* Code block */
-  .code-block {
-    @apply p-3 rounded-md bg-muted font-mono text-xs overflow-x-auto;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }

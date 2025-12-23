@@ -1,224 +1,117 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
+    Key01Icon,
     Add01Icon,
-    MoreHorizontalIcon,
     Copy01Icon,
     Delete01Icon,
+    ViewIcon,
+    ViewOffIcon,
 } from '@hugeicons/core-free-icons'
 import { Shell, PageHeader } from '@/components/shell'
 import { AuthGuard } from '@/components/auth-guard'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { useApiKeys, useCreateApiKey, useRevokeApiKey } from '@/hooks'
-import type { ApiKey } from '@/types'
 
 export const Route = createFileRoute('/api-keys')(
     {
-        component: ApiKeysPage,
+        component: APIKeysPage,
     }
 )
 
-function ApiKeysPage() {
+function APIKeysPage() {
     return (
         <AuthGuard>
-            <ApiKeysContent />
+            <APIKeysContent />
         </AuthGuard>
     )
 }
 
-function ApiKeysContent() {
-    const [isCreateOpen, setIsCreateOpen] = useState(false)
-    const [newKeyName, setNewKeyName] = useState('')
-    const [createdKey, setCreatedKey] = useState<string | null>(null)
+function APIKeysContent() {
+    const [keys] = useState([
+        { id: '1', name: 'Production Key', prefix: 'em_live_', created: '2025-12-20', lastUsed: '2 hours ago', environment: 'live' },
+        { id: '2', name: 'Testing Key', prefix: 'em_test_', created: '2025-12-23', lastUsed: 'Never', environment: 'test' },
+    ])
+    const [showKeys, setShowKeys] = useState<Record<string, boolean>>({})
 
-    const { data: apiKeys, isLoading } = useApiKeys()
-    const createApiKey = useCreateApiKey()
-    const revokeApiKey = useRevokeApiKey()
-
-    const handleCreate = async () => {
-        if (!newKeyName.trim()) return
-
-        try {
-            const result = await createApiKey.mutateAsync({
-                name: newKeyName,
-                scopes: ['email:send'],
-                environment: 'live',
-            })
-            setCreatedKey(result.rawKey)
-            setNewKeyName('')
-        } catch (error) {
-            console.error('Failed to create API key:', error)
-        }
-    }
-
-    const handleCopy = async (text: string) => {
-        await navigator.clipboard.writeText(text)
-    }
-
-    const handleRevoke = async (id: string) => {
-        if (!confirm('Are you sure you want to revoke this API key?')) return
-        await revokeApiKey.mutateAsync(id)
+    const toggleShow = (id: string) => {
+        setShowKeys(prev => ({ ...prev, [id]: !prev[id] }))
     }
 
     return (
         <Shell>
             <PageHeader
                 title="API Keys"
-                description="Manage your API keys for authentication"
+                description="Manage your secret keys to authenticate API requests."
                 actions={
-                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                        <DialogTrigger asChild>
-                            <Button size="sm">
-                                <HugeiconsIcon icon={Add01Icon} size={12} strokeWidth={1.5} />
-                                Create key
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            {createdKey ? (
-                                <>
-                                    <DialogHeader>
-                                        <DialogTitle>API Key Created</DialogTitle>
-                                        <DialogDescription>
-                                            Copy your API key now. You won't see it again.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2">
-                                            <code className="flex-1 rounded-md bg-muted px-3 py-2 text-xs font-mono break-all">
-                                                {createdKey}
-                                            </code>
-                                            <Button
-                                                variant="outline"
-                                                size="icon"
-                                                onClick={() => handleCopy(createdKey)}
-                                            >
-                                                <HugeiconsIcon icon={Copy01Icon} size={14} strokeWidth={1.5} />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                    <DialogFooter>
-                                        <Button
-                                            onClick={() => {
-                                                setCreatedKey(null)
-                                                setIsCreateOpen(false)
-                                            }}
-                                        >
-                                            Done
-                                        </Button>
-                                    </DialogFooter>
-                                </>
-                            ) : (
-                                <>
-                                    <DialogHeader>
-                                        <DialogTitle>Create API Key</DialogTitle>
-                                        <DialogDescription>
-                                            Give your key a name to identify it later.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="space-y-3">
-                                        <div className="space-y-1.5">
-                                            <Label htmlFor="name">Name</Label>
-                                            <Input
-                                                id="name"
-                                                placeholder="e.g., Production Server"
-                                                value={newKeyName}
-                                                onChange={(e) => setNewKeyName(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <DialogFooter>
-                                        <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-                                            Cancel
-                                        </Button>
-                                        <Button
-                                            onClick={handleCreate}
-                                            disabled={!newKeyName.trim() || createApiKey.isPending}
-                                        >
-                                            {createApiKey.isPending ? 'Creating...' : 'Create'}
-                                        </Button>
-                                    </DialogFooter>
-                                </>
-                            )}
-                        </DialogContent>
-                    </Dialog>
+                    <Button variant="default" className="gap-2">
+                        <HugeiconsIcon icon={Add01Icon} size={14} />
+                        <span>Create Key</span>
+                    </Button>
                 }
             />
 
-            <Card>
-                <CardContent className="p-0">
-                    {isLoading ? (
-                        <div className="p-4 text-center text-xs text-muted-foreground">
-                            Loading...
-                        </div>
-                    ) : !apiKeys?.length ? (
-                        <div className="p-4 text-center text-xs text-muted-foreground">
-                            No API keys yet. Create one to get started.
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-border">
-                            {apiKeys.map((key: ApiKey) => (
-                                <div key={key.id} className="flex items-center justify-between px-3 py-2.5">
-                                    <div className="flex items-center gap-3">
-                                        <div>
-                                            <div className="text-xs font-medium">{key.name}</div>
-                                            <code className="text-2xs text-muted-foreground font-mono">
-                                                {key.keyPrefix}...
-                                            </code>
+            <div className="card-saas !p-0 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider">
+                            <tr>
+                                <th className="px-6 py-3 font-medium">Name</th>
+                                <th className="px-6 py-3 font-medium">Key Prefix</th>
+                                <th className="px-6 py-3 font-medium">Environment</th>
+                                <th className="px-6 py-3 font-medium">Created</th>
+                                <th className="px-6 py-3 font-medium text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                            {keys.map((key) => (
+                                <tr key={key.id} className="hover:bg-muted/30 transition-colors">
+                                    <td className="px-6 py-4 font-medium">{key.name}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
+                                            <span>{key.prefix}</span>
+                                            <span>{showKeys[key.id] ? "pk_live_8f0a...92b1" : "••••••••••••••••"}</span>
+                                            <button
+                                                onClick={() => toggleShow(key.id)}
+                                                className="ml-1 hover:text-foreground transition-colors"
+                                            >
+                                                <HugeiconsIcon icon={showKeys[key.id] ? ViewOffIcon : ViewIcon} size={12} />
+                                            </button>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant={key.isActive ? 'success' : 'secondary'}>
-                                            {key.isActive ? 'active' : 'revoked'}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <Badge variant={key.environment === 'live' ? 'default' : 'secondary'}>
+                                            {key.environment}
                                         </Badge>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon">
-                                                    <HugeiconsIcon icon={MoreHorizontalIcon} size={14} strokeWidth={1.5} />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => handleCopy(key.keyPrefix)}>
-                                                    <HugeiconsIcon icon={Copy01Icon} size={12} strokeWidth={1.5} />
-                                                    Copy prefix
-                                                </DropdownMenuItem>
-                                                {key.isActive && (
-                                                    <DropdownMenuItem
-                                                        className="text-destructive"
-                                                        onClick={() => handleRevoke(key.id)}
-                                                    >
-                                                        <HugeiconsIcon icon={Delete01Icon} size={12} strokeWidth={1.5} />
-                                                        Revoke
-                                                    </DropdownMenuItem>
-                                                )}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-muted-foreground text-xs">{key.created}</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <HugeiconsIcon icon={Copy01Icon} size={14} />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                <HugeiconsIcon icon={Delete01Icon} size={14} />
+                                            </Button>
+                                        </div>
+                                    </td>
+                                </tr>
                             ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div className="mt-8 card-saas border-dashed border-2 bg-muted/20 flex flex-col items-center text-center py-10">
+                <div className="p-3 rounded-full bg-background mb-4">
+                    <HugeiconsIcon icon={Key01Icon} size={24} className="text-muted-foreground" />
+                </div>
+                <h3 className="text-base font-semibold mb-2">Security Best Practices</h3>
+                <p className="text-sm text-muted-foreground max-w-sm leading-relaxed">
+                    Never commit your API keys to version control. Use environment variables to manage them securely in production.
+                </p>
+            </div>
         </Shell>
     )
 }

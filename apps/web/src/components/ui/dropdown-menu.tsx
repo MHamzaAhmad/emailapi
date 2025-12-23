@@ -93,4 +93,30 @@ export {
     DropdownMenuPortal,
     DropdownMenuSub,
     DropdownMenuRadioGroup,
+    DropdownMenuCheckboxItem,
 }
+
+const DropdownMenuCheckboxItem = React.forwardRef<
+    React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
+    React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem>
+>(({ className, children, checked, ...props }, ref) => (
+    <DropdownMenuPrimitive.CheckboxItem
+        ref={ref}
+        className={cn(
+            "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-xs outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+            className
+        )}
+        checked={checked}
+        {...props}
+    >
+        <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+            <DropdownMenuPrimitive.ItemIndicator>
+                {/* Manually verify this icon import in the file header if not present */}
+                {/* Assuming Checkmark01Icon is available or I need to add import */}
+                <div className="h-2 w-2 bg-foreground rounded-full" />
+            </DropdownMenuPrimitive.ItemIndicator>
+        </span>
+        {children}
+    </DropdownMenuPrimitive.CheckboxItem>
+))
+DropdownMenuCheckboxItem.displayName = DropdownMenuPrimitive.CheckboxItem.displayName

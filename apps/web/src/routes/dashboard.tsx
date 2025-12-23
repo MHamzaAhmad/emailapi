@@ -1,16 +1,32 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useUser } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-    MailIcon,
-    CheckmarkCircleIcon,
+    PlusSignIcon,
+    FilterHorizontalIcon,
+    Search01Icon,
+    MoreHorizontalIcon,
+    CheckmarkCircle01Icon,
     AlertCircleIcon,
-    ClockIcon,
+    Clock01Icon,
+    ArrowRight01Icon
 } from '@hugeicons/core-free-icons'
-import { Shell, PageHeader } from '@/components/shell'
+import { Shell } from '@/components/shell'
 import { AuthGuard } from '@/components/auth-guard'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { DataTable } from '@/components/ui/data-table'
+import { ColumnDef } from "@tanstack/react-table"
+import { Switch } from "@/components/ui/switch"
 
 export const Route = createFileRoute('/dashboard')(
     {
@@ -26,116 +42,127 @@ function DashboardPage() {
     )
 }
 
+// Define Event Type
+type Event = {
+    id: string
+    type: string
+    target: string
+    status: 'success' | 'failed' | 'pending'
+    latency: string
+    created_at: string
+}
+
+const data: Event[] = [
+    { id: 'evt_8f2a1b', type: 'Email Dispatch', target: 'user@example.com', status: 'success', latency: '124ms', created_at: '2 mins ago' },
+    { id: 'evt_9k3b2c', type: 'Email Dispatch', target: 'hello@company.com', status: 'success', latency: '156ms', created_at: '5 mins ago' },
+    { id: 'evt_2p4l5d', type: 'Webhook', target: 'https://api.acme.inc/wh', status: 'failed', latency: '42ms', created_at: '12 mins ago' },
+    { id: 'evt_7m9x0e', type: 'Health Check', target: 'us-east-cluster', status: 'success', latency: '12ms', created_at: '15 mins ago' },
+    { id: 'evt_1z8q9f', type: 'Email Dispatch', target: 'billing@client.io', status: 'pending', latency: '-', created_at: 'Just now' },
+    { id: 'evt_3w5r7g', type: 'API Key Created', target: 'System', status: 'success', latency: '24ms', created_at: '1 hour ago' },
+]
+
+const columns: ColumnDef<Event>[] = [
+    {
+        accessorKey: "id",
+        header: "Event ID",
+        cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">{row.getValue("id")}</span>,
+    },
+    {
+        accessorKey: "type",
+        header: "Type",
+        cell: ({ row }) => <span className="font-medium text-xs">{row.getValue("type")}</span>,
+    },
+    {
+        accessorKey: "target",
+        header: "Target / Recipient",
+        cell: ({ row }) => <span className="text-xs text-muted-foreground font-mono">{row.getValue("target")}</span>,
+    },
+    {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => {
+            const status = row.getValue("status") as string
+            return (
+                <div className="flex items-center gap-2">
+                    <Switch checked={status === 'success'} className="scale-75 data-[state=checked]:bg-emerald-500" />
+                    <span className={`text-[10px] font-medium uppercase tracking-wide ${status === 'success' ? 'text-emerald-600' :
+                        status === 'failed' ? 'text-red-500' : 'text-amber-500'
+                        }`}>
+                        {status}
+                    </span>
+                </div>
+            )
+        },
+    },
+    {
+        accessorKey: "latency",
+        header: "Latency",
+        cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">{row.getValue("latency")}</span>,
+    },
+    {
+        accessorKey: "created_at",
+        header: "Time",
+        cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.getValue("created_at")}</span>,
+    },
+    {
+        id: "actions",
+        cell: ({ row }) => {
+            return (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <HugeiconsIcon icon={MoreHorizontalIcon} size={16} />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                        <DropdownMenuItem>Replay Event</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )
+        },
+    },
+]
+
 function DashboardContent() {
     const { user } = useUser()
 
-    // Mock stats - these will come from API
-    const stats = {
-        totalSent: 1234,
-        delivered: 1180,
-        bounced: 12,
-        pending: 42,
-    }
-
-    // Mock activity - will come from API
-    const activity = [
-        { id: '1', type: 'sent', message: 'Email sent to user@example.com', time: '2 min ago' },
-        { id: '2', type: 'delivered', message: 'Email delivered to hello@company.com', time: '5 min ago' },
-        { id: '3', type: 'bounced', message: 'Bounce: invalid@nowhere.com', time: '12 min ago' },
-        { id: '4', type: 'sent', message: 'Email sent to team@startup.io', time: '15 min ago' },
-        { id: '5', type: 'delivered', message: 'Email delivered to dev@example.com', time: '20 min ago' },
-    ]
-
     return (
         <Shell>
-            <PageHeader
-                title="Dashboard"
-                description={`Welcome back${user?.firstName ? `, ${user.firstName}` : ''}`}
-            />
+            {/* Header Area */}
+            <div className="flex flex-col gap-6 mb-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+                        <h1>Dashboard</h1>
+                        <span className="text-muted-foreground font-light">/</span>
+                        <h1 className="text-foreground">Activity</h1>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" className="h-9 gap-2 bg-background hover:bg-muted/50 border-input/60 shadow-sm">
+                            <HugeiconsIcon icon={FilterHorizontalIcon} size={14} />
+                            <span>Filters</span>
+                        </Button>
+                        <Button size="sm" className="h-9 gap-2 shadow-sm font-medium">
+                            <HugeiconsIcon icon={PlusSignIcon} size={14} />
+                            <span>Dispatch Email</span>
+                        </Button>
+                    </div>
+                </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                <StatCard
-                    label="Sent"
-                    value={stats.totalSent}
-                    icon={MailIcon}
-                />
-                <StatCard
-                    label="Delivered"
-                    value={stats.delivered}
-                    icon={CheckmarkCircleIcon}
-                />
-                <StatCard
-                    label="Bounced"
-                    value={stats.bounced}
-                    icon={AlertCircleIcon}
-                    variant="destructive"
-                />
-                <StatCard
-                    label="Pending"
-                    value={stats.pending}
-                    icon={ClockIcon}
-                />
+
             </div>
 
-            {/* Activity Log */}
-            <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle>Activity</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <div className="divide-y divide-border">
-                        {activity.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between px-3 py-2">
-                                <div className="flex items-center gap-2">
-                                    <ActivityIcon type={item.type} />
-                                    <span className="text-xs">{item.message}</span>
-                                </div>
-                                <span className="text-2xs text-muted-foreground">{item.time}</span>
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
+            {/* Main Content - Data Table */}
+            <div className="space-y-4">
+                <DataTable columns={columns} data={data} searchKey="target" />
+            </div>
+
+            <div className="mt-4 text-xs text-muted-foreground">
+                Showing {data.length} of {data.length} events
+            </div>
         </Shell>
     )
-}
-
-function StatCard({
-    label,
-    value,
-    icon,
-    variant,
-}: {
-    label: string
-    value: number
-    icon: typeof MailIcon
-    variant?: 'destructive'
-}) {
-    return (
-        <div className="stat-card">
-            <div className="flex items-center justify-between mb-1">
-                <span className="text-2xs text-muted-foreground">{label}</span>
-                <span className={variant === 'destructive' ? 'text-destructive' : 'text-muted-foreground'}>
-                    <HugeiconsIcon icon={icon} size={14} strokeWidth={1.5} />
-                </span>
-            </div>
-            <div className={`text-xl font-medium ${variant === 'destructive' ? 'text-destructive' : ''}`}>
-                {value.toLocaleString()}
-            </div>
-        </div>
-    )
-}
-
-function ActivityIcon({ type }: { type: string }) {
-    switch (type) {
-        case 'sent':
-            return <Badge variant="secondary">sent</Badge>
-        case 'delivered':
-            return <Badge variant="success">delivered</Badge>
-        case 'bounced':
-            return <Badge variant="destructive">bounced</Badge>
-        default:
-            return <Badge variant="outline">{type}</Badge>
-    }
 }
