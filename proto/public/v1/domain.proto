@@ -184,10 +184,19 @@ message GetDomainResponse {
   Domain domain = 1;
 }
 
-message ListDomainsRequest {}
+message ListDomainsRequest {
+  // Page number (1-indexed). Defaults to 1.
+  int32 page = 1;
+  
+  // Number of items per page. Defaults to 10.
+  int32 page_size = 2;
+}
 
 message ListDomainsResponse {
   repeated Domain data = 1;
+  
+  // Total number of domains for pagination
+  int32 total = 2;
 }
 
 message DeleteDomainRequest {

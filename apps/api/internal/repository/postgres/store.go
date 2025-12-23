@@ -39,7 +39,7 @@ func NewStore(databaseURL string) (*Store, error) {
 	}
 	store.user = NewUserRepository(pool)
 	store.apiKey = NewAPIKeyRepository(pool)
-	store.domain = NewDomainRepository(pool)
+	store.domain = NewDomainRepository(store.queries)
 
 	return store, nil
 }

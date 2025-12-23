@@ -38,3 +38,12 @@ WHERE last_verified_at IS NULL
    OR last_verified_at < NOW() - INTERVAL '5 minutes'
 ORDER BY last_verified_at ASC NULLS FIRST
 LIMIT $1;
+
+-- name: GetDomainsByUserIDPaginated :many
+SELECT * FROM domains 
+WHERE user_id = $1 
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: CountDomainsByUserID :one
+SELECT COUNT(*) FROM domains WHERE user_id = $1;

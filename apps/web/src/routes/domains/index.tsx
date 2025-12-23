@@ -3,9 +3,6 @@ import { useState, useMemo } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
     Add01Icon,
-    ArrowRight01Icon,
-    RefreshIcon,
-    Delete01Icon,
 } from '@hugeicons/core-free-icons'
 import { ColumnDef } from '@tanstack/react-table'
 import { Shell } from '@/components/shell'
@@ -62,7 +59,16 @@ function DomainsContent() {
     const [isAddOpen, setIsAddOpen] = useState(false)
     const [newDomain, setNewDomain] = useState('')
 
-    const { data: domains, isLoading } = useDomains()
+    const [pagination, setPagination] = useState({
+        pageIndex: 0,
+        pageSize: 10,
+    })
+
+    const { data: domainsResponse, isLoading } = useDomains(pagination.pageIndex + 1, pagination.pageSize)
+    const domains = domainsResponse?.data || []
+    const total = domainsResponse?.total || 0
+    const pageCount = Math.ceil(total / pagination.pageSize)
+
     const addMutation = useAddDomain()
     const deleteMutation = useDeleteDomain()
     const verifyMutation = useVerifyDomain()
@@ -115,39 +121,32 @@ function DomainsContent() {
             {
                 id: 'actions',
                 cell: ({ row }) => (
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex items-center justify-end gap-2">
                         <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
+                            size="sm"
+                            className="h-7 text-xs font-medium"
                             onClick={() => verifyMutation.mutate(row.original.id)}
                             disabled={verifyMutation.isPending}
-                            title="Verify"
                         >
-                            <HugeiconsIcon
-                                icon={RefreshIcon}
-                                size={14}
-                                strokeWidth={1.5}
-                                className={verifyMutation.isPending ? 'animate-spin' : ''}
-                            />
+                            {verifyMutation.isPending ? 'Verifying...' : 'Verify'}
                         </Button>
                         <Link
                             to="/domains/$domainId"
                             params={{ domainId: row.original.id }}
                         >
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="View DNS">
-                                <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={1.5} />
+                            <Button variant="ghost" size="sm" className="h-7 text-xs font-medium">
+                                View DNS
                             </Button>
                         </Link>
                         <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            size="sm"
+                            className="h-7 text-xs font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={() => handleDelete(row.original.id)}
                             disabled={deleteMutation.isPending}
-                            title="Delete"
                         >
-                            <HugeiconsIcon icon={Delete01Icon} size={14} strokeWidth={1.5} />
+                            Delete
                         </Button>
                     </div>
                 ),
@@ -210,8 +209,13 @@ function DomainsContent() {
             <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
                 <DataTable
                     columns={columns}
-                    data={domains || []}
+                    data={domains}
                     isLoading={isLoading}
+                    manualPagination={true}
+                    pageCount={pageCount}
+                    pageIndex={pagination.pageIndex}
+                    pageSize={pagination.pageSize}
+                    onPaginationChange={setPagination}
                 />
             </div>
         </Shell>

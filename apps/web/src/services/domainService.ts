@@ -33,8 +33,11 @@ export const domainService = {
     /**
      * List all domains for the current user
      */
-    list: async (): Promise<ListDomainsResponse> => {
-        return domainClient().listDomains({});
+    list: async (params?: { page?: number; pageSize?: number }): Promise<ListDomainsResponse> => {
+        return domainClient().listDomains({
+            page: params?.page || 1,
+            pageSize: params?.pageSize || 10,
+        });
     },
 
     /**

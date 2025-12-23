@@ -76,8 +76,11 @@ type DomainRepository interface {
 	// GetByDomainName retrieves a domain by its name for a specific user.
 	GetByDomainName(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error)
 
-	// GetByUserID retrieves all domains for a user.
-	GetByUserID(ctx context.Context, userID string) ([]*domain.SendingDomain, error)
+	// GetByUserID retrieves domains for a user with pagination.
+	GetByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.SendingDomain, error)
+
+	// CountByUserID returns the total number of domains for a user.
+	CountByUserID(ctx context.Context, userID string) (int, error)
 
 	// Update updates an existing domain.
 	Update(ctx context.Context, d *domain.SendingDomain) error

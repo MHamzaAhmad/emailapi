@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countDomainsByUserID = `-- name: CountDomainsByUserID :one
+SELECT COUNT(*) FROM domains WHERE user_id = $1
+`
+
+func (q *Queries) CountDomainsByUserID(ctx context.Context, userID string) (int64, error) {
+	row := q.db.QueryRow(ctx, countDomainsByUserID, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createDomain = `-- name: CreateDomain :exec
 INSERT INTO domains (
     id, user_id, domain_name, status, verified_for_sending,
@@ -126,6 +137,53 @@ SELECT id, user_id, domain_name, status, verified_for_sending, dkim_tokens, dkim
 
 func (q *Queries) GetDomainsByUserID(ctx context.Context, userID string) ([]Domain, error) {
 	rows, err := q.db.Query(ctx, getDomainsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Domain
+	for rows.Next() {
+		var i Domain
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.DomainName,
+			&i.Status,
+			&i.VerifiedForSending,
+			&i.DkimTokens,
+			&i.DkimStatus,
+			&i.MailFromDomain,
+			&i.MailFromStatus,
+			&i.Region,
+			&i.LastVerifiedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDomainsByUserIDPaginated = `-- name: GetDomainsByUserIDPaginated :many
+SELECT id, user_id, domain_name, status, verified_for_sending, dkim_tokens, dkim_status, mail_from_domain, mail_from_status, region, last_verified_at, created_at, updated_at FROM domains 
+WHERE user_id = $1 
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetDomainsByUserIDPaginatedParams struct {
+	UserID string `json:"user_id"`
+	Limit  int32  `json:"limit"`
+	Offset int32  `json:"offset"`
+}
+
+func (q *Queries) GetDomainsByUserIDPaginated(ctx context.Context, arg GetDomainsByUserIDPaginatedParams) ([]Domain, error) {
+	rows, err := q.db.Query(ctx, getDomainsByUserIDPaginated, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

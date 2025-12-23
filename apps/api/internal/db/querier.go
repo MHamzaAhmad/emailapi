@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	CountActiveApiKeysByUserID(ctx context.Context, userID string) (int64, error)
+	CountDomainsByUserID(ctx context.Context, userID string) (int64, error)
 	CountSuppressionsByUser(ctx context.Context, userID string) (int64, error)
 	CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error)
 	CreateDomain(ctx context.Context, arg CreateDomainParams) error
@@ -27,6 +28,7 @@ type Querier interface {
 	GetDomainByID(ctx context.Context, id string) (Domain, error)
 	GetDomainByName(ctx context.Context, arg GetDomainByNameParams) (Domain, error)
 	GetDomainsByUserID(ctx context.Context, userID string) ([]Domain, error)
+	GetDomainsByUserIDPaginated(ctx context.Context, arg GetDomainsByUserIDPaginatedParams) ([]Domain, error)
 	// Get domains that need verification refresh (never verified or older than threshold)
 	GetStaleDomains(ctx context.Context, limit int32) ([]Domain, error)
 	GetSuppressionByHash(ctx context.Context, emailHash string) (SuppressionList, error)

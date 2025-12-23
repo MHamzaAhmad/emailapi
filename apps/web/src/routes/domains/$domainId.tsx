@@ -34,7 +34,7 @@ function DomainDetailPage() {
 }
 
 function getRecordStatusBadge(status: RecordStatus) {
-    const className = "text-[10px] px-2 py-0.5 uppercase tracking-wider font-medium"
+    const className = "px-2 py-0.5 uppercase tracking-wider font-medium text-[10px]" // Keeping compact for badges inside table
     switch (status) {
         case RecordStatus.FOUND:
             return <Badge variant="success" className={className}>Found</Badge>
@@ -117,17 +117,18 @@ function DomainDetailContent() {
                 accessorKey: 'recordType',
                 header: 'Type',
                 cell: ({ row }) => (
-                    <div className="font-medium text-xs whitespace-nowrap">
+                    <div className="font-medium text-sm whitespace-nowrap">
                         {getRecordTypeName(row.original.recordType)}
                     </div>
                 ),
+                size: 100,
             },
             {
                 accessorKey: 'name',
                 header: 'Host',
                 cell: ({ row }) => (
                     <div className="flex items-center group max-w-[200px] sm:max-w-[300px]">
-                        <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono truncate">
+                        <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono truncate text-foreground/80">
                             {row.original.name}
                         </code>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -137,12 +138,24 @@ function DomainDetailContent() {
                 ),
             },
             {
+                accessorKey: 'priority',
+                header: 'Priority',
+                cell: ({ row }) => (
+                    <div className="text-sm text-muted-foreground font-mono pl-4">
+                        {row.original.recordType === RecordType.MX_INBOUND || row.original.recordType === RecordType.MAIL_FROM_MX
+                            ? row.original.priority
+                            : '-'}
+                    </div>
+                ),
+                size: 80,
+            },
+            {
                 accessorKey: 'value',
                 header: 'Value',
                 cell: ({ row }) => (
                     <div className="flex flex-col gap-1 min-w-0 max-w-[300px] sm:max-w-[400px]">
                         <div className="flex items-center group">
-                            <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono truncate block flex-1">
+                            <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono truncate block flex-1 text-foreground/80">
                                 {row.original.value}
                             </code>
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -150,7 +163,7 @@ function DomainDetailContent() {
                             </div>
                         </div>
                         {row.original.status === RecordStatus.MISMATCH && row.original.discoveredValue && (
-                            <div className="text-2xs text-destructive flex items-center gap-1">
+                            <div className="text-[10px] text-destructive flex items-center gap-1 mt-1">
                                 <HugeiconsIcon icon={AlertCircleIcon} size={10} />
                                 <span className="font-mono truncate">Found: {row.original.discoveredValue}</span>
                             </div>
@@ -162,6 +175,7 @@ function DomainDetailContent() {
                 accessorKey: 'status',
                 header: 'Status',
                 cell: ({ row }) => getRecordStatusBadge(row.original.status),
+                size: 100,
             },
         ],
         []
@@ -209,59 +223,62 @@ function DomainDetailContent() {
                             <HugeiconsIcon icon={ArrowLeft02Icon} size={16} strokeWidth={1.5} />
                         </Link>
                         <div>
-                            <div className="text-sm font-medium leading-none">{domain.domain}</div>
-                            <div className="text-2xs text-muted-foreground mt-1">Region: {domain.region}</div>
+                            <div className="text-sm font-medium leading-none flex items-center gap-2">
+                                {domain.domain}
+                                {domain.summary?.canSend && (
+                                    <Badge variant="success" className="h-5 px-1.5 text-[10px] font-medium tracking-wider uppercase">Active</Badge>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button
                             size="sm"
+                            variant="outline"
                             onClick={() => verifyMutation.mutate(domainId)}
                             disabled={verifyMutation.isPending}
-                            className="h-8 shadow-sm"
+                            className="h-8 shadow-sm text-xs font-medium"
                         >
                             <HugeiconsIcon
                                 icon={RefreshIcon}
                                 size={12}
                                 strokeWidth={1.5}
-                                className={verifyMutation.isPending ? 'animate-spin' : ''}
+                                className={verifyMutation.isPending ? 'animate-spin mr-1.5' : 'mr-1.5'}
                             />
-                            {verifyMutation.isPending ? 'Verifying...' : 'Verify'}
+                            {verifyMutation.isPending ? 'Verifying...' : 'Verify DNS'}
                         </Button>
                     </div>
                 </div>
             </div>
 
             {/* Status Summary */}
-            <Card className="mb-6">
-                <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <div className="text-xs font-medium">
-                                {summary?.canSend ? "Ready to send" : "Verification required"}
-                            </div>
-                            <div className="text-2xs text-muted-foreground mt-0.5">
-                                {summary?.message || "Please configure the DNS records below to verify your domain."}
-                            </div>
+            <Card className="mb-6 rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
+                <div className="p-4 flex items-center justify-between">
+                    <div>
+                        <div className="text-sm font-medium">
+                            {summary?.canSend ? "Ready to send" : "Verification required"}
                         </div>
-                        {summary?.canSend ? (
-                            <Badge variant="success" className="h-6">
-                                <HugeiconsIcon icon={CheckmarkCircle01Icon} size={12} strokeWidth={1.5} className="mr-1" />
-                                Active
-                            </Badge>
-                        ) : summary?.nextAction === 'CONFIGURE_DNS' ? (
-                            <Badge variant="warning" className="h-6">
-                                <HugeiconsIcon icon={AlertCircleIcon} size={12} strokeWidth={1.5} className="mr-1" />
-                                Action Required
-                            </Badge>
-                        ) : (
-                            <Badge variant="secondary" className="h-6">
-                                <HugeiconsIcon icon={Clock01Icon} size={12} strokeWidth={1.5} className="mr-1" />
-                                Waiting
-                            </Badge>
-                        )}
+                        <div className="text-xs text-muted-foreground mt-1">
+                            {summary?.message || "Please configure the DNS records below to verify your domain."}
+                        </div>
                     </div>
-                </CardContent>
+                    {summary?.canSend ? (
+                        <div className="flex items-center text-xs text-emerald-600 font-medium bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
+                            <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} strokeWidth={2} className="mr-1.5" />
+                            Verified for sending
+                        </div>
+                    ) : summary?.nextAction === 'CONFIGURE_DNS' ? (
+                        <div className="flex items-center text-xs text-amber-600 font-medium bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20">
+                            <HugeiconsIcon icon={AlertCircleIcon} size={14} strokeWidth={2} className="mr-1.5" />
+                            {summary.recordsPending} records pending
+                        </div>
+                    ) : (
+                        <div className="flex items-center text-xs text-muted-foreground font-medium bg-muted/50 px-3 py-1.5 rounded-full border border-border/50">
+                            <HugeiconsIcon icon={Clock01Icon} size={14} strokeWidth={2} className="mr-1.5" />
+                            Waiting for propagation
+                        </div>
+                    )}
+                </div>
             </Card>
 
             <div className="space-y-4">

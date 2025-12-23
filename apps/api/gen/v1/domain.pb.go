@@ -790,7 +790,11 @@ func (x *GetDomainResponse) GetDomain() *Domain {
 }
 
 type ListDomainsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Page number (1-indexed). Defaults to 1.
+	Page int32 `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
+	// Number of items per page. Defaults to 10.
+	PageSize      int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -825,9 +829,25 @@ func (*ListDomainsRequest) Descriptor() ([]byte, []int) {
 	return file_v1_domain_proto_rawDescGZIP(), []int{8}
 }
 
+func (x *ListDomainsRequest) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListDomainsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
 type ListDomainsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          []*Domain              `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Data  []*Domain              `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
+	// Total number of domains for pagination
+	Total         int32 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -867,6 +887,13 @@ func (x *ListDomainsResponse) GetData() []*Domain {
 		return x.Data
 	}
 	return nil
+}
+
+func (x *ListDomainsResponse) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
 }
 
 type DeleteDomainRequest struct {
@@ -1127,11 +1154,14 @@ const file_v1_domain_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"7\n" +
 	"\x11GetDomainResponse\x12\"\n" +
 	"\x06domain\x18\x01 \x01(\v2\n" +
-	".v1.DomainR\x06domain\"\x14\n" +
-	"\x12ListDomainsRequest\"5\n" +
+	".v1.DomainR\x06domain\"E\n" +
+	"\x12ListDomainsRequest\x12\x12\n" +
+	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\"K\n" +
 	"\x13ListDomainsResponse\x12\x1e\n" +
 	"\x04data\x18\x01 \x03(\v2\n" +
-	".v1.DomainR\x04data\"%\n" +
+	".v1.DomainR\x04data\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\"%\n" +
 	"\x13DeleteDomainRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"0\n" +
 	"\x14DeleteDomainResponse\x12\x18\n" +

@@ -10,11 +10,10 @@ import type {
 /**
  * Hook to list all domains
  */
-export const useDomains = () => {
+export const useDomains = (page = 1, pageSize = 10) => {
     return useQuery({
-        queryKey: queryKeys.domains.list(),
-        queryFn: domainService.list,
-        select: (data: ListDomainsResponse) => data.data,
+        queryKey: [...queryKeys.domains.list(), page, pageSize],
+        queryFn: () => domainService.list({ page, pageSize }),
     });
 };
 

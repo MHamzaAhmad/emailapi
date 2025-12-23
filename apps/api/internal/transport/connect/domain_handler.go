@@ -76,7 +76,11 @@ func (h *DomainHandler) ListDomains(
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
 	}
 
-	domains, err := h.svc.List(ctx, userID)
+	// Extract pagination params from request
+	page := int(req.Msg.Page)
+	pageSize := int(req.Msg.PageSize)
+
+	domains, total, err := h.svc.List(ctx, userID, page, pageSize)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -87,7 +91,8 @@ func (h *DomainHandler) ListDomains(
 	}
 
 	return connect.NewResponse(&v1.ListDomainsResponse{
-		Data: protoDomains,
+		Data:  protoDomains,
+		Total: int32(total),
 	}), nil
 }
 

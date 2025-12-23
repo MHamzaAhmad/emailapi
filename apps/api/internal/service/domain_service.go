@@ -188,32 +188,58 @@ func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*doma
 	return s.buildDomainWithDetails(d), nil
 }
 
-// List retrieves all domains for a user.
-func (s *DomainService) List(ctx context.Context, userID string) ([]*domain.DomainWithDetails, error) {
-	// Try cache first
-	if s.cache != nil {
+// List retrieves all domains for a user with pagination.
+// Uses cache for unpaginated requests (page <= 1, pageSize >= 100) for performance.
+func (s *DomainService) List(ctx context.Context, userID string, page, pageSize int) ([]*domain.DomainWithDetails, int, error) {
+	// Default pagination if not specified
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 25 // Reasonable default
+	}
+
+	// Use cache for "list all" requests (first page with large page size)
+	// This optimizes the common case of loading domains in UI
+	useCache := page == 1 && pageSize >= 25
+
+	if useCache && s.cache != nil {
 		if cached, _ := s.cache.GetByUserID(ctx, userID); cached != nil {
-			result := make([]*domain.DomainWithDetails, len(cached))
+			// Return cached results (limited to pageSize for consistency)
+			limit := len(cached)
+			if pageSize < limit {
+				limit = pageSize
+			}
+
+			result := make([]*domain.DomainWithDetails, limit)
 			var wg sync.WaitGroup
-			for i, d := range cached {
+			for i := 0; i < limit; i++ {
 				wg.Add(1)
 				go func(idx int, dom *domain.SendingDomain) {
 					defer wg.Done()
 					result[idx] = s.buildDomainWithDetails(dom)
-				}(i, d)
+				}(i, cached[i])
 			}
 			wg.Wait()
-			return result, nil
+			return result, len(cached), nil
 		}
 	}
 
-	domains, err := s.store.Domains().GetByUserID(ctx, userID)
+	offset := (page - 1) * pageSize
+
+	domains, err := s.store.Domains().GetByUserID(ctx, userID, pageSize, offset)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list domains: %w", err)
+		return nil, 0, fmt.Errorf("failed to list domains: %w", err)
 	}
 
-	// Cache the domains list
-	if s.cache != nil {
+	// Get total count for pagination
+	total, err := s.store.Domains().CountByUserID(ctx, userID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count domains: %w", err)
+	}
+
+	// Cache for first page requests
+	if useCache && s.cache != nil && page == 1 {
 		_ = s.cache.SetByUserID(ctx, userID, domains)
 	}
 
@@ -228,7 +254,7 @@ func (s *DomainService) List(ctx context.Context, userID string) ([]*domain.Doma
 	}
 	wg.Wait()
 
-	return result, nil
+	return result, total, nil
 }
 
 // GetVerifiedDomainForSending retrieves a domain by name for sender validation.
