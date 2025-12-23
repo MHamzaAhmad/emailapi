@@ -53,7 +53,7 @@ type SNSInput struct {
 
 // SESEventNotification represents the parsed SES notification inside SNS Message.
 type SESEventNotification struct {
-	NotificationType string             `json:"notificationType"`
+	NotificationType string             `json:"eventType"` // AWS uses "eventType" not "notificationType"
 	Delivery         *SESEventDelivery  `json:"delivery,omitempty"`
 	Bounce           *SESEventBounce    `json:"bounce,omitempty"`
 	Complaint        *SESEventComplaint `json:"complaint,omitempty"`
@@ -111,6 +111,8 @@ type SESEventReject struct {
 // HandleNotification processes an SNS notification from SES.
 // Note: Signature verification is handled by the SNS middleware interceptor.
 func (s *SNSNotificationService) HandleNotification(ctx context.Context, input *SNSInput) error {
+	fmt.Println("SNS notification received:", input.Type)
+	fmt.Printf("SNS notification message: %s\n", input.Message)
 	switch input.Type {
 	case "SubscriptionConfirmation":
 		return s.handleSubscriptionConfirmation(input.SubscribeURL)
@@ -148,6 +150,7 @@ func (s *SNSNotificationService) handleSESEventNotification(ctx context.Context,
 		return fmt.Errorf("failed to parse SES notification: %w", err)
 	}
 
+	fmt.Println("Notification type: ", notification.NotificationType)
 	switch notification.NotificationType {
 	case "Delivery":
 		return s.handleDelivery(ctx, &notification)
@@ -170,12 +173,15 @@ func (s *SNSNotificationService) handleSESEventNotification(ctx context.Context,
 func (s *SNSNotificationService) handleDelivery(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
+	fmt.Println("Delivery notification received: ", messageID)
 	// Look up routing to get user_id
 	routing, err := s.chRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		// Can't find routing - log and skip (might be old email)
 		return nil
 	}
+
+	fmt.Println("User ID: ", routing.UserID)
 
 	// Log activity
 	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "delivered", "success",
@@ -363,6 +369,7 @@ func (s *SNSNotificationService) sendWebhook(ctx context.Context, userID, eventT
 	}
 
 	if err := s.svixClient.EnsureApp(ctx, userID, "User "+userID); err != nil {
+		fmt.Println("Failed to ensure svix app: ", err)
 		return fmt.Errorf("failed to ensure svix app: %w", err)
 	}
 
@@ -372,6 +379,7 @@ func (s *SNSNotificationService) sendWebhook(ctx context.Context, userID, eventT
 	}
 
 	if err := s.svixClient.SendMessage(ctx, userID, eventType, payload); err != nil {
+		fmt.Println("Failed to send webhook: ", err)
 		return fmt.Errorf("failed to send webhook: %w", err)
 	}
 
