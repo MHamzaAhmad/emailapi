@@ -1,12 +1,16 @@
-import api from '@/lib/api';
-import { AppPortalAccessResponse } from '@/types/webhook';
+import { webhookClient } from '@/lib/connect';
+import type { GetAppPortalAccessResponse } from '@/lib/connect';
 
+/**
+ * Webhook Service
+ * Handles webhook-related API operations using Connect RPC
+ */
 export const webhookService = {
     /**
      * Get App Portal access URL and token
      */
-    getAppPortalAccess: async (): Promise<AppPortalAccessResponse> => {
-        return api.post<AppPortalAccessResponse>('/v1/webhooks/portal', {});
+    getAppPortalAccess: async (): Promise<GetAppPortalAccessResponse> => {
+        return webhookClient().getAppPortalAccess({});
     },
 };
 

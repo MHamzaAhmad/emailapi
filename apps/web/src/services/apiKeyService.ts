@@ -1,57 +1,57 @@
-import api from '@/lib/api';
+import { apiKeyClient } from '@/lib/connect';
 import type {
     ApiKey,
     CreateApiKeyRequest,
     CreateApiKeyResponse,
     UpdateApiKeyRequest,
     ListApiKeysResponse,
-} from '@/types';
+} from '@/lib/connect';
 
 /**
  * API Key Service
- * Handles all API key-related operations
+ * Handles all API key-related operations using Connect RPC
  */
 export const apiKeyService = {
     /**
      * Create a new API key
      */
-    create: async (data: CreateApiKeyRequest): Promise<CreateApiKeyResponse> => {
-        return api.post<CreateApiKeyResponse>('/v1/api-keys', data);
+    create: async (data: Omit<CreateApiKeyRequest, '$typeName'>): Promise<CreateApiKeyResponse> => {
+        return apiKeyClient().createApiKey(data);
     },
 
     /**
      * Get an API key by ID
      */
     get: async (id: string): Promise<ApiKey> => {
-        return api.get<ApiKey>(`/v1/api-keys/${id}`);
+        return apiKeyClient().getApiKey({ id });
     },
 
     /**
      * List all API keys for the current user
      */
     list: async (): Promise<ListApiKeysResponse> => {
-        return api.get<ListApiKeysResponse>('/v1/api-keys');
+        return apiKeyClient().listApiKeys({});
     },
 
     /**
      * Update an API key
      */
-    update: async (id: string, data: UpdateApiKeyRequest): Promise<ApiKey> => {
-        return api.patch<ApiKey>(`/v1/api-keys/${id}`, data);
+    update: async (id: string, data: Omit<UpdateApiKeyRequest, 'id' | '$typeName'>): Promise<ApiKey> => {
+        return apiKeyClient().updateApiKey({ id, ...data });
     },
 
     /**
      * Delete an API key permanently
      */
     delete: async (id: string): Promise<void> => {
-        return api.delete(`/v1/api-keys/${id}`);
+        await apiKeyClient().deleteApiKey({ id });
     },
 
     /**
      * Revoke an API key (soft delete)
      */
     revoke: async (id: string): Promise<ApiKey> => {
-        return api.post<ApiKey>(`/v1/api-keys/${id}/revoke`);
+        return apiKeyClient().revokeApiKey({ id });
     },
 };
 

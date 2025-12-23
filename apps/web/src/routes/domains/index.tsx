@@ -24,13 +24,12 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog'
 import { useDomains, useAddDomain, useDeleteDomain, useVerifyDomain } from '@/hooks'
-import type { DomainStatus, Domain } from '@/types'
+import { DomainStatus } from '@/generated/v1/domain_pb'
+import type { Domain } from '@/generated/v1/domain_pb'
 
-export const Route = createFileRoute('/domains/')(
-    {
-        component: DomainsPage,
-    }
-)
+export const Route = createFileRoute('/domains/')({
+    component: DomainsPage,
+})
 
 function DomainsPage() {
     return (
@@ -42,18 +41,18 @@ function DomainsPage() {
 
 function getStatusBadge(status: DomainStatus) {
     switch (status) {
-        case 'ready':
+        case DomainStatus.READY:
             return <Badge variant="success">ready</Badge>
-        case 'verifying':
+        case DomainStatus.VERIFYING:
             return <Badge variant="secondary">verifying</Badge>
-        case 'pending':
+        case DomainStatus.PENDING:
             return <Badge variant="warning">pending</Badge>
-        case 'failed':
+        case DomainStatus.FAILED:
             return <Badge variant="destructive">failed</Badge>
-        case 'degraded':
+        case DomainStatus.DEGRADED:
             return <Badge variant="warning">degraded</Badge>
         default:
-            return <Badge variant="outline">{status}</Badge>
+            return <Badge variant="outline">unknown</Badge>
     }
 }
 

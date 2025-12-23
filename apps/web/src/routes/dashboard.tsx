@@ -36,14 +36,14 @@ const columns: ColumnDef<ActivityLog>[] = [
         cell: ({ row }) => <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(row.getValue("timestamp"))}</span>,
     },
     {
-        accessorKey: "entity_type",
+        accessorKey: "entityType",
         header: "Type",
-        cell: ({ row }) => <span className="capitalize font-medium text-xs">{(row.getValue("entity_type") as string).replace('_', ' ')}</span>,
+        cell: ({ row }) => <span className="capitalize font-medium text-xs">{(row.getValue("entityType") as string).replace('_', ' ')}</span>,
     },
     {
-        accessorKey: "entity_id",
+        accessorKey: "entityId",
         header: "Entity ID",
-        cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">{row.getValue("entity_id")}</span>,
+        cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">{row.getValue("entityId")}</span>,
     },
     {
         accessorKey: "action",
@@ -90,11 +90,11 @@ function DashboardContent() {
     })
 
     const { data, isLoading } = useActivityLogs({
-        page_size: pagination.pageSize,
+        pageSize: pagination.pageSize,
         offset: pagination.pageIndex * pagination.pageSize,
     })
 
-    const totalCount = data?.total_count || 0
+    const totalCount = data?.totalCount || 0
     const pageCount = Math.ceil(totalCount / pagination.pageSize)
 
     return (
@@ -131,7 +131,7 @@ function DashboardContent() {
                     pageIndex={pagination.pageIndex}
                     pageSize={pagination.pageSize}
                     onPaginationChange={setPagination}
-                    searchKey="entity_id"
+                    searchKey="entityId"
                 />
             </div>
 

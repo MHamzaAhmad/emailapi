@@ -1,31 +1,32 @@
-import api from '@/lib/api';
+import { domainClient } from '@/lib/connect';
 import type {
     Domain,
-    GetDomainResponse,
-    AddDomainRequest,
     AddDomainResponse,
-    VerifyDomainResponse,
     ListDomainsResponse,
     DeleteDomainResponse,
-} from '@/types';
+    VerifyDomainResponse,
+} from '@/lib/connect';
 
 /**
  * Domain Service
- * Handles all domain-related API operations
+ * Handles all domain-related API operations using Connect RPC
  */
 export const domainService = {
     /**
      * Add a new domain
      */
-    add: async (data: AddDomainRequest): Promise<AddDomainResponse> => {
-        return api.post<AddDomainResponse>('/v1/domains', data);
+    add: async (data: { domain: string }): Promise<AddDomainResponse> => {
+        return domainClient().addDomain(data);
     },
 
     /**
      * Get a single domain
      */
     get: async (id: string): Promise<Domain> => {
-        const response = await api.get<GetDomainResponse>(`/v1/domains/${id}`);
+        const response = await domainClient().getDomain({ id });
+        if (!response.domain) {
+            throw new Error('Domain not found');
+        }
         return response.domain;
     },
 
@@ -33,21 +34,21 @@ export const domainService = {
      * List all domains for the current user
      */
     list: async (): Promise<ListDomainsResponse> => {
-        return api.get<ListDomainsResponse>('/v1/domains');
+        return domainClient().listDomains({});
     },
 
     /**
      * Delete a domain
      */
     delete: async (id: string): Promise<DeleteDomainResponse> => {
-        return api.delete<DeleteDomainResponse>(`/v1/domains/${id}`);
+        return domainClient().deleteDomain({ id });
     },
 
     /**
      * Verify a domain's DNS configuration
      */
     verify: async (id: string): Promise<VerifyDomainResponse> => {
-        return api.post<VerifyDomainResponse>(`/v1/domains/${id}/verify`);
+        return domainClient().verifyDomain({ id });
     },
 };
 

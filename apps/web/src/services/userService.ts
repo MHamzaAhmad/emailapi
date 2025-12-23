@@ -1,43 +1,48 @@
-import api from '@/lib/api';
+import { userClient } from '@/lib/connect';
 import type {
     User,
     CreateUserRequest,
     CreateUserResponse,
     UpdateUserRequest,
-    ListUsersResponse,
     ListUsersRequest,
-} from '@/types';
+    ListUsersResponse,
+} from '@/lib/connect';
 
 /**
  * User Service
- * Handles all user-related API operations
+ * Handles all user-related API operations using Connect RPC
  */
 export const userService = {
     /**
      * List all users
      */
-    list: async (params?: ListUsersRequest): Promise<ListUsersResponse> => {
-        return api.get<ListUsersResponse>('/v1/users', { params });
+    list: async (params?: Partial<Omit<ListUsersRequest, '$typeName'>>): Promise<ListUsersResponse> => {
+        return userClient().listUsers({
+            pageSize: params?.pageSize ?? 20,
+            offset: params?.offset ?? 0,
+            pageToken: params?.pageToken ?? '',
+        });
     },
+
     /**
      * Create a new user
      */
-    create: async (data: CreateUserRequest): Promise<CreateUserResponse> => {
-        return api.post<CreateUserResponse>('/v1/users', data);
+    create: async (data: Omit<CreateUserRequest, '$typeName'>): Promise<CreateUserResponse> => {
+        return userClient().createUser(data);
     },
 
     /**
      * Get the current authenticated user
      */
     getCurrentUser: async (): Promise<User> => {
-        return api.get<User>('/v1/users/me');
+        return userClient().getCurrentUser({});
     },
 
     /**
      * Update a user by ID
      */
-    update: async (id: string, data: UpdateUserRequest): Promise<User> => {
-        return api.patch<User>(`/v1/users/${id}`, data);
+    update: async (id: string, data: Omit<UpdateUserRequest, 'id' | '$typeName'>): Promise<User> => {
+        return userClient().updateUser({ id, ...data });
     },
 };
 

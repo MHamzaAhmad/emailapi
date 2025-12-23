@@ -9,7 +9,10 @@
         "test": "vitest run"
     },
     "dependencies": {
+        "@bufbuild/protobuf": "^2.10.2",
         "@clerk/clerk-react": "^5.59.2",
+        "@connectrpc/connect": "^2.1.1",
+        "@connectrpc/connect-web": "^2.1.1",
         "@fontsource/geist-mono": "^5.2.7",
         "@fontsource/geist-sans": "^5.2.5",
         "@hugeicons/core-free-icons": "^3.1.0",

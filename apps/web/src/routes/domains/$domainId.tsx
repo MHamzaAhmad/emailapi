@@ -18,7 +18,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useDomain, useVerifyDomain } from '@/hooks'
-import type { DnsRecord, RecordStatus, DomainStatus } from '@/types'
+import { DomainStatus, RecordStatus, RecordType } from '@/generated/v1/domain_pb'
+import type { DnsRecord } from '@/generated/v1/domain_pb'
 
 export const Route = createFileRoute('/domains/$domainId')({
     component: DomainDetailPage,
@@ -32,23 +33,54 @@ function DomainDetailPage() {
     )
 }
 
-function getStatusBadge(status: RecordStatus | DomainStatus) {
+function getRecordStatusBadge(status: RecordStatus) {
     switch (status) {
-        case 'found':
-        case 'ready':
-            return <Badge variant="success">{status}</Badge>
-        case 'verifying':
-            return <Badge variant="secondary">{status}</Badge>
-        case 'pending':
-            return <Badge variant="warning">{status}</Badge>
-        case 'failed':
-        case 'missing':
-        case 'mismatch':
-            return <Badge variant="destructive">{status}</Badge>
-        case 'degraded':
-            return <Badge variant="warning">{status}</Badge>
+        case RecordStatus.FOUND:
+            return <Badge variant="success">found</Badge>
+        case RecordStatus.PENDING:
+            return <Badge variant="warning">pending</Badge>
+        case RecordStatus.MISSING:
+            return <Badge variant="destructive">missing</Badge>
+        case RecordStatus.MISMATCH:
+            return <Badge variant="destructive">mismatch</Badge>
         default:
-            return <Badge variant="outline">{status}</Badge>
+            return <Badge variant="outline">unknown</Badge>
+    }
+}
+
+function getDomainStatusBadge(status: DomainStatus) {
+    switch (status) {
+        case DomainStatus.READY:
+            return <Badge variant="success">ready</Badge>
+        case DomainStatus.VERIFYING:
+            return <Badge variant="secondary">verifying</Badge>
+        case DomainStatus.PENDING:
+            return <Badge variant="warning">pending</Badge>
+        case DomainStatus.FAILED:
+            return <Badge variant="destructive">failed</Badge>
+        case DomainStatus.DEGRADED:
+            return <Badge variant="warning">degraded</Badge>
+        default:
+            return <Badge variant="outline">unknown</Badge>
+    }
+}
+
+function getRecordTypeName(recordType: RecordType): string {
+    switch (recordType) {
+        case RecordType.DKIM:
+            return 'DKIM'
+        case RecordType.SPF:
+            return 'SPF'
+        case RecordType.DMARC:
+            return 'DMARC'
+        case RecordType.MX_INBOUND:
+            return 'MX INBOUND'
+        case RecordType.MAIL_FROM_MX:
+            return 'MAIL FROM MX'
+        case RecordType.MAIL_FROM_SPF:
+            return 'MAIL FROM SPF'
+        default:
+            return 'UNKNOWN'
     }
 }
 
@@ -67,9 +99,9 @@ function DnsRecordCard({ record }: { record: DnsRecord }) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <CardTitle className="text-xs">
-                            {record.recordType.toUpperCase().replace(/_/g, ' ')}
+                            {getRecordTypeName(record.recordType)}
                         </CardTitle>
-                        {getStatusBadge(record.status)}
+                        {getRecordStatusBadge(record.status)}
                     </div>
                     <span className="text-2xs text-muted-foreground">{record.type} Record</span>
                 </div>
@@ -134,7 +166,7 @@ function DnsRecordCard({ record }: { record: DnsRecord }) {
                 </div>
 
                 {/* Discovered Value (if mismatch) */}
-                {record.status === 'mismatch' && record.discoveredValue && (
+                {record.status === RecordStatus.MISMATCH && record.discoveredValue && (
                     <div className="p-2 bg-destructive/10 border border-destructive/30 rounded">
                         <label className="block text-2xs text-destructive mb-1 font-medium">
                             FOUND IN DNS (MISMATCH):

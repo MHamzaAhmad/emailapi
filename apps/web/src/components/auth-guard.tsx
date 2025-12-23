@@ -1,6 +1,6 @@
 import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from '@clerk/clerk-react'
 import { useEffect } from 'react'
-import { setTokenGetter } from '@/lib/api'
+import { setTokenGetter } from '@/lib/connect'
 
 interface AuthGuardProps {
     children: React.ReactNode

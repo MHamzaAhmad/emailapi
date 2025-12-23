@@ -19,3 +19,11 @@ plugins:
   - remote: buf.build/connectrpc/go
     out: ../apps/api/gen
     opt: paths=source_relative
+
+  # TypeScript protobuf messages for web app (Connect v2)
+  - remote: buf.build/bufbuild/es:v2.2.3
+    out: ../apps/web/src/generated
+    opt:
+      - target=ts
+      - import_extension=none
+    include_imports: true
