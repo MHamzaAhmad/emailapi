@@ -10,7 +10,7 @@
    ============================================================================= */
 
 :root {
-  /* Pure light mode (not used, dark is default) */
+  /* Light mode (default) */
   --background: 0 0% 100%;
   --foreground: 0 0% 4%;
   --card: 0 0% 100%;
@@ -44,7 +44,7 @@
 }
 
 .dark {
-  /* Pure black background */
+  /* Dark mode - pure black background */
   --background: 0 0% 0%;
   --foreground: 0 0% 98%;
 
@@ -129,10 +129,6 @@
 @layer base {
   * {
     @apply border-border;
-  }
-
-  html {
-    @apply dark;
   }
 
   body {

@@ -6,6 +6,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { getQueryClient } from '@/lib/queryClient'
 
 import appCss from '../styles.css?url'
+import { ThemeProvider } from '@/providers/themeProvider'
 
 // Get Clerk publishable key from env
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
@@ -66,7 +67,9 @@ function RootComponent() {
     >
       <QueryClientProvider client={queryClient}>
         <TooltipProvider delayDuration={300}>
-          <Outlet />
+          <ThemeProvider attribute="class" defaultTheme="dark">
+            <Outlet />
+          </ThemeProvider>
         </TooltipProvider>
         {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>
@@ -76,7 +79,7 @@ function RootComponent() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <HeadContent />
       </head>
