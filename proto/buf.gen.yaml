@@ -24,9 +24,16 @@ plugins:
       - paths=source_relative
       - generate_unbound_methods=true
 
-  # OpenAPI v2 spec for API docs
+  # OpenAPI v2 spec for API docs (Docusaurus)
   - remote: buf.build/grpc-ecosystem/openapiv2
     out: ../apps/docs/openapi
+    opt:
+      - allow_merge=true
+      - merge_file_name=openapi
+
+  # OpenAPI v2 spec for web app Scalar (auto-generated)
+  - remote: buf.build/grpc-ecosystem/openapiv2
+    out: ../apps/web/public/api
     opt:
       - allow_merge=true
       - merge_file_name=openapi

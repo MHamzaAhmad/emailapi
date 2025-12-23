@@ -1,107 +1,95 @@
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
-import type { ApiError } from '@/types';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios'
+import type { ApiError } from '@/types'
 
-// API base URL - defaults to /api for same-origin requests
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// API base URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
-// Create axios instance with default config
-const axiosInstance: AxiosInstance = axios.create({
+// Create axios instance
+const axiosInstance = axios.create({
     baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
-    timeout: 30000, // 30 seconds
-});
+    timeout: 30000,
+})
 
-// Request interceptor for adding auth token
+// Token getter - will be set by Clerk
+let getToken: (() => Promise<string | null>) | null = null
+
+export const setTokenGetter = (getter: () => Promise<string | null>) => {
+    getToken = getter
+}
+
+// Request interceptor for adding auth token from Clerk
 axiosInstance.interceptors.request.use(
-    (config) => {
-        // Get token from localStorage or wherever you store it
-        const token = typeof window !== 'undefined' ? localStorage.getItem('api_key') : null;
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+    async (config) => {
+        if (getToken) {
+            try {
+                const token = await getToken()
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`
+                }
+            } catch (error) {
+                console.warn('Failed to get auth token:', error)
+            }
         }
-        return config;
+        return config
     },
     (error) => Promise.reject(error)
-);
+)
 
 // Response interceptor for error handling
 axiosInstance.interceptors.response.use(
     (response) => response,
     (error: AxiosError<ApiError>) => {
-        // Handle different error scenarios
         if (error.response) {
-            // Server responded with error status
             const apiError: ApiError = {
                 message: error.response.data?.message || 'An error occurred',
                 code: error.response.data?.code,
                 details: error.response.data?.details,
-            };
-            return Promise.reject(apiError);
+            }
+            return Promise.reject(apiError)
         } else if (error.request) {
-            // Request made but no response received
             return Promise.reject({
                 message: 'Network error. Please check your connection.',
                 code: 'NETWORK_ERROR',
-            } as ApiError);
+            } as ApiError)
         } else {
-            // Error in request configuration
             return Promise.reject({
                 message: error.message,
                 code: 'REQUEST_ERROR',
-            } as ApiError);
+            } as ApiError)
         }
     }
-);
+)
 
 // Generic API request functions
 export const api = {
     get: async <T>(url: string, config?: AxiosRequestConfig): Promise<T> => {
-        const response = await axiosInstance.get<T>(url, config);
-        return response.data;
+        const response = await axiosInstance.get<T>(url, config)
+        return response.data
     },
 
     post: async <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> => {
-        const response = await axiosInstance.post<T>(url, data, config);
-        return response.data;
+        const response = await axiosInstance.post<T>(url, data, config)
+        return response.data
     },
 
     put: async <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> => {
-        const response = await axiosInstance.put<T>(url, data, config);
-        return response.data;
+        const response = await axiosInstance.put<T>(url, data, config)
+        return response.data
     },
 
     patch: async <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> => {
-        const response = await axiosInstance.patch<T>(url, data, config);
-        return response.data;
+        const response = await axiosInstance.patch<T>(url, data, config)
+        return response.data
     },
 
     delete: async <T>(url: string, config?: AxiosRequestConfig): Promise<T> => {
-        const response = await axiosInstance.delete<T>(url, config);
-        return response.data;
+        const response = await axiosInstance.delete<T>(url, config)
+        return response.data
     },
-};
+}
 
-// Set auth token helper
-export const setAuthToken = (token: string | null) => {
-    if (token) {
-        localStorage.setItem('api_key', token);
-    } else {
-        localStorage.removeItem('api_key');
-    }
-};
-
-// Get auth token helper
-export const getAuthToken = (): string | null => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('api_key');
-};
-
-// Clear auth token helper
-export const clearAuthToken = () => {
-    localStorage.removeItem('api_key');
-};
-
-export { axiosInstance };
-export default api;
+export { axiosInstance }
+export default api

@@ -74,6 +74,12 @@ export const queryKeys = {
         detail: (id: string) => [...queryKeys.domains.all, id] as const,
         records: (id: string) => [...queryKeys.domains.all, id, 'records'] as const,
     },
+
+    // Webhook keys
+    webhooks: {
+        all: ['webhooks'] as const,
+        portal: () => [...queryKeys.webhooks.all, 'portal'] as const,
+    },
 } as const;
 
 export default getQueryClient;

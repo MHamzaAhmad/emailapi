@@ -1,132 +1,162 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { Key, Globe, User, ArrowRight, Zap, CheckCircle2 } from 'lucide-react'
+import { SignedIn, SignedOut } from '@clerk/clerk-react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  ArrowRight01Icon,
+  ZapIcon,
+  CodeIcon,
+  ShieldIcon,
+} from '@hugeicons/core-free-icons'
+import { Button } from '@/components/ui/button'
 import { useEffect } from 'react'
-import { getAuthToken } from '@/lib/api'
-import { useCurrentUser } from '@/hooks'
 
-export const Route = createFileRoute('/')({
-  component: Dashboard,
-})
+export const Route = createFileRoute('/')(
+  {
+    component: LandingPage,
+  }
+)
 
-function Dashboard() {
+function LandingPage() {
+  return (
+    <>
+      <SignedIn>
+        <RedirectToDashboard />
+      </SignedIn>
+      <SignedOut>
+        <LandingContent />
+      </SignedOut>
+    </>
+  )
+}
+
+function RedirectToDashboard() {
   const navigate = useNavigate()
-  const token = getAuthToken()
-  const { data: user } = useCurrentUser()
 
   useEffect(() => {
-    if (!token) {
-      navigate({ to: '/user' })
-    }
-  }, [token, navigate])
+    navigate({ to: '/dashboard' })
+  }, [navigate])
 
-  if (!token) return null
+  return null
+}
 
-  const quickActions = [
-    {
-      icon: <Globe className="w-8 h-8 text-cyan-400" />,
-      title: 'Domains',
-      description: 'Configure and verify sending domains',
-      href: '/domains',
-      color: 'cyan',
-    },
-    {
-      icon: <Key className="w-8 h-8 text-purple-400" />,
-      title: 'API Keys',
-      description: 'Manage authentication tokens',
-      href: '/api-keys',
-      color: 'purple',
-    },
-    {
-      icon: <User className="w-8 h-8 text-indigo-400" />,
-      title: 'Session',
-      description: `Logged in as ${user?.name || 'User'}`,
-      href: '/user',
-      color: 'indigo',
-    },
-  ]
-
+function LandingContent() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12">
-      <div className="max-w-5xl mx-auto space-y-12">
-        {/* Header */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 text-cyan-400 mb-2">
-            <Zap className="w-6 h-6" />
-            <span className="font-mono text-sm tracking-wide uppercase">Email API Test Console</span>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border">
+        <div className="mx-auto max-w-5xl flex items-center justify-between px-6 h-12">
+          <div className="flex items-center gap-1.5">
+            <div className="h-5 w-5 rounded border border-foreground/30 flex items-center justify-center">
+              <HugeiconsIcon icon={ArrowRight01Icon} size={12} strokeWidth={1.5} />
+            </div>
+            <span className="text-sm font-medium tracking-tight">emailapi</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Ready to Build.
-          </h1>
-          <p className="text-xl text-slate-400 max-w-2xl">
-            You are authenticated and connected to the local API environment.
-          </p>
-
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm font-medium border border-green-500/20">
-            <CheckCircle2 className="w-4 h-4" />
-            System Operational
-          </div>
-        </div>
-
-        {/* Quick Actions Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {quickActions.map((action) => (
-            <Link
-              key={action.href}
-              to={action.href}
-              className="group relative bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-slate-700 transition-all hover:-translate-y-1 hover:shadow-xl"
-            >
-              <div className={`mb-4 p-3 rounded-xl bg-${action.color}-500/10 w-fit`}>
-                {action.icon}
-              </div>
-              <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
-                {action.title}
-                <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-slate-400" />
-              </h3>
-              <p className="text-slate-400 leading-relaxed">
-                {action.description}
-              </p>
+          <div className="flex items-center gap-3">
+            <Link to="/docs">
+              <Button variant="ghost" size="sm">Docs</Button>
             </Link>
-          ))}
+            <Link to="/sign-in">
+              <Button variant="ghost" size="sm">Sign in</Button>
+            </Link>
+            <Link to="/sign-up">
+              <Button size="sm">Get Started</Button>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="mx-auto max-w-5xl px-6 py-24">
+        <div className="max-w-2xl">
+          <h1 className="text-3xl font-medium tracking-tight leading-tight">
+            The simplest email API
+          </h1>
+          <p className="mt-3 text-base text-muted-foreground leading-relaxed">
+            Send transactional emails with a single API call. No complexity, no bloat.
+            Built for developers who want to ship.
+          </p>
+          <div className="mt-6 flex items-center gap-3">
+            <Link to="/sign-up">
+              <Button>
+                Get your API key
+                <HugeiconsIcon icon={ArrowRight01Icon} size={12} strokeWidth={1.5} />
+              </Button>
+            </Link>
+            <Link to="/docs">
+              <Button variant="outline">Read the docs</Button>
+            </Link>
+          </div>
         </div>
 
-        {/* Status Section */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-            <h3 className="font-semibold text-slate-200 mb-4">Environment</h3>
-            <div className="space-y-3 font-mono text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">API Endpoint</span>
-                <span className="text-cyan-400">http://localhost:8080</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Gateway</span>
-                <span className="text-purple-400">gRPC-Gateway</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Version</span>
-                <span className="text-slate-200">v1.0.0-dev</span>
-              </div>
-            </div>
+        {/* Code example */}
+        <div className="mt-12 rounded-md border border-border bg-card p-4 font-mono text-xs">
+          <div className="text-muted-foreground mb-2"># Send an email</div>
+          <div>
+            <span className="text-muted-foreground">curl</span>{' '}
+            <span className="text-foreground">-X POST https://api.emailapi.dev/v1/send \</span>
           </div>
-          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-            <h3 className="font-semibold text-slate-200 mb-4">Current Session</h3>
-            <div className="space-y-3 font-mono text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">User ID</span>
-                <span className="text-slate-200" title={user?.id}>{user?.id?.slice(0, 12)}...</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Email</span>
-                <span className="text-slate-200">{user?.email}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Role</span>
-                <span className="text-indigo-400">{user?.role}</span>
-              </div>
-            </div>
+          <div className="pl-4">
+            <span className="text-muted-foreground">-H</span>{' '}
+            <span className="text-foreground">"Authorization: Bearer em_live_..." \</span>
+          </div>
+          <div className="pl-4">
+            <span className="text-muted-foreground">-d</span>{' '}
+            <span className="text-foreground">'{`{"from":"you@example.com","to":["user@example.com"],"subject":"Hello","body":"World"}`}'</span>
           </div>
         </div>
+      </section>
+
+      {/* Features */}
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-5xl px-6 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <FeatureCard
+              icon={ZapIcon}
+              title="Fast"
+              description="Sub-100ms API response times. Emails delivered in seconds."
+            />
+            <FeatureCard
+              icon={CodeIcon}
+              title="Simple"
+              description="One endpoint to send emails. Native SDKs for TypeScript and Go."
+            />
+            <FeatureCard
+              icon={ShieldIcon}
+              title="Reliable"
+              description="Automatic retries, bounce handling, and webhook delivery."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border">
+        <div className="mx-auto max-w-5xl px-6 py-6">
+          <p className="text-2xs text-muted-foreground">
+            Email API
+          </p>
+        </div>
+      </footer>
+    </div>
+  )
+}
+
+function FeatureCard({
+  icon,
+  title,
+  description
+}: {
+  icon: typeof ZapIcon
+  title: string
+  description: string
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="text-foreground">
+        <HugeiconsIcon icon={icon} size={16} strokeWidth={1.5} />
       </div>
+      <h3 className="text-sm font-medium">{title}</h3>
+      <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
     </div>
   )
 }

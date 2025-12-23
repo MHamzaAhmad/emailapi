@@ -10,8 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WebhooksRouteImport } from './routes/webhooks'
-import { Route as UserRouteImport } from './routes/user'
-import { Route as TestEmailRouteImport } from './routes/test-email'
+import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ApiKeysRouteImport } from './routes/api-keys'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DomainsIndexRouteImport } from './routes/domains/index'
@@ -22,14 +23,19 @@ const WebhooksRoute = WebhooksRouteImport.update({
   path: '/webhooks',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UserRoute = UserRouteImport.update({
-  id: '/user',
-  path: '/user',
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TestEmailRoute = TestEmailRouteImport.update({
-  id: '/test-email',
-  path: '/test-email',
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiKeysRoute = ApiKeysRouteImport.update({
@@ -56,8 +62,9 @@ const DomainsDomainIdRoute = DomainsDomainIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
-  '/test-email': typeof TestEmailRoute
-  '/user': typeof UserRoute
+  '/dashboard': typeof DashboardRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/webhooks': typeof WebhooksRoute
   '/domains/$domainId': typeof DomainsDomainIdRoute
   '/domains': typeof DomainsIndexRoute
@@ -65,8 +72,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
-  '/test-email': typeof TestEmailRoute
-  '/user': typeof UserRoute
+  '/dashboard': typeof DashboardRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/webhooks': typeof WebhooksRoute
   '/domains/$domainId': typeof DomainsDomainIdRoute
   '/domains': typeof DomainsIndexRoute
@@ -75,8 +83,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api-keys': typeof ApiKeysRoute
-  '/test-email': typeof TestEmailRoute
-  '/user': typeof UserRoute
+  '/dashboard': typeof DashboardRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/webhooks': typeof WebhooksRoute
   '/domains/$domainId': typeof DomainsDomainIdRoute
   '/domains/': typeof DomainsIndexRoute
@@ -86,8 +95,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/api-keys'
-    | '/test-email'
-    | '/user'
+    | '/dashboard'
+    | '/sign-in'
+    | '/sign-up'
     | '/webhooks'
     | '/domains/$domainId'
     | '/domains'
@@ -95,8 +105,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api-keys'
-    | '/test-email'
-    | '/user'
+    | '/dashboard'
+    | '/sign-in'
+    | '/sign-up'
     | '/webhooks'
     | '/domains/$domainId'
     | '/domains'
@@ -104,8 +115,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/api-keys'
-    | '/test-email'
-    | '/user'
+    | '/dashboard'
+    | '/sign-in'
+    | '/sign-up'
     | '/webhooks'
     | '/domains/$domainId'
     | '/domains/'
@@ -114,8 +126,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiKeysRoute: typeof ApiKeysRoute
-  TestEmailRoute: typeof TestEmailRoute
-  UserRoute: typeof UserRoute
+  DashboardRoute: typeof DashboardRoute
+  SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
   WebhooksRoute: typeof WebhooksRoute
   DomainsDomainIdRoute: typeof DomainsDomainIdRoute
   DomainsIndexRoute: typeof DomainsIndexRoute
@@ -130,18 +143,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WebhooksRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/user': {
-      id: '/user'
-      path: '/user'
-      fullPath: '/user'
-      preLoaderRoute: typeof UserRouteImport
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/test-email': {
-      id: '/test-email'
-      path: '/test-email'
-      fullPath: '/test-email'
-      preLoaderRoute: typeof TestEmailRouteImport
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api-keys': {
@@ -178,8 +198,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiKeysRoute: ApiKeysRoute,
-  TestEmailRoute: TestEmailRoute,
-  UserRoute: UserRoute,
+  DashboardRoute: DashboardRoute,
+  SignInRoute: SignInRoute,
+  SignUpRoute: SignUpRoute,
   WebhooksRoute: WebhooksRoute,
   DomainsDomainIdRoute: DomainsDomainIdRoute,
   DomainsIndexRoute: DomainsIndexRoute,
