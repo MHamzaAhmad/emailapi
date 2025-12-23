@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: v1/internal.proto
 
-package emailapiv1
+package v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -391,7 +391,7 @@ var File_v1_internal_proto protoreflect.FileDescriptor
 
 const file_v1_internal_proto_rawDesc = "" +
 	"\n" +
-	"\x11v1/internal.proto\x12\vemailapi.v1\"\x92\x01\n" +
+	"\x11v1/internal.proto\x12\x02v1\"\x92\x01\n" +
 	"\x1aGuardDutyScanResultRequest\x12\x1b\n" +
 	"\ts3_bucket\x18\x01 \x01(\tR\bs3Bucket\x12\x15\n" +
 	"\x06s3_key\x18\x02 \x01(\tR\x05s3Key\x12\x1f\n" +
@@ -422,11 +422,11 @@ const file_v1_internal_proto_rawDesc = "" +
 	"\x04html\x18\t \x01(\tR\x04html\x12*\n" +
 	"\x11original_email_id\x18\n" +
 	" \x01(\tR\x0foriginalEmailId\x12\x17\n" +
-	"\auser_id\x18\v \x01(\tR\x06userId2\xe0\x01\n" +
-	"\x0fInternalService\x12p\n" +
-	"\x19HandleGuardDutyScanResult\x12'.emailapi.v1.GuardDutyScanResultRequest\x1a(.emailapi.v1.GuardDutyScanResultResponse\"\x00\x12[\n" +
-	"\x12HandleClerkWebhook\x12 .emailapi.v1.ClerkWebhookRequest\x1a!.emailapi.v1.ClerkWebhookResponse\"\x00B\x98\x01\n" +
-	"\x0fcom.emailapi.v1B\rInternalProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
+	"\auser_id\x18\v \x01(\tR\x06userId2\xbc\x01\n" +
+	"\x0fInternalService\x12^\n" +
+	"\x19HandleGuardDutyScanResult\x12\x1e.v1.GuardDutyScanResultRequest\x1a\x1f.v1.GuardDutyScanResultResponse\"\x00\x12I\n" +
+	"\x12HandleClerkWebhook\x12\x17.v1.ClerkWebhookRequest\x1a\x18.v1.ClerkWebhookResponse\"\x00B_\n" +
+	"\x06com.v1B\rInternalProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (
 	file_v1_internal_proto_rawDescOnce sync.Once
@@ -442,17 +442,17 @@ func file_v1_internal_proto_rawDescGZIP() []byte {
 
 var file_v1_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_v1_internal_proto_goTypes = []any{
-	(*GuardDutyScanResultRequest)(nil),  // 0: emailapi.v1.GuardDutyScanResultRequest
-	(*GuardDutyScanResultResponse)(nil), // 1: emailapi.v1.GuardDutyScanResultResponse
-	(*ClerkWebhookRequest)(nil),         // 2: emailapi.v1.ClerkWebhookRequest
-	(*ClerkWebhookResponse)(nil),        // 3: emailapi.v1.ClerkWebhookResponse
-	(*InboundEmail)(nil),                // 4: emailapi.v1.InboundEmail
+	(*GuardDutyScanResultRequest)(nil),  // 0: v1.GuardDutyScanResultRequest
+	(*GuardDutyScanResultResponse)(nil), // 1: v1.GuardDutyScanResultResponse
+	(*ClerkWebhookRequest)(nil),         // 2: v1.ClerkWebhookRequest
+	(*ClerkWebhookResponse)(nil),        // 3: v1.ClerkWebhookResponse
+	(*InboundEmail)(nil),                // 4: v1.InboundEmail
 }
 var file_v1_internal_proto_depIdxs = []int32{
-	0, // 0: emailapi.v1.InternalService.HandleGuardDutyScanResult:input_type -> emailapi.v1.GuardDutyScanResultRequest
-	2, // 1: emailapi.v1.InternalService.HandleClerkWebhook:input_type -> emailapi.v1.ClerkWebhookRequest
-	1, // 2: emailapi.v1.InternalService.HandleGuardDutyScanResult:output_type -> emailapi.v1.GuardDutyScanResultResponse
-	3, // 3: emailapi.v1.InternalService.HandleClerkWebhook:output_type -> emailapi.v1.ClerkWebhookResponse
+	0, // 0: v1.InternalService.HandleGuardDutyScanResult:input_type -> v1.GuardDutyScanResultRequest
+	2, // 1: v1.InternalService.HandleClerkWebhook:input_type -> v1.ClerkWebhookRequest
+	1, // 2: v1.InternalService.HandleGuardDutyScanResult:output_type -> v1.GuardDutyScanResultResponse
+	3, // 3: v1.InternalService.HandleClerkWebhook:output_type -> v1.ClerkWebhookResponse
 	2, // [2:4] is the sub-list for method output_type
 	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

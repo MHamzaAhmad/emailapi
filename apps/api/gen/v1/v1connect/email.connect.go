@@ -2,7 +2,7 @@
 //
 // Source: v1/email.proto
 
-package emailapiv1connect
+package v1connect
 
 import (
 	connect "connectrpc.com/connect"
@@ -22,7 +22,7 @@ const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// EmailServiceName is the fully-qualified name of the EmailService service.
-	EmailServiceName = "emailapi.v1.EmailService"
+	EmailServiceName = "v1.EmailService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -34,10 +34,10 @@ const (
 // period.
 const (
 	// EmailServiceSendEmailProcedure is the fully-qualified name of the EmailService's SendEmail RPC.
-	EmailServiceSendEmailProcedure = "/emailapi.v1.EmailService/SendEmail"
+	EmailServiceSendEmailProcedure = "/v1.EmailService/SendEmail"
 )
 
-// EmailServiceClient is a client for the emailapi.v1.EmailService service.
+// EmailServiceClient is a client for the v1.EmailService service.
 type EmailServiceClient interface {
 	// SendEmail sends an email immediately or queues it for async processing.
 	//
@@ -49,10 +49,10 @@ type EmailServiceClient interface {
 	SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error)
 }
 
-// NewEmailServiceClient constructs a client for the emailapi.v1.EmailService service. By default,
-// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
-// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
-// or connect.WithGRPCWeb() options.
+// NewEmailServiceClient constructs a client for the v1.EmailService service. By default, it uses
+// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
@@ -74,12 +74,12 @@ type emailServiceClient struct {
 	sendEmail *connect.Client[v1.SendEmailRequest, v1.SendEmailResponse]
 }
 
-// SendEmail calls emailapi.v1.EmailService.SendEmail.
+// SendEmail calls v1.EmailService.SendEmail.
 func (c *emailServiceClient) SendEmail(ctx context.Context, req *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error) {
 	return c.sendEmail.CallUnary(ctx, req)
 }
 
-// EmailServiceHandler is an implementation of the emailapi.v1.EmailService service.
+// EmailServiceHandler is an implementation of the v1.EmailService service.
 type EmailServiceHandler interface {
 	// SendEmail sends an email immediately or queues it for async processing.
 	//
@@ -104,7 +104,7 @@ func NewEmailServiceHandler(svc EmailServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(emailServiceMethods.ByName("SendEmail")),
 		connect.WithHandlerOptions(opts...),
 	)
-	return "/emailapi.v1.EmailService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/v1.EmailService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case EmailServiceSendEmailProcedure:
 			emailServiceSendEmailHandler.ServeHTTP(w, r)
@@ -118,5 +118,5 @@ func NewEmailServiceHandler(svc EmailServiceHandler, opts ...connect.HandlerOpti
 type UnimplementedEmailServiceHandler struct{}
 
 func (UnimplementedEmailServiceHandler) SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.EmailService.SendEmail is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.EmailService.SendEmail is not implemented"))
 }

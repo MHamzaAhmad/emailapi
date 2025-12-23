@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: v1/email.proto
 
-package emailapiv1
+package v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -348,7 +348,7 @@ type SendEmailResponse struct {
 	// Unique identifier for tracking this email.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Current status of the email.
-	Status EmailStatus `protobuf:"varint,2,opt,name=status,proto3,enum=emailapi.v1.EmailStatus" json:"status,omitempty"`
+	Status EmailStatus `protobuf:"varint,2,opt,name=status,proto3,enum=v1.EmailStatus" json:"status,omitempty"`
 	// SES Message-ID (only present if sync send succeeded).
 	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
 	// Human-readable status message.
@@ -419,7 +419,7 @@ var File_v1_email_proto protoreflect.FileDescriptor
 
 const file_v1_email_proto_rawDesc = "" +
 	"\n" +
-	"\x0ev1/email.proto\x12\vemailapi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf0\x03\n" +
+	"\x0ev1/email.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xde\x03\n" +
 	"\x10SendEmailRequest\x12\x12\n" +
 	"\x04from\x18\x01 \x01(\tR\x04from\x12\x0e\n" +
 	"\x02to\x18\x02 \x03(\tR\x02to\x12\x0e\n" +
@@ -427,11 +427,11 @@ const file_v1_email_proto_rawDesc = "" +
 	"\x03bcc\x18\x04 \x03(\tR\x03bcc\x12\x18\n" +
 	"\asubject\x18\x05 \x01(\tR\asubject\x12\x12\n" +
 	"\x04body\x18\x06 \x01(\tR\x04body\x12\x12\n" +
-	"\x04html\x18\a \x01(\tR\x04html\x12G\n" +
-	"\bmetadata\x18\b \x03(\v2+.emailapi.v1.SendEmailRequest.MetadataEntryR\bmetadata\x12=\n" +
-	"\fscheduled_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\vscheduledAt\x129\n" +
+	"\x04html\x18\a \x01(\tR\x04html\x12>\n" +
+	"\bmetadata\x18\b \x03(\v2\".v1.SendEmailRequest.MetadataEntryR\bmetadata\x12=\n" +
+	"\fscheduled_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\vscheduledAt\x120\n" +
 	"\vattachments\x18\n" +
-	" \x03(\v2\x17.emailapi.v1.AttachmentR\vattachments\x12\x1e\n" +
+	" \x03(\v2\x0e.v1.AttachmentR\vattachments\x12\x1e\n" +
 	"\vin_reply_to\x18\v \x01(\tR\tinReplyTo\x12\x1e\n" +
 	"\n" +
 	"references\x18\f \x03(\tR\n" +
@@ -446,10 +446,10 @@ const file_v1_email_proto_rawDesc = "" +
 	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\x12\x12\n" +
 	"\x03url\x18\x03 \x01(\tH\x00R\x03url\x12'\n" +
 	"\x0ebase64_content\x18\x04 \x01(\tH\x00R\rbase64ContentB\b\n" +
-	"\x06source\"\x9b\x01\n" +
+	"\x06source\"\x92\x01\n" +
 	"\x11SendEmailResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x120\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x18.emailapi.v1.EmailStatusR\x06status\x12\x1d\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12'\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x0f.v1.EmailStatusR\x06status\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x03 \x01(\tR\tmessageId\x12%\n" +
 	"\x0estatus_message\x18\x04 \x01(\tR\rstatusMessage*\x91\x01\n" +
@@ -458,11 +458,11 @@ const file_v1_email_proto_rawDesc = "" +
 	"\x13EMAIL_STATUS_QUEUED\x10\x01\x12\x1b\n" +
 	"\x17EMAIL_STATUS_PROCESSING\x10\x02\x12\x15\n" +
 	"\x11EMAIL_STATUS_SENT\x10\x03\x12\x17\n" +
-	"\x13EMAIL_STATUS_FAILED\x10\x042\\\n" +
-	"\fEmailService\x12L\n" +
-	"\tSendEmail\x12\x1d.emailapi.v1.SendEmailRequest\x1a\x1e.emailapi.v1.SendEmailResponse\"\x00B\x95\x01\n" +
-	"\x0fcom.emailapi.v1B\n" +
-	"EmailProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
+	"\x13EMAIL_STATUS_FAILED\x10\x042J\n" +
+	"\fEmailService\x12:\n" +
+	"\tSendEmail\x12\x14.v1.SendEmailRequest\x1a\x15.v1.SendEmailResponse\"\x00B\\\n" +
+	"\x06com.v1B\n" +
+	"EmailProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (
 	file_v1_email_proto_rawDescOnce sync.Once
@@ -479,20 +479,20 @@ func file_v1_email_proto_rawDescGZIP() []byte {
 var file_v1_email_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_v1_email_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_v1_email_proto_goTypes = []any{
-	(EmailStatus)(0),              // 0: emailapi.v1.EmailStatus
-	(*SendEmailRequest)(nil),      // 1: emailapi.v1.SendEmailRequest
-	(*Attachment)(nil),            // 2: emailapi.v1.Attachment
-	(*SendEmailResponse)(nil),     // 3: emailapi.v1.SendEmailResponse
-	nil,                           // 4: emailapi.v1.SendEmailRequest.MetadataEntry
+	(EmailStatus)(0),              // 0: v1.EmailStatus
+	(*SendEmailRequest)(nil),      // 1: v1.SendEmailRequest
+	(*Attachment)(nil),            // 2: v1.Attachment
+	(*SendEmailResponse)(nil),     // 3: v1.SendEmailResponse
+	nil,                           // 4: v1.SendEmailRequest.MetadataEntry
 	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_v1_email_proto_depIdxs = []int32{
-	4, // 0: emailapi.v1.SendEmailRequest.metadata:type_name -> emailapi.v1.SendEmailRequest.MetadataEntry
-	5, // 1: emailapi.v1.SendEmailRequest.scheduled_at:type_name -> google.protobuf.Timestamp
-	2, // 2: emailapi.v1.SendEmailRequest.attachments:type_name -> emailapi.v1.Attachment
-	0, // 3: emailapi.v1.SendEmailResponse.status:type_name -> emailapi.v1.EmailStatus
-	1, // 4: emailapi.v1.EmailService.SendEmail:input_type -> emailapi.v1.SendEmailRequest
-	3, // 5: emailapi.v1.EmailService.SendEmail:output_type -> emailapi.v1.SendEmailResponse
+	4, // 0: v1.SendEmailRequest.metadata:type_name -> v1.SendEmailRequest.MetadataEntry
+	5, // 1: v1.SendEmailRequest.scheduled_at:type_name -> google.protobuf.Timestamp
+	2, // 2: v1.SendEmailRequest.attachments:type_name -> v1.Attachment
+	0, // 3: v1.SendEmailResponse.status:type_name -> v1.EmailStatus
+	1, // 4: v1.EmailService.SendEmail:input_type -> v1.SendEmailRequest
+	3, // 5: v1.EmailService.SendEmail:output_type -> v1.SendEmailResponse
 	5, // [5:6] is the sub-list for method output_type
 	4, // [4:5] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name

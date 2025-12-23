@@ -2,7 +2,7 @@
 //
 // Source: v1/sns.proto
 
-package emailapiv1connect
+package v1connect
 
 import (
 	connect "connectrpc.com/connect"
@@ -22,7 +22,7 @@ const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// SnsServiceName is the fully-qualified name of the SnsService service.
-	SnsServiceName = "emailapi.v1.SnsService"
+	SnsServiceName = "v1.SnsService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -35,13 +35,13 @@ const (
 const (
 	// SnsServiceHandleSNSNotificationProcedure is the fully-qualified name of the SnsService's
 	// HandleSNSNotification RPC.
-	SnsServiceHandleSNSNotificationProcedure = "/emailapi.v1.SnsService/HandleSNSNotification"
+	SnsServiceHandleSNSNotificationProcedure = "/v1.SnsService/HandleSNSNotification"
 	// SnsServiceHandleInboundSNSNotificationProcedure is the fully-qualified name of the SnsService's
 	// HandleInboundSNSNotification RPC.
-	SnsServiceHandleInboundSNSNotificationProcedure = "/emailapi.v1.SnsService/HandleInboundSNSNotification"
+	SnsServiceHandleInboundSNSNotificationProcedure = "/v1.SnsService/HandleInboundSNSNotification"
 )
 
-// SnsServiceClient is a client for the emailapi.v1.SnsService service.
+// SnsServiceClient is a client for the v1.SnsService service.
 type SnsServiceClient interface {
 	// HandleSNSNotification processes SNS notifications for outbound email events.
 	// (Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay)
@@ -51,8 +51,8 @@ type SnsServiceClient interface {
 	HandleInboundSNSNotification(context.Context, *connect.Request[v1.SNSNotificationRequest]) (*connect.Response[v1.SNSNotificationResponse], error)
 }
 
-// NewSnsServiceClient constructs a client for the emailapi.v1.SnsService service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// NewSnsServiceClient constructs a client for the v1.SnsService service. By default, it uses the
+// Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
 // uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
 // connect.WithGRPCWeb() options.
 //
@@ -83,17 +83,17 @@ type snsServiceClient struct {
 	handleInboundSNSNotification *connect.Client[v1.SNSNotificationRequest, v1.SNSNotificationResponse]
 }
 
-// HandleSNSNotification calls emailapi.v1.SnsService.HandleSNSNotification.
+// HandleSNSNotification calls v1.SnsService.HandleSNSNotification.
 func (c *snsServiceClient) HandleSNSNotification(ctx context.Context, req *connect.Request[v1.SNSNotificationRequest]) (*connect.Response[v1.SNSNotificationResponse], error) {
 	return c.handleSNSNotification.CallUnary(ctx, req)
 }
 
-// HandleInboundSNSNotification calls emailapi.v1.SnsService.HandleInboundSNSNotification.
+// HandleInboundSNSNotification calls v1.SnsService.HandleInboundSNSNotification.
 func (c *snsServiceClient) HandleInboundSNSNotification(ctx context.Context, req *connect.Request[v1.SNSNotificationRequest]) (*connect.Response[v1.SNSNotificationResponse], error) {
 	return c.handleInboundSNSNotification.CallUnary(ctx, req)
 }
 
-// SnsServiceHandler is an implementation of the emailapi.v1.SnsService service.
+// SnsServiceHandler is an implementation of the v1.SnsService service.
 type SnsServiceHandler interface {
 	// HandleSNSNotification processes SNS notifications for outbound email events.
 	// (Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay)
@@ -122,7 +122,7 @@ func NewSnsServiceHandler(svc SnsServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(snsServiceMethods.ByName("HandleInboundSNSNotification")),
 		connect.WithHandlerOptions(opts...),
 	)
-	return "/emailapi.v1.SnsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/v1.SnsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case SnsServiceHandleSNSNotificationProcedure:
 			snsServiceHandleSNSNotificationHandler.ServeHTTP(w, r)
@@ -138,9 +138,9 @@ func NewSnsServiceHandler(svc SnsServiceHandler, opts ...connect.HandlerOption) 
 type UnimplementedSnsServiceHandler struct{}
 
 func (UnimplementedSnsServiceHandler) HandleSNSNotification(context.Context, *connect.Request[v1.SNSNotificationRequest]) (*connect.Response[v1.SNSNotificationResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.SnsService.HandleSNSNotification is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.SnsService.HandleSNSNotification is not implemented"))
 }
 
 func (UnimplementedSnsServiceHandler) HandleInboundSNSNotification(context.Context, *connect.Request[v1.SNSNotificationRequest]) (*connect.Response[v1.SNSNotificationResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.SnsService.HandleInboundSNSNotification is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.SnsService.HandleInboundSNSNotification is not implemented"))
 }

@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: v1/user.proto
 
-package emailapiv1
+package v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -75,7 +75,7 @@ type CreateUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Role          UserRole               `protobuf:"varint,3,opt,name=role,proto3,enum=emailapi.v1.UserRole" json:"role,omitempty"`
+	Role          UserRole               `protobuf:"varint,3,opt,name=role,proto3,enum=v1.UserRole" json:"role,omitempty"`
 	ExternalId    *string                `protobuf:"bytes,4,opt,name=external_id,json=externalId,proto3,oneof" json:"external_id,omitempty"` // Clerk user ID (set via webhook)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -240,7 +240,7 @@ type User struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Role          UserRole               `protobuf:"varint,4,opt,name=role,proto3,enum=emailapi.v1.UserRole" json:"role,omitempty"`
+	Role          UserRole               `protobuf:"varint,4,opt,name=role,proto3,enum=v1.UserRole" json:"role,omitempty"`
 	IsActive      bool                   `protobuf:"varint,5,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
@@ -340,7 +340,7 @@ type UpdateUserRequest struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Email         *string                `protobuf:"bytes,2,opt,name=email,proto3,oneof" json:"email,omitempty"`
 	Name          *string                `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
-	Role          *UserRole              `protobuf:"varint,4,opt,name=role,proto3,enum=emailapi.v1.UserRole,oneof" json:"role,omitempty"`
+	Role          *UserRole              `protobuf:"varint,4,opt,name=role,proto3,enum=v1.UserRole,oneof" json:"role,omitempty"`
 	IsActive      *bool                  `protobuf:"varint,5,opt,name=is_active,json=isActive,proto3,oneof" json:"is_active,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -535,24 +535,24 @@ var File_v1_user_proto protoreflect.FileDescriptor
 
 const file_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\rv1/user.proto\x12\vemailapi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9e\x01\n" +
+	"\rv1/user.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x95\x01\n" +
 	"\x11CreateUserRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12)\n" +
-	"\x04role\x18\x03 \x01(\x0e2\x15.emailapi.v1.UserRoleR\x04role\x12$\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
+	"\x04role\x18\x03 \x01(\x0e2\f.v1.UserRoleR\x04role\x12$\n" +
 	"\vexternal_id\x18\x04 \x01(\tH\x00R\n" +
 	"externalId\x88\x01\x01B\x0e\n" +
-	"\f_external_id\"n\n" +
-	"\x12CreateUserResponse\x12%\n" +
-	"\x04user\x18\x01 \x01(\v2\x11.emailapi.v1.UserR\x04user\x12\x18\n" +
+	"\f_external_id\"e\n" +
+	"\x12CreateUserResponse\x12\x1c\n" +
+	"\x04user\x18\x01 \x01(\v2\b.v1.UserR\x04user\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x17\n" +
 	"\aapi_key\x18\x03 \x01(\tR\x06apiKey\"\x17\n" +
-	"\x15GetCurrentUserRequest\"\xb4\x02\n" +
+	"\x15GetCurrentUserRequest\"\xab\x02\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12)\n" +
-	"\x04role\x18\x04 \x01(\x0e2\x15.emailapi.v1.UserRoleR\x04role\x12\x1b\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12 \n" +
+	"\x04role\x18\x04 \x01(\x0e2\f.v1.UserRoleR\x04role\x12\x1b\n" +
 	"\tis_active\x18\x05 \x01(\bR\bisActive\x129\n" +
 	"\n" +
 	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
@@ -560,12 +560,12 @@ const file_v1_user_proto_rawDesc = "" +
 	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12$\n" +
 	"\vexternal_id\x18\b \x01(\tH\x00R\n" +
 	"externalId\x88\x01\x01B\x0e\n" +
-	"\f_external_id\"\xd3\x01\n" +
+	"\f_external_id\"\xca\x01\n" +
 	"\x11UpdateUserRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\x05email\x18\x02 \x01(\tH\x00R\x05email\x88\x01\x01\x12\x17\n" +
-	"\x04name\x18\x03 \x01(\tH\x01R\x04name\x88\x01\x01\x12.\n" +
-	"\x04role\x18\x04 \x01(\x0e2\x15.emailapi.v1.UserRoleH\x02R\x04role\x88\x01\x01\x12 \n" +
+	"\x04name\x18\x03 \x01(\tH\x01R\x04name\x88\x01\x01\x12%\n" +
+	"\x04role\x18\x04 \x01(\x0e2\f.v1.UserRoleH\x02R\x04role\x88\x01\x01\x12 \n" +
 	"\tis_active\x18\x05 \x01(\bH\x03R\bisActive\x88\x01\x01B\b\n" +
 	"\x06_emailB\a\n" +
 	"\x05_nameB\a\n" +
@@ -576,24 +576,24 @@ const file_v1_user_proto_rawDesc = "" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\x12\x16\n" +
-	"\x06offset\x18\x03 \x01(\x05R\x06offset\"\x85\x01\n" +
-	"\x11ListUsersResponse\x12'\n" +
-	"\x05users\x18\x01 \x03(\v2\x11.emailapi.v1.UserR\x05users\x12\x1f\n" +
+	"\x06offset\x18\x03 \x01(\x05R\x06offset\"|\n" +
+	"\x11ListUsersResponse\x12\x1e\n" +
+	"\x05users\x18\x01 \x03(\v2\b.v1.UserR\x05users\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x05R\n" +
 	"totalCount\x12&\n" +
 	"\x0fnext_page_token\x18\x03 \x01(\tR\rnextPageToken*P\n" +
 	"\bUserRole\x12\x19\n" +
 	"\x15USER_ROLE_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fUSER_ROLE_ADMIN\x10\x01\x12\x14\n" +
-	"\x10USER_ROLE_MEMBER\x10\x022\xba\x02\n" +
-	"\vUserService\x12O\n" +
+	"\x10USER_ROLE_MEMBER\x10\x022\xf2\x01\n" +
+	"\vUserService\x12=\n" +
 	"\n" +
-	"CreateUser\x12\x1e.emailapi.v1.CreateUserRequest\x1a\x1f.emailapi.v1.CreateUserResponse\"\x00\x12I\n" +
-	"\x0eGetCurrentUser\x12\".emailapi.v1.GetCurrentUserRequest\x1a\x11.emailapi.v1.User\"\x00\x12A\n" +
+	"CreateUser\x12\x15.v1.CreateUserRequest\x1a\x16.v1.CreateUserResponse\"\x00\x127\n" +
+	"\x0eGetCurrentUser\x12\x19.v1.GetCurrentUserRequest\x1a\b.v1.User\"\x00\x12/\n" +
 	"\n" +
-	"UpdateUser\x12\x1e.emailapi.v1.UpdateUserRequest\x1a\x11.emailapi.v1.User\"\x00\x12L\n" +
-	"\tListUsers\x12\x1d.emailapi.v1.ListUsersRequest\x1a\x1e.emailapi.v1.ListUsersResponse\"\x00B\x94\x01\n" +
-	"\x0fcom.emailapi.v1B\tUserProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
+	"UpdateUser\x12\x15.v1.UpdateUserRequest\x1a\b.v1.User\"\x00\x12:\n" +
+	"\tListUsers\x12\x14.v1.ListUsersRequest\x1a\x15.v1.ListUsersResponse\"\x00B[\n" +
+	"\x06com.v1B\tUserProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (
 	file_v1_user_proto_rawDescOnce sync.Once
@@ -610,32 +610,32 @@ func file_v1_user_proto_rawDescGZIP() []byte {
 var file_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_v1_user_proto_goTypes = []any{
-	(UserRole)(0),                 // 0: emailapi.v1.UserRole
-	(*CreateUserRequest)(nil),     // 1: emailapi.v1.CreateUserRequest
-	(*CreateUserResponse)(nil),    // 2: emailapi.v1.CreateUserResponse
-	(*GetCurrentUserRequest)(nil), // 3: emailapi.v1.GetCurrentUserRequest
-	(*User)(nil),                  // 4: emailapi.v1.User
-	(*UpdateUserRequest)(nil),     // 5: emailapi.v1.UpdateUserRequest
-	(*ListUsersRequest)(nil),      // 6: emailapi.v1.ListUsersRequest
-	(*ListUsersResponse)(nil),     // 7: emailapi.v1.ListUsersResponse
+	(UserRole)(0),                 // 0: v1.UserRole
+	(*CreateUserRequest)(nil),     // 1: v1.CreateUserRequest
+	(*CreateUserResponse)(nil),    // 2: v1.CreateUserResponse
+	(*GetCurrentUserRequest)(nil), // 3: v1.GetCurrentUserRequest
+	(*User)(nil),                  // 4: v1.User
+	(*UpdateUserRequest)(nil),     // 5: v1.UpdateUserRequest
+	(*ListUsersRequest)(nil),      // 6: v1.ListUsersRequest
+	(*ListUsersResponse)(nil),     // 7: v1.ListUsersResponse
 	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
 }
 var file_v1_user_proto_depIdxs = []int32{
-	0,  // 0: emailapi.v1.CreateUserRequest.role:type_name -> emailapi.v1.UserRole
-	4,  // 1: emailapi.v1.CreateUserResponse.user:type_name -> emailapi.v1.User
-	0,  // 2: emailapi.v1.User.role:type_name -> emailapi.v1.UserRole
-	8,  // 3: emailapi.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	8,  // 4: emailapi.v1.User.updated_at:type_name -> google.protobuf.Timestamp
-	0,  // 5: emailapi.v1.UpdateUserRequest.role:type_name -> emailapi.v1.UserRole
-	4,  // 6: emailapi.v1.ListUsersResponse.users:type_name -> emailapi.v1.User
-	1,  // 7: emailapi.v1.UserService.CreateUser:input_type -> emailapi.v1.CreateUserRequest
-	3,  // 8: emailapi.v1.UserService.GetCurrentUser:input_type -> emailapi.v1.GetCurrentUserRequest
-	5,  // 9: emailapi.v1.UserService.UpdateUser:input_type -> emailapi.v1.UpdateUserRequest
-	6,  // 10: emailapi.v1.UserService.ListUsers:input_type -> emailapi.v1.ListUsersRequest
-	2,  // 11: emailapi.v1.UserService.CreateUser:output_type -> emailapi.v1.CreateUserResponse
-	4,  // 12: emailapi.v1.UserService.GetCurrentUser:output_type -> emailapi.v1.User
-	4,  // 13: emailapi.v1.UserService.UpdateUser:output_type -> emailapi.v1.User
-	7,  // 14: emailapi.v1.UserService.ListUsers:output_type -> emailapi.v1.ListUsersResponse
+	0,  // 0: v1.CreateUserRequest.role:type_name -> v1.UserRole
+	4,  // 1: v1.CreateUserResponse.user:type_name -> v1.User
+	0,  // 2: v1.User.role:type_name -> v1.UserRole
+	8,  // 3: v1.User.created_at:type_name -> google.protobuf.Timestamp
+	8,  // 4: v1.User.updated_at:type_name -> google.protobuf.Timestamp
+	0,  // 5: v1.UpdateUserRequest.role:type_name -> v1.UserRole
+	4,  // 6: v1.ListUsersResponse.users:type_name -> v1.User
+	1,  // 7: v1.UserService.CreateUser:input_type -> v1.CreateUserRequest
+	3,  // 8: v1.UserService.GetCurrentUser:input_type -> v1.GetCurrentUserRequest
+	5,  // 9: v1.UserService.UpdateUser:input_type -> v1.UpdateUserRequest
+	6,  // 10: v1.UserService.ListUsers:input_type -> v1.ListUsersRequest
+	2,  // 11: v1.UserService.CreateUser:output_type -> v1.CreateUserResponse
+	4,  // 12: v1.UserService.GetCurrentUser:output_type -> v1.User
+	4,  // 13: v1.UserService.UpdateUser:output_type -> v1.User
+	7,  // 14: v1.UserService.ListUsers:output_type -> v1.ListUsersResponse
 	11, // [11:15] is the sub-list for method output_type
 	7,  // [7:11] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name

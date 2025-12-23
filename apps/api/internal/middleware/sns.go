@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	emailapiv1 "github.com/emailapi/api/gen/v1"
+	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/external/sns"
 )
 
@@ -39,7 +39,7 @@ func (i *SNSInterceptor) Unary() grpc.UnaryServerInterceptor {
 		}
 
 		// Type assert to SNS request
-		snsReq, ok := req.(*emailapiv1.SNSNotificationRequest)
+		snsReq, ok := req.(*v1.SNSNotificationRequest)
 		if !ok {
 			// Not an SNS request, pass through
 			return handler(ctx, req)

@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jordan-wright/email"
 
-	emailapiv1 "github.com/emailapi/api/gen/v1"
+	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/external/s3"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/webhook"
@@ -241,7 +241,7 @@ func (s *InboundEmailService) deliverWebhook(ctx context.Context, email *Inbound
 		return nil
 	}
 
-	event := &emailapiv1.EmailReplyReceivedEvent{
+	event := &v1.EmailReplyReceivedEvent{
 		Id:            email.ID,
 		UserId:        email.UserID,
 		MessageId:     email.MessageID,

@@ -2,7 +2,7 @@
 //
 // Source: v1/activity.proto
 
-package emailapiv1connect
+package v1connect
 
 import (
 	connect "connectrpc.com/connect"
@@ -22,7 +22,7 @@ const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// ActivityServiceName is the fully-qualified name of the ActivityService service.
-	ActivityServiceName = "emailapi.v1.ActivityService"
+	ActivityServiceName = "v1.ActivityService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -35,19 +35,19 @@ const (
 const (
 	// ActivityServiceListActivityLogsProcedure is the fully-qualified name of the ActivityService's
 	// ListActivityLogs RPC.
-	ActivityServiceListActivityLogsProcedure = "/emailapi.v1.ActivityService/ListActivityLogs"
+	ActivityServiceListActivityLogsProcedure = "/v1.ActivityService/ListActivityLogs"
 )
 
-// ActivityServiceClient is a client for the emailapi.v1.ActivityService service.
+// ActivityServiceClient is a client for the v1.ActivityService service.
 type ActivityServiceClient interface {
 	// ListActivityLogs retrieves activity logs with pagination and optional filters.
 	ListActivityLogs(context.Context, *connect.Request[v1.ListActivityLogsRequest]) (*connect.Response[v1.ListActivityLogsResponse], error)
 }
 
-// NewActivityServiceClient constructs a client for the emailapi.v1.ActivityService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
+// NewActivityServiceClient constructs a client for the v1.ActivityService service. By default, it
+// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
@@ -69,12 +69,12 @@ type activityServiceClient struct {
 	listActivityLogs *connect.Client[v1.ListActivityLogsRequest, v1.ListActivityLogsResponse]
 }
 
-// ListActivityLogs calls emailapi.v1.ActivityService.ListActivityLogs.
+// ListActivityLogs calls v1.ActivityService.ListActivityLogs.
 func (c *activityServiceClient) ListActivityLogs(ctx context.Context, req *connect.Request[v1.ListActivityLogsRequest]) (*connect.Response[v1.ListActivityLogsResponse], error) {
 	return c.listActivityLogs.CallUnary(ctx, req)
 }
 
-// ActivityServiceHandler is an implementation of the emailapi.v1.ActivityService service.
+// ActivityServiceHandler is an implementation of the v1.ActivityService service.
 type ActivityServiceHandler interface {
 	// ListActivityLogs retrieves activity logs with pagination and optional filters.
 	ListActivityLogs(context.Context, *connect.Request[v1.ListActivityLogsRequest]) (*connect.Response[v1.ListActivityLogsResponse], error)
@@ -93,7 +93,7 @@ func NewActivityServiceHandler(svc ActivityServiceHandler, opts ...connect.Handl
 		connect.WithSchema(activityServiceMethods.ByName("ListActivityLogs")),
 		connect.WithHandlerOptions(opts...),
 	)
-	return "/emailapi.v1.ActivityService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/v1.ActivityService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ActivityServiceListActivityLogsProcedure:
 			activityServiceListActivityLogsHandler.ServeHTTP(w, r)
@@ -107,5 +107,5 @@ func NewActivityServiceHandler(svc ActivityServiceHandler, opts ...connect.Handl
 type UnimplementedActivityServiceHandler struct{}
 
 func (UnimplementedActivityServiceHandler) ListActivityLogs(context.Context, *connect.Request[v1.ListActivityLogsRequest]) (*connect.Response[v1.ListActivityLogsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.ActivityService.ListActivityLogs is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.ActivityService.ListActivityLogs is not implemented"))
 }

@@ -8,15 +8,15 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	emailapiv1 "github.com/emailapi/api/gen/v1"
-	"github.com/emailapi/api/gen/v1/emailapiv1connect"
+	v1 "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/service"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
 )
 
 // ActivityHandler implements the Connect ActivityServiceHandler.
 type ActivityHandler struct {
-	emailapiv1connect.UnimplementedActivityServiceHandler
+	v1connect.UnimplementedActivityServiceHandler
 	svc *service.ActivityService
 }
 
@@ -28,8 +28,8 @@ func NewActivityHandler(svc *service.ActivityService) *ActivityHandler {
 // ListActivityLogs retrieves activity logs with pagination and optional filters.
 func (h *ActivityHandler) ListActivityLogs(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.ListActivityLogsRequest],
-) (*connect.Response[emailapiv1.ListActivityLogsResponse], error) {
+	req *connect.Request[v1.ListActivityLogsRequest],
+) (*connect.Response[v1.ListActivityLogsResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
@@ -57,9 +57,9 @@ func (h *ActivityHandler) ListActivityLogs(
 	}
 
 	// Convert to proto
-	protoLogs := make([]*emailapiv1.ActivityLog, len(logs))
+	protoLogs := make([]*v1.ActivityLog, len(logs))
 	for i, log := range logs {
-		protoLogs[i] = &emailapiv1.ActivityLog{
+		protoLogs[i] = &v1.ActivityLog{
 			Id:         log.ID,
 			UserId:     log.UserID,
 			EntityType: log.EntityType,
@@ -72,7 +72,7 @@ func (h *ActivityHandler) ListActivityLogs(
 		}
 	}
 
-	return connect.NewResponse(&emailapiv1.ListActivityLogsResponse{
+	return connect.NewResponse(&v1.ListActivityLogsResponse{
 		Logs:       protoLogs,
 		TotalCount: int32(totalCount),
 	}), nil

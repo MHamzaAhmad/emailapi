@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: v1/apikey.proto
 
-package emailapiv1
+package v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -152,9 +152,9 @@ type ApiKey struct {
 	// Display prefix of the key (e.g., ep_live_abc123...).
 	KeyPrefix string `protobuf:"bytes,4,opt,name=key_prefix,json=keyPrefix,proto3" json:"key_prefix,omitempty"`
 	// Scopes granted to this API key.
-	Scopes []Scope `protobuf:"varint,5,rep,packed,name=scopes,proto3,enum=emailapi.v1.Scope" json:"scopes,omitempty"`
+	Scopes []Scope `protobuf:"varint,5,rep,packed,name=scopes,proto3,enum=v1.Scope" json:"scopes,omitempty"`
 	// Environment (live or dev).
-	Environment Environment `protobuf:"varint,6,opt,name=environment,proto3,enum=emailapi.v1.Environment" json:"environment,omitempty"`
+	Environment Environment `protobuf:"varint,6,opt,name=environment,proto3,enum=v1.Environment" json:"environment,omitempty"`
 	// Whether the API key is active.
 	IsActive bool `protobuf:"varint,7,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
 	// When the API key was last used.
@@ -282,9 +282,9 @@ type CreateApiKeyRequest struct {
 	// Human-readable name for the API key.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Scopes to grant to this API key.
-	Scopes []Scope `protobuf:"varint,2,rep,packed,name=scopes,proto3,enum=emailapi.v1.Scope" json:"scopes,omitempty"`
+	Scopes []Scope `protobuf:"varint,2,rep,packed,name=scopes,proto3,enum=v1.Scope" json:"scopes,omitempty"`
 	// Environment (live or dev). Defaults to live.
-	Environment Environment `protobuf:"varint,3,opt,name=environment,proto3,enum=emailapi.v1.Environment" json:"environment,omitempty"`
+	Environment Environment `protobuf:"varint,3,opt,name=environment,proto3,enum=v1.Environment" json:"environment,omitempty"`
 	// Optional expiration time.
 	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -550,7 +550,7 @@ type UpdateApiKeyRequest struct {
 	// Human-readable name for the API key.
 	Name *string `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
 	// Scopes to grant to this API key.
-	Scopes []Scope `protobuf:"varint,3,rep,packed,name=scopes,proto3,enum=emailapi.v1.Scope" json:"scopes,omitempty"`
+	Scopes []Scope `protobuf:"varint,3,rep,packed,name=scopes,proto3,enum=v1.Scope" json:"scopes,omitempty"`
 	// Whether the API key is active.
 	IsActive *bool `protobuf:"varint,4,opt,name=is_active,json=isActive,proto3,oneof" json:"is_active,omitempty"`
 	// Optional expiration time.
@@ -757,15 +757,15 @@ var File_v1_apikey_proto protoreflect.FileDescriptor
 
 const file_v1_apikey_proto_rawDesc = "" +
 	"\n" +
-	"\x0fv1/apikey.proto\x12\vemailapi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd8\x03\n" +
+	"\x0fv1/apikey.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc6\x03\n" +
 	"\x06ApiKey\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
-	"key_prefix\x18\x04 \x01(\tR\tkeyPrefix\x12*\n" +
-	"\x06scopes\x18\x05 \x03(\x0e2\x12.emailapi.v1.ScopeR\x06scopes\x12:\n" +
-	"\venvironment\x18\x06 \x01(\x0e2\x18.emailapi.v1.EnvironmentR\venvironment\x12\x1b\n" +
+	"key_prefix\x18\x04 \x01(\tR\tkeyPrefix\x12!\n" +
+	"\x06scopes\x18\x05 \x03(\x0e2\t.v1.ScopeR\x06scopes\x121\n" +
+	"\venvironment\x18\x06 \x01(\x0e2\x0f.v1.EnvironmentR\venvironment\x12\x1b\n" +
 	"\tis_active\x18\a \x01(\bR\bisActive\x12<\n" +
 	"\flast_used_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastUsedAt\x129\n" +
@@ -775,26 +775,28 @@ const file_v1_apikey_proto_rawDesc = "" +
 	"created_at\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xcc\x01\n" +
+	"updated_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xba\x01\n" +
 	"\x13CreateApiKeyRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12*\n" +
-	"\x06scopes\x18\x02 \x03(\x0e2\x12.emailapi.v1.ScopeR\x06scopes\x12:\n" +
-	"\venvironment\x18\x03 \x01(\x0e2\x18.emailapi.v1.EnvironmentR\venvironment\x129\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
+	"\x06scopes\x18\x02 \x03(\x0e2\t.v1.ScopeR\x06scopes\x121\n" +
+	"\venvironment\x18\x03 \x01(\x0e2\x0f.v1.EnvironmentR\venvironment\x129\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"w\n" +
-	"\x14CreateApiKeyResponse\x12,\n" +
-	"\aapi_key\x18\x01 \x01(\v2\x13.emailapi.v1.ApiKeyR\x06apiKey\x12\x17\n" +
+	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"n\n" +
+	"\x14CreateApiKeyResponse\x12#\n" +
+	"\aapi_key\x18\x01 \x01(\v2\n" +
+	".v1.ApiKeyR\x06apiKey\x12\x17\n" +
 	"\araw_key\x18\x02 \x01(\tR\x06rawKey\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\"\"\n" +
 	"\x10GetApiKeyRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x14\n" +
-	"\x12ListApiKeysRequest\">\n" +
-	"\x13ListApiKeysResponse\x12'\n" +
-	"\x04data\x18\x01 \x03(\v2\x13.emailapi.v1.ApiKeyR\x04data\"\xde\x01\n" +
+	"\x12ListApiKeysRequest\"5\n" +
+	"\x13ListApiKeysResponse\x12\x1e\n" +
+	"\x04data\x18\x01 \x03(\v2\n" +
+	".v1.ApiKeyR\x04data\"\xd5\x01\n" +
 	"\x13UpdateApiKeyRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
-	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12*\n" +
-	"\x06scopes\x18\x03 \x03(\x0e2\x12.emailapi.v1.ScopeR\x06scopes\x12 \n" +
+	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12!\n" +
+	"\x06scopes\x18\x03 \x03(\x0e2\t.v1.ScopeR\x06scopes\x12 \n" +
 	"\tis_active\x18\x04 \x01(\bH\x01R\bisActive\x88\x01\x01\x129\n" +
 	"\n" +
 	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAtB\a\n" +
@@ -819,15 +821,18 @@ const file_v1_apikey_proto_rawDesc = "" +
 	"\x11SCOPE_APIKEY_READ\x10\x05\x12\x16\n" +
 	"\x12SCOPE_APIKEY_WRITE\x10\x06\x12\x13\n" +
 	"\x0fSCOPE_USER_READ\x10\a\x12\x14\n" +
-	"\x10SCOPE_USER_WRITE\x10\b2\xe6\x03\n" +
-	"\rApiKeyService\x12U\n" +
-	"\fCreateApiKey\x12 .emailapi.v1.CreateApiKeyRequest\x1a!.emailapi.v1.CreateApiKeyResponse\"\x00\x12A\n" +
-	"\tGetApiKey\x12\x1d.emailapi.v1.GetApiKeyRequest\x1a\x13.emailapi.v1.ApiKey\"\x00\x12R\n" +
-	"\vListApiKeys\x12\x1f.emailapi.v1.ListApiKeysRequest\x1a .emailapi.v1.ListApiKeysResponse\"\x00\x12G\n" +
-	"\fUpdateApiKey\x12 .emailapi.v1.UpdateApiKeyRequest\x1a\x13.emailapi.v1.ApiKey\"\x00\x12U\n" +
-	"\fDeleteApiKey\x12 .emailapi.v1.DeleteApiKeyRequest\x1a!.emailapi.v1.DeleteApiKeyResponse\"\x00\x12G\n" +
-	"\fRevokeApiKey\x12 .emailapi.v1.RevokeApiKeyRequest\x1a\x13.emailapi.v1.ApiKey\"\x00B\x96\x01\n" +
-	"\x0fcom.emailapi.v1B\vApikeyProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
+	"\x10SCOPE_USER_WRITE\x10\b2\xfa\x02\n" +
+	"\rApiKeyService\x12C\n" +
+	"\fCreateApiKey\x12\x17.v1.CreateApiKeyRequest\x1a\x18.v1.CreateApiKeyResponse\"\x00\x12/\n" +
+	"\tGetApiKey\x12\x14.v1.GetApiKeyRequest\x1a\n" +
+	".v1.ApiKey\"\x00\x12@\n" +
+	"\vListApiKeys\x12\x16.v1.ListApiKeysRequest\x1a\x17.v1.ListApiKeysResponse\"\x00\x125\n" +
+	"\fUpdateApiKey\x12\x17.v1.UpdateApiKeyRequest\x1a\n" +
+	".v1.ApiKey\"\x00\x12C\n" +
+	"\fDeleteApiKey\x12\x17.v1.DeleteApiKeyRequest\x1a\x18.v1.DeleteApiKeyResponse\"\x00\x125\n" +
+	"\fRevokeApiKey\x12\x17.v1.RevokeApiKeyRequest\x1a\n" +
+	".v1.ApiKey\"\x00B]\n" +
+	"\x06com.v1B\vApikeyProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (
 	file_v1_apikey_proto_rawDescOnce sync.Once
@@ -844,46 +849,46 @@ func file_v1_apikey_proto_rawDescGZIP() []byte {
 var file_v1_apikey_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_v1_apikey_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_v1_apikey_proto_goTypes = []any{
-	(Environment)(0),              // 0: emailapi.v1.Environment
-	(Scope)(0),                    // 1: emailapi.v1.Scope
-	(*ApiKey)(nil),                // 2: emailapi.v1.ApiKey
-	(*CreateApiKeyRequest)(nil),   // 3: emailapi.v1.CreateApiKeyRequest
-	(*CreateApiKeyResponse)(nil),  // 4: emailapi.v1.CreateApiKeyResponse
-	(*GetApiKeyRequest)(nil),      // 5: emailapi.v1.GetApiKeyRequest
-	(*ListApiKeysRequest)(nil),    // 6: emailapi.v1.ListApiKeysRequest
-	(*ListApiKeysResponse)(nil),   // 7: emailapi.v1.ListApiKeysResponse
-	(*UpdateApiKeyRequest)(nil),   // 8: emailapi.v1.UpdateApiKeyRequest
-	(*DeleteApiKeyRequest)(nil),   // 9: emailapi.v1.DeleteApiKeyRequest
-	(*DeleteApiKeyResponse)(nil),  // 10: emailapi.v1.DeleteApiKeyResponse
-	(*RevokeApiKeyRequest)(nil),   // 11: emailapi.v1.RevokeApiKeyRequest
+	(Environment)(0),              // 0: v1.Environment
+	(Scope)(0),                    // 1: v1.Scope
+	(*ApiKey)(nil),                // 2: v1.ApiKey
+	(*CreateApiKeyRequest)(nil),   // 3: v1.CreateApiKeyRequest
+	(*CreateApiKeyResponse)(nil),  // 4: v1.CreateApiKeyResponse
+	(*GetApiKeyRequest)(nil),      // 5: v1.GetApiKeyRequest
+	(*ListApiKeysRequest)(nil),    // 6: v1.ListApiKeysRequest
+	(*ListApiKeysResponse)(nil),   // 7: v1.ListApiKeysResponse
+	(*UpdateApiKeyRequest)(nil),   // 8: v1.UpdateApiKeyRequest
+	(*DeleteApiKeyRequest)(nil),   // 9: v1.DeleteApiKeyRequest
+	(*DeleteApiKeyResponse)(nil),  // 10: v1.DeleteApiKeyResponse
+	(*RevokeApiKeyRequest)(nil),   // 11: v1.RevokeApiKeyRequest
 	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
 }
 var file_v1_apikey_proto_depIdxs = []int32{
-	1,  // 0: emailapi.v1.ApiKey.scopes:type_name -> emailapi.v1.Scope
-	0,  // 1: emailapi.v1.ApiKey.environment:type_name -> emailapi.v1.Environment
-	12, // 2: emailapi.v1.ApiKey.last_used_at:type_name -> google.protobuf.Timestamp
-	12, // 3: emailapi.v1.ApiKey.expires_at:type_name -> google.protobuf.Timestamp
-	12, // 4: emailapi.v1.ApiKey.created_at:type_name -> google.protobuf.Timestamp
-	12, // 5: emailapi.v1.ApiKey.updated_at:type_name -> google.protobuf.Timestamp
-	1,  // 6: emailapi.v1.CreateApiKeyRequest.scopes:type_name -> emailapi.v1.Scope
-	0,  // 7: emailapi.v1.CreateApiKeyRequest.environment:type_name -> emailapi.v1.Environment
-	12, // 8: emailapi.v1.CreateApiKeyRequest.expires_at:type_name -> google.protobuf.Timestamp
-	2,  // 9: emailapi.v1.CreateApiKeyResponse.api_key:type_name -> emailapi.v1.ApiKey
-	2,  // 10: emailapi.v1.ListApiKeysResponse.data:type_name -> emailapi.v1.ApiKey
-	1,  // 11: emailapi.v1.UpdateApiKeyRequest.scopes:type_name -> emailapi.v1.Scope
-	12, // 12: emailapi.v1.UpdateApiKeyRequest.expires_at:type_name -> google.protobuf.Timestamp
-	3,  // 13: emailapi.v1.ApiKeyService.CreateApiKey:input_type -> emailapi.v1.CreateApiKeyRequest
-	5,  // 14: emailapi.v1.ApiKeyService.GetApiKey:input_type -> emailapi.v1.GetApiKeyRequest
-	6,  // 15: emailapi.v1.ApiKeyService.ListApiKeys:input_type -> emailapi.v1.ListApiKeysRequest
-	8,  // 16: emailapi.v1.ApiKeyService.UpdateApiKey:input_type -> emailapi.v1.UpdateApiKeyRequest
-	9,  // 17: emailapi.v1.ApiKeyService.DeleteApiKey:input_type -> emailapi.v1.DeleteApiKeyRequest
-	11, // 18: emailapi.v1.ApiKeyService.RevokeApiKey:input_type -> emailapi.v1.RevokeApiKeyRequest
-	4,  // 19: emailapi.v1.ApiKeyService.CreateApiKey:output_type -> emailapi.v1.CreateApiKeyResponse
-	2,  // 20: emailapi.v1.ApiKeyService.GetApiKey:output_type -> emailapi.v1.ApiKey
-	7,  // 21: emailapi.v1.ApiKeyService.ListApiKeys:output_type -> emailapi.v1.ListApiKeysResponse
-	2,  // 22: emailapi.v1.ApiKeyService.UpdateApiKey:output_type -> emailapi.v1.ApiKey
-	10, // 23: emailapi.v1.ApiKeyService.DeleteApiKey:output_type -> emailapi.v1.DeleteApiKeyResponse
-	2,  // 24: emailapi.v1.ApiKeyService.RevokeApiKey:output_type -> emailapi.v1.ApiKey
+	1,  // 0: v1.ApiKey.scopes:type_name -> v1.Scope
+	0,  // 1: v1.ApiKey.environment:type_name -> v1.Environment
+	12, // 2: v1.ApiKey.last_used_at:type_name -> google.protobuf.Timestamp
+	12, // 3: v1.ApiKey.expires_at:type_name -> google.protobuf.Timestamp
+	12, // 4: v1.ApiKey.created_at:type_name -> google.protobuf.Timestamp
+	12, // 5: v1.ApiKey.updated_at:type_name -> google.protobuf.Timestamp
+	1,  // 6: v1.CreateApiKeyRequest.scopes:type_name -> v1.Scope
+	0,  // 7: v1.CreateApiKeyRequest.environment:type_name -> v1.Environment
+	12, // 8: v1.CreateApiKeyRequest.expires_at:type_name -> google.protobuf.Timestamp
+	2,  // 9: v1.CreateApiKeyResponse.api_key:type_name -> v1.ApiKey
+	2,  // 10: v1.ListApiKeysResponse.data:type_name -> v1.ApiKey
+	1,  // 11: v1.UpdateApiKeyRequest.scopes:type_name -> v1.Scope
+	12, // 12: v1.UpdateApiKeyRequest.expires_at:type_name -> google.protobuf.Timestamp
+	3,  // 13: v1.ApiKeyService.CreateApiKey:input_type -> v1.CreateApiKeyRequest
+	5,  // 14: v1.ApiKeyService.GetApiKey:input_type -> v1.GetApiKeyRequest
+	6,  // 15: v1.ApiKeyService.ListApiKeys:input_type -> v1.ListApiKeysRequest
+	8,  // 16: v1.ApiKeyService.UpdateApiKey:input_type -> v1.UpdateApiKeyRequest
+	9,  // 17: v1.ApiKeyService.DeleteApiKey:input_type -> v1.DeleteApiKeyRequest
+	11, // 18: v1.ApiKeyService.RevokeApiKey:input_type -> v1.RevokeApiKeyRequest
+	4,  // 19: v1.ApiKeyService.CreateApiKey:output_type -> v1.CreateApiKeyResponse
+	2,  // 20: v1.ApiKeyService.GetApiKey:output_type -> v1.ApiKey
+	7,  // 21: v1.ApiKeyService.ListApiKeys:output_type -> v1.ListApiKeysResponse
+	2,  // 22: v1.ApiKeyService.UpdateApiKey:output_type -> v1.ApiKey
+	10, // 23: v1.ApiKeyService.DeleteApiKey:output_type -> v1.DeleteApiKeyResponse
+	2,  // 24: v1.ApiKeyService.RevokeApiKey:output_type -> v1.ApiKey
 	19, // [19:25] is the sub-list for method output_type
 	13, // [13:19] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name

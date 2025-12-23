@@ -14,7 +14,7 @@ import (
 	"github.com/jordan-wright/email"
 	"github.com/riverqueue/river"
 
-	emailapiv1 "github.com/emailapi/api/gen/v1"
+	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
@@ -235,7 +235,7 @@ func (w *EmailWorker) sendWebhook(ctx context.Context, args SendEmailArgs, messa
 		return
 	}
 
-	event := &emailapiv1.EmailSentEvent{
+	event := &v1.EmailSentEvent{
 		EmailId:   args.EmailID,
 		UserId:    args.UserID,
 		MessageId: messageID,

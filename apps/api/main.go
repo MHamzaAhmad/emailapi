@@ -15,7 +15,7 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
-	"github.com/emailapi/api/gen/v1/emailapiv1connect"
+	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/config"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
@@ -229,49 +229,49 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Register all service handlers
-	path, handler := emailapiv1connect.NewUserServiceHandler(
+	path, handler := v1connect.NewUserServiceHandler(
 		connecttransport.NewUserHandler(svc.User),
 		interceptors,
 	)
 	mux.Handle(path, handler)
 
-	path, handler = emailapiv1connect.NewApiKeyServiceHandler(
+	path, handler = v1connect.NewApiKeyServiceHandler(
 		connecttransport.NewApiKeyHandler(svc.APIKey),
 		interceptors,
 	)
 	mux.Handle(path, handler)
 
-	path, handler = emailapiv1connect.NewDomainServiceHandler(
+	path, handler = v1connect.NewDomainServiceHandler(
 		connecttransport.NewDomainHandler(svc.Domain),
 		interceptors,
 	)
 	mux.Handle(path, handler)
 
-	path, handler = emailapiv1connect.NewEmailServiceHandler(
+	path, handler = v1connect.NewEmailServiceHandler(
 		connecttransport.NewEmailHandler(svc.Email),
 		interceptors,
 	)
 	mux.Handle(path, handler)
 
-	path, handler = emailapiv1connect.NewInternalServiceHandler(
+	path, handler = v1connect.NewInternalServiceHandler(
 		connecttransport.NewInternalHandler(svc.Internal),
 		interceptors,
 	)
 	mux.Handle(path, handler)
 
-	path, handler = emailapiv1connect.NewWebhookServiceHandler(
+	path, handler = v1connect.NewWebhookServiceHandler(
 		connecttransport.NewWebhookHandler(svc.Webhook),
 		interceptors,
 	)
 	mux.Handle(path, handler)
 
-	path, handler = emailapiv1connect.NewSnsServiceHandler(
+	path, handler = v1connect.NewSnsServiceHandler(
 		connecttransport.NewSnsHandler(svc.SNSNotification, svc.InboundEmail),
 		interceptors,
 	)
 	mux.Handle(path, handler)
 
-	path, handler = emailapiv1connect.NewActivityServiceHandler(
+	path, handler = v1connect.NewActivityServiceHandler(
 		connecttransport.NewActivityHandler(svc.Activity),
 		interceptors,
 	)

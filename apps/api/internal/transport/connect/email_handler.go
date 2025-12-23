@@ -6,15 +6,15 @@ import (
 
 	"connectrpc.com/connect"
 
-	emailapiv1 "github.com/emailapi/api/gen/v1"
-	"github.com/emailapi/api/gen/v1/emailapiv1connect"
+	v1 "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/service"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
 )
 
 // EmailHandler implements the Connect EmailServiceHandler.
 type EmailHandler struct {
-	emailapiv1connect.UnimplementedEmailServiceHandler
+	v1connect.UnimplementedEmailServiceHandler
 	svc *service.EmailService
 }
 
@@ -26,8 +26,8 @@ func NewEmailHandler(svc *service.EmailService) *EmailHandler {
 // SendEmail handles sending an email.
 func (h *EmailHandler) SendEmail(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.SendEmailRequest],
-) (*connect.Response[emailapiv1.SendEmailResponse], error) {
+	req *connect.Request[v1.SendEmailRequest],
+) (*connect.Response[v1.SendEmailResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))

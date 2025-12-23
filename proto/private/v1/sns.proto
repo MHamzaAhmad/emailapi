@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package emailapi.v1;
+package v1;
 
-option go_package = "github.com/emailapi/api/gen/emailapi/v1";
+option go_package = "github.com/emailapi/api/gen/v1";
 
 // SnsService handles notifications from Amazon SNS.
 // These endpoints are public but authenticated via SNS signature verification.

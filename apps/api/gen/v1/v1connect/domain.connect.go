@@ -2,7 +2,7 @@
 //
 // Source: v1/domain.proto
 
-package emailapiv1connect
+package v1connect
 
 import (
 	connect "connectrpc.com/connect"
@@ -22,7 +22,7 @@ const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// DomainServiceName is the fully-qualified name of the DomainService service.
-	DomainServiceName = "emailapi.v1.DomainService"
+	DomainServiceName = "v1.DomainService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -34,21 +34,21 @@ const (
 // period.
 const (
 	// DomainServiceAddDomainProcedure is the fully-qualified name of the DomainService's AddDomain RPC.
-	DomainServiceAddDomainProcedure = "/emailapi.v1.DomainService/AddDomain"
+	DomainServiceAddDomainProcedure = "/v1.DomainService/AddDomain"
 	// DomainServiceGetDomainProcedure is the fully-qualified name of the DomainService's GetDomain RPC.
-	DomainServiceGetDomainProcedure = "/emailapi.v1.DomainService/GetDomain"
+	DomainServiceGetDomainProcedure = "/v1.DomainService/GetDomain"
 	// DomainServiceListDomainsProcedure is the fully-qualified name of the DomainService's ListDomains
 	// RPC.
-	DomainServiceListDomainsProcedure = "/emailapi.v1.DomainService/ListDomains"
+	DomainServiceListDomainsProcedure = "/v1.DomainService/ListDomains"
 	// DomainServiceDeleteDomainProcedure is the fully-qualified name of the DomainService's
 	// DeleteDomain RPC.
-	DomainServiceDeleteDomainProcedure = "/emailapi.v1.DomainService/DeleteDomain"
+	DomainServiceDeleteDomainProcedure = "/v1.DomainService/DeleteDomain"
 	// DomainServiceVerifyDomainProcedure is the fully-qualified name of the DomainService's
 	// VerifyDomain RPC.
-	DomainServiceVerifyDomainProcedure = "/emailapi.v1.DomainService/VerifyDomain"
+	DomainServiceVerifyDomainProcedure = "/v1.DomainService/VerifyDomain"
 )
 
-// DomainServiceClient is a client for the emailapi.v1.DomainService service.
+// DomainServiceClient is a client for the v1.DomainService service.
 type DomainServiceClient interface {
 	// AddDomain registers a new sending domain.
 	// Returns everything you need: domain info, DNS records, and next steps.
@@ -66,10 +66,10 @@ type DomainServiceClient interface {
 	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error)
 }
 
-// NewDomainServiceClient constructs a client for the emailapi.v1.DomainService service. By default,
-// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
-// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
-// or connect.WithGRPCWeb() options.
+// NewDomainServiceClient constructs a client for the v1.DomainService service. By default, it uses
+// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
@@ -119,32 +119,32 @@ type domainServiceClient struct {
 	verifyDomain *connect.Client[v1.VerifyDomainRequest, v1.VerifyDomainResponse]
 }
 
-// AddDomain calls emailapi.v1.DomainService.AddDomain.
+// AddDomain calls v1.DomainService.AddDomain.
 func (c *domainServiceClient) AddDomain(ctx context.Context, req *connect.Request[v1.AddDomainRequest]) (*connect.Response[v1.AddDomainResponse], error) {
 	return c.addDomain.CallUnary(ctx, req)
 }
 
-// GetDomain calls emailapi.v1.DomainService.GetDomain.
+// GetDomain calls v1.DomainService.GetDomain.
 func (c *domainServiceClient) GetDomain(ctx context.Context, req *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.GetDomainResponse], error) {
 	return c.getDomain.CallUnary(ctx, req)
 }
 
-// ListDomains calls emailapi.v1.DomainService.ListDomains.
+// ListDomains calls v1.DomainService.ListDomains.
 func (c *domainServiceClient) ListDomains(ctx context.Context, req *connect.Request[v1.ListDomainsRequest]) (*connect.Response[v1.ListDomainsResponse], error) {
 	return c.listDomains.CallUnary(ctx, req)
 }
 
-// DeleteDomain calls emailapi.v1.DomainService.DeleteDomain.
+// DeleteDomain calls v1.DomainService.DeleteDomain.
 func (c *domainServiceClient) DeleteDomain(ctx context.Context, req *connect.Request[v1.DeleteDomainRequest]) (*connect.Response[v1.DeleteDomainResponse], error) {
 	return c.deleteDomain.CallUnary(ctx, req)
 }
 
-// VerifyDomain calls emailapi.v1.DomainService.VerifyDomain.
+// VerifyDomain calls v1.DomainService.VerifyDomain.
 func (c *domainServiceClient) VerifyDomain(ctx context.Context, req *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error) {
 	return c.verifyDomain.CallUnary(ctx, req)
 }
 
-// DomainServiceHandler is an implementation of the emailapi.v1.DomainService service.
+// DomainServiceHandler is an implementation of the v1.DomainService service.
 type DomainServiceHandler interface {
 	// AddDomain registers a new sending domain.
 	// Returns everything you need: domain info, DNS records, and next steps.
@@ -199,7 +199,7 @@ func NewDomainServiceHandler(svc DomainServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(domainServiceMethods.ByName("VerifyDomain")),
 		connect.WithHandlerOptions(opts...),
 	)
-	return "/emailapi.v1.DomainService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/v1.DomainService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DomainServiceAddDomainProcedure:
 			domainServiceAddDomainHandler.ServeHTTP(w, r)
@@ -221,21 +221,21 @@ func NewDomainServiceHandler(svc DomainServiceHandler, opts ...connect.HandlerOp
 type UnimplementedDomainServiceHandler struct{}
 
 func (UnimplementedDomainServiceHandler) AddDomain(context.Context, *connect.Request[v1.AddDomainRequest]) (*connect.Response[v1.AddDomainResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.DomainService.AddDomain is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.DomainService.AddDomain is not implemented"))
 }
 
 func (UnimplementedDomainServiceHandler) GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.GetDomainResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.DomainService.GetDomain is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.DomainService.GetDomain is not implemented"))
 }
 
 func (UnimplementedDomainServiceHandler) ListDomains(context.Context, *connect.Request[v1.ListDomainsRequest]) (*connect.Response[v1.ListDomainsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.DomainService.ListDomains is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.DomainService.ListDomains is not implemented"))
 }
 
 func (UnimplementedDomainServiceHandler) DeleteDomain(context.Context, *connect.Request[v1.DeleteDomainRequest]) (*connect.Response[v1.DeleteDomainResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.DomainService.DeleteDomain is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.DomainService.DeleteDomain is not implemented"))
 }
 
 func (UnimplementedDomainServiceHandler) VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.DomainService.VerifyDomain is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.DomainService.VerifyDomain is not implemented"))
 }

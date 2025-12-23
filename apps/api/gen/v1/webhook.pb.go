@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: v1/webhook.proto
 
-package emailapiv1
+package v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -1121,26 +1121,26 @@ var File_v1_webhook_proto protoreflect.FileDescriptor
 
 const file_v1_webhook_proto_rawDesc = "" +
 	"\n" +
-	"\x10v1/webhook.proto\x12\vemailapi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x1b\n" +
+	"\x10v1/webhook.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x1b\n" +
 	"\x19GetAppPortalAccessRequest\"D\n" +
 	"\x1aGetAppPortalAccessResponse\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x14\n" +
-	"\x05token\x18\x02 \x01(\tR\x05token\"\xc3\x05\n" +
+	"\x05token\x18\x02 \x01(\tR\x05token\"\xfb\x04\n" +
 	"\fWebhookEvent\x12\x1d\n" +
 	"\n" +
 	"event_type\x18\x01 \x01(\tR\teventType\x128\n" +
-	"\ttimestamp\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12<\n" +
+	"\ttimestamp\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x123\n" +
 	"\n" +
 	"email_sent\x18\n" +
-	" \x01(\v2\x1b.emailapi.v1.EmailSentEventH\x00R\temailSent\x12K\n" +
-	"\x0femail_delivered\x18\v \x01(\v2 .emailapi.v1.EmailDeliveredEventH\x00R\x0eemailDelivered\x12E\n" +
-	"\remail_bounced\x18\f \x01(\v2\x1e.emailapi.v1.EmailBouncedEventH\x00R\femailBounced\x12N\n" +
-	"\x10email_complained\x18\r \x01(\v2!.emailapi.v1.EmailComplainedEventH\x00R\x0femailComplained\x12H\n" +
-	"\x0eemail_rejected\x18\x0e \x01(\v2\x1f.emailapi.v1.EmailRejectedEventH\x00R\remailRejected\x12E\n" +
-	"\remail_delayed\x18\x0f \x01(\v2\x1e.emailapi.v1.EmailDelayedEventH\x00R\femailDelayed\x12X\n" +
-	"\x14email_reply_received\x18\x10 \x01(\v2$.emailapi.v1.EmailReplyReceivedEventH\x00R\x12emailReplyReceived\x12B\n" +
-	"\femail_failed\x18\x11 \x01(\v2\x1d.emailapi.v1.EmailFailedEventH\x00R\vemailFailedB\t\n" +
-	"\apayload\"\xc7\x02\n" +
+	" \x01(\v2\x12.v1.EmailSentEventH\x00R\temailSent\x12B\n" +
+	"\x0femail_delivered\x18\v \x01(\v2\x17.v1.EmailDeliveredEventH\x00R\x0eemailDelivered\x12<\n" +
+	"\remail_bounced\x18\f \x01(\v2\x15.v1.EmailBouncedEventH\x00R\femailBounced\x12E\n" +
+	"\x10email_complained\x18\r \x01(\v2\x18.v1.EmailComplainedEventH\x00R\x0femailComplained\x12?\n" +
+	"\x0eemail_rejected\x18\x0e \x01(\v2\x16.v1.EmailRejectedEventH\x00R\remailRejected\x12<\n" +
+	"\remail_delayed\x18\x0f \x01(\v2\x15.v1.EmailDelayedEventH\x00R\femailDelayed\x12O\n" +
+	"\x14email_reply_received\x18\x10 \x01(\v2\x1b.v1.EmailReplyReceivedEventH\x00R\x12emailReplyReceived\x129\n" +
+	"\femail_failed\x18\x11 \x01(\v2\x14.v1.EmailFailedEventH\x00R\vemailFailedB\t\n" +
+	"\apayload\"\xbe\x02\n" +
 	"\x0eEmailSentEvent\x12\x19\n" +
 	"\bemail_id\x18\x01 \x01(\tR\aemailId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
@@ -1150,8 +1150,8 @@ const file_v1_webhook_proto_rawDesc = "" +
 	"\x02to\x18\x05 \x03(\tR\x02to\x12\x0e\n" +
 	"\x02cc\x18\x06 \x03(\tR\x02cc\x12\x10\n" +
 	"\x03bcc\x18\a \x03(\tR\x03bcc\x12\x18\n" +
-	"\asubject\x18\b \x01(\tR\asubject\x12E\n" +
-	"\bmetadata\x18\t \x03(\v2).emailapi.v1.EmailSentEvent.MetadataEntryR\bmetadata\x1a;\n" +
+	"\asubject\x18\b \x01(\tR\asubject\x12<\n" +
+	"\bmetadata\x18\t \x03(\v2 .v1.EmailSentEvent.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xad\x01\n" +
@@ -1230,10 +1230,10 @@ const file_v1_webhook_proto_rawDesc = "" +
 	"#WEBHOOK_EVENT_TYPE_EMAIL_COMPLAINED\x10\b\x12%\n" +
 	"!WEBHOOK_EVENT_TYPE_EMAIL_REJECTED\x10\t\x12$\n" +
 	" WEBHOOK_EVENT_TYPE_EMAIL_DELAYED\x10\n" +
-	"2y\n" +
-	"\x0eWebhookService\x12g\n" +
-	"\x12GetAppPortalAccess\x12&.emailapi.v1.GetAppPortalAccessRequest\x1a'.emailapi.v1.GetAppPortalAccessResponse\"\x00B\x97\x01\n" +
-	"\x0fcom.emailapi.v1B\fWebhookProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
+	"2g\n" +
+	"\x0eWebhookService\x12U\n" +
+	"\x12GetAppPortalAccess\x12\x1d.v1.GetAppPortalAccessRequest\x1a\x1e.v1.GetAppPortalAccessResponse\"\x00B^\n" +
+	"\x06com.v1B\fWebhookProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (
 	file_v1_webhook_proto_rawDescOnce sync.Once
@@ -1250,34 +1250,34 @@ func file_v1_webhook_proto_rawDescGZIP() []byte {
 var file_v1_webhook_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_v1_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_v1_webhook_proto_goTypes = []any{
-	(WebhookEventType)(0),              // 0: emailapi.v1.WebhookEventType
-	(*GetAppPortalAccessRequest)(nil),  // 1: emailapi.v1.GetAppPortalAccessRequest
-	(*GetAppPortalAccessResponse)(nil), // 2: emailapi.v1.GetAppPortalAccessResponse
-	(*WebhookEvent)(nil),               // 3: emailapi.v1.WebhookEvent
-	(*EmailSentEvent)(nil),             // 4: emailapi.v1.EmailSentEvent
-	(*EmailDeliveredEvent)(nil),        // 5: emailapi.v1.EmailDeliveredEvent
-	(*EmailBouncedEvent)(nil),          // 6: emailapi.v1.EmailBouncedEvent
-	(*EmailComplainedEvent)(nil),       // 7: emailapi.v1.EmailComplainedEvent
-	(*EmailRejectedEvent)(nil),         // 8: emailapi.v1.EmailRejectedEvent
-	(*EmailDelayedEvent)(nil),          // 9: emailapi.v1.EmailDelayedEvent
-	(*EmailFailedEvent)(nil),           // 10: emailapi.v1.EmailFailedEvent
-	(*EmailReplyReceivedEvent)(nil),    // 11: emailapi.v1.EmailReplyReceivedEvent
-	nil,                                // 12: emailapi.v1.EmailSentEvent.MetadataEntry
+	(WebhookEventType)(0),              // 0: v1.WebhookEventType
+	(*GetAppPortalAccessRequest)(nil),  // 1: v1.GetAppPortalAccessRequest
+	(*GetAppPortalAccessResponse)(nil), // 2: v1.GetAppPortalAccessResponse
+	(*WebhookEvent)(nil),               // 3: v1.WebhookEvent
+	(*EmailSentEvent)(nil),             // 4: v1.EmailSentEvent
+	(*EmailDeliveredEvent)(nil),        // 5: v1.EmailDeliveredEvent
+	(*EmailBouncedEvent)(nil),          // 6: v1.EmailBouncedEvent
+	(*EmailComplainedEvent)(nil),       // 7: v1.EmailComplainedEvent
+	(*EmailRejectedEvent)(nil),         // 8: v1.EmailRejectedEvent
+	(*EmailDelayedEvent)(nil),          // 9: v1.EmailDelayedEvent
+	(*EmailFailedEvent)(nil),           // 10: v1.EmailFailedEvent
+	(*EmailReplyReceivedEvent)(nil),    // 11: v1.EmailReplyReceivedEvent
+	nil,                                // 12: v1.EmailSentEvent.MetadataEntry
 	(*timestamppb.Timestamp)(nil),      // 13: google.protobuf.Timestamp
 }
 var file_v1_webhook_proto_depIdxs = []int32{
-	13, // 0: emailapi.v1.WebhookEvent.timestamp:type_name -> google.protobuf.Timestamp
-	4,  // 1: emailapi.v1.WebhookEvent.email_sent:type_name -> emailapi.v1.EmailSentEvent
-	5,  // 2: emailapi.v1.WebhookEvent.email_delivered:type_name -> emailapi.v1.EmailDeliveredEvent
-	6,  // 3: emailapi.v1.WebhookEvent.email_bounced:type_name -> emailapi.v1.EmailBouncedEvent
-	7,  // 4: emailapi.v1.WebhookEvent.email_complained:type_name -> emailapi.v1.EmailComplainedEvent
-	8,  // 5: emailapi.v1.WebhookEvent.email_rejected:type_name -> emailapi.v1.EmailRejectedEvent
-	9,  // 6: emailapi.v1.WebhookEvent.email_delayed:type_name -> emailapi.v1.EmailDelayedEvent
-	11, // 7: emailapi.v1.WebhookEvent.email_reply_received:type_name -> emailapi.v1.EmailReplyReceivedEvent
-	10, // 8: emailapi.v1.WebhookEvent.email_failed:type_name -> emailapi.v1.EmailFailedEvent
-	12, // 9: emailapi.v1.EmailSentEvent.metadata:type_name -> emailapi.v1.EmailSentEvent.MetadataEntry
-	1,  // 10: emailapi.v1.WebhookService.GetAppPortalAccess:input_type -> emailapi.v1.GetAppPortalAccessRequest
-	2,  // 11: emailapi.v1.WebhookService.GetAppPortalAccess:output_type -> emailapi.v1.GetAppPortalAccessResponse
+	13, // 0: v1.WebhookEvent.timestamp:type_name -> google.protobuf.Timestamp
+	4,  // 1: v1.WebhookEvent.email_sent:type_name -> v1.EmailSentEvent
+	5,  // 2: v1.WebhookEvent.email_delivered:type_name -> v1.EmailDeliveredEvent
+	6,  // 3: v1.WebhookEvent.email_bounced:type_name -> v1.EmailBouncedEvent
+	7,  // 4: v1.WebhookEvent.email_complained:type_name -> v1.EmailComplainedEvent
+	8,  // 5: v1.WebhookEvent.email_rejected:type_name -> v1.EmailRejectedEvent
+	9,  // 6: v1.WebhookEvent.email_delayed:type_name -> v1.EmailDelayedEvent
+	11, // 7: v1.WebhookEvent.email_reply_received:type_name -> v1.EmailReplyReceivedEvent
+	10, // 8: v1.WebhookEvent.email_failed:type_name -> v1.EmailFailedEvent
+	12, // 9: v1.EmailSentEvent.metadata:type_name -> v1.EmailSentEvent.MetadataEntry
+	1,  // 10: v1.WebhookService.GetAppPortalAccess:input_type -> v1.GetAppPortalAccessRequest
+	2,  // 11: v1.WebhookService.GetAppPortalAccess:output_type -> v1.GetAppPortalAccessResponse
 	11, // [11:12] is the sub-list for method output_type
 	10, // [10:11] is the sub-list for method input_type
 	10, // [10:10] is the sub-list for extension type_name

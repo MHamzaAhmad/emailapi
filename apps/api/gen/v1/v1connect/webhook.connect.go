@@ -2,7 +2,7 @@
 //
 // Source: v1/webhook.proto
 
-package emailapiv1connect
+package v1connect
 
 import (
 	connect "connectrpc.com/connect"
@@ -22,7 +22,7 @@ const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// WebhookServiceName is the fully-qualified name of the WebhookService service.
-	WebhookServiceName = "emailapi.v1.WebhookService"
+	WebhookServiceName = "v1.WebhookService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -35,20 +35,20 @@ const (
 const (
 	// WebhookServiceGetAppPortalAccessProcedure is the fully-qualified name of the WebhookService's
 	// GetAppPortalAccess RPC.
-	WebhookServiceGetAppPortalAccessProcedure = "/emailapi.v1.WebhookService/GetAppPortalAccess"
+	WebhookServiceGetAppPortalAccessProcedure = "/v1.WebhookService/GetAppPortalAccess"
 )
 
-// WebhookServiceClient is a client for the emailapi.v1.WebhookService service.
+// WebhookServiceClient is a client for the v1.WebhookService service.
 type WebhookServiceClient interface {
 	// GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
 	// Frontend uses this with svix-react to let users manage webhook endpoints.
 	GetAppPortalAccess(context.Context, *connect.Request[v1.GetAppPortalAccessRequest]) (*connect.Response[v1.GetAppPortalAccessResponse], error)
 }
 
-// NewWebhookServiceClient constructs a client for the emailapi.v1.WebhookService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
+// NewWebhookServiceClient constructs a client for the v1.WebhookService service. By default, it
+// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
@@ -70,12 +70,12 @@ type webhookServiceClient struct {
 	getAppPortalAccess *connect.Client[v1.GetAppPortalAccessRequest, v1.GetAppPortalAccessResponse]
 }
 
-// GetAppPortalAccess calls emailapi.v1.WebhookService.GetAppPortalAccess.
+// GetAppPortalAccess calls v1.WebhookService.GetAppPortalAccess.
 func (c *webhookServiceClient) GetAppPortalAccess(ctx context.Context, req *connect.Request[v1.GetAppPortalAccessRequest]) (*connect.Response[v1.GetAppPortalAccessResponse], error) {
 	return c.getAppPortalAccess.CallUnary(ctx, req)
 }
 
-// WebhookServiceHandler is an implementation of the emailapi.v1.WebhookService service.
+// WebhookServiceHandler is an implementation of the v1.WebhookService service.
 type WebhookServiceHandler interface {
 	// GetAppPortalAccess returns a magic URL for embedding Svix App Portal.
 	// Frontend uses this with svix-react to let users manage webhook endpoints.
@@ -95,7 +95,7 @@ func NewWebhookServiceHandler(svc WebhookServiceHandler, opts ...connect.Handler
 		connect.WithSchema(webhookServiceMethods.ByName("GetAppPortalAccess")),
 		connect.WithHandlerOptions(opts...),
 	)
-	return "/emailapi.v1.WebhookService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/v1.WebhookService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case WebhookServiceGetAppPortalAccessProcedure:
 			webhookServiceGetAppPortalAccessHandler.ServeHTTP(w, r)
@@ -109,5 +109,5 @@ func NewWebhookServiceHandler(svc WebhookServiceHandler, opts ...connect.Handler
 type UnimplementedWebhookServiceHandler struct{}
 
 func (UnimplementedWebhookServiceHandler) GetAppPortalAccess(context.Context, *connect.Request[v1.GetAppPortalAccessRequest]) (*connect.Response[v1.GetAppPortalAccessResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.WebhookService.GetAppPortalAccess is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.WebhookService.GetAppPortalAccess is not implemented"))
 }

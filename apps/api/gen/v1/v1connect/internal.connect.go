@@ -2,7 +2,7 @@
 //
 // Source: v1/internal.proto
 
-package emailapiv1connect
+package v1connect
 
 import (
 	connect "connectrpc.com/connect"
@@ -22,7 +22,7 @@ const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// InternalServiceName is the fully-qualified name of the InternalService service.
-	InternalServiceName = "emailapi.v1.InternalService"
+	InternalServiceName = "v1.InternalService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -35,13 +35,13 @@ const (
 const (
 	// InternalServiceHandleGuardDutyScanResultProcedure is the fully-qualified name of the
 	// InternalService's HandleGuardDutyScanResult RPC.
-	InternalServiceHandleGuardDutyScanResultProcedure = "/emailapi.v1.InternalService/HandleGuardDutyScanResult"
+	InternalServiceHandleGuardDutyScanResultProcedure = "/v1.InternalService/HandleGuardDutyScanResult"
 	// InternalServiceHandleClerkWebhookProcedure is the fully-qualified name of the InternalService's
 	// HandleClerkWebhook RPC.
-	InternalServiceHandleClerkWebhookProcedure = "/emailapi.v1.InternalService/HandleClerkWebhook"
+	InternalServiceHandleClerkWebhookProcedure = "/v1.InternalService/HandleClerkWebhook"
 )
 
-// InternalServiceClient is a client for the emailapi.v1.InternalService service.
+// InternalServiceClient is a client for the v1.InternalService service.
 type InternalServiceClient interface {
 	// HandleGuardDutyScanResult processes GuardDuty malware scan results from EventBridge.
 	HandleGuardDutyScanResult(context.Context, *connect.Request[v1.GuardDutyScanResultRequest]) (*connect.Response[v1.GuardDutyScanResultResponse], error)
@@ -51,10 +51,10 @@ type InternalServiceClient interface {
 	HandleClerkWebhook(context.Context, *connect.Request[v1.ClerkWebhookRequest]) (*connect.Response[v1.ClerkWebhookResponse], error)
 }
 
-// NewInternalServiceClient constructs a client for the emailapi.v1.InternalService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
+// NewInternalServiceClient constructs a client for the v1.InternalService service. By default, it
+// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
@@ -83,17 +83,17 @@ type internalServiceClient struct {
 	handleClerkWebhook        *connect.Client[v1.ClerkWebhookRequest, v1.ClerkWebhookResponse]
 }
 
-// HandleGuardDutyScanResult calls emailapi.v1.InternalService.HandleGuardDutyScanResult.
+// HandleGuardDutyScanResult calls v1.InternalService.HandleGuardDutyScanResult.
 func (c *internalServiceClient) HandleGuardDutyScanResult(ctx context.Context, req *connect.Request[v1.GuardDutyScanResultRequest]) (*connect.Response[v1.GuardDutyScanResultResponse], error) {
 	return c.handleGuardDutyScanResult.CallUnary(ctx, req)
 }
 
-// HandleClerkWebhook calls emailapi.v1.InternalService.HandleClerkWebhook.
+// HandleClerkWebhook calls v1.InternalService.HandleClerkWebhook.
 func (c *internalServiceClient) HandleClerkWebhook(ctx context.Context, req *connect.Request[v1.ClerkWebhookRequest]) (*connect.Response[v1.ClerkWebhookResponse], error) {
 	return c.handleClerkWebhook.CallUnary(ctx, req)
 }
 
-// InternalServiceHandler is an implementation of the emailapi.v1.InternalService service.
+// InternalServiceHandler is an implementation of the v1.InternalService service.
 type InternalServiceHandler interface {
 	// HandleGuardDutyScanResult processes GuardDuty malware scan results from EventBridge.
 	HandleGuardDutyScanResult(context.Context, *connect.Request[v1.GuardDutyScanResultRequest]) (*connect.Response[v1.GuardDutyScanResultResponse], error)
@@ -122,7 +122,7 @@ func NewInternalServiceHandler(svc InternalServiceHandler, opts ...connect.Handl
 		connect.WithSchema(internalServiceMethods.ByName("HandleClerkWebhook")),
 		connect.WithHandlerOptions(opts...),
 	)
-	return "/emailapi.v1.InternalService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/v1.InternalService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case InternalServiceHandleGuardDutyScanResultProcedure:
 			internalServiceHandleGuardDutyScanResultHandler.ServeHTTP(w, r)
@@ -138,9 +138,9 @@ func NewInternalServiceHandler(svc InternalServiceHandler, opts ...connect.Handl
 type UnimplementedInternalServiceHandler struct{}
 
 func (UnimplementedInternalServiceHandler) HandleGuardDutyScanResult(context.Context, *connect.Request[v1.GuardDutyScanResultRequest]) (*connect.Response[v1.GuardDutyScanResultResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.InternalService.HandleGuardDutyScanResult is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.InternalService.HandleGuardDutyScanResult is not implemented"))
 }
 
 func (UnimplementedInternalServiceHandler) HandleClerkWebhook(context.Context, *connect.Request[v1.ClerkWebhookRequest]) (*connect.Response[v1.ClerkWebhookResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.InternalService.HandleClerkWebhook is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.InternalService.HandleClerkWebhook is not implemented"))
 }

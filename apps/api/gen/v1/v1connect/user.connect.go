@@ -2,7 +2,7 @@
 //
 // Source: v1/user.proto
 
-package emailapiv1connect
+package v1connect
 
 import (
 	connect "connectrpc.com/connect"
@@ -22,7 +22,7 @@ const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// UserServiceName is the fully-qualified name of the UserService service.
-	UserServiceName = "emailapi.v1.UserService"
+	UserServiceName = "v1.UserService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -34,17 +34,17 @@ const (
 // period.
 const (
 	// UserServiceCreateUserProcedure is the fully-qualified name of the UserService's CreateUser RPC.
-	UserServiceCreateUserProcedure = "/emailapi.v1.UserService/CreateUser"
+	UserServiceCreateUserProcedure = "/v1.UserService/CreateUser"
 	// UserServiceGetCurrentUserProcedure is the fully-qualified name of the UserService's
 	// GetCurrentUser RPC.
-	UserServiceGetCurrentUserProcedure = "/emailapi.v1.UserService/GetCurrentUser"
+	UserServiceGetCurrentUserProcedure = "/v1.UserService/GetCurrentUser"
 	// UserServiceUpdateUserProcedure is the fully-qualified name of the UserService's UpdateUser RPC.
-	UserServiceUpdateUserProcedure = "/emailapi.v1.UserService/UpdateUser"
+	UserServiceUpdateUserProcedure = "/v1.UserService/UpdateUser"
 	// UserServiceListUsersProcedure is the fully-qualified name of the UserService's ListUsers RPC.
-	UserServiceListUsersProcedure = "/emailapi.v1.UserService/ListUsers"
+	UserServiceListUsersProcedure = "/v1.UserService/ListUsers"
 )
 
-// UserServiceClient is a client for the emailapi.v1.UserService service.
+// UserServiceClient is a client for the v1.UserService service.
 type UserServiceClient interface {
 	// CreateUser creates a new user.
 	CreateUser(context.Context, *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error)
@@ -56,8 +56,8 @@ type UserServiceClient interface {
 	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
 }
 
-// NewUserServiceClient constructs a client for the emailapi.v1.UserService service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// NewUserServiceClient constructs a client for the v1.UserService service. By default, it uses the
+// Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
 // uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
 // connect.WithGRPCWeb() options.
 //
@@ -102,27 +102,27 @@ type userServiceClient struct {
 	listUsers      *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
 }
 
-// CreateUser calls emailapi.v1.UserService.CreateUser.
+// CreateUser calls v1.UserService.CreateUser.
 func (c *userServiceClient) CreateUser(ctx context.Context, req *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error) {
 	return c.createUser.CallUnary(ctx, req)
 }
 
-// GetCurrentUser calls emailapi.v1.UserService.GetCurrentUser.
+// GetCurrentUser calls v1.UserService.GetCurrentUser.
 func (c *userServiceClient) GetCurrentUser(ctx context.Context, req *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.User], error) {
 	return c.getCurrentUser.CallUnary(ctx, req)
 }
 
-// UpdateUser calls emailapi.v1.UserService.UpdateUser.
+// UpdateUser calls v1.UserService.UpdateUser.
 func (c *userServiceClient) UpdateUser(ctx context.Context, req *connect.Request[v1.UpdateUserRequest]) (*connect.Response[v1.User], error) {
 	return c.updateUser.CallUnary(ctx, req)
 }
 
-// ListUsers calls emailapi.v1.UserService.ListUsers.
+// ListUsers calls v1.UserService.ListUsers.
 func (c *userServiceClient) ListUsers(ctx context.Context, req *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error) {
 	return c.listUsers.CallUnary(ctx, req)
 }
 
-// UserServiceHandler is an implementation of the emailapi.v1.UserService service.
+// UserServiceHandler is an implementation of the v1.UserService service.
 type UserServiceHandler interface {
 	// CreateUser creates a new user.
 	CreateUser(context.Context, *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error)
@@ -165,7 +165,7 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceMethods.ByName("ListUsers")),
 		connect.WithHandlerOptions(opts...),
 	)
-	return "/emailapi.v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case UserServiceCreateUserProcedure:
 			userServiceCreateUserHandler.ServeHTTP(w, r)
@@ -185,17 +185,17 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 type UnimplementedUserServiceHandler struct{}
 
 func (UnimplementedUserServiceHandler) CreateUser(context.Context, *connect.Request[v1.CreateUserRequest]) (*connect.Response[v1.CreateUserResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.UserService.CreateUser is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.UserService.CreateUser is not implemented"))
 }
 
 func (UnimplementedUserServiceHandler) GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.User], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.UserService.GetCurrentUser is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.UserService.GetCurrentUser is not implemented"))
 }
 
 func (UnimplementedUserServiceHandler) UpdateUser(context.Context, *connect.Request[v1.UpdateUserRequest]) (*connect.Response[v1.User], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.UserService.UpdateUser is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.UserService.UpdateUser is not implemented"))
 }
 
 func (UnimplementedUserServiceHandler) ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.UserService.ListUsers is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.UserService.ListUsers is not implemented"))
 }

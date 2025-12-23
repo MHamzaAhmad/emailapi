@@ -5,15 +5,15 @@ import (
 
 	"connectrpc.com/connect"
 
-	emailapiv1 "github.com/emailapi/api/gen/v1"
-	"github.com/emailapi/api/gen/v1/emailapiv1connect"
+	v1 "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/service"
 )
 
 // SnsHandler implements the Connect SnsServiceHandler.
 // These endpoints are public but authenticated via SNS signature verification.
 type SnsHandler struct {
-	emailapiv1connect.UnimplementedSnsServiceHandler
+	v1connect.UnimplementedSnsServiceHandler
 	svc        *service.SNSNotificationService
 	inboundSvc *service.InboundEmailService
 }
@@ -29,8 +29,8 @@ func NewSnsHandler(svc *service.SNSNotificationService, inboundSvc *service.Inbo
 // HandleSNSNotification processes SNS notifications for outbound email events.
 func (h *SnsHandler) HandleSNSNotification(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.SNSNotificationRequest],
-) (*connect.Response[emailapiv1.SNSNotificationResponse], error) {
+	req *connect.Request[v1.SNSNotificationRequest],
+) (*connect.Response[v1.SNSNotificationResponse], error) {
 	input := &service.SNSInput{
 		Type:             req.Msg.Type,
 		MessageID:        req.Msg.MessageId,
@@ -46,13 +46,13 @@ func (h *SnsHandler) HandleSNSNotification(
 	}
 
 	if err := h.svc.HandleNotification(ctx, input); err != nil {
-		return connect.NewResponse(&emailapiv1.SNSNotificationResponse{
+		return connect.NewResponse(&v1.SNSNotificationResponse{
 			Success: false,
 			Message: err.Error(),
 		}), nil
 	}
 
-	return connect.NewResponse(&emailapiv1.SNSNotificationResponse{
+	return connect.NewResponse(&v1.SNSNotificationResponse{
 		Success: true,
 		Message: "SNS notification processed successfully",
 	}), nil
@@ -61,10 +61,10 @@ func (h *SnsHandler) HandleSNSNotification(
 // HandleInboundSNSNotification processes SNS notifications for inbound emails (replies).
 func (h *SnsHandler) HandleInboundSNSNotification(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.SNSNotificationRequest],
-) (*connect.Response[emailapiv1.SNSNotificationResponse], error) {
+	req *connect.Request[v1.SNSNotificationRequest],
+) (*connect.Response[v1.SNSNotificationResponse], error) {
 	if h.inboundSvc == nil {
-		return connect.NewResponse(&emailapiv1.SNSNotificationResponse{
+		return connect.NewResponse(&v1.SNSNotificationResponse{
 			Success: false,
 			Message: "Inbound email service not configured",
 		}), nil
@@ -85,13 +85,13 @@ func (h *SnsHandler) HandleInboundSNSNotification(
 	}
 
 	if err := h.inboundSvc.HandleSNSNotification(ctx, input); err != nil {
-		return connect.NewResponse(&emailapiv1.SNSNotificationResponse{
+		return connect.NewResponse(&v1.SNSNotificationResponse{
 			Success: false,
 			Message: err.Error(),
 		}), nil
 	}
 
-	return connect.NewResponse(&emailapiv1.SNSNotificationResponse{
+	return connect.NewResponse(&v1.SNSNotificationResponse{
 		Success: true,
 		Message: "Inbound email notification processed successfully",
 	}), nil

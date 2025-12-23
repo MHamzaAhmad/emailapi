@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: v1/sns.proto
 
-package emailapiv1
+package v1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -216,7 +216,7 @@ var File_v1_sns_proto protoreflect.FileDescriptor
 
 const file_v1_sns_proto_rawDesc = "" +
 	"\n" +
-	"\fv1/sns.proto\x12\vemailapi.v1\"\xea\x02\n" +
+	"\fv1/sns.proto\x12\x02v1\"\xea\x02\n" +
 	"\x16SNSNotificationRequest\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04Type\x12\x1d\n" +
 	"\n" +
@@ -233,12 +233,12 @@ const file_v1_sns_proto_rawDesc = "" +
 	"\x05token\x18\v \x01(\tR\x05Token\"M\n" +
 	"\x17SNSNotificationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xdf\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xbb\x01\n" +
 	"\n" +
-	"SnsService\x12d\n" +
-	"\x15HandleSNSNotification\x12#.emailapi.v1.SNSNotificationRequest\x1a$.emailapi.v1.SNSNotificationResponse\"\x00\x12k\n" +
-	"\x1cHandleInboundSNSNotification\x12#.emailapi.v1.SNSNotificationRequest\x1a$.emailapi.v1.SNSNotificationResponse\"\x00B\x93\x01\n" +
-	"\x0fcom.emailapi.v1B\bSnsProtoP\x01Z)github.com/emailapi/api/gen/v1;emailapiv1\xa2\x02\x03EXX\xaa\x02\vEmailapi.V1\xca\x02\vEmailapi\\V1\xe2\x02\x17Emailapi\\V1\\GPBMetadata\xea\x02\fEmailapi::V1b\x06proto3"
+	"SnsService\x12R\n" +
+	"\x15HandleSNSNotification\x12\x1a.v1.SNSNotificationRequest\x1a\x1b.v1.SNSNotificationResponse\"\x00\x12Y\n" +
+	"\x1cHandleInboundSNSNotification\x12\x1a.v1.SNSNotificationRequest\x1a\x1b.v1.SNSNotificationResponse\"\x00BZ\n" +
+	"\x06com.v1B\bSnsProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (
 	file_v1_sns_proto_rawDescOnce sync.Once
@@ -254,14 +254,14 @@ func file_v1_sns_proto_rawDescGZIP() []byte {
 
 var file_v1_sns_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_v1_sns_proto_goTypes = []any{
-	(*SNSNotificationRequest)(nil),  // 0: emailapi.v1.SNSNotificationRequest
-	(*SNSNotificationResponse)(nil), // 1: emailapi.v1.SNSNotificationResponse
+	(*SNSNotificationRequest)(nil),  // 0: v1.SNSNotificationRequest
+	(*SNSNotificationResponse)(nil), // 1: v1.SNSNotificationResponse
 }
 var file_v1_sns_proto_depIdxs = []int32{
-	0, // 0: emailapi.v1.SnsService.HandleSNSNotification:input_type -> emailapi.v1.SNSNotificationRequest
-	0, // 1: emailapi.v1.SnsService.HandleInboundSNSNotification:input_type -> emailapi.v1.SNSNotificationRequest
-	1, // 2: emailapi.v1.SnsService.HandleSNSNotification:output_type -> emailapi.v1.SNSNotificationResponse
-	1, // 3: emailapi.v1.SnsService.HandleInboundSNSNotification:output_type -> emailapi.v1.SNSNotificationResponse
+	0, // 0: v1.SnsService.HandleSNSNotification:input_type -> v1.SNSNotificationRequest
+	0, // 1: v1.SnsService.HandleInboundSNSNotification:input_type -> v1.SNSNotificationRequest
+	1, // 2: v1.SnsService.HandleSNSNotification:output_type -> v1.SNSNotificationResponse
+	1, // 3: v1.SnsService.HandleInboundSNSNotification:output_type -> v1.SNSNotificationResponse
 	2, // [2:4] is the sub-list for method output_type
 	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	emailapiv1 "github.com/emailapi/api/gen/v1"
+	v1 "github.com/emailapi/api/gen/v1"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/repository/suppression"
 	"github.com/emailapi/api/internal/webhook"
@@ -188,7 +188,7 @@ func (s *SNSNotificationService) handleDelivery(ctx context.Context, notificatio
 
 	// Send webhook to user
 	if s.webhookSender != nil {
-		event := &emailapiv1.EmailDeliveredEvent{
+		event := &v1.EmailDeliveredEvent{
 			EmailId:      routing.EmailID,
 			UserId:       routing.UserID,
 			MessageId:    messageID,
@@ -252,7 +252,7 @@ func (s *SNSNotificationService) handleBounce(ctx context.Context, notification 
 			diagnosticCodes[i] = r.DiagnosticCode
 		}
 
-		event := &emailapiv1.EmailBouncedEvent{
+		event := &v1.EmailBouncedEvent{
 			EmailId:         routing.EmailID,
 			UserId:          routing.UserID,
 			MessageId:       messageID,
@@ -305,7 +305,7 @@ func (s *SNSNotificationService) handleComplaint(ctx context.Context, notificati
 
 	// Send webhook
 	if s.webhookSender != nil {
-		event := &emailapiv1.EmailComplainedEvent{
+		event := &v1.EmailComplainedEvent{
 			EmailId:      routing.EmailID,
 			UserId:       routing.UserID,
 			MessageId:    messageID,
@@ -350,7 +350,7 @@ func (s *SNSNotificationService) handleReject(ctx context.Context, notification 
 
 	// Send webhook
 	if s.webhookSender != nil {
-		event := &emailapiv1.EmailRejectedEvent{
+		event := &v1.EmailRejectedEvent{
 			EmailId:   routing.EmailID,
 			UserId:    routing.UserID,
 			MessageId: messageID,
@@ -377,7 +377,7 @@ func (s *SNSNotificationService) handleDeliveryDelay(ctx context.Context, notifi
 
 	// Send webhook
 	if s.webhookSender != nil {
-		event := &emailapiv1.EmailDelayedEvent{
+		event := &v1.EmailDelayedEvent{
 			EmailId:   routing.EmailID,
 			UserId:    routing.UserID,
 			MessageId: messageID,

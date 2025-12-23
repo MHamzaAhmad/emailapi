@@ -7,8 +7,8 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	emailapiv1 "github.com/emailapi/api/gen/v1"
-	"github.com/emailapi/api/gen/v1/emailapiv1connect"
+	v1 "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/service"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
@@ -16,7 +16,7 @@ import (
 
 // DomainHandler implements the Connect DomainServiceHandler.
 type DomainHandler struct {
-	emailapiv1connect.UnimplementedDomainServiceHandler
+	v1connect.UnimplementedDomainServiceHandler
 	svc *service.DomainService
 }
 
@@ -28,8 +28,8 @@ func NewDomainHandler(svc *service.DomainService) *DomainHandler {
 // AddDomain handles adding a new domain.
 func (h *DomainHandler) AddDomain(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.AddDomainRequest],
-) (*connect.Response[emailapiv1.AddDomainResponse], error) {
+	req *connect.Request[v1.AddDomainRequest],
+) (*connect.Response[v1.AddDomainResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
@@ -40,7 +40,7 @@ func (h *DomainHandler) AddDomain(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	return connect.NewResponse(&emailapiv1.AddDomainResponse{
+	return connect.NewResponse(&v1.AddDomainResponse{
 		Domain:  toProtoDomain(details),
 		Message: "Domain added. Configure the DNS records below to start sending emails.",
 	}), nil
@@ -49,8 +49,8 @@ func (h *DomainHandler) AddDomain(
 // GetDomain handles retrieving a domain.
 func (h *DomainHandler) GetDomain(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.GetDomainRequest],
-) (*connect.Response[emailapiv1.GetDomainResponse], error) {
+	req *connect.Request[v1.GetDomainRequest],
+) (*connect.Response[v1.GetDomainResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
@@ -61,7 +61,7 @@ func (h *DomainHandler) GetDomain(
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("domain not found or access denied"))
 	}
 
-	return connect.NewResponse(&emailapiv1.GetDomainResponse{
+	return connect.NewResponse(&v1.GetDomainResponse{
 		Domain: toProtoDomain(details),
 	}), nil
 }
@@ -69,8 +69,8 @@ func (h *DomainHandler) GetDomain(
 // ListDomains handles listing all domains for a user.
 func (h *DomainHandler) ListDomains(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.ListDomainsRequest],
-) (*connect.Response[emailapiv1.ListDomainsResponse], error) {
+	req *connect.Request[v1.ListDomainsRequest],
+) (*connect.Response[v1.ListDomainsResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
@@ -81,12 +81,12 @@ func (h *DomainHandler) ListDomains(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	protoDomains := make([]*emailapiv1.Domain, len(domains))
+	protoDomains := make([]*v1.Domain, len(domains))
 	for i, d := range domains {
 		protoDomains[i] = toProtoDomain(d)
 	}
 
-	return connect.NewResponse(&emailapiv1.ListDomainsResponse{
+	return connect.NewResponse(&v1.ListDomainsResponse{
 		Data: protoDomains,
 	}), nil
 }
@@ -94,8 +94,8 @@ func (h *DomainHandler) ListDomains(
 // DeleteDomain handles deleting a domain.
 func (h *DomainHandler) DeleteDomain(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.DeleteDomainRequest],
-) (*connect.Response[emailapiv1.DeleteDomainResponse], error) {
+	req *connect.Request[v1.DeleteDomainRequest],
+) (*connect.Response[v1.DeleteDomainResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
@@ -105,7 +105,7 @@ func (h *DomainHandler) DeleteDomain(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	return connect.NewResponse(&emailapiv1.DeleteDomainResponse{
+	return connect.NewResponse(&v1.DeleteDomainResponse{
 		Message: "Domain deleted.",
 	}), nil
 }
@@ -113,8 +113,8 @@ func (h *DomainHandler) DeleteDomain(
 // VerifyDomain handles verifying a domain status with rate limiting.
 func (h *DomainHandler) VerifyDomain(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.VerifyDomainRequest],
-) (*connect.Response[emailapiv1.VerifyDomainResponse], error) {
+	req *connect.Request[v1.VerifyDomainRequest],
+) (*connect.Response[v1.VerifyDomainResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
@@ -125,7 +125,7 @@ func (h *DomainHandler) VerifyDomain(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	resp := &emailapiv1.VerifyDomainResponse{
+	resp := &v1.VerifyDomainResponse{
 		Domain:       toProtoDomain(result.Domain),
 		WasRefreshed: result.WasRefreshed,
 		Message:      result.Message,
@@ -140,8 +140,8 @@ func (h *DomainHandler) VerifyDomain(
 // Proto Conversion Helpers
 // ============================================================================
 
-func toProtoDomain(d *domain.DomainWithDetails) *emailapiv1.Domain {
-	pb := &emailapiv1.Domain{
+func toProtoDomain(d *domain.DomainWithDetails) *v1.Domain {
+	pb := &v1.Domain{
 		Id:        d.ID,
 		Domain:    d.Domain,
 		Status:    toProtoDomainStatus(d.Status),
@@ -157,28 +157,28 @@ func toProtoDomain(d *domain.DomainWithDetails) *emailapiv1.Domain {
 	return pb
 }
 
-func toProtoDomainStatus(s domain.DomainStatus) emailapiv1.DomainStatus {
+func toProtoDomainStatus(s domain.DomainStatus) v1.DomainStatus {
 	switch s {
 	case domain.DomainStatusPending:
-		return emailapiv1.DomainStatus_DOMAIN_STATUS_PENDING
+		return v1.DomainStatus_DOMAIN_STATUS_PENDING
 	case domain.DomainStatusVerifying:
-		return emailapiv1.DomainStatus_DOMAIN_STATUS_VERIFYING
+		return v1.DomainStatus_DOMAIN_STATUS_VERIFYING
 	case domain.DomainStatusReady:
-		return emailapiv1.DomainStatus_DOMAIN_STATUS_READY
+		return v1.DomainStatus_DOMAIN_STATUS_READY
 	case domain.DomainStatusDegraded:
-		return emailapiv1.DomainStatus_DOMAIN_STATUS_DEGRADED
+		return v1.DomainStatus_DOMAIN_STATUS_DEGRADED
 	case domain.DomainStatusFailed:
-		return emailapiv1.DomainStatus_DOMAIN_STATUS_FAILED
+		return v1.DomainStatus_DOMAIN_STATUS_FAILED
 	default:
-		return emailapiv1.DomainStatus_DOMAIN_STATUS_UNSPECIFIED
+		return v1.DomainStatus_DOMAIN_STATUS_UNSPECIFIED
 	}
 }
 
-func toProtoSummary(s *domain.DomainSummary) *emailapiv1.DomainSummary {
+func toProtoSummary(s *domain.DomainSummary) *v1.DomainSummary {
 	if s == nil {
 		return nil
 	}
-	return &emailapiv1.DomainSummary{
+	return &v1.DomainSummary{
 		Message:           s.Message,
 		NextAction:        s.NextAction,
 		RecordsPending:    int32(s.RecordsPending),
@@ -188,11 +188,11 @@ func toProtoSummary(s *domain.DomainSummary) *emailapiv1.DomainSummary {
 	}
 }
 
-func toProtoRecords(r *domain.DomainRecords) *emailapiv1.DomainRecords {
+func toProtoRecords(r *domain.DomainRecords) *v1.DomainRecords {
 	if r == nil {
 		return nil
 	}
-	pb := &emailapiv1.DomainRecords{}
+	pb := &v1.DomainRecords{}
 
 	for _, rec := range r.DkimRecords {
 		pb.DkimRecords = append(pb.DkimRecords, toProtoRecord(&rec))
@@ -217,8 +217,8 @@ func toProtoRecords(r *domain.DomainRecords) *emailapiv1.DomainRecords {
 	return pb
 }
 
-func toProtoRecord(r *domain.DnsRecord) *emailapiv1.DnsRecord {
-	return &emailapiv1.DnsRecord{
+func toProtoRecord(r *domain.DnsRecord) *v1.DnsRecord {
+	return &v1.DnsRecord{
 		Type:            r.Type,
 		Name:            r.Name,
 		Value:           r.Value,
@@ -231,36 +231,36 @@ func toProtoRecord(r *domain.DnsRecord) *emailapiv1.DnsRecord {
 	}
 }
 
-func toProtoRecordType(t domain.RecordType) emailapiv1.RecordType {
+func toProtoRecordType(t domain.RecordType) v1.RecordType {
 	switch t {
 	case domain.RecordTypeDKIM:
-		return emailapiv1.RecordType_RECORD_TYPE_DKIM
+		return v1.RecordType_RECORD_TYPE_DKIM
 	case domain.RecordTypeSPF:
-		return emailapiv1.RecordType_RECORD_TYPE_SPF
+		return v1.RecordType_RECORD_TYPE_SPF
 	case domain.RecordTypeDMARC:
-		return emailapiv1.RecordType_RECORD_TYPE_DMARC
+		return v1.RecordType_RECORD_TYPE_DMARC
 	case domain.RecordTypeMXInbound:
-		return emailapiv1.RecordType_RECORD_TYPE_MX_INBOUND
+		return v1.RecordType_RECORD_TYPE_MX_INBOUND
 	case domain.RecordTypeMailFromMX:
-		return emailapiv1.RecordType_RECORD_TYPE_MAIL_FROM_MX
+		return v1.RecordType_RECORD_TYPE_MAIL_FROM_MX
 	case domain.RecordTypeMailFromSPF:
-		return emailapiv1.RecordType_RECORD_TYPE_MAIL_FROM_SPF
+		return v1.RecordType_RECORD_TYPE_MAIL_FROM_SPF
 	default:
-		return emailapiv1.RecordType_RECORD_TYPE_UNSPECIFIED
+		return v1.RecordType_RECORD_TYPE_UNSPECIFIED
 	}
 }
 
-func toProtoRecordStatus(s domain.RecordStatus) emailapiv1.RecordStatus {
+func toProtoRecordStatus(s domain.RecordStatus) v1.RecordStatus {
 	switch s {
 	case domain.RecordStatusPending:
-		return emailapiv1.RecordStatus_RECORD_STATUS_PENDING
+		return v1.RecordStatus_RECORD_STATUS_PENDING
 	case domain.RecordStatusFound:
-		return emailapiv1.RecordStatus_RECORD_STATUS_FOUND
+		return v1.RecordStatus_RECORD_STATUS_FOUND
 	case domain.RecordStatusMismatch:
-		return emailapiv1.RecordStatus_RECORD_STATUS_MISMATCH
+		return v1.RecordStatus_RECORD_STATUS_MISMATCH
 	case domain.RecordStatusMissing:
-		return emailapiv1.RecordStatus_RECORD_STATUS_MISSING
+		return v1.RecordStatus_RECORD_STATUS_MISSING
 	default:
-		return emailapiv1.RecordStatus_RECORD_STATUS_UNSPECIFIED
+		return v1.RecordStatus_RECORD_STATUS_UNSPECIFIED
 	}
 }

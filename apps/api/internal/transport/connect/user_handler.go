@@ -7,8 +7,8 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	emailapiv1 "github.com/emailapi/api/gen/v1"
-	"github.com/emailapi/api/gen/v1/emailapiv1connect"
+	v1 "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/service"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
@@ -16,7 +16,7 @@ import (
 
 // UserHandler implements the Connect UserServiceHandler.
 type UserHandler struct {
-	emailapiv1connect.UnimplementedUserServiceHandler
+	v1connect.UnimplementedUserServiceHandler
 	svc *service.UserService
 }
 
@@ -28,8 +28,8 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 // CreateUser handles the CreateUser RPC.
 func (h *UserHandler) CreateUser(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.CreateUserRequest],
-) (*connect.Response[emailapiv1.CreateUserResponse], error) {
+	req *connect.Request[v1.CreateUserRequest],
+) (*connect.Response[v1.CreateUserResponse], error) {
 	domainReq := &domain.CreateUserRequest{
 		Email: req.Msg.Email,
 		Name:  req.Msg.Name,
@@ -41,7 +41,7 @@ func (h *UserHandler) CreateUser(
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	return connect.NewResponse(&emailapiv1.CreateUserResponse{
+	return connect.NewResponse(&v1.CreateUserResponse{
 		User:    toProtoUser(user),
 		Message: "User created successfully.",
 		ApiKey:  apiKey,
@@ -51,8 +51,8 @@ func (h *UserHandler) CreateUser(
 // GetCurrentUser handles the GetCurrentUser RPC.
 func (h *UserHandler) GetCurrentUser(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.GetCurrentUserRequest],
-) (*connect.Response[emailapiv1.User], error) {
+	req *connect.Request[v1.GetCurrentUserRequest],
+) (*connect.Response[v1.User], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
@@ -69,8 +69,8 @@ func (h *UserHandler) GetCurrentUser(
 // UpdateUser handles the UpdateUser RPC.
 func (h *UserHandler) UpdateUser(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.UpdateUserRequest],
-) (*connect.Response[emailapiv1.User], error) {
+	req *connect.Request[v1.UpdateUserRequest],
+) (*connect.Response[v1.User], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
@@ -107,8 +107,8 @@ func (h *UserHandler) UpdateUser(
 // ListUsers handles the ListUsers RPC.
 func (h *UserHandler) ListUsers(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.ListUsersRequest],
-) (*connect.Response[emailapiv1.ListUsersResponse], error) {
+	req *connect.Request[v1.ListUsersRequest],
+) (*connect.Response[v1.ListUsersResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
@@ -125,12 +125,12 @@ func (h *UserHandler) ListUsers(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	protoUsers := make([]*emailapiv1.User, len(users))
+	protoUsers := make([]*v1.User, len(users))
 	for i, u := range users {
 		protoUsers[i] = toProtoUser(u)
 	}
 
-	return connect.NewResponse(&emailapiv1.ListUsersResponse{
+	return connect.NewResponse(&v1.ListUsersResponse{
 		Users:      protoUsers,
 		TotalCount: int32(len(protoUsers)),
 	}), nil
@@ -140,30 +140,30 @@ func (h *UserHandler) ListUsers(
 // Proto Conversion Helpers
 // ============================================================================
 
-func toRole(r emailapiv1.UserRole) domain.UserRole {
+func toRole(r v1.UserRole) domain.UserRole {
 	switch r {
-	case emailapiv1.UserRole_USER_ROLE_ADMIN:
+	case v1.UserRole_USER_ROLE_ADMIN:
 		return domain.UserRoleAdmin
-	case emailapiv1.UserRole_USER_ROLE_MEMBER:
+	case v1.UserRole_USER_ROLE_MEMBER:
 		return domain.UserRoleMember
 	default:
 		return domain.UserRoleMember
 	}
 }
 
-func toProtoUserRole(r domain.UserRole) emailapiv1.UserRole {
+func toProtoUserRole(r domain.UserRole) v1.UserRole {
 	switch r {
 	case domain.UserRoleAdmin:
-		return emailapiv1.UserRole_USER_ROLE_ADMIN
+		return v1.UserRole_USER_ROLE_ADMIN
 	case domain.UserRoleMember:
-		return emailapiv1.UserRole_USER_ROLE_MEMBER
+		return v1.UserRole_USER_ROLE_MEMBER
 	default:
-		return emailapiv1.UserRole_USER_ROLE_UNSPECIFIED
+		return v1.UserRole_USER_ROLE_UNSPECIFIED
 	}
 }
 
-func toProtoUser(u *domain.User) *emailapiv1.User {
-	user := &emailapiv1.User{
+func toProtoUser(u *domain.User) *v1.User {
+	user := &v1.User{
 		Id:        u.ID,
 		Email:     u.Email,
 		Name:      u.Name,

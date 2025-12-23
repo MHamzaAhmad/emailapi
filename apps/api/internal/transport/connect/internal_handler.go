@@ -6,14 +6,14 @@ import (
 
 	"connectrpc.com/connect"
 
-	emailapiv1 "github.com/emailapi/api/gen/v1"
-	"github.com/emailapi/api/gen/v1/emailapiv1connect"
+	v1 "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/service"
 )
 
 // InternalHandler implements the Connect InternalServiceHandler.
 type InternalHandler struct {
-	emailapiv1connect.UnimplementedInternalServiceHandler
+	v1connect.UnimplementedInternalServiceHandler
 	svc *service.InternalService
 }
 
@@ -25,8 +25,8 @@ func NewInternalHandler(svc *service.InternalService) *InternalHandler {
 // HandleGuardDutyScanResult processes GuardDuty malware scan results from EventBridge.
 func (h *InternalHandler) HandleGuardDutyScanResult(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.GuardDutyScanResultRequest],
-) (*connect.Response[emailapiv1.GuardDutyScanResultResponse], error) {
+	req *connect.Request[v1.GuardDutyScanResultRequest],
+) (*connect.Response[v1.GuardDutyScanResultResponse], error) {
 	result := &service.GuardDutyScanResult{
 		S3Bucket:   req.Msg.S3Bucket,
 		S3Key:      req.Msg.S3Key,
@@ -36,13 +36,13 @@ func (h *InternalHandler) HandleGuardDutyScanResult(
 
 	err := h.svc.HandleGuardDutyScanResult(ctx, result)
 	if err != nil {
-		return connect.NewResponse(&emailapiv1.GuardDutyScanResultResponse{
+		return connect.NewResponse(&v1.GuardDutyScanResultResponse{
 			Success: false,
 			Message: err.Error(),
 		}), nil
 	}
 
-	return connect.NewResponse(&emailapiv1.GuardDutyScanResultResponse{
+	return connect.NewResponse(&v1.GuardDutyScanResultResponse{
 		Success: true,
 		Message: "Scan result processed successfully",
 	}), nil
@@ -51,8 +51,8 @@ func (h *InternalHandler) HandleGuardDutyScanResult(
 // HandleClerkWebhook processes Clerk user lifecycle events.
 func (h *InternalHandler) HandleClerkWebhook(
 	ctx context.Context,
-	req *connect.Request[emailapiv1.ClerkWebhookRequest],
-) (*connect.Response[emailapiv1.ClerkWebhookResponse], error) {
+	req *connect.Request[v1.ClerkWebhookRequest],
+) (*connect.Response[v1.ClerkWebhookResponse], error) {
 	// Connect provides headers directly from the request
 	headers := http.Header{}
 	for k, values := range req.Header() {
@@ -63,13 +63,13 @@ func (h *InternalHandler) HandleClerkWebhook(
 
 	success, message, err := h.svc.HandleClerkWebhook(ctx, req.Msg.Payload, headers)
 	if err != nil {
-		return connect.NewResponse(&emailapiv1.ClerkWebhookResponse{
+		return connect.NewResponse(&v1.ClerkWebhookResponse{
 			Success: false,
 			Message: err.Error(),
 		}), nil
 	}
 
-	return connect.NewResponse(&emailapiv1.ClerkWebhookResponse{
+	return connect.NewResponse(&v1.ClerkWebhookResponse{
 		Success: success,
 		Message: message,
 	}), nil

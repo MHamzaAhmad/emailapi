@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	emailapiv1 "github.com/emailapi/api/gen/v1"
+	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/external/svix"
 )
 
@@ -37,42 +37,42 @@ func NewSender(svixClient svix.Client) Sender {
 }
 
 // SendEmailSent sends an email.sent webhook event.
-func (s *sender) SendEmailSent(ctx context.Context, userID string, event *emailapiv1.EmailSentEvent) {
+func (s *sender) SendEmailSent(ctx context.Context, userID string, event *v1.EmailSentEvent) {
 	s.send(ctx, userID, EventEmailSent, event)
 }
 
 // SendEmailDelivered sends an email.delivered webhook event.
-func (s *sender) SendEmailDelivered(ctx context.Context, userID string, event *emailapiv1.EmailDeliveredEvent) {
+func (s *sender) SendEmailDelivered(ctx context.Context, userID string, event *v1.EmailDeliveredEvent) {
 	s.send(ctx, userID, EventEmailDelivered, event)
 }
 
 // SendEmailBounced sends an email.bounced webhook event.
-func (s *sender) SendEmailBounced(ctx context.Context, userID string, event *emailapiv1.EmailBouncedEvent) {
+func (s *sender) SendEmailBounced(ctx context.Context, userID string, event *v1.EmailBouncedEvent) {
 	s.send(ctx, userID, EventEmailBounced, event)
 }
 
 // SendEmailComplained sends an email.complained webhook event.
-func (s *sender) SendEmailComplained(ctx context.Context, userID string, event *emailapiv1.EmailComplainedEvent) {
+func (s *sender) SendEmailComplained(ctx context.Context, userID string, event *v1.EmailComplainedEvent) {
 	s.send(ctx, userID, EventEmailComplained, event)
 }
 
 // SendEmailRejected sends an email.rejected webhook event.
-func (s *sender) SendEmailRejected(ctx context.Context, userID string, event *emailapiv1.EmailRejectedEvent) {
+func (s *sender) SendEmailRejected(ctx context.Context, userID string, event *v1.EmailRejectedEvent) {
 	s.send(ctx, userID, EventEmailRejected, event)
 }
 
 // SendEmailDelayed sends an email.delayed webhook event.
-func (s *sender) SendEmailDelayed(ctx context.Context, userID string, event *emailapiv1.EmailDelayedEvent) {
+func (s *sender) SendEmailDelayed(ctx context.Context, userID string, event *v1.EmailDelayedEvent) {
 	s.send(ctx, userID, EventEmailDelayed, event)
 }
 
 // SendEmailFailed sends an email.failed webhook event.
-func (s *sender) SendEmailFailed(ctx context.Context, userID string, event *emailapiv1.EmailFailedEvent) {
+func (s *sender) SendEmailFailed(ctx context.Context, userID string, event *v1.EmailFailedEvent) {
 	s.send(ctx, userID, EventEmailFailed, event)
 }
 
 // SendEmailReplyReceived sends an email.reply_received webhook event.
-func (s *sender) SendEmailReplyReceived(ctx context.Context, userID string, event *emailapiv1.EmailReplyReceivedEvent) {
+func (s *sender) SendEmailReplyReceived(ctx context.Context, userID string, event *v1.EmailReplyReceivedEvent) {
 	s.send(ctx, userID, EventEmailReplyReceived, event)
 }
 
@@ -94,29 +94,29 @@ func (s *sender) send(ctx context.Context, userID, eventType string, payload pro
 		}
 
 		// Build the webhook envelope
-		envelope := &emailapiv1.WebhookEvent{
+		envelope := &v1.WebhookEvent{
 			EventType: eventType,
 			Timestamp: timestamppb.New(time.Now().UTC()),
 		}
 
 		// Set the appropriate payload field based on event type
 		switch p := payload.(type) {
-		case *emailapiv1.EmailSentEvent:
-			envelope.Payload = &emailapiv1.WebhookEvent_EmailSent{EmailSent: p}
-		case *emailapiv1.EmailDeliveredEvent:
-			envelope.Payload = &emailapiv1.WebhookEvent_EmailDelivered{EmailDelivered: p}
-		case *emailapiv1.EmailBouncedEvent:
-			envelope.Payload = &emailapiv1.WebhookEvent_EmailBounced{EmailBounced: p}
-		case *emailapiv1.EmailComplainedEvent:
-			envelope.Payload = &emailapiv1.WebhookEvent_EmailComplained{EmailComplained: p}
-		case *emailapiv1.EmailRejectedEvent:
-			envelope.Payload = &emailapiv1.WebhookEvent_EmailRejected{EmailRejected: p}
-		case *emailapiv1.EmailDelayedEvent:
-			envelope.Payload = &emailapiv1.WebhookEvent_EmailDelayed{EmailDelayed: p}
-		case *emailapiv1.EmailFailedEvent:
-			envelope.Payload = &emailapiv1.WebhookEvent_EmailFailed{EmailFailed: p}
-		case *emailapiv1.EmailReplyReceivedEvent:
-			envelope.Payload = &emailapiv1.WebhookEvent_EmailReplyReceived{EmailReplyReceived: p}
+		case *v1.EmailSentEvent:
+			envelope.Payload = &v1.WebhookEvent_EmailSent{EmailSent: p}
+		case *v1.EmailDeliveredEvent:
+			envelope.Payload = &v1.WebhookEvent_EmailDelivered{EmailDelivered: p}
+		case *v1.EmailBouncedEvent:
+			envelope.Payload = &v1.WebhookEvent_EmailBounced{EmailBounced: p}
+		case *v1.EmailComplainedEvent:
+			envelope.Payload = &v1.WebhookEvent_EmailComplained{EmailComplained: p}
+		case *v1.EmailRejectedEvent:
+			envelope.Payload = &v1.WebhookEvent_EmailRejected{EmailRejected: p}
+		case *v1.EmailDelayedEvent:
+			envelope.Payload = &v1.WebhookEvent_EmailDelayed{EmailDelayed: p}
+		case *v1.EmailFailedEvent:
+			envelope.Payload = &v1.WebhookEvent_EmailFailed{EmailFailed: p}
+		case *v1.EmailReplyReceivedEvent:
+			envelope.Payload = &v1.WebhookEvent_EmailReplyReceived{EmailReplyReceived: p}
 		}
 
 		// Convert proto to JSON-friendly map for Svix

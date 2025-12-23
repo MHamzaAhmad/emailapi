@@ -2,7 +2,7 @@
 //
 // Source: v1/apikey.proto
 
-package emailapiv1connect
+package v1connect
 
 import (
 	connect "connectrpc.com/connect"
@@ -22,7 +22,7 @@ const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// ApiKeyServiceName is the fully-qualified name of the ApiKeyService service.
-	ApiKeyServiceName = "emailapi.v1.ApiKeyService"
+	ApiKeyServiceName = "v1.ApiKeyService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -35,24 +35,24 @@ const (
 const (
 	// ApiKeyServiceCreateApiKeyProcedure is the fully-qualified name of the ApiKeyService's
 	// CreateApiKey RPC.
-	ApiKeyServiceCreateApiKeyProcedure = "/emailapi.v1.ApiKeyService/CreateApiKey"
+	ApiKeyServiceCreateApiKeyProcedure = "/v1.ApiKeyService/CreateApiKey"
 	// ApiKeyServiceGetApiKeyProcedure is the fully-qualified name of the ApiKeyService's GetApiKey RPC.
-	ApiKeyServiceGetApiKeyProcedure = "/emailapi.v1.ApiKeyService/GetApiKey"
+	ApiKeyServiceGetApiKeyProcedure = "/v1.ApiKeyService/GetApiKey"
 	// ApiKeyServiceListApiKeysProcedure is the fully-qualified name of the ApiKeyService's ListApiKeys
 	// RPC.
-	ApiKeyServiceListApiKeysProcedure = "/emailapi.v1.ApiKeyService/ListApiKeys"
+	ApiKeyServiceListApiKeysProcedure = "/v1.ApiKeyService/ListApiKeys"
 	// ApiKeyServiceUpdateApiKeyProcedure is the fully-qualified name of the ApiKeyService's
 	// UpdateApiKey RPC.
-	ApiKeyServiceUpdateApiKeyProcedure = "/emailapi.v1.ApiKeyService/UpdateApiKey"
+	ApiKeyServiceUpdateApiKeyProcedure = "/v1.ApiKeyService/UpdateApiKey"
 	// ApiKeyServiceDeleteApiKeyProcedure is the fully-qualified name of the ApiKeyService's
 	// DeleteApiKey RPC.
-	ApiKeyServiceDeleteApiKeyProcedure = "/emailapi.v1.ApiKeyService/DeleteApiKey"
+	ApiKeyServiceDeleteApiKeyProcedure = "/v1.ApiKeyService/DeleteApiKey"
 	// ApiKeyServiceRevokeApiKeyProcedure is the fully-qualified name of the ApiKeyService's
 	// RevokeApiKey RPC.
-	ApiKeyServiceRevokeApiKeyProcedure = "/emailapi.v1.ApiKeyService/RevokeApiKey"
+	ApiKeyServiceRevokeApiKeyProcedure = "/v1.ApiKeyService/RevokeApiKey"
 )
 
-// ApiKeyServiceClient is a client for the emailapi.v1.ApiKeyService service.
+// ApiKeyServiceClient is a client for the v1.ApiKeyService service.
 type ApiKeyServiceClient interface {
 	// CreateApiKey creates a new API key for the authenticated user.
 	CreateApiKey(context.Context, *connect.Request[v1.CreateApiKeyRequest]) (*connect.Response[v1.CreateApiKeyResponse], error)
@@ -68,10 +68,10 @@ type ApiKeyServiceClient interface {
 	RevokeApiKey(context.Context, *connect.Request[v1.RevokeApiKeyRequest]) (*connect.Response[v1.ApiKey], error)
 }
 
-// NewApiKeyServiceClient constructs a client for the emailapi.v1.ApiKeyService service. By default,
-// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
-// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
-// or connect.WithGRPCWeb() options.
+// NewApiKeyServiceClient constructs a client for the v1.ApiKeyService service. By default, it uses
+// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
@@ -128,37 +128,37 @@ type apiKeyServiceClient struct {
 	revokeApiKey *connect.Client[v1.RevokeApiKeyRequest, v1.ApiKey]
 }
 
-// CreateApiKey calls emailapi.v1.ApiKeyService.CreateApiKey.
+// CreateApiKey calls v1.ApiKeyService.CreateApiKey.
 func (c *apiKeyServiceClient) CreateApiKey(ctx context.Context, req *connect.Request[v1.CreateApiKeyRequest]) (*connect.Response[v1.CreateApiKeyResponse], error) {
 	return c.createApiKey.CallUnary(ctx, req)
 }
 
-// GetApiKey calls emailapi.v1.ApiKeyService.GetApiKey.
+// GetApiKey calls v1.ApiKeyService.GetApiKey.
 func (c *apiKeyServiceClient) GetApiKey(ctx context.Context, req *connect.Request[v1.GetApiKeyRequest]) (*connect.Response[v1.ApiKey], error) {
 	return c.getApiKey.CallUnary(ctx, req)
 }
 
-// ListApiKeys calls emailapi.v1.ApiKeyService.ListApiKeys.
+// ListApiKeys calls v1.ApiKeyService.ListApiKeys.
 func (c *apiKeyServiceClient) ListApiKeys(ctx context.Context, req *connect.Request[v1.ListApiKeysRequest]) (*connect.Response[v1.ListApiKeysResponse], error) {
 	return c.listApiKeys.CallUnary(ctx, req)
 }
 
-// UpdateApiKey calls emailapi.v1.ApiKeyService.UpdateApiKey.
+// UpdateApiKey calls v1.ApiKeyService.UpdateApiKey.
 func (c *apiKeyServiceClient) UpdateApiKey(ctx context.Context, req *connect.Request[v1.UpdateApiKeyRequest]) (*connect.Response[v1.ApiKey], error) {
 	return c.updateApiKey.CallUnary(ctx, req)
 }
 
-// DeleteApiKey calls emailapi.v1.ApiKeyService.DeleteApiKey.
+// DeleteApiKey calls v1.ApiKeyService.DeleteApiKey.
 func (c *apiKeyServiceClient) DeleteApiKey(ctx context.Context, req *connect.Request[v1.DeleteApiKeyRequest]) (*connect.Response[v1.DeleteApiKeyResponse], error) {
 	return c.deleteApiKey.CallUnary(ctx, req)
 }
 
-// RevokeApiKey calls emailapi.v1.ApiKeyService.RevokeApiKey.
+// RevokeApiKey calls v1.ApiKeyService.RevokeApiKey.
 func (c *apiKeyServiceClient) RevokeApiKey(ctx context.Context, req *connect.Request[v1.RevokeApiKeyRequest]) (*connect.Response[v1.ApiKey], error) {
 	return c.revokeApiKey.CallUnary(ctx, req)
 }
 
-// ApiKeyServiceHandler is an implementation of the emailapi.v1.ApiKeyService service.
+// ApiKeyServiceHandler is an implementation of the v1.ApiKeyService service.
 type ApiKeyServiceHandler interface {
 	// CreateApiKey creates a new API key for the authenticated user.
 	CreateApiKey(context.Context, *connect.Request[v1.CreateApiKeyRequest]) (*connect.Response[v1.CreateApiKeyResponse], error)
@@ -217,7 +217,7 @@ func NewApiKeyServiceHandler(svc ApiKeyServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(apiKeyServiceMethods.ByName("RevokeApiKey")),
 		connect.WithHandlerOptions(opts...),
 	)
-	return "/emailapi.v1.ApiKeyService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/v1.ApiKeyService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ApiKeyServiceCreateApiKeyProcedure:
 			apiKeyServiceCreateApiKeyHandler.ServeHTTP(w, r)
@@ -241,25 +241,25 @@ func NewApiKeyServiceHandler(svc ApiKeyServiceHandler, opts ...connect.HandlerOp
 type UnimplementedApiKeyServiceHandler struct{}
 
 func (UnimplementedApiKeyServiceHandler) CreateApiKey(context.Context, *connect.Request[v1.CreateApiKeyRequest]) (*connect.Response[v1.CreateApiKeyResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.ApiKeyService.CreateApiKey is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.ApiKeyService.CreateApiKey is not implemented"))
 }
 
 func (UnimplementedApiKeyServiceHandler) GetApiKey(context.Context, *connect.Request[v1.GetApiKeyRequest]) (*connect.Response[v1.ApiKey], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.ApiKeyService.GetApiKey is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.ApiKeyService.GetApiKey is not implemented"))
 }
 
 func (UnimplementedApiKeyServiceHandler) ListApiKeys(context.Context, *connect.Request[v1.ListApiKeysRequest]) (*connect.Response[v1.ListApiKeysResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.ApiKeyService.ListApiKeys is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.ApiKeyService.ListApiKeys is not implemented"))
 }
 
 func (UnimplementedApiKeyServiceHandler) UpdateApiKey(context.Context, *connect.Request[v1.UpdateApiKeyRequest]) (*connect.Response[v1.ApiKey], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.ApiKeyService.UpdateApiKey is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.ApiKeyService.UpdateApiKey is not implemented"))
 }
 
 func (UnimplementedApiKeyServiceHandler) DeleteApiKey(context.Context, *connect.Request[v1.DeleteApiKeyRequest]) (*connect.Response[v1.DeleteApiKeyResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.ApiKeyService.DeleteApiKey is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.ApiKeyService.DeleteApiKey is not implemented"))
 }
 
 func (UnimplementedApiKeyServiceHandler) RevokeApiKey(context.Context, *connect.Request[v1.RevokeApiKeyRequest]) (*connect.Response[v1.ApiKey], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("emailapi.v1.ApiKeyService.RevokeApiKey is not implemented"))
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.ApiKeyService.RevokeApiKey is not implemented"))
 }
