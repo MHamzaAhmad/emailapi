@@ -25,7 +25,7 @@ var eventTypes = []struct {
 	{"email.complained", "Recipient marked email as spam", &v1.EmailComplainedEvent{}},
 	{"email.rejected", "Email was rejected by SES", &v1.EmailRejectedEvent{}},
 	{"email.delayed", "Email delivery was delayed", &v1.EmailDelayedEvent{}},
-	{"email.reply_received", "Reply to a sent email was received", &v1.EmailReplyReceivedEvent{}},
+	{"email.replied", "Reply to a sent email was received", &v1.EmailRepliedEvent{}},
 }
 
 // svixClient implements the Client interface using Svix SDK.

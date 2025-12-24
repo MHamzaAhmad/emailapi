@@ -21,7 +21,7 @@ enum EventType {
   EVENT_TYPE_EMAIL_BOUNCED = 4;
   EVENT_TYPE_EMAIL_OPENED = 5;
   EVENT_TYPE_EMAIL_CLICKED = 6;
-  EVENT_TYPE_EMAIL_REPLY_RECEIVED = 7;
+  EVENT_TYPE_EMAIL_REPLIED = 7;
   EVENT_TYPE_EMAIL_COMPLAINED = 8;
   EVENT_TYPE_EMAIL_REJECTED = 9;
   EVENT_TYPE_EMAIL_DELAYED = 10;
@@ -44,7 +44,7 @@ message Event {
     EmailComplainedEvent email_complained = 13;
     EmailRejectedEvent email_rejected = 14;
     EmailDelayedEvent email_delayed = 15;
-    EmailReplyReceivedEvent email_reply_received = 16;
+    EmailRepliedEvent email_replied = 16;
     EmailFailedEvent email_failed = 17;
   }
 }
@@ -155,8 +155,8 @@ message EmailFailedEvent {
   string error = 3;
 }
 
-// EmailReplyReceivedEvent is sent when a reply to a sent email is received.
-message EmailReplyReceivedEvent {
+// EmailRepliedEvent is sent when a reply to a sent email is received.
+message EmailRepliedEvent {
   // ID of this inbound email.
   string id = 1;
   // User who owns the original email.

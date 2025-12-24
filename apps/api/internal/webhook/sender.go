@@ -17,14 +17,14 @@ import (
 
 // Event type constants matching Svix event types.
 const (
-	EventEmailSent          = "email.sent"
-	EventEmailDelivered     = "email.delivered"
-	EventEmailBounced       = "email.bounced"
-	EventEmailComplained    = "email.complained"
-	EventEmailRejected      = "email.rejected"
-	EventEmailDelayed       = "email.delayed"
-	EventEmailFailed        = "email.failed"
-	EventEmailReplyReceived = "email.reply_received"
+	EventEmailSent       = "email.sent"
+	EventEmailDelivered  = "email.delivered"
+	EventEmailBounced    = "email.bounced"
+	EventEmailComplained = "email.complained"
+	EventEmailRejected   = "email.rejected"
+	EventEmailDelayed    = "email.delayed"
+	EventEmailFailed     = "email.failed"
+	EventEmailReplied    = "email.replied"
 )
 
 // sender implements the Sender interface.
@@ -74,9 +74,9 @@ func (s *sender) SendEmailFailed(ctx context.Context, userID string, event *v1.E
 	s.send(ctx, userID, EventEmailFailed, v1.EventType_EVENT_TYPE_EMAIL_FAILED, event)
 }
 
-// SendEmailReplyReceived sends an email.reply_received webhook event.
-func (s *sender) SendEmailReplyReceived(ctx context.Context, userID string, event *v1.EmailReplyReceivedEvent) {
-	s.send(ctx, userID, EventEmailReplyReceived, v1.EventType_EVENT_TYPE_EMAIL_REPLY_RECEIVED, event)
+// SendEmailReplied sends an email.replied webhook event.
+func (s *sender) SendEmailReplied(ctx context.Context, userID string, event *v1.EmailRepliedEvent) {
+	s.send(ctx, userID, EventEmailReplied, v1.EventType_EVENT_TYPE_EMAIL_REPLIED, event)
 }
 
 // send handles the common webhook sending logic.
@@ -157,8 +157,8 @@ func (s *sender) buildEvent(eventType v1.EventType, payload proto.Message) *v1.E
 		event.Payload = &v1.Event_EmailDelayed{EmailDelayed: p}
 	case *v1.EmailFailedEvent:
 		event.Payload = &v1.Event_EmailFailed{EmailFailed: p}
-	case *v1.EmailReplyReceivedEvent:
-		event.Payload = &v1.Event_EmailReplyReceived{EmailReplyReceived: p}
+	case *v1.EmailRepliedEvent:
+		event.Payload = &v1.Event_EmailReplied{EmailReplied: p}
 	}
 
 	return event

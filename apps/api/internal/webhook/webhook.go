@@ -32,6 +32,6 @@ type Sender interface {
 	// SendEmailFailed notifies when email sending fails.
 	SendEmailFailed(ctx context.Context, userID string, event *v1.EmailFailedEvent)
 
-	// SendEmailReplyReceived notifies when a reply is received.
-	SendEmailReplyReceived(ctx context.Context, userID string, event *v1.EmailReplyReceivedEvent)
+	// SendEmailReplied notifies when a reply is received.
+	SendEmailReplied(ctx context.Context, userID string, event *v1.EmailRepliedEvent)
 }

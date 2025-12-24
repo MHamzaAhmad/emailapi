@@ -1,0 +1,9 @@
+version: v2
+plugins:
+  # TypeScript protobuf messages and service definitions
+  - remote: buf.build/bufbuild/es:v2.2.3
+    out: src/gen
+    opt:
+      - target=ts
+      - import_extension=none
+    include_imports: true

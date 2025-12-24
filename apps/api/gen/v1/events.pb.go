@@ -26,17 +26,17 @@ const (
 type EventType int32
 
 const (
-	EventType_EVENT_TYPE_UNSPECIFIED          EventType = 0
-	EventType_EVENT_TYPE_EMAIL_SENT           EventType = 1
-	EventType_EVENT_TYPE_EMAIL_DELIVERED      EventType = 2
-	EventType_EVENT_TYPE_EMAIL_FAILED         EventType = 3
-	EventType_EVENT_TYPE_EMAIL_BOUNCED        EventType = 4
-	EventType_EVENT_TYPE_EMAIL_OPENED         EventType = 5
-	EventType_EVENT_TYPE_EMAIL_CLICKED        EventType = 6
-	EventType_EVENT_TYPE_EMAIL_REPLY_RECEIVED EventType = 7
-	EventType_EVENT_TYPE_EMAIL_COMPLAINED     EventType = 8
-	EventType_EVENT_TYPE_EMAIL_REJECTED       EventType = 9
-	EventType_EVENT_TYPE_EMAIL_DELAYED        EventType = 10
+	EventType_EVENT_TYPE_UNSPECIFIED      EventType = 0
+	EventType_EVENT_TYPE_EMAIL_SENT       EventType = 1
+	EventType_EVENT_TYPE_EMAIL_DELIVERED  EventType = 2
+	EventType_EVENT_TYPE_EMAIL_FAILED     EventType = 3
+	EventType_EVENT_TYPE_EMAIL_BOUNCED    EventType = 4
+	EventType_EVENT_TYPE_EMAIL_OPENED     EventType = 5
+	EventType_EVENT_TYPE_EMAIL_CLICKED    EventType = 6
+	EventType_EVENT_TYPE_EMAIL_REPLIED    EventType = 7
+	EventType_EVENT_TYPE_EMAIL_COMPLAINED EventType = 8
+	EventType_EVENT_TYPE_EMAIL_REJECTED   EventType = 9
+	EventType_EVENT_TYPE_EMAIL_DELAYED    EventType = 10
 )
 
 // Enum value maps for EventType.
@@ -49,23 +49,23 @@ var (
 		4:  "EVENT_TYPE_EMAIL_BOUNCED",
 		5:  "EVENT_TYPE_EMAIL_OPENED",
 		6:  "EVENT_TYPE_EMAIL_CLICKED",
-		7:  "EVENT_TYPE_EMAIL_REPLY_RECEIVED",
+		7:  "EVENT_TYPE_EMAIL_REPLIED",
 		8:  "EVENT_TYPE_EMAIL_COMPLAINED",
 		9:  "EVENT_TYPE_EMAIL_REJECTED",
 		10: "EVENT_TYPE_EMAIL_DELAYED",
 	}
 	EventType_value = map[string]int32{
-		"EVENT_TYPE_UNSPECIFIED":          0,
-		"EVENT_TYPE_EMAIL_SENT":           1,
-		"EVENT_TYPE_EMAIL_DELIVERED":      2,
-		"EVENT_TYPE_EMAIL_FAILED":         3,
-		"EVENT_TYPE_EMAIL_BOUNCED":        4,
-		"EVENT_TYPE_EMAIL_OPENED":         5,
-		"EVENT_TYPE_EMAIL_CLICKED":        6,
-		"EVENT_TYPE_EMAIL_REPLY_RECEIVED": 7,
-		"EVENT_TYPE_EMAIL_COMPLAINED":     8,
-		"EVENT_TYPE_EMAIL_REJECTED":       9,
-		"EVENT_TYPE_EMAIL_DELAYED":        10,
+		"EVENT_TYPE_UNSPECIFIED":      0,
+		"EVENT_TYPE_EMAIL_SENT":       1,
+		"EVENT_TYPE_EMAIL_DELIVERED":  2,
+		"EVENT_TYPE_EMAIL_FAILED":     3,
+		"EVENT_TYPE_EMAIL_BOUNCED":    4,
+		"EVENT_TYPE_EMAIL_OPENED":     5,
+		"EVENT_TYPE_EMAIL_CLICKED":    6,
+		"EVENT_TYPE_EMAIL_REPLIED":    7,
+		"EVENT_TYPE_EMAIL_COMPLAINED": 8,
+		"EVENT_TYPE_EMAIL_REJECTED":   9,
+		"EVENT_TYPE_EMAIL_DELAYED":    10,
 	}
 )
 
@@ -116,7 +116,7 @@ type Event struct {
 	//	*Event_EmailComplained
 	//	*Event_EmailRejected
 	//	*Event_EmailDelayed
-	//	*Event_EmailReplyReceived
+	//	*Event_EmailReplied
 	//	*Event_EmailFailed
 	Payload       isEvent_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
@@ -235,10 +235,10 @@ func (x *Event) GetEmailDelayed() *EmailDelayedEvent {
 	return nil
 }
 
-func (x *Event) GetEmailReplyReceived() *EmailReplyReceivedEvent {
+func (x *Event) GetEmailReplied() *EmailRepliedEvent {
 	if x != nil {
-		if x, ok := x.Payload.(*Event_EmailReplyReceived); ok {
-			return x.EmailReplyReceived
+		if x, ok := x.Payload.(*Event_EmailReplied); ok {
+			return x.EmailReplied
 		}
 	}
 	return nil
@@ -281,8 +281,8 @@ type Event_EmailDelayed struct {
 	EmailDelayed *EmailDelayedEvent `protobuf:"bytes,15,opt,name=email_delayed,json=emailDelayed,proto3,oneof"`
 }
 
-type Event_EmailReplyReceived struct {
-	EmailReplyReceived *EmailReplyReceivedEvent `protobuf:"bytes,16,opt,name=email_reply_received,json=emailReplyReceived,proto3,oneof"`
+type Event_EmailReplied struct {
+	EmailReplied *EmailRepliedEvent `protobuf:"bytes,16,opt,name=email_replied,json=emailReplied,proto3,oneof"`
 }
 
 type Event_EmailFailed struct {
@@ -301,7 +301,7 @@ func (*Event_EmailRejected) isEvent_Payload() {}
 
 func (*Event_EmailDelayed) isEvent_Payload() {}
 
-func (*Event_EmailReplyReceived) isEvent_Payload() {}
+func (*Event_EmailReplied) isEvent_Payload() {}
 
 func (*Event_EmailFailed) isEvent_Payload() {}
 
@@ -897,8 +897,8 @@ func (x *EmailFailedEvent) GetError() string {
 	return ""
 }
 
-// EmailReplyReceivedEvent is sent when a reply to a sent email is received.
-type EmailReplyReceivedEvent struct {
+// EmailRepliedEvent is sent when a reply to a sent email is received.
+type EmailRepliedEvent struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// ID of this inbound email.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -926,20 +926,20 @@ type EmailReplyReceivedEvent struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EmailReplyReceivedEvent) Reset() {
-	*x = EmailReplyReceivedEvent{}
+func (x *EmailRepliedEvent) Reset() {
+	*x = EmailRepliedEvent{}
 	mi := &file_v1_events_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EmailReplyReceivedEvent) String() string {
+func (x *EmailRepliedEvent) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EmailReplyReceivedEvent) ProtoMessage() {}
+func (*EmailRepliedEvent) ProtoMessage() {}
 
-func (x *EmailReplyReceivedEvent) ProtoReflect() protoreflect.Message {
+func (x *EmailRepliedEvent) ProtoReflect() protoreflect.Message {
 	mi := &file_v1_events_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -951,82 +951,82 @@ func (x *EmailReplyReceivedEvent) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EmailReplyReceivedEvent.ProtoReflect.Descriptor instead.
-func (*EmailReplyReceivedEvent) Descriptor() ([]byte, []int) {
+// Deprecated: Use EmailRepliedEvent.ProtoReflect.Descriptor instead.
+func (*EmailRepliedEvent) Descriptor() ([]byte, []int) {
 	return file_v1_events_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *EmailReplyReceivedEvent) GetId() string {
+func (x *EmailRepliedEvent) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *EmailReplyReceivedEvent) GetUserId() string {
+func (x *EmailRepliedEvent) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-func (x *EmailReplyReceivedEvent) GetMessageId() string {
+func (x *EmailRepliedEvent) GetMessageId() string {
 	if x != nil {
 		return x.MessageId
 	}
 	return ""
 }
 
-func (x *EmailReplyReceivedEvent) GetInReplyTo() string {
+func (x *EmailRepliedEvent) GetInReplyTo() string {
 	if x != nil {
 		return x.InReplyTo
 	}
 	return ""
 }
 
-func (x *EmailReplyReceivedEvent) GetReferences() []string {
+func (x *EmailRepliedEvent) GetReferences() []string {
 	if x != nil {
 		return x.References
 	}
 	return nil
 }
 
-func (x *EmailReplyReceivedEvent) GetFrom() string {
+func (x *EmailRepliedEvent) GetFrom() string {
 	if x != nil {
 		return x.From
 	}
 	return ""
 }
 
-func (x *EmailReplyReceivedEvent) GetTo() []string {
+func (x *EmailRepliedEvent) GetTo() []string {
 	if x != nil {
 		return x.To
 	}
 	return nil
 }
 
-func (x *EmailReplyReceivedEvent) GetSubject() string {
+func (x *EmailRepliedEvent) GetSubject() string {
 	if x != nil {
 		return x.Subject
 	}
 	return ""
 }
 
-func (x *EmailReplyReceivedEvent) GetBody() string {
+func (x *EmailRepliedEvent) GetBody() string {
 	if x != nil {
 		return x.Body
 	}
 	return ""
 }
 
-func (x *EmailReplyReceivedEvent) GetHtml() string {
+func (x *EmailRepliedEvent) GetHtml() string {
 	if x != nil {
 		return x.Html
 	}
 	return ""
 }
 
-func (x *EmailReplyReceivedEvent) GetParentEmailId() string {
+func (x *EmailRepliedEvent) GetParentEmailId() string {
 	if x != nil {
 		return x.ParentEmailId
 	}
@@ -1037,7 +1037,7 @@ var File_v1_events_proto protoreflect.FileDescriptor
 
 const file_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x0fv1/events.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x88\x05\n" +
+	"\x0fv1/events.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf5\x04\n" +
 	"\x05Event\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\x04type\x18\x02 \x01(\x0e2\r.v1.EventTypeR\x04type\x128\n" +
@@ -1049,8 +1049,8 @@ const file_v1_events_proto_rawDesc = "" +
 	"\remail_bounced\x18\f \x01(\v2\x15.v1.EmailBouncedEventH\x00R\femailBounced\x12E\n" +
 	"\x10email_complained\x18\r \x01(\v2\x18.v1.EmailComplainedEventH\x00R\x0femailComplained\x12?\n" +
 	"\x0eemail_rejected\x18\x0e \x01(\v2\x16.v1.EmailRejectedEventH\x00R\remailRejected\x12<\n" +
-	"\remail_delayed\x18\x0f \x01(\v2\x15.v1.EmailDelayedEventH\x00R\femailDelayed\x12O\n" +
-	"\x14email_reply_received\x18\x10 \x01(\v2\x1b.v1.EmailReplyReceivedEventH\x00R\x12emailReplyReceived\x129\n" +
+	"\remail_delayed\x18\x0f \x01(\v2\x15.v1.EmailDelayedEventH\x00R\femailDelayed\x12<\n" +
+	"\remail_replied\x18\x10 \x01(\v2\x15.v1.EmailRepliedEventH\x00R\femailReplied\x129\n" +
 	"\femail_failed\x18\x11 \x01(\v2\x14.v1.EmailFailedEventH\x00R\vemailFailedB\t\n" +
 	"\apayload\"\xbe\x02\n" +
 	"\x0eEmailSentEvent\x12\x19\n" +
@@ -1113,8 +1113,8 @@ const file_v1_events_proto_rawDesc = "" +
 	"\x10EmailFailedEvent\x12\x19\n" +
 	"\bemail_id\x18\x01 \x01(\tR\aemailId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"\xaf\x02\n" +
-	"\x17EmailReplyReceivedEvent\x12\x0e\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\xa9\x02\n" +
+	"\x11EmailRepliedEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
 	"\n" +
@@ -1129,7 +1129,7 @@ const file_v1_events_proto_rawDesc = "" +
 	"\x04body\x18\t \x01(\tR\x04body\x12\x12\n" +
 	"\x04html\x18\n" +
 	" \x01(\tR\x04html\x12&\n" +
-	"\x0fparent_email_id\x18\v \x01(\tR\rparentEmailId*\xdb\x02\n" +
+	"\x0fparent_email_id\x18\v \x01(\tR\rparentEmailId*\xd4\x02\n" +
 	"\tEventType\x12\x1a\n" +
 	"\x16EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15EVENT_TYPE_EMAIL_SENT\x10\x01\x12\x1e\n" +
@@ -1137,8 +1137,8 @@ const file_v1_events_proto_rawDesc = "" +
 	"\x17EVENT_TYPE_EMAIL_FAILED\x10\x03\x12\x1c\n" +
 	"\x18EVENT_TYPE_EMAIL_BOUNCED\x10\x04\x12\x1b\n" +
 	"\x17EVENT_TYPE_EMAIL_OPENED\x10\x05\x12\x1c\n" +
-	"\x18EVENT_TYPE_EMAIL_CLICKED\x10\x06\x12#\n" +
-	"\x1fEVENT_TYPE_EMAIL_REPLY_RECEIVED\x10\a\x12\x1f\n" +
+	"\x18EVENT_TYPE_EMAIL_CLICKED\x10\x06\x12\x1c\n" +
+	"\x18EVENT_TYPE_EMAIL_REPLIED\x10\a\x12\x1f\n" +
 	"\x1bEVENT_TYPE_EMAIL_COMPLAINED\x10\b\x12\x1d\n" +
 	"\x19EVENT_TYPE_EMAIL_REJECTED\x10\t\x12\x1c\n" +
 	"\x18EVENT_TYPE_EMAIL_DELAYED\x10\n" +
@@ -1160,18 +1160,18 @@ func file_v1_events_proto_rawDescGZIP() []byte {
 var file_v1_events_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_v1_events_proto_goTypes = []any{
-	(EventType)(0),                  // 0: v1.EventType
-	(*Event)(nil),                   // 1: v1.Event
-	(*EmailSentEvent)(nil),          // 2: v1.EmailSentEvent
-	(*EmailDeliveredEvent)(nil),     // 3: v1.EmailDeliveredEvent
-	(*EmailBouncedEvent)(nil),       // 4: v1.EmailBouncedEvent
-	(*EmailComplainedEvent)(nil),    // 5: v1.EmailComplainedEvent
-	(*EmailRejectedEvent)(nil),      // 6: v1.EmailRejectedEvent
-	(*EmailDelayedEvent)(nil),       // 7: v1.EmailDelayedEvent
-	(*EmailFailedEvent)(nil),        // 8: v1.EmailFailedEvent
-	(*EmailReplyReceivedEvent)(nil), // 9: v1.EmailReplyReceivedEvent
-	nil,                             // 10: v1.EmailSentEvent.MetadataEntry
-	(*timestamppb.Timestamp)(nil),   // 11: google.protobuf.Timestamp
+	(EventType)(0),                // 0: v1.EventType
+	(*Event)(nil),                 // 1: v1.Event
+	(*EmailSentEvent)(nil),        // 2: v1.EmailSentEvent
+	(*EmailDeliveredEvent)(nil),   // 3: v1.EmailDeliveredEvent
+	(*EmailBouncedEvent)(nil),     // 4: v1.EmailBouncedEvent
+	(*EmailComplainedEvent)(nil),  // 5: v1.EmailComplainedEvent
+	(*EmailRejectedEvent)(nil),    // 6: v1.EmailRejectedEvent
+	(*EmailDelayedEvent)(nil),     // 7: v1.EmailDelayedEvent
+	(*EmailFailedEvent)(nil),      // 8: v1.EmailFailedEvent
+	(*EmailRepliedEvent)(nil),     // 9: v1.EmailRepliedEvent
+	nil,                           // 10: v1.EmailSentEvent.MetadataEntry
+	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
 }
 var file_v1_events_proto_depIdxs = []int32{
 	0,  // 0: v1.Event.type:type_name -> v1.EventType
@@ -1182,7 +1182,7 @@ var file_v1_events_proto_depIdxs = []int32{
 	5,  // 5: v1.Event.email_complained:type_name -> v1.EmailComplainedEvent
 	6,  // 6: v1.Event.email_rejected:type_name -> v1.EmailRejectedEvent
 	7,  // 7: v1.Event.email_delayed:type_name -> v1.EmailDelayedEvent
-	9,  // 8: v1.Event.email_reply_received:type_name -> v1.EmailReplyReceivedEvent
+	9,  // 8: v1.Event.email_replied:type_name -> v1.EmailRepliedEvent
 	8,  // 9: v1.Event.email_failed:type_name -> v1.EmailFailedEvent
 	10, // 10: v1.EmailSentEvent.metadata:type_name -> v1.EmailSentEvent.MetadataEntry
 	11, // [11:11] is the sub-list for method output_type
@@ -1204,7 +1204,7 @@ func file_v1_events_proto_init() {
 		(*Event_EmailComplained)(nil),
 		(*Event_EmailRejected)(nil),
 		(*Event_EmailDelayed)(nil),
-		(*Event_EmailReplyReceived)(nil),
+		(*Event_EmailReplied)(nil),
 		(*Event_EmailFailed)(nil),
 	}
 	type x struct{}

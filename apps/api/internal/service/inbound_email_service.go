@@ -185,7 +185,7 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 		ctx,
 		routing.UserID,
 		routing.EmailID,
-		"reply_received",
+		"replied",
 		"success",
 		fmt.Sprintf("Reply from %s: %s", inboundEmail.From, inboundEmail.Subject),
 		map[string]interface{}{
@@ -241,7 +241,7 @@ func (s *InboundEmailService) deliverWebhook(ctx context.Context, email *Inbound
 		return nil
 	}
 
-	event := &v1.EmailReplyReceivedEvent{
+	event := &v1.EmailRepliedEvent{
 		Id:            email.ID,
 		UserId:        email.UserID,
 		MessageId:     email.MessageID,
@@ -255,7 +255,7 @@ func (s *InboundEmailService) deliverWebhook(ctx context.Context, email *Inbound
 		ParentEmailId: email.OriginalEmailID,
 	}
 
-	s.webhookSender.SendEmailReplyReceived(ctx, email.UserID, event)
+	s.webhookSender.SendEmailReplied(ctx, email.UserID, event)
 	return nil
 }
 
