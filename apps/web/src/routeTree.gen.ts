@@ -9,10 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignUpRouteImport } from './routes/sign-up'
-import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DocsApiReferenceRouteImport } from './routes/docs/api-reference'
 import { Route as DocsSplatRouteImport } from './routes/docs/$'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as AuthedWebhooksRouteImport } from './routes/_authed/webhooks'
@@ -21,16 +20,6 @@ import { Route as AuthedApiKeysRouteImport } from './routes/_authed/api-keys'
 import { Route as AuthedDomainsIndexRouteImport } from './routes/_authed/domains/index'
 import { Route as AuthedDomainsDomainIdRouteImport } from './routes/_authed/domains/$domainId'
 
-const SignUpRoute = SignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignInRoute = SignInRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
@@ -38,6 +27,11 @@ const AuthedRoute = AuthedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsApiReferenceRoute = DocsApiReferenceRouteImport.update({
+  id: '/docs/api-reference',
+  path: '/docs/api-reference',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsSplatRoute = DocsSplatRouteImport.update({
@@ -78,25 +72,23 @@ const AuthedDomainsDomainIdRoute = AuthedDomainsDomainIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/sign-in': typeof SignInRoute
-  '/sign-up': typeof SignUpRoute
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/webhooks': typeof AuthedWebhooksRoute
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
+  '/docs/api-reference': typeof DocsApiReferenceRoute
   '/domains/$domainId': typeof AuthedDomainsDomainIdRoute
   '/domains': typeof AuthedDomainsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/sign-in': typeof SignInRoute
-  '/sign-up': typeof SignUpRoute
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/webhooks': typeof AuthedWebhooksRoute
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
+  '/docs/api-reference': typeof DocsApiReferenceRoute
   '/domains/$domainId': typeof AuthedDomainsDomainIdRoute
   '/domains': typeof AuthedDomainsIndexRoute
 }
@@ -104,13 +96,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
-  '/sign-in': typeof SignInRoute
-  '/sign-up': typeof SignUpRoute
   '/_authed/api-keys': typeof AuthedApiKeysRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/webhooks': typeof AuthedWebhooksRoute
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
+  '/docs/api-reference': typeof DocsApiReferenceRoute
   '/_authed/domains/$domainId': typeof AuthedDomainsDomainIdRoute
   '/_authed/domains/': typeof AuthedDomainsIndexRoute
 }
@@ -118,38 +109,35 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/sign-in'
-    | '/sign-up'
     | '/api-keys'
     | '/dashboard'
     | '/webhooks'
     | '/api/search'
     | '/docs/$'
+    | '/docs/api-reference'
     | '/domains/$domainId'
     | '/domains'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/sign-in'
-    | '/sign-up'
     | '/api-keys'
     | '/dashboard'
     | '/webhooks'
     | '/api/search'
     | '/docs/$'
+    | '/docs/api-reference'
     | '/domains/$domainId'
     | '/domains'
   id:
     | '__root__'
     | '/'
     | '/_authed'
-    | '/sign-in'
-    | '/sign-up'
     | '/_authed/api-keys'
     | '/_authed/dashboard'
     | '/_authed/webhooks'
     | '/api/search'
     | '/docs/$'
+    | '/docs/api-reference'
     | '/_authed/domains/$domainId'
     | '/_authed/domains/'
   fileRoutesById: FileRoutesById
@@ -157,28 +145,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
-  SignInRoute: typeof SignInRoute
-  SignUpRoute: typeof SignUpRoute
   ApiSearchRoute: typeof ApiSearchRoute
   DocsSplatRoute: typeof DocsSplatRoute
+  DocsApiReferenceRoute: typeof DocsApiReferenceRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sign-up': {
-      id: '/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof SignUpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-in': {
-      id: '/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authed': {
       id: '/_authed'
       path: ''
@@ -191,6 +164,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/api-reference': {
+      id: '/docs/api-reference'
+      path: '/docs/api-reference'
+      fullPath: '/docs/api-reference'
+      preLoaderRoute: typeof DocsApiReferenceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs/$': {
@@ -267,10 +247,9 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
-  SignInRoute: SignInRoute,
-  SignUpRoute: SignUpRoute,
   ApiSearchRoute: ApiSearchRoute,
   DocsSplatRoute: DocsSplatRoute,
+  DocsApiReferenceRoute: DocsApiReferenceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

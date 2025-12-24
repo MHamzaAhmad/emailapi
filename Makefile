@@ -13,6 +13,7 @@ gen: proto gen-sqlc
 proto:
 	cd proto && buf dep update && buf generate
 	cd proto && buf generate --template buf.gen.yaml
+	cd proto && buf generate --template buf.gen.openapi.yaml	
 
 gen-sqlc:
 	cd tools && sqlc generate

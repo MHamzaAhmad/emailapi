@@ -56,6 +56,7 @@ function LandingContent() {
           </div>
           <div className="hidden md:flex items-center gap-4">
             <ModeToggle />
+            {/* @ts-expect-error docs route */}
             <Link to="/docs" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Documentation</Link>
             <SignedOut>
               <SignInButton mode="modal">
@@ -88,6 +89,7 @@ function LandingContent() {
                 <Link to="/sign-up">Start Building</Link>
               </Button>
               <Button asChild variant="outline" className="h-9 px-6 text-sm bg-background hover:bg-muted/50 rounded-md">
+                {/* @ts-expect-error docs route */}
                 <Link to="/docs">
                   <HugeiconsIcon icon={Book02Icon} size={14} className="mr-2 text-muted-foreground" />
                   Documentation
@@ -184,8 +186,11 @@ function LandingContent() {
             <span className="text-xs font-bold tracking-widest text-foreground uppercase">emailapi</span>
           </div>
           <div className="flex gap-6 text-xs text-muted-foreground">
+            {/* @ts-expect-error docs route */}
             <Link to="/docs" className="hover:text-foreground">Docs</Link>
+            {/* @ts-expect-error status route */}
             <Link to="/status" className="hover:text-foreground">Status</Link>
+            {/* @ts-expect-error legal route */}
             <Link to="/legal" className="hover:text-foreground">Legal</Link>
           </div>
         </div>

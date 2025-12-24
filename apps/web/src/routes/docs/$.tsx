@@ -10,25 +10,16 @@ import {
 } from 'fumadocs-ui/layouts/docs/page';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import { baseOptions } from '@/lib/layout.shared';
-import { useFumadocsLoader } from 'fumadocs-core/source/client';
 
 export const Route = createFileRoute('/docs/$')({
     component: Page,
     loader: async ({ params }) => {
-        const slugs = params._splat?.split('/') ?? [];
-
-        // Get the page from the source
+        const slugs = params._splat?.split('/').filter(Boolean) ?? [];
         const page = source.getPage(slugs);
         if (!page) throw notFound();
 
-        // Serialize page tree and preload the client-side content
-        const pageTree = await source.serializePageTree(source.getPageTree());
         await clientLoader.preload(page.path);
-
-        return {
-            path: page.path,
-            pageTree,
-        };
+        return { path: page.path };
     },
 });
 
@@ -52,11 +43,10 @@ const clientLoader = browserCollections.docs.createClientLoader({
 
 function Page() {
     const data = Route.useLoaderData();
-    const { pageTree } = useFumadocsLoader(data);
     const Content = clientLoader.getComponent(data.path);
 
     return (
-        <DocsLayout {...baseOptions()} tree={pageTree}>
+        <DocsLayout {...baseOptions()} tree={source.pageTree}>
             <Content />
         </DocsLayout>
     );

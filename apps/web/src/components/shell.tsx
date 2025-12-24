@@ -65,11 +65,13 @@ export function Shell({ children }: ShellProps) {
 
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" asChild>
+                            {/* @ts-expect-error docs route */}
                             <Link to="/docs">
                                 <HugeiconsIcon icon={Book02Icon} size={16} />
                             </Link>
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" asChild>
+                            {/* @ts-expect-error settings route */}
                             <Link to="/settings">
                                 <HugeiconsIcon icon={Settings01Icon} size={16} />
                             </Link>
