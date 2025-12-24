@@ -70,12 +70,6 @@ export function Shell({ children }: ShellProps) {
                                 <HugeiconsIcon icon={Book02Icon} size={16} />
                             </Link>
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" asChild>
-                            {/* @ts-expect-error settings route */}
-                            <Link to="/settings">
-                                <HugeiconsIcon icon={Settings01Icon} size={16} />
-                            </Link>
-                        </Button>
                         <ModeToggle />
                         <div className="h-4 w-[1px] bg-border/60 mx-1" />
                         <UserButton
