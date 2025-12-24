@@ -2,14 +2,15 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { SignedIn, SignedOut } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  ArrowRight01Icon,
+  PackageIcon,
   ZapIcon,
-  CodeIcon,
-  ShieldIcon,
-  CheckmarkCircle01Icon,
+  Mail01Icon,
+  LockKeyIcon,
+  Book02Icon
 } from '@hugeicons/core-free-icons'
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { CodeWindow } from '@/components/ui/code-window'
 
 export const Route = createFileRoute('/')(
   {
@@ -42,20 +43,20 @@ function RedirectToDashboard() {
 
 function LandingContent() {
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-foreground selection:text-background flex flex-col">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-sm bg-primary text-primary-foreground">
-              <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={2.5} />
+    <div className="min-h-screen bg-background text-foreground font-sans flex flex-col">
+      {/* Navigation - Matching Shell Header Exactly */}
+      <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-6">
+          <div className="flex items-center gap-2 font-bold tracking-tight text-foreground/90 hover:text-foreground transition-colors">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
+              <HugeiconsIcon icon={PackageIcon} size={14} strokeWidth={2.5} />
             </div>
-            <span className="text-sm font-bold tracking-tight">emailapi.dev</span>
+            <span className="text-sm">emailapi.dev</span>
           </div>
-          <div className="hidden md:flex items-center gap-6">
-            <Link to="/docs" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Documentation</Link>
-            <Link to="/sign-in" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Login</Link>
-            <Button asChild size="sm" className="h-8 font-semibold">
+          <div className="hidden md:flex items-center gap-4">
+            <Link to="/docs" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Documentation</Link>
+            <Link to="/sign-in" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Login</Link>
+            <Button asChild size="sm" className="h-8 px-4 text-xs font-medium">
               <Link to="/sign-up">
                 Get Started
               </Link>
@@ -66,125 +67,135 @@ function LandingContent() {
 
       {/* Hero Section */}
       <main className="flex-1">
-        <section className="relative px-6 pt-32 pb-24 lg:pt-48 lg:pb-32 overflow-hidden">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-8 inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium text-muted-foreground bg-muted/50 backdrop-blur-sm">
-              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={12} className="mr-2" />
-              v1.0.0 Stable Release
-            </div>
-            <h1 className="mb-8 text-5xl font-bold tracking-tight sm:text-7xl">
-              Zero-Bloat <br className="hidden sm:block" /> Email Delivery
+        <section className="relative px-6 pt-24 pb-12 overflow-hidden">
+          <div className="mx-auto max-w-4xl text-center">
+            <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl leading-[1.1]">
+              The Simplest API for <br /> <span className="text-primary">Inbound & Outbound</span>
             </h1>
-            <p className="mx-auto mb-10 max-w-xl text-lg text-muted-foreground leading-relaxed">
-              A minimal gRPC & REST API for developers. No dashboard clutter.
-              No marketing bloat. Just direct-to-inbox speed.
+            <p className="mx-auto mb-10 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl">
+              High-performance email infrastructure without the complexity. <br className="hidden sm:block" />
+              Send transactional emails or build powerful reply flows in minutes.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button asChild size="lg" className="h-12 px-8 text-base">
-                <Link to="/sign-up">Start Building Free</Link>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-20">
+              <Button asChild className="h-9 px-6 text-sm shadow-sm rounded-md">
+                <Link to="/sign-up">Start Building</Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="h-12 px-8 text-base bg-background/50 hover:bg-muted/50">
-                <Link to="/docs">Read the Docs</Link>
+              <Button asChild variant="outline" className="h-9 px-6 text-sm bg-background hover:bg-muted/50 rounded-md">
+                <Link to="/docs">
+                  <HugeiconsIcon icon={Book02Icon} size={14} className="mr-2 text-muted-foreground" />
+                  Documentation
+                </Link>
               </Button>
+            </div>
+
+            {/* Centered Code Window */}
+            <div className="relative mx-auto max-w-3xl">
+              {/* Subtle Back Glow */}
+              <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-b from-primary/5 to-transparent blur-3xl opacity-50" />
+
+              <CodeWindow
+                className="w-full border-border/60 shadow-xl"
+                tabs={[
+                  {
+                    label: "TypeScript",
+                    value: "ts",
+                    language: "typescript",
+                    content: `import { EmailClient } from '@emailapi/sdk';\n\nconst client = new EmailClient('em_live_...');\n\n// Send an email\nawait client.send({\n  from: 'updates@app.com',\n  to: 'user@example.com',\n  subject: 'Welcome!',\n  body: 'Thanks for signing up.'\n});\n\n// Listen for replies (Real-time)\nclient.onReceive(async (email) => {\n  console.log('New reply:', email.subject);\n});`
+                  },
+                  {
+                    label: "cURL",
+                    value: "curl",
+                    language: "bash",
+                    content: `curl -X POST https://api.emailapi.dev/v1/send \\\n  -H "Authorization: Bearer em_live_..." \\\n  -d '{\n    "from": "updates@app.com",\n    "to": ["user@example.com"],\n    "subject": "Welcome!",\n    "body": "Thanks for signing up."\n  }'`
+                  },
+                  {
+                    label: "Go",
+                    value: "go",
+                    language: "go",
+                    content: `package main\n\nimport "github.com/emailapi/go-sdk"\n\nfunc main() {\n  client := emailapi.NewClient("em_live_...")\n\n  // Send Email\n  client.Send(&emailapi.Message{\n    From:    "updates@app.com",\n    To:      []string{"user@example.com"},\n    Subject: "Welcome!",\n    Body:    "Thanks for signing up.",\n  })\n}`
+                  },
+                  {
+                    label: "gRPC",
+                    value: "grpc",
+                    language: "bash",
+                    content: `grpcurl -d '{\n  "from": "updates@app.com",\n  "to": ["user@example.com"],\n  "subject": "Welcome!",\n  "body": "Thanks for signing up."\n}' \\\n  -H "Authorization: Bearer em_live_..." \\\n  api.emailapi.dev:443 emailapi.v1.EmailService/Send`
+                  }
+                ]}
+              />
             </div>
           </div>
 
-          {/* Subtle Grid Background */}
-          <div className="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+          {/* Background Grid */}
+          <div className="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
         </section>
 
-        {/* Code Example Section */}
-        <section className="px-6 py-20 border-y bg-muted/10">
-          <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight mb-4">API-First Design</h2>
-              <p className="text-muted-foreground leading-relaxed mb-6">
-                Connect your application in seconds using our simplified SDKs or direct HTTP endpoints.
-                We handle the delivery pipeline, you handle the product.
-              </p>
-              <ul className="space-y-4 text-sm font-medium text-muted-foreground">
-                <li className="flex items-center gap-3">
-                  <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} className="text-primary" />
-                  <span>Type-safe SDKs for TS, Go, Python</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} className="text-primary" />
-                  <span>Idempotency keys built-in</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <HugeiconsIcon icon={CheckmarkCircle01Icon} size={16} className="text-primary" />
-                  <span>Webhooks for real-time events</span>
-                </li>
-              </ul>
-            </div>
-            <div className="relative overflow-hidden rounded-xl border bg-card/80 shadow-sm backdrop-blur">
-              <div className="flex items-center gap-1.5 border-b p-4 bg-muted/40">
-                <div className="h-2.5 w-2.5 rounded-full bg-red-500/20 border border-red-500/30" />
-                <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/20 border border-yellow-500/30" />
-                <div className="h-2.5 w-2.5 rounded-full bg-green-500/20 border border-green-500/30" />
-              </div>
-              <div className="p-6 overflow-x-auto">
-                <pre className="text-sm font-mono leading-relaxed">
-                  <span className="text-purple-500">curl</span> -X POST https://api.emailapi.dev/v1/send \<br />
-                  {"  "}-H <span className="text-green-500">"Authorization: Bearer em_live_..."</span> \<br />
-                  {"  "}-d <span className="text-blue-500">'{`{`}'</span><br />
-                  {"    "}<span className="text-foreground">"from"</span>: <span className="text-green-500">"ops@system.io"</span>,<br />
-                  {"    "}<span className="text-foreground">"to"</span>: [<span className="text-green-500">"user@dest.com"</span>],<br />
-                  {"    "}<span className="text-foreground">"subject"</span>: <span className="text-green-500">"System Alert"</span>,<br />
-                  {"    "}<span className="text-foreground">"body"</span>: <span className="text-green-500">"Your build is complete."</span><br />
-                  {"  "}<span className="text-blue-500">'{`}`}'</span>
-                </pre>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section className="py-24 px-6">
-          <div className="mx-auto max-w-6xl">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <FeatureItem
+        {/* Minimal Features Section */}
+        <section className="py-24">
+          <div className="mx-auto max-w-5xl px-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
+              <MinimalFeature
+                icon={Mail01Icon}
+                title="Direct & Replyable"
+                description="Every email sent helps build a conversation. Listen to replies directly in your app via our SDKs or webhooks."
+              />
+              <MinimalFeature
                 icon={ZapIcon}
-                title="Nano-Latency"
-                description="Engineered for speed with a Go-based core and global edge delivery nodes."
+                title="High Performance"
+                description="Built on gRPC and HTTP/2. Global edge network ensures your emails are dispatched in milliseconds."
               />
-              <FeatureItem
-                icon={CodeIcon}
-                title="Developer Native"
-                description="REST, gRPC, and GraphQL support. Type-safe SDKs for all major languages."
-              />
-              <FeatureItem
-                icon={ShieldIcon}
-                title="Secure by Default"
-                description="Strict DKIM, SPF, and DMARC enforcement. Isolated infrastructure for every key."
+              <MinimalFeature
+                icon={LockKeyIcon}
+                title="Private & Secure"
+                description="We don't read your emails. Ephemeral storage options available for GDPR compliance. Full encryption."
               />
             </div>
           </div>
         </section>
+
+        {/* Simple CTA */}
+        <section className="py-24 px-6 border-t border-dashed border-border/40">
+          <div className="mx-auto max-w-xl text-center">
+            <h2 className="text-2xl font-bold tracking-tight mb-4">Ready to Ship?</h2>
+            <p className="text-muted-foreground mb-8 text-sm">
+              Get your API key in seconds. 5,000 free emails per month.
+            </p>
+            <Button asChild className="h-9 px-8 rounded-md text-sm">
+              <Link to="/sign-up">Start Building Now</Link>
+            </Button>
+          </div>
+        </section>
+
       </main>
 
-      {/* Footer */}
-      <footer className="border-t py-12 px-6 bg-muted/20">
-        <div className="mx-auto max-w-6xl flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="h-4 w-4 bg-foreground/20 rounded-sm" />
-            <span className="text-xs font-bold tracking-widest text-muted-foreground uppercase">emailapi</span>
+      {/* Minimal Footer */}
+      <footer className="border-t py-12 px-6 bg-background">
+        <div className="mx-auto max-w-5xl flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all">
+            <div className="flex h-5 w-5 items-center justify-center rounded-sm bg-foreground text-background">
+              <HugeiconsIcon icon={PackageIcon} size={12} strokeWidth={3} />
+            </div>
+            <span className="text-xs font-bold tracking-widest text-foreground uppercase">emailapi</span>
           </div>
-          <p className="text-xs text-muted-foreground font-mono">© 2025 EMAILAPI ENGINE INC.</p>
+          <div className="flex gap-6 text-xs text-muted-foreground">
+            <Link to="/docs" className="hover:text-foreground">Docs</Link>
+            <Link to="/status" className="hover:text-foreground">Status</Link>
+            <Link to="/legal" className="hover:text-foreground">Legal</Link>
+          </div>
         </div>
       </footer>
     </div>
   )
 }
 
-function FeatureItem({ icon, title, description }: { icon: any, title: string, description: string }) {
+function MinimalFeature({ icon, title, description }: { icon: any, title: string, description: string }) {
   return (
-    <div className="group rounded-xl border bg-card p-8 transition-shadow hover:shadow-md">
-      <div className="mb-4 inline-flex items-center justify-center rounded-lg border bg-background p-3 shadow-sm">
+    <div className="flex flex-col items-center text-center gap-3">
+      <div className="h-10 w-10 rounded-md bg-secondary/50 flex items-center justify-center text-foreground mb-1">
         <HugeiconsIcon icon={icon} size={20} strokeWidth={1.5} />
       </div>
-      <h3 className="mb-2 text-sm font-bold tracking-tight">{title}</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+      <h3 className="text-base font-bold tracking-tight">{title}</h3>
+      <p className="text-muted-foreground leading-relaxed text-sm max-w-[280px]">{description}</p>
     </div>
   )
 }
