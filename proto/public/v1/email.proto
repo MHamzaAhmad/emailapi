@@ -7,105 +7,126 @@ option go_package = "github.com/emailapi/api/gen/v1";
 import "google/protobuf/timestamp.proto";
 import "v1/events.proto";
 
-// EmailService handles email sending operations.
-// This is a stateless, compliance-first API - no email content is stored.
+// EmailService is the core service for sending emails and listening to events.
+// It provides a simple, stateless API designed for developer happiness.
 service EmailService {
-  // SendEmail sends an email immediately or queues it for async processing.
+  // Send an email to one or more recipients.
   //
-  // Behavior:
-  // - async=false + no attachments: Send synchronously, return message_id
-  // - async=true OR has attachments: Queue for processing with retries
+  // By default, this method sends the email synchronously and returns a result only
+  // after the upstream provider has accepted it.
   //
-  // Delivery status is sent to your webhook endpoint.
+  // For better performance with large attachments or batch sending, set `async: true`
+  // to queue the email for background processing.
   rpc SendEmail(SendEmailRequest) returns (SendEmailResponse) {}
 
-  // StreamEvents streams email events to the client in real-time.
-  // Alternative to webhooks for consuming events.
-  // Use cursor to resume from a specific position.
+  // Stream real-time email events (delivery, bounces, clicks, replies).
+  //
+  // This is a robust alternative to webhooks. It provides a persistent stream of events
+  // that you can consume at your own pace. Use the `cursor` to resume reading
+  // from a specific point in time, ensuring no events are ever lost.
   rpc StreamEvents(StreamEventsRequest) returns (stream Event) {}
 }
 
-// EmailStatus represents the current processing status.
+// Represents the current status of an email delivery.
 enum EmailStatus {
   EMAIL_STATUS_UNSPECIFIED = 0;
+  // The email is queued for background processing.
   EMAIL_STATUS_QUEUED = 1;
+  // The email is currently being processed.
   EMAIL_STATUS_PROCESSING = 2;
+  // The email was successfully sent to the upstream provider.
   EMAIL_STATUS_SENT = 3;
+  // The email failed to send.
   EMAIL_STATUS_FAILED = 4;
 }
 
-// SendEmailRequest is the payload for sending an email.
+// Request to send an email.
 message SendEmailRequest {
-  // Sender email address (must be from a verified domain).
+  // Verified sender email address (e.g., "notifications@yourdomain.com").
   string from = 1;
-  // List of primary recipient email addresses.
+
+  // Primary recipients.
   repeated string to = 2;
-  // List of CC recipient email addresses.
+
+  // Carbon copy recipients.
   repeated string cc = 3;
-  // List of BCC recipient email addresses.
+
+  // Blind carbon copy recipients.
   repeated string bcc = 4;
+
   // Email subject line.
   string subject = 5;
-  // Plain text content of the email.
+
+  // Plain text content. Always recommended for better deliverability.
   string body = 6;
-  // HTML content of the email.
+
+  // HTML content.
   string html = 7;
-  // Custom key-value metadata (returned in webhooks).
+
+  // Custom metadata to track this email. These values are returned in webhooks and events.
   map<string, string> metadata = 8;
-  // Optional timestamp to schedule the email for future delivery (UTC).
-  // If set, the email will be sent at this time instead of immediately.
-  // Uses UTC timezone - clients should convert local time to UTC before sending.
+
+  // Schedule this email for a future time (UTC).
   google.protobuf.Timestamp scheduled_at = 9;
-  // List of attachments.
+
+  // File attachments.
   repeated Attachment attachments = 10;
-  // Message-ID of the email being replied to (for threading).
+
+  // Message-ID of the email to reply to. Setting this automatically handles
+  // threading headers (In-Reply-To, References).
   string in_reply_to = 11;
-  // Full list of message IDs in the thread (for proper threading).
-  // Should include in_reply_to and all previous message IDs.
+
+  // Explicit threading references. Usually not needed if `in_reply_to` is set.
   repeated string references = 12;
-  // If true, queue for async processing (we handle retries).
-  // If false, send synchronously and return message_id immediately.
-  // Note: Emails with attachments are always processed async.
+
+  // Set to `true` to return immediately and send the email in the background.
+  // Recommended for bulk sending or when attachments are large.
   bool async = 13;
 }
 
-// Attachment represents a file to be attached to the email.
+// A file attachment.
 message Attachment {
-  // Filename of the attachment.
+  // Name of the file (e.g., "invoice.pdf").
   string filename = 1;
-  // MIME type of the attachment (e.g., application/pdf).
+
+  // MIME type (e.g., "application/pdf").
   string content_type = 2;
-  // Content source - either a URL to download from or base64-encoded content.
+
+  // The content of the file.
   oneof source {
-    // URL to download the attachment from.
+    // Publicly accessible URL to download the file from.
     string url = 3;
-    // Base64-encoded content of the attachment.
+    // Base64-encoded file content.
     string base64_content = 4;
   }
 }
 
-// SendEmailResponse contains the result of a send request.
+// Response after sending an email.
 message SendEmailResponse {
-  // Unique identifier for tracking this email.
+  // Unique system ID for this email. Use this to track events.
   string id = 1;
-  // Current status of the email.
+
+  // Current status.
   EmailStatus status = 2;
-  // SES Message-ID (only present if sync send succeeded).
+
+  // Upstream Message-ID (if available immediately).
   string message_id = 3;
-  // Human-readable status message.
+
+  // Human-readable description of the status.
   string status_message = 4;
 }
 
-// StreamEventsRequest is the request for streaming events.
+// Request to stream events.
 message StreamEventsRequest {
-  // Cursor position to start from (event ID).
-  // Empty string means start from latest events.
-  // Use "0" to start from the beginning of the stream.
+  // Checkpoint to resume streaming from.
+  // - Leave empty to start from *now* (live events only).
+  // - Set to "0" to read from the very beginning.
+  // - Set to a specific event ID to resume from that event.
   string cursor = 1;
   
-  // Optional: Filter by event types.
+  // Filter by specific event types.
   repeated EventType event_types = 2;
   
-  // Number of events to batch (1-100, default: 10).
+  // Internal batch size hints.
   int32 batch_size = 3;
 }

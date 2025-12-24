@@ -6,168 +6,158 @@ option go_package = "github.com/emailapi/api/gen/v1";
 
 import "google/protobuf/timestamp.proto";
 
-// =============================================================================
-// DomainService - Simple domain management for email sending
-// =============================================================================
-//
-// Add your domain, configure DNS records, and start sending emails.
-// MAIL FROM is auto-configured for best deliverability.
+// DomainService handles sending domains.
+// To send emails with good deliverability, you need to:
+// 1. Add a domain (AddDomain)
+// 2. Configure the DNS records we give you
+// 3. Verify the layout (VerifyDomain)
 service DomainService {
-  // AddDomain registers a new sending domain.
-  // Returns everything you need: domain info, DNS records, and next steps.
-  // MAIL FROM (mail.yourdomain.com) is auto-configured.
+  // Register a new domain for sending.
+  // Returns the DNS records you need to add to your DNS provider (e.g. Cloudflare, GoDaddy).
   rpc AddDomain(AddDomainRequest) returns (AddDomainResponse) {}
 
-  // GetDomain retrieves a domain with its configuration and status.
-  // Automatically refreshes from SES if data is stale (>5 min).
+  // Get details for a specific domain, including current DNS status.
+  // We automatically refresh the status if it's stale (>5 minutes old).
   rpc GetDomain(GetDomainRequest) returns (GetDomainResponse) {}
 
-  // ListDomains retrieves all domains with their status.
+  // List all your domains.
   rpc ListDomains(ListDomainsRequest) returns (ListDomainsResponse) {}
 
-  // DeleteDomain removes a domain from your account.
+  // Remove a domain. You won't be able to send from it anymore.
   rpc DeleteDomain(DeleteDomainRequest) returns (DeleteDomainResponse) {}
 
-  // VerifyDomain forces a fresh check of DNS records and SES status.
-  // Rate-limited to 30s between calls. Use after configuring DNS.
+  // Trigger an immediate check of DNS records.
+  // Useful if you just updated your DNS and don't want to wait for the auto-refresh.
+  // Rate limited to once every 30 seconds.
   rpc VerifyDomain(VerifyDomainRequest) returns (VerifyDomainResponse) {}
 }
 
-// =============================================================================
-// Enums - DX-friendly statuses for easy comparison in code
-// =============================================================================
-
-// DomainStatus represents the overall status of a domain.
-// Use in code: if (domain.status === DomainStatus.READY)
+// DomainStatus tracks the verification lifecycle.
 enum DomainStatus {
   DOMAIN_STATUS_UNSPECIFIED = 0;
-
-  // Just added, waiting for DNS configuration
+  // Domain added, waiting for DNS records.
   DOMAIN_STATUS_PENDING = 1;
-
-  // DNS check in progress
+  // Verification in progress.
   DOMAIN_STATUS_VERIFYING = 2;
-
-  // Ready to send emails!
+  // Verified and ready to send!
   DOMAIN_STATUS_READY = 3;
-
-  // Works but missing optional records (SPF, DMARC, MAIL FROM)
+  // Functional, but some optional records (like custom MAIL FROM) are missing.
   DOMAIN_STATUS_DEGRADED = 4;
-
-  // Cannot send, action required
+  // Verification failed. Check your DNS records.
   DOMAIN_STATUS_FAILED = 5;
 }
 
-// RecordStatus represents the status of a single DNS record.
-// Use in code: if (record.status === RecordStatus.FOUND)
+// Status of a single DNS record.
 enum RecordStatus {
   RECORD_STATUS_UNSPECIFIED = 0;
-
-  // Not configured yet
+  // We haven't checked this yet.
   RECORD_STATUS_PENDING = 1;
-
-  // Found in DNS with correct value ✓
+  // Valid and found.
   RECORD_STATUS_FOUND = 2;
-
-  // Found but wrong value
+  // Found, but the value doesn't match what we expected.
   RECORD_STATUS_MISMATCH = 3;
-
-  // Not found in DNS
+  // Not found in DNS.
   RECORD_STATUS_MISSING = 4;
 }
 
-// RecordType identifies the purpose of a DNS record.
+// Types of DNS records we require.
 enum RecordType {
   RECORD_TYPE_UNSPECIFIED = 0;
+  // DKIM (DomainKeys Identified Mail) - signs your emails.
   RECORD_TYPE_DKIM = 1;
+  // SPF (Sender Policy Framework) - authorizes us to send for you.
   RECORD_TYPE_SPF = 2;
+  // DMARC - tells receivers what to do with unauthenticated mail.
   RECORD_TYPE_DMARC = 3;
+  // MX record for receiving inbound emails (if enabled).
   RECORD_TYPE_MX_INBOUND = 4;
+  // MX record for custom MAIL FROM domain (improves deliverability).
   RECORD_TYPE_MAIL_FROM_MX = 5;
+  // SPF record for custom MAIL FROM domain.
   RECORD_TYPE_MAIL_FROM_SPF = 6;
 }
 
-// =============================================================================
-// Messages
-// =============================================================================
-
-// Domain represents a sending domain with all its configuration.
+// A sending domain.
 message Domain {
   string id = 1;
+  // The domain name (e.g. "example.com").
   string domain = 2;
+  // Overall verification status.
   DomainStatus status = 3;
+  // AWS Region (e.g. "us-east-1").
   string region = 4;
   google.protobuf.Timestamp created_at = 5;
   google.protobuf.Timestamp updated_at = 6;
   google.protobuf.Timestamp last_checked_at = 7;
 
-  // Human-readable summary for lazy users
+  // Simple summary of what's needed next.
   DomainSummary summary = 8;
-
-  // All DNS records needed
+  
+  // Detailed DNS records list.
   DomainRecords records = 9;
 }
 
-// DomainSummary provides human-readable status for lazy users.
+// Human-readable status summary.
 message DomainSummary {
-  // e.g., "Add 3 DNS records to start sending" or "Ready to send emails!"
+  // A friendly message like "Add 3 DNS records to start sending".
   string message = 1;
-
-  // What the user should do next: CONFIGURE_DNS, WAIT, NONE
+  
+  // Next logical step: "CONFIGURE_DNS", "WAIT" (for receiver cache), or "NONE" (done).
   string next_action = 2;
-
-  // Quick stats
+  
   int32 records_pending = 3;
   int32 records_configured = 4;
+  // If true, you can start sending emails (even if not fully optimized).
   bool can_send = 5;
+  // If true, you can receive inbound emails.
   bool can_receive = 6;
 }
 
-// DomainRecords contains all DNS records needed for email.
+// DNS configuration.
 message DomainRecords {
+  // DKIM keys (usually CNAMES).
   repeated DnsRecord dkim_records = 1;
+  // SPF record (TXT).
   DnsRecord spf_record = 2;
+  // DMARC record (TXT).
   DnsRecord dmarc_record = 3;
+  // Inbound MX records.
   repeated DnsRecord mx_records = 4;
+  // Custom MAIL FROM records.
   repeated DnsRecord mail_from_records = 5;
 }
 
-// DnsRecord represents a single DNS record to configure.
+// A single DNS record.
 message DnsRecord {
-  // DNS record type: CNAME, TXT, MX
+  // Record type: "CNAME", "TXT", or "MX".
   string type = 1;
-
-  // Full record name (e.g., "abc._domainkey.example.com")
+  
+  // Hostname to set (e.g. "email._domainkey").
   string name = 2;
-
-  // Record value to set
+  
+  // Value to set (e.g. "k=rsa; ...").
   string value = 3;
-
-  // Priority (MX records only)
+  
+  // Priority (only for MX records).
   int32 priority = 4;
-
-  // Purpose of this record
+  
+  // What this record is for.
   RecordType record_type = 5;
-
-  // Current status
+  
+  // Verification status.
   RecordStatus status = 6;
-
-  // Short name for DNS providers that want just the subdomain (e.g., "abc._domainkey")
+  
+  // Shortened hostname (e.g. "email._domainkey" instead of full FQDN) for easier copy-pasting.
   string name_short = 7;
-
-  // What we found in DNS (after verification)
+  
+  // The value we actually found in your DNS (useful for debugging).
   string discovered_value = 8;
-
-  // Human-readable instructions
+  
+  // User-friendly instructions, e.g. "Add this TXT record to verify ownership".
   string instructions = 9;
 }
 
-// =============================================================================
-// Request/Response Messages
-// =============================================================================
-
 message AddDomainRequest {
-  // Domain name to add (e.g., "example.com")
   string domain = 1;
 }
 
@@ -185,17 +175,12 @@ message GetDomainResponse {
 }
 
 message ListDomainsRequest {
-  // Page number (1-indexed). Defaults to 1.
   int32 page = 1;
-  
-  // Number of items per page. Defaults to 10.
   int32 page_size = 2;
 }
 
 message ListDomainsResponse {
   repeated Domain data = 1;
-  
-  // Total number of domains for pagination
   int32 total = 2;
 }
 
@@ -213,12 +198,9 @@ message VerifyDomainRequest {
 
 message VerifyDomainResponse {
   Domain domain = 1;
-  
-  // True if we actually checked (false if rate-limited)
+  // Whether we actually performed a fresh DNS lookup.
   bool was_refreshed = 2;
-
-  // When next check is allowed (if rate-limited)
+  // When you can retry if rate limited.
   google.protobuf.Timestamp next_retry_at = 3;
-
   string message = 4;
 }

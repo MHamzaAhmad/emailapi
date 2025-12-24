@@ -1,0 +1,42 @@
+---
+title: Webhooks
+description: Receive HTTP POST callbacks for email events.
+---
+
+# Webhooks
+
+If you prefer the traditional push model, you can configure webhooks. We will send a `POST` request to your URL for every event.
+
+## Payload
+
+The payload structure is identical to the [Event](/docs/receiving/on-receive) object used in streams.
+
+```json
+{
+  "id": "evt_8923...",
+  "type": "EMAIL_DELIVERED",
+  "timestamp": "2024-01-01T12:00:00Z",
+  "payload": {
+    "email_id": "msg_123...",
+    "recipients": ["user@example.com"],
+    "smtp_response": "250 OK"
+  }
+}
+```
+
+## Security: Verifying Signatures
+
+We verify the identity of the sender using **Svix** conventions (standard HTTP headers).
+
+```ts
+import { Webhook } from 'svix';
+
+const secret = "whsec_...";
+const headers = request.headers;
+const payload = request.body;
+
+const wh = new Webhook(secret);
+const evt = wh.verify(payload, headers);
+
+// Safe to process 'evt'
+```

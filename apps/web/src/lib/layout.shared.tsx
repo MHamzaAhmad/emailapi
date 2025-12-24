@@ -21,18 +21,6 @@ export function baseOptions(): BaseLayoutProps {
                 url: '/docs/api-reference',
             },
             {
-                text: 'Dashboard',
-                url: '/dashboard',
-            },
-            {
-                text: 'Domains',
-                url: '/domains',
-            },
-            {
-                text: 'API Keys',
-                url: '/api-keys',
-            },
-            {
                 text: 'Webhooks',
                 url: '/webhooks',
             },

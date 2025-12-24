@@ -1,0 +1,11 @@
+{
+    "title": "Documentation",
+    "pages": [
+        "index",
+        "quickstart",
+        "---Guides---",
+        "sending-email",
+        "receiving",
+        "domains"
+    ]
+}

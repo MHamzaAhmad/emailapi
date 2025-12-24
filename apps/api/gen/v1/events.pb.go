@@ -22,23 +22,32 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// EventType defines the types of events that can be delivered.
+// EventType defines the specific kind of event that occurred.
 type EventType int32
 
 const (
-	EventType_EVENT_TYPE_UNSPECIFIED      EventType = 0
-	EventType_EVENT_TYPE_EMAIL_SENT       EventType = 1
-	EventType_EVENT_TYPE_EMAIL_DELIVERED  EventType = 2
-	EventType_EVENT_TYPE_EMAIL_FAILED     EventType = 3
-	EventType_EVENT_TYPE_EMAIL_BOUNCED    EventType = 4
-	EventType_EVENT_TYPE_EMAIL_OPENED     EventType = 5
-	EventType_EVENT_TYPE_EMAIL_CLICKED    EventType = 6
-	EventType_EVENT_TYPE_EMAIL_REPLIED    EventType = 7
+	EventType_EVENT_TYPE_UNSPECIFIED EventType = 0
+	// Email has been accepted by our system and sent to the upstream provider.
+	EventType_EVENT_TYPE_EMAIL_SENT EventType = 1
+	// Email has been successfully delivered to the recipient's inbox.
+	EventType_EVENT_TYPE_EMAIL_DELIVERED EventType = 2
+	// Email delivery failed permanently (e.g. invalid address).
+	EventType_EVENT_TYPE_EMAIL_FAILED EventType = 3
+	// Email bounced (permanent or transient).
+	EventType_EVENT_TYPE_EMAIL_BOUNCED EventType = 4
+	// Recipient opened the email (requires open tracking).
+	EventType_EVENT_TYPE_EMAIL_OPENED EventType = 5
+	// Recipient clicked a link in the email (requires click tracking).
+	EventType_EVENT_TYPE_EMAIL_CLICKED EventType = 6
+	// Recipient replied to the email.
+	EventType_EVENT_TYPE_EMAIL_REPLIED EventType = 7
+	// Recipient marked the email as spam.
 	EventType_EVENT_TYPE_EMAIL_COMPLAINED EventType = 8
-	EventType_EVENT_TYPE_EMAIL_REJECTED   EventType = 9
-	EventType_EVENT_TYPE_EMAIL_DELAYED    EventType = 10
-	// Heartbeat event for keeping long-lived connections alive.
-	// Clients should filter this out - it carries no payload.
+	// Upstream provider rejected the email.
+	EventType_EVENT_TYPE_EMAIL_REJECTED EventType = 9
+	// Email delivery is delayed (soft bounce, will retry).
+	EventType_EVENT_TYPE_EMAIL_DELAYED EventType = 10
+	// Internal heartbeat to keep connections alive. safely ignore.
 	EventType_EVENT_TYPE_HEARTBEAT EventType = 99
 )
 
@@ -101,17 +110,16 @@ func (EventType) EnumDescriptor() ([]byte, []int) {
 	return file_v1_events_proto_rawDescGZIP(), []int{0}
 }
 
-// Event is the envelope for all events.
-// Used for both webhook payloads and streaming responses.
+// Event is the wrapper for all event payloads.
 type Event struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Unique event ID (Redis stream ID when streaming).
+	// Unique event ID. Use this as a cursor to resume streaming.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Event type.
+	// The type of event.
 	Type EventType `protobuf:"varint,2,opt,name=type,proto3,enum=v1.EventType" json:"type,omitempty"`
-	// Timestamp when the event occurred.
+	// When the event occurred.
 	Timestamp *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	// Event-specific payload.
+	// The actual event data.
 	//
 	// Types that are valid to be assigned to Payload:
 	//
@@ -310,27 +318,18 @@ func (*Event_EmailReplied) isEvent_Payload() {}
 
 func (*Event_EmailFailed) isEvent_Payload() {}
 
-// EmailSentEvent is sent when an email is accepted for delivery.
+// Email was accepted and sent to the upstream provider.
 type EmailSentEvent struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Our internal email ID for tracking.
-	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
-	// User who sent the email.
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// SES Message-ID.
-	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	// Sender email address.
-	From string `protobuf:"bytes,4,opt,name=from,proto3" json:"from,omitempty"`
-	// Primary recipients.
-	To []string `protobuf:"bytes,5,rep,name=to,proto3" json:"to,omitempty"`
-	// CC recipients.
-	Cc []string `protobuf:"bytes,6,rep,name=cc,proto3" json:"cc,omitempty"`
-	// BCC recipients.
-	Bcc []string `protobuf:"bytes,7,rep,name=bcc,proto3" json:"bcc,omitempty"`
-	// Email subject.
-	Subject string `protobuf:"bytes,8,opt,name=subject,proto3" json:"subject,omitempty"`
-	// Custom metadata passed with the email.
-	Metadata      map[string]string `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EmailId       string                 `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	MessageId     string                 `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	From          string                 `protobuf:"bytes,4,opt,name=from,proto3" json:"from,omitempty"`
+	To            []string               `protobuf:"bytes,5,rep,name=to,proto3" json:"to,omitempty"`
+	Cc            []string               `protobuf:"bytes,6,rep,name=cc,proto3" json:"cc,omitempty"`
+	Bcc           []string               `protobuf:"bytes,7,rep,name=bcc,proto3" json:"bcc,omitempty"`
+	Subject       string                 `protobuf:"bytes,8,opt,name=subject,proto3" json:"subject,omitempty"`
+	Metadata      map[string]string      `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -428,18 +427,14 @@ func (x *EmailSentEvent) GetMetadata() map[string]string {
 	return nil
 }
 
-// EmailDeliveredEvent is sent when an email is delivered to the recipient's mailbox.
+// Email reached the recipient's mail server.
 type EmailDeliveredEvent struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Our internal email ID.
-	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
-	// User who sent the email.
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// SES Message-ID.
-	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	// Recipients who received the email.
-	Recipients []string `protobuf:"bytes,4,rep,name=recipients,proto3" json:"recipients,omitempty"`
-	// SMTP response from the recipient's mail server.
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	EmailId    string                 `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	UserId     string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	MessageId  string                 `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	Recipients []string               `protobuf:"bytes,4,rep,name=recipients,proto3" json:"recipients,omitempty"`
+	// Detailed response from the SMTP server.
 	SmtpResponse  string `protobuf:"bytes,5,opt,name=smtp_response,json=smtpResponse,proto3" json:"smtp_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -510,22 +505,18 @@ func (x *EmailDeliveredEvent) GetSmtpResponse() string {
 	return ""
 }
 
-// EmailBouncedEvent is sent when an email bounces.
+// Email bounced.
 type EmailBouncedEvent struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Our internal email ID.
-	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
-	// User who sent the email.
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// SES Message-ID.
-	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	// Type of bounce: "Permanent" or "Transient".
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	EmailId   string                 `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	UserId    string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	MessageId string                 `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// "Permanent" or "Transient"
 	BounceType string `protobuf:"bytes,4,opt,name=bounce_type,json=bounceType,proto3" json:"bounce_type,omitempty"`
-	// Subtype providing more detail (e.g., "General", "NoEmail").
-	BounceSubtype string `protobuf:"bytes,5,opt,name=bounce_subtype,json=bounceSubtype,proto3" json:"bounce_subtype,omitempty"`
-	// Recipients who bounced.
-	Recipients []string `protobuf:"bytes,6,rep,name=recipients,proto3" json:"recipients,omitempty"`
-	// Diagnostic codes for each bounced recipient.
+	// More specific reason (e.g. "MailboxFull", "General")
+	BounceSubtype string   `protobuf:"bytes,5,opt,name=bounce_subtype,json=bounceSubtype,proto3" json:"bounce_subtype,omitempty"`
+	Recipients    []string `protobuf:"bytes,6,rep,name=recipients,proto3" json:"recipients,omitempty"`
+	// Technical error codes.
 	DiagnosticCodes []string `protobuf:"bytes,7,rep,name=diagnostic_codes,json=diagnosticCodes,proto3" json:"diagnostic_codes,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -610,18 +601,14 @@ func (x *EmailBouncedEvent) GetDiagnosticCodes() []string {
 	return nil
 }
 
-// EmailComplainedEvent is sent when a recipient marks the email as spam.
+// Recipient marked as spam.
 type EmailComplainedEvent struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Our internal email ID.
-	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
-	// User who sent the email.
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// SES Message-ID.
-	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	// Type of complaint feedback.
-	FeedbackType string `protobuf:"bytes,4,opt,name=feedback_type,json=feedbackType,proto3" json:"feedback_type,omitempty"`
-	// Recipients who complained.
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	EmailId   string                 `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	UserId    string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	MessageId string                 `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	// e.g. "abuse", "fraud"
+	FeedbackType  string   `protobuf:"bytes,4,opt,name=feedback_type,json=feedbackType,proto3" json:"feedback_type,omitempty"`
 	Recipients    []string `protobuf:"bytes,5,rep,name=recipients,proto3" json:"recipients,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -692,17 +679,13 @@ func (x *EmailComplainedEvent) GetRecipients() []string {
 	return nil
 }
 
-// EmailRejectedEvent is sent when SES rejects the email.
+// Upstream rejected the request.
 type EmailRejectedEvent struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Our internal email ID.
-	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
-	// User who sent the email.
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// SES Message-ID.
-	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	// Reason for rejection.
-	Reason        string `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EmailId       string                 `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	MessageId     string                 `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	Reason        string                 `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -765,17 +748,13 @@ func (x *EmailRejectedEvent) GetReason() string {
 	return ""
 }
 
-// EmailDelayedEvent is sent when email delivery is delayed.
+// Delivery is delayed but will be retried.
 type EmailDelayedEvent struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Our internal email ID.
-	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
-	// User who sent the email.
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// SES Message-ID.
-	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	// Type of delay.
-	DelayType     string `protobuf:"bytes,4,opt,name=delay_type,json=delayType,proto3" json:"delay_type,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EmailId       string                 `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	MessageId     string                 `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	DelayType     string                 `protobuf:"bytes,4,opt,name=delay_type,json=delayType,proto3" json:"delay_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -838,15 +817,12 @@ func (x *EmailDelayedEvent) GetDelayType() string {
 	return ""
 }
 
-// EmailFailedEvent is sent when email sending fails permanently.
+// Sending failed permanently.
 type EmailFailedEvent struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Our internal email ID.
-	EmailId string `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
-	// User who sent the email.
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// Error message describing the failure.
-	Error         string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EmailId       string                 `protobuf:"bytes,1,opt,name=email_id,json=emailId,proto3" json:"email_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -902,30 +878,28 @@ func (x *EmailFailedEvent) GetError() string {
 	return ""
 }
 
-// EmailRepliedEvent is sent when a reply to a sent email is received.
+// Inbound reply received.
 type EmailRepliedEvent struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// ID of this inbound email.
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// User who owns the original email.
+	// ID of this new inbound email.
+	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// Message-ID of this reply.
+	// Message-ID from the email headers.
 	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	// Message-ID of the email being replied to.
+	// Message-ID of the email that was replied to.
 	InReplyTo string `protobuf:"bytes,4,opt,name=in_reply_to,json=inReplyTo,proto3" json:"in_reply_to,omitempty"`
-	// Full thread reference chain.
+	// Thread reference chain.
 	References []string `protobuf:"bytes,5,rep,name=references,proto3" json:"references,omitempty"`
-	// Sender of the reply.
+	// Who sent the reply.
 	From string `protobuf:"bytes,6,opt,name=from,proto3" json:"from,omitempty"`
-	// Recipients of the reply.
-	To []string `protobuf:"bytes,7,rep,name=to,proto3" json:"to,omitempty"`
-	// Subject of the reply.
-	Subject string `protobuf:"bytes,8,opt,name=subject,proto3" json:"subject,omitempty"`
-	// Plain text body.
+	// Who received the reply (your address).
+	To      []string `protobuf:"bytes,7,rep,name=to,proto3" json:"to,omitempty"`
+	Subject string   `protobuf:"bytes,8,opt,name=subject,proto3" json:"subject,omitempty"`
+	// Reply content (plain text).
 	Body string `protobuf:"bytes,9,opt,name=body,proto3" json:"body,omitempty"`
-	// HTML body.
+	// Reply content (HTML).
 	Html string `protobuf:"bytes,10,opt,name=html,proto3" json:"html,omitempty"`
-	// Our email ID of the original email being replied to.
+	// ID of the original email that was replied to (if found).
 	ParentEmailId string `protobuf:"bytes,11,opt,name=parent_email_id,json=parentEmailId,proto3" json:"parent_email_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

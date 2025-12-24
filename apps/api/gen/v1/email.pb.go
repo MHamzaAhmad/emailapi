@@ -22,15 +22,19 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// EmailStatus represents the current processing status.
+// Represents the current status of an email delivery.
 type EmailStatus int32
 
 const (
 	EmailStatus_EMAIL_STATUS_UNSPECIFIED EmailStatus = 0
-	EmailStatus_EMAIL_STATUS_QUEUED      EmailStatus = 1
-	EmailStatus_EMAIL_STATUS_PROCESSING  EmailStatus = 2
-	EmailStatus_EMAIL_STATUS_SENT        EmailStatus = 3
-	EmailStatus_EMAIL_STATUS_FAILED      EmailStatus = 4
+	// The email is queued for background processing.
+	EmailStatus_EMAIL_STATUS_QUEUED EmailStatus = 1
+	// The email is currently being processed.
+	EmailStatus_EMAIL_STATUS_PROCESSING EmailStatus = 2
+	// The email was successfully sent to the upstream provider.
+	EmailStatus_EMAIL_STATUS_SENT EmailStatus = 3
+	// The email failed to send.
+	EmailStatus_EMAIL_STATUS_FAILED EmailStatus = 4
 )
 
 // Enum value maps for EmailStatus.
@@ -78,39 +82,36 @@ func (EmailStatus) EnumDescriptor() ([]byte, []int) {
 	return file_v1_email_proto_rawDescGZIP(), []int{0}
 }
 
-// SendEmailRequest is the payload for sending an email.
+// Request to send an email.
 type SendEmailRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Sender email address (must be from a verified domain).
+	// Verified sender email address (e.g., "notifications@yourdomain.com").
 	From string `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
-	// List of primary recipient email addresses.
+	// Primary recipients.
 	To []string `protobuf:"bytes,2,rep,name=to,proto3" json:"to,omitempty"`
-	// List of CC recipient email addresses.
+	// Carbon copy recipients.
 	Cc []string `protobuf:"bytes,3,rep,name=cc,proto3" json:"cc,omitempty"`
-	// List of BCC recipient email addresses.
+	// Blind carbon copy recipients.
 	Bcc []string `protobuf:"bytes,4,rep,name=bcc,proto3" json:"bcc,omitempty"`
 	// Email subject line.
 	Subject string `protobuf:"bytes,5,opt,name=subject,proto3" json:"subject,omitempty"`
-	// Plain text content of the email.
+	// Plain text content. Always recommended for better deliverability.
 	Body string `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`
-	// HTML content of the email.
+	// HTML content.
 	Html string `protobuf:"bytes,7,opt,name=html,proto3" json:"html,omitempty"`
-	// Custom key-value metadata (returned in webhooks).
+	// Custom metadata to track this email. These values are returned in webhooks and events.
 	Metadata map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Optional timestamp to schedule the email for future delivery (UTC).
-	// If set, the email will be sent at this time instead of immediately.
-	// Uses UTC timezone - clients should convert local time to UTC before sending.
+	// Schedule this email for a future time (UTC).
 	ScheduledAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=scheduled_at,json=scheduledAt,proto3" json:"scheduled_at,omitempty"`
-	// List of attachments.
+	// File attachments.
 	Attachments []*Attachment `protobuf:"bytes,10,rep,name=attachments,proto3" json:"attachments,omitempty"`
-	// Message-ID of the email being replied to (for threading).
+	// Message-ID of the email to reply to. Setting this automatically handles
+	// threading headers (In-Reply-To, References).
 	InReplyTo string `protobuf:"bytes,11,opt,name=in_reply_to,json=inReplyTo,proto3" json:"in_reply_to,omitempty"`
-	// Full list of message IDs in the thread (for proper threading).
-	// Should include in_reply_to and all previous message IDs.
+	// Explicit threading references. Usually not needed if `in_reply_to` is set.
 	References []string `protobuf:"bytes,12,rep,name=references,proto3" json:"references,omitempty"`
-	// If true, queue for async processing (we handle retries).
-	// If false, send synchronously and return message_id immediately.
-	// Note: Emails with attachments are always processed async.
+	// Set to `true` to return immediately and send the email in the background.
+	// Recommended for bulk sending or when attachments are large.
 	Async         bool `protobuf:"varint,13,opt,name=async,proto3" json:"async,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -237,14 +238,14 @@ func (x *SendEmailRequest) GetAsync() bool {
 	return false
 }
 
-// Attachment represents a file to be attached to the email.
+// A file attachment.
 type Attachment struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Filename of the attachment.
+	// Name of the file (e.g., "invoice.pdf").
 	Filename string `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
-	// MIME type of the attachment (e.g., application/pdf).
+	// MIME type (e.g., "application/pdf").
 	ContentType string `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
-	// Content source - either a URL to download from or base64-encoded content.
+	// The content of the file.
 	//
 	// Types that are valid to be assigned to Source:
 	//
@@ -329,12 +330,12 @@ type isAttachment_Source interface {
 }
 
 type Attachment_Url struct {
-	// URL to download the attachment from.
+	// Publicly accessible URL to download the file from.
 	Url string `protobuf:"bytes,3,opt,name=url,proto3,oneof"`
 }
 
 type Attachment_Base64Content struct {
-	// Base64-encoded content of the attachment.
+	// Base64-encoded file content.
 	Base64Content string `protobuf:"bytes,4,opt,name=base64_content,json=base64Content,proto3,oneof"`
 }
 
@@ -342,16 +343,16 @@ func (*Attachment_Url) isAttachment_Source() {}
 
 func (*Attachment_Base64Content) isAttachment_Source() {}
 
-// SendEmailResponse contains the result of a send request.
+// Response after sending an email.
 type SendEmailResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Unique identifier for tracking this email.
+	// Unique system ID for this email. Use this to track events.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Current status of the email.
+	// Current status.
 	Status EmailStatus `protobuf:"varint,2,opt,name=status,proto3,enum=v1.EmailStatus" json:"status,omitempty"`
-	// SES Message-ID (only present if sync send succeeded).
+	// Upstream Message-ID (if available immediately).
 	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	// Human-readable status message.
+	// Human-readable description of the status.
 	StatusMessage string `protobuf:"bytes,4,opt,name=status_message,json=statusMessage,proto3" json:"status_message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -415,16 +416,17 @@ func (x *SendEmailResponse) GetStatusMessage() string {
 	return ""
 }
 
-// StreamEventsRequest is the request for streaming events.
+// Request to stream events.
 type StreamEventsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Cursor position to start from (event ID).
-	// Empty string means start from latest events.
-	// Use "0" to start from the beginning of the stream.
+	// Checkpoint to resume streaming from.
+	// - Leave empty to start from *now* (live events only).
+	// - Set to "0" to read from the very beginning.
+	// - Set to a specific event ID to resume from that event.
 	Cursor string `protobuf:"bytes,1,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	// Optional: Filter by event types.
+	// Filter by specific event types.
 	EventTypes []EventType `protobuf:"varint,2,rep,packed,name=event_types,json=eventTypes,proto3,enum=v1.EventType" json:"event_types,omitempty"`
-	// Number of events to batch (1-100, default: 10).
+	// Internal batch size hints.
 	BatchSize     int32 `protobuf:"varint,3,opt,name=batch_size,json=batchSize,proto3" json:"batch_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

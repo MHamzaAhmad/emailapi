@@ -7,8 +7,8 @@
         "tags": [
           "v1.DomainService"
         ],
-        "summary": "AddDomain registers a new sending domain.  Returns everything you need: domain info, DNS records, and next steps.  MAIL FROM (mail.yourdomain.com) is auto-configured.",
-        "description": "AddDomain registers a new sending domain.\n Returns everything you need: domain info, DNS records, and next steps.\n MAIL FROM (mail.yourdomain.com) is auto-configured.",
+        "summary": "Register a new domain for sending.  Returns the DNS records you need to add to your DNS provider (e.g. Cloudflare, GoDaddy).",
+        "description": "Register a new domain for sending.\n Returns the DNS records you need to add to your DNS provider (e.g. Cloudflare, GoDaddy).",
         "operationId": "v1.DomainService.AddDomain",
         "parameters": [
           {
@@ -66,8 +66,8 @@
         "tags": [
           "v1.DomainService"
         ],
-        "summary": "DeleteDomain removes a domain from your account.",
-        "description": "DeleteDomain removes a domain from your account.",
+        "summary": "Remove a domain. You won't be able to send from it anymore.",
+        "description": "Remove a domain. You won't be able to send from it anymore.",
         "operationId": "v1.DomainService.DeleteDomain",
         "parameters": [
           {
@@ -125,8 +125,8 @@
         "tags": [
           "v1.DomainService"
         ],
-        "summary": "GetDomain retrieves a domain with its configuration and status.  Automatically refreshes from SES if data is stale (\u003e5 min).",
-        "description": "GetDomain retrieves a domain with its configuration and status.\n Automatically refreshes from SES if data is stale (\u003e5 min).",
+        "summary": "Get details for a specific domain, including current DNS status.  We automatically refresh the status if it's stale (\u003e5 minutes old).",
+        "description": "Get details for a specific domain, including current DNS status.\n We automatically refresh the status if it's stale (\u003e5 minutes old).",
         "operationId": "v1.DomainService.GetDomain",
         "parameters": [
           {
@@ -184,8 +184,8 @@
         "tags": [
           "v1.DomainService"
         ],
-        "summary": "ListDomains retrieves all domains with their status.",
-        "description": "ListDomains retrieves all domains with their status.",
+        "summary": "List all your domains.",
+        "description": "List all your domains.",
         "operationId": "v1.DomainService.ListDomains",
         "parameters": [
           {
@@ -243,8 +243,8 @@
         "tags": [
           "v1.DomainService"
         ],
-        "summary": "VerifyDomain forces a fresh check of DNS records and SES status.  Rate-limited to 30s between calls. Use after configuring DNS.",
-        "description": "VerifyDomain forces a fresh check of DNS records and SES status.\n Rate-limited to 30s between calls. Use after configuring DNS.",
+        "summary": "Trigger an immediate check of DNS records.  Useful if you just updated your DNS and don't want to wait for the auto-refresh.  Rate limited to once every 30 seconds.",
+        "description": "Trigger an immediate check of DNS records.\n Useful if you just updated your DNS and don't want to wait for the auto-refresh.\n Rate limited to once every 30 seconds.",
         "operationId": "v1.DomainService.VerifyDomain",
         "parameters": [
           {
@@ -302,8 +302,8 @@
         "tags": [
           "v1.EmailService"
         ],
-        "summary": "SendEmail sends an email immediately or queues it for async processing.",
-        "description": "Behavior:\n - async=false + no attachments: Send synchronously, return message_id\n - async=true OR has attachments: Queue for processing with retries\n\n Delivery status is sent to your webhook endpoint.",
+        "summary": "Send an email to one or more recipients.",
+        "description": "By default, this method sends the email synchronously and returns a result only\n after the upstream provider has accepted it.\n\n For better performance with large attachments or batch sending, set `async: true`\n to queue the email for background processing.",
         "operationId": "v1.EmailService.SendEmail",
         "parameters": [
           {
@@ -463,8 +463,7 @@
         "properties": {
           "domain": {
             "type": "string",
-            "title": "domain",
-            "description": "Domain name to add (e.g., \"example.com\")"
+            "title": "domain"
           }
         },
         "title": "AddDomainRequest",
@@ -493,12 +492,12 @@
               "filename": {
                 "type": "string",
                 "title": "filename",
-                "description": "Filename of the attachment."
+                "description": "Name of the file (e.g., \"invoice.pdf\")."
               },
               "contentType": {
                 "type": "string",
                 "title": "content_type",
-                "description": "MIME type of the attachment (e.g., application/pdf)."
+                "description": "MIME type (e.g., \"application/pdf\")."
               }
             }
           },
@@ -509,7 +508,7 @@
                   "base64Content": {
                     "type": "string",
                     "title": "base64_content",
-                    "description": "Base64-encoded content of the attachment."
+                    "description": "Base64-encoded file content."
                   }
                 },
                 "title": "base64_content",
@@ -522,7 +521,7 @@
                   "url": {
                     "type": "string",
                     "title": "url",
-                    "description": "URL to download the attachment from."
+                    "description": "Publicly accessible URL to download the file from."
                   }
                 },
                 "title": "url",
@@ -535,7 +534,7 @@
         ],
         "title": "Attachment",
         "additionalProperties": false,
-        "description": "Attachment represents a file to be attached to the email."
+        "description": "A file attachment."
       },
       "v1.DeleteDomainRequest": {
         "type": "object",
@@ -565,53 +564,53 @@
           "type": {
             "type": "string",
             "title": "type",
-            "description": "DNS record type: CNAME, TXT, MX"
+            "description": "Record type: \"CNAME\", \"TXT\", or \"MX\"."
           },
           "name": {
             "type": "string",
             "title": "name",
-            "description": "Full record name (e.g., \"abc._domainkey.example.com\")"
+            "description": "Hostname to set (e.g. \"email._domainkey\")."
           },
           "value": {
             "type": "string",
             "title": "value",
-            "description": "Record value to set"
+            "description": "Value to set (e.g. \"k=rsa; ...\")."
           },
           "priority": {
             "type": "integer",
             "title": "priority",
             "format": "int32",
-            "description": "Priority (MX records only)"
+            "description": "Priority (only for MX records)."
           },
           "recordType": {
             "title": "record_type",
-            "description": "Purpose of this record",
+            "description": "What this record is for.",
             "$ref": "#/components/schemas/v1.RecordType"
           },
           "status": {
             "title": "status",
-            "description": "Current status",
+            "description": "Verification status.",
             "$ref": "#/components/schemas/v1.RecordStatus"
           },
           "nameShort": {
             "type": "string",
             "title": "name_short",
-            "description": "Short name for DNS providers that want just the subdomain (e.g., \"abc._domainkey\")"
+            "description": "Shortened hostname (e.g. \"email._domainkey\" instead of full FQDN) for easier copy-pasting."
           },
           "discoveredValue": {
             "type": "string",
             "title": "discovered_value",
-            "description": "What we found in DNS (after verification)"
+            "description": "The value we actually found in your DNS (useful for debugging)."
           },
           "instructions": {
             "type": "string",
             "title": "instructions",
-            "description": "Human-readable instructions"
+            "description": "User-friendly instructions, e.g. \"Add this TXT record to verify ownership\"."
           }
         },
         "title": "DnsRecord",
         "additionalProperties": false,
-        "description": "DnsRecord represents a single DNS record to configure."
+        "description": "A single DNS record."
       },
       "v1.Domain": {
         "type": "object",
@@ -622,15 +621,18 @@
           },
           "domain": {
             "type": "string",
-            "title": "domain"
+            "title": "domain",
+            "description": "The domain name (e.g. \"example.com\")."
           },
           "status": {
             "title": "status",
+            "description": "Overall verification status.",
             "$ref": "#/components/schemas/v1.DomainStatus"
           },
           "region": {
             "type": "string",
-            "title": "region"
+            "title": "region",
+            "description": "AWS Region (e.g. \"us-east-1\")."
           },
           "createdAt": {
             "title": "created_at",
@@ -646,18 +648,18 @@
           },
           "summary": {
             "title": "summary",
-            "description": "Human-readable summary for lazy users",
+            "description": "Simple summary of what's needed next.",
             "$ref": "#/components/schemas/v1.DomainSummary"
           },
           "records": {
             "title": "records",
-            "description": "All DNS records needed",
+            "description": "Detailed DNS records list.",
             "$ref": "#/components/schemas/v1.DomainRecords"
           }
         },
         "title": "Domain",
         "additionalProperties": false,
-        "description": "Domain represents a sending domain with all its configuration."
+        "description": "A sending domain."
       },
       "v1.DomainRecords": {
         "type": "object",
@@ -667,14 +669,17 @@
             "items": {
               "$ref": "#/components/schemas/v1.DnsRecord"
             },
-            "title": "dkim_records"
+            "title": "dkim_records",
+            "description": "DKIM keys (usually CNAMES)."
           },
           "spfRecord": {
             "title": "spf_record",
+            "description": "SPF record (TXT).",
             "$ref": "#/components/schemas/v1.DnsRecord"
           },
           "dmarcRecord": {
             "title": "dmarc_record",
+            "description": "DMARC record (TXT).",
             "$ref": "#/components/schemas/v1.DnsRecord"
           },
           "mxRecords": {
@@ -682,19 +687,21 @@
             "items": {
               "$ref": "#/components/schemas/v1.DnsRecord"
             },
-            "title": "mx_records"
+            "title": "mx_records",
+            "description": "Inbound MX records."
           },
           "mailFromRecords": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/v1.DnsRecord"
             },
-            "title": "mail_from_records"
+            "title": "mail_from_records",
+            "description": "Custom MAIL FROM records."
           }
         },
         "title": "DomainRecords",
         "additionalProperties": false,
-        "description": "DomainRecords contains all DNS records needed for email."
+        "description": "DNS configuration."
       },
       "v1.DomainStatus": {
         "type": "string",
@@ -707,7 +714,7 @@
           "DOMAIN_STATUS_DEGRADED",
           "DOMAIN_STATUS_FAILED"
         ],
-        "description": "DomainStatus represents the overall status of a domain.\n Use in code: if (domain.status === DomainStatus.READY)"
+        "description": "DomainStatus tracks the verification lifecycle."
       },
       "v1.DomainSummary": {
         "type": "object",
@@ -715,18 +722,17 @@
           "message": {
             "type": "string",
             "title": "message",
-            "description": "e.g., \"Add 3 DNS records to start sending\" or \"Ready to send emails!\""
+            "description": "A friendly message like \"Add 3 DNS records to start sending\"."
           },
           "nextAction": {
             "type": "string",
             "title": "next_action",
-            "description": "What the user should do next: CONFIGURE_DNS, WAIT, NONE"
+            "description": "Next logical step: \"CONFIGURE_DNS\", \"WAIT\" (for receiver cache), or \"NONE\" (done)."
           },
           "recordsPending": {
             "type": "integer",
             "title": "records_pending",
-            "format": "int32",
-            "description": "Quick stats"
+            "format": "int32"
           },
           "recordsConfigured": {
             "type": "integer",
@@ -735,52 +741,50 @@
           },
           "canSend": {
             "type": "boolean",
-            "title": "can_send"
+            "title": "can_send",
+            "description": "If true, you can start sending emails (even if not fully optimized)."
           },
           "canReceive": {
             "type": "boolean",
-            "title": "can_receive"
+            "title": "can_receive",
+            "description": "If true, you can receive inbound emails."
           }
         },
         "title": "DomainSummary",
         "additionalProperties": false,
-        "description": "DomainSummary provides human-readable status for lazy users."
+        "description": "Human-readable status summary."
       },
       "v1.EmailBouncedEvent": {
         "type": "object",
         "properties": {
           "emailId": {
             "type": "string",
-            "title": "email_id",
-            "description": "Our internal email ID."
+            "title": "email_id"
           },
           "userId": {
             "type": "string",
-            "title": "user_id",
-            "description": "User who sent the email."
+            "title": "user_id"
           },
           "messageId": {
             "type": "string",
-            "title": "message_id",
-            "description": "SES Message-ID."
+            "title": "message_id"
           },
           "bounceType": {
             "type": "string",
             "title": "bounce_type",
-            "description": "Type of bounce: \"Permanent\" or \"Transient\"."
+            "description": "\"Permanent\" or \"Transient\""
           },
           "bounceSubtype": {
             "type": "string",
             "title": "bounce_subtype",
-            "description": "Subtype providing more detail (e.g., \"General\", \"NoEmail\")."
+            "description": "More specific reason (e.g. \"MailboxFull\", \"General\")"
           },
           "recipients": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "title": "recipients",
-            "description": "Recipients who bounced."
+            "title": "recipients"
           },
           "diagnosticCodes": {
             "type": "array",
@@ -788,163 +792,144 @@
               "type": "string"
             },
             "title": "diagnostic_codes",
-            "description": "Diagnostic codes for each bounced recipient."
+            "description": "Technical error codes."
           }
         },
         "title": "EmailBouncedEvent",
         "additionalProperties": false,
-        "description": "EmailBouncedEvent is sent when an email bounces."
+        "description": "Email bounced."
       },
       "v1.EmailComplainedEvent": {
         "type": "object",
         "properties": {
           "emailId": {
             "type": "string",
-            "title": "email_id",
-            "description": "Our internal email ID."
+            "title": "email_id"
           },
           "userId": {
             "type": "string",
-            "title": "user_id",
-            "description": "User who sent the email."
+            "title": "user_id"
           },
           "messageId": {
             "type": "string",
-            "title": "message_id",
-            "description": "SES Message-ID."
+            "title": "message_id"
           },
           "feedbackType": {
             "type": "string",
             "title": "feedback_type",
-            "description": "Type of complaint feedback."
+            "description": "e.g. \"abuse\", \"fraud\""
           },
           "recipients": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "title": "recipients",
-            "description": "Recipients who complained."
+            "title": "recipients"
           }
         },
         "title": "EmailComplainedEvent",
         "additionalProperties": false,
-        "description": "EmailComplainedEvent is sent when a recipient marks the email as spam."
+        "description": "Recipient marked as spam."
       },
       "v1.EmailDelayedEvent": {
         "type": "object",
         "properties": {
           "emailId": {
             "type": "string",
-            "title": "email_id",
-            "description": "Our internal email ID."
+            "title": "email_id"
           },
           "userId": {
             "type": "string",
-            "title": "user_id",
-            "description": "User who sent the email."
+            "title": "user_id"
           },
           "messageId": {
             "type": "string",
-            "title": "message_id",
-            "description": "SES Message-ID."
+            "title": "message_id"
           },
           "delayType": {
             "type": "string",
-            "title": "delay_type",
-            "description": "Type of delay."
+            "title": "delay_type"
           }
         },
         "title": "EmailDelayedEvent",
         "additionalProperties": false,
-        "description": "EmailDelayedEvent is sent when email delivery is delayed."
+        "description": "Delivery is delayed but will be retried."
       },
       "v1.EmailDeliveredEvent": {
         "type": "object",
         "properties": {
           "emailId": {
             "type": "string",
-            "title": "email_id",
-            "description": "Our internal email ID."
+            "title": "email_id"
           },
           "userId": {
             "type": "string",
-            "title": "user_id",
-            "description": "User who sent the email."
+            "title": "user_id"
           },
           "messageId": {
             "type": "string",
-            "title": "message_id",
-            "description": "SES Message-ID."
+            "title": "message_id"
           },
           "recipients": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "title": "recipients",
-            "description": "Recipients who received the email."
+            "title": "recipients"
           },
           "smtpResponse": {
             "type": "string",
             "title": "smtp_response",
-            "description": "SMTP response from the recipient's mail server."
+            "description": "Detailed response from the SMTP server."
           }
         },
         "title": "EmailDeliveredEvent",
         "additionalProperties": false,
-        "description": "EmailDeliveredEvent is sent when an email is delivered to the recipient's mailbox."
+        "description": "Email reached the recipient's mail server."
       },
       "v1.EmailFailedEvent": {
         "type": "object",
         "properties": {
           "emailId": {
             "type": "string",
-            "title": "email_id",
-            "description": "Our internal email ID."
+            "title": "email_id"
           },
           "userId": {
             "type": "string",
-            "title": "user_id",
-            "description": "User who sent the email."
+            "title": "user_id"
           },
           "error": {
             "type": "string",
-            "title": "error",
-            "description": "Error message describing the failure."
+            "title": "error"
           }
         },
         "title": "EmailFailedEvent",
         "additionalProperties": false,
-        "description": "EmailFailedEvent is sent when email sending fails permanently."
+        "description": "Sending failed permanently."
       },
       "v1.EmailRejectedEvent": {
         "type": "object",
         "properties": {
           "emailId": {
             "type": "string",
-            "title": "email_id",
-            "description": "Our internal email ID."
+            "title": "email_id"
           },
           "userId": {
             "type": "string",
-            "title": "user_id",
-            "description": "User who sent the email."
+            "title": "user_id"
           },
           "messageId": {
             "type": "string",
-            "title": "message_id",
-            "description": "SES Message-ID."
+            "title": "message_id"
           },
           "reason": {
             "type": "string",
-            "title": "reason",
-            "description": "Reason for rejection."
+            "title": "reason"
           }
         },
         "title": "EmailRejectedEvent",
         "additionalProperties": false,
-        "description": "EmailRejectedEvent is sent when SES rejects the email."
+        "description": "Upstream rejected the request."
       },
       "v1.EmailRepliedEvent": {
         "type": "object",
@@ -952,22 +937,21 @@
           "id": {
             "type": "string",
             "title": "id",
-            "description": "ID of this inbound email."
+            "description": "ID of this new inbound email."
           },
           "userId": {
             "type": "string",
-            "title": "user_id",
-            "description": "User who owns the original email."
+            "title": "user_id"
           },
           "messageId": {
             "type": "string",
             "title": "message_id",
-            "description": "Message-ID of this reply."
+            "description": "Message-ID from the email headers."
           },
           "inReplyTo": {
             "type": "string",
             "title": "in_reply_to",
-            "description": "Message-ID of the email being replied to."
+            "description": "Message-ID of the email that was replied to."
           },
           "references": {
             "type": "array",
@@ -975,12 +959,12 @@
               "type": "string"
             },
             "title": "references",
-            "description": "Full thread reference chain."
+            "description": "Thread reference chain."
           },
           "from": {
             "type": "string",
             "title": "from",
-            "description": "Sender of the reply."
+            "description": "Who sent the reply."
           },
           "to": {
             "type": "array",
@@ -988,84 +972,75 @@
               "type": "string"
             },
             "title": "to",
-            "description": "Recipients of the reply."
+            "description": "Who received the reply (your address)."
           },
           "subject": {
             "type": "string",
-            "title": "subject",
-            "description": "Subject of the reply."
+            "title": "subject"
           },
           "body": {
             "type": "string",
             "title": "body",
-            "description": "Plain text body."
+            "description": "Reply content (plain text)."
           },
           "html": {
             "type": "string",
             "title": "html",
-            "description": "HTML body."
+            "description": "Reply content (HTML)."
           },
           "parentEmailId": {
             "type": "string",
             "title": "parent_email_id",
-            "description": "Our email ID of the original email being replied to."
+            "description": "ID of the original email that was replied to (if found)."
           }
         },
         "title": "EmailRepliedEvent",
         "additionalProperties": false,
-        "description": "EmailRepliedEvent is sent when a reply to a sent email is received."
+        "description": "Inbound reply received."
       },
       "v1.EmailSentEvent": {
         "type": "object",
         "properties": {
           "emailId": {
             "type": "string",
-            "title": "email_id",
-            "description": "Our internal email ID for tracking."
+            "title": "email_id"
           },
           "userId": {
             "type": "string",
-            "title": "user_id",
-            "description": "User who sent the email."
+            "title": "user_id"
           },
           "messageId": {
             "type": "string",
-            "title": "message_id",
-            "description": "SES Message-ID."
+            "title": "message_id"
           },
           "from": {
             "type": "string",
-            "title": "from",
-            "description": "Sender email address."
+            "title": "from"
           },
           "to": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "title": "to",
-            "description": "Primary recipients."
+            "title": "to"
           },
           "cc": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "title": "cc",
-            "description": "CC recipients."
+            "title": "cc"
           },
           "bcc": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "title": "bcc",
-            "description": "BCC recipients."
+            "title": "bcc"
           },
           "subject": {
             "type": "string",
-            "title": "subject",
-            "description": "Email subject."
+            "title": "subject"
           },
           "metadata": {
             "type": "object",
@@ -1073,13 +1048,12 @@
             "additionalProperties": {
               "type": "string",
               "title": "value"
-            },
-            "description": "Custom metadata passed with the email."
+            }
           }
         },
         "title": "EmailSentEvent",
         "additionalProperties": false,
-        "description": "EmailSentEvent is sent when an email is accepted for delivery."
+        "description": "Email was accepted and sent to the upstream provider."
       },
       "v1.EmailSentEvent.MetadataEntry": {
         "type": "object",
@@ -1106,7 +1080,7 @@
           "EMAIL_STATUS_SENT",
           "EMAIL_STATUS_FAILED"
         ],
-        "description": "EmailStatus represents the current processing status."
+        "description": "Represents the current status of an email delivery."
       },
       "v1.Event": {
         "type": "object",
@@ -1116,16 +1090,16 @@
               "id": {
                 "type": "string",
                 "title": "id",
-                "description": "Unique event ID (Redis stream ID when streaming)."
+                "description": "Unique event ID. Use this as a cursor to resume streaming."
               },
               "type": {
                 "title": "type",
-                "description": "Event type.",
+                "description": "The type of event.",
                 "$ref": "#/components/schemas/v1.EventType"
               },
               "timestamp": {
                 "title": "timestamp",
-                "description": "Timestamp when the event occurred.",
+                "description": "When the event occurred.",
                 "$ref": "#/components/schemas/google.protobuf.Timestamp"
               }
             }
@@ -1233,7 +1207,7 @@
         ],
         "title": "Event",
         "additionalProperties": false,
-        "description": "Event is the envelope for all events.\n Used for both webhook payloads and streaming responses."
+        "description": "Event is the wrapper for all event payloads."
       },
       "v1.EventType": {
         "type": "string",
@@ -1252,7 +1226,7 @@
           "EVENT_TYPE_EMAIL_DELAYED",
           "EVENT_TYPE_HEARTBEAT"
         ],
-        "description": "EventType defines the types of events that can be delivered."
+        "description": "EventType defines the specific kind of event that occurred."
       },
       "v1.GetDomainRequest": {
         "type": "object",
@@ -1282,14 +1256,12 @@
           "page": {
             "type": "integer",
             "title": "page",
-            "format": "int32",
-            "description": "Page number (1-indexed). Defaults to 1."
+            "format": "int32"
           },
           "pageSize": {
             "type": "integer",
             "title": "page_size",
-            "format": "int32",
-            "description": "Number of items per page. Defaults to 10."
+            "format": "int32"
           }
         },
         "title": "ListDomainsRequest",
@@ -1308,8 +1280,7 @@
           "total": {
             "type": "integer",
             "title": "total",
-            "format": "int32",
-            "description": "Total number of domains for pagination"
+            "format": "int32"
           }
         },
         "title": "ListDomainsResponse",
@@ -1325,7 +1296,7 @@
           "RECORD_STATUS_MISMATCH",
           "RECORD_STATUS_MISSING"
         ],
-        "description": "RecordStatus represents the status of a single DNS record.\n Use in code: if (record.status === RecordStatus.FOUND)"
+        "description": "Status of a single DNS record."
       },
       "v1.RecordType": {
         "type": "string",
@@ -1339,7 +1310,7 @@
           "RECORD_TYPE_MAIL_FROM_MX",
           "RECORD_TYPE_MAIL_FROM_SPF"
         ],
-        "description": "RecordType identifies the purpose of a DNS record."
+        "description": "Types of DNS records we require."
       },
       "v1.SendEmailRequest": {
         "type": "object",
@@ -1347,7 +1318,7 @@
           "from": {
             "type": "string",
             "title": "from",
-            "description": "Sender email address (must be from a verified domain)."
+            "description": "Verified sender email address (e.g., \"notifications@yourdomain.com\")."
           },
           "to": {
             "type": "array",
@@ -1355,7 +1326,7 @@
               "type": "string"
             },
             "title": "to",
-            "description": "List of primary recipient email addresses."
+            "description": "Primary recipients."
           },
           "cc": {
             "type": "array",
@@ -1363,7 +1334,7 @@
               "type": "string"
             },
             "title": "cc",
-            "description": "List of CC recipient email addresses."
+            "description": "Carbon copy recipients."
           },
           "bcc": {
             "type": "array",
@@ -1371,7 +1342,7 @@
               "type": "string"
             },
             "title": "bcc",
-            "description": "List of BCC recipient email addresses."
+            "description": "Blind carbon copy recipients."
           },
           "subject": {
             "type": "string",
@@ -1381,12 +1352,12 @@
           "body": {
             "type": "string",
             "title": "body",
-            "description": "Plain text content of the email."
+            "description": "Plain text content. Always recommended for better deliverability."
           },
           "html": {
             "type": "string",
             "title": "html",
-            "description": "HTML content of the email."
+            "description": "HTML content."
           },
           "metadata": {
             "type": "object",
@@ -1395,11 +1366,11 @@
               "type": "string",
               "title": "value"
             },
-            "description": "Custom key-value metadata (returned in webhooks)."
+            "description": "Custom metadata to track this email. These values are returned in webhooks and events."
           },
           "scheduledAt": {
             "title": "scheduled_at",
-            "description": "Optional timestamp to schedule the email for future delivery (UTC).\n If set, the email will be sent at this time instead of immediately.\n Uses UTC timezone - clients should convert local time to UTC before sending.",
+            "description": "Schedule this email for a future time (UTC).",
             "$ref": "#/components/schemas/google.protobuf.Timestamp"
           },
           "attachments": {
@@ -1408,12 +1379,12 @@
               "$ref": "#/components/schemas/v1.Attachment"
             },
             "title": "attachments",
-            "description": "List of attachments."
+            "description": "File attachments."
           },
           "inReplyTo": {
             "type": "string",
             "title": "in_reply_to",
-            "description": "Message-ID of the email being replied to (for threading)."
+            "description": "Message-ID of the email to reply to. Setting this automatically handles\n threading headers (In-Reply-To, References)."
           },
           "references": {
             "type": "array",
@@ -1421,17 +1392,17 @@
               "type": "string"
             },
             "title": "references",
-            "description": "Full list of message IDs in the thread (for proper threading).\n Should include in_reply_to and all previous message IDs."
+            "description": "Explicit threading references. Usually not needed if `in_reply_to` is set."
           },
           "async": {
             "type": "boolean",
             "title": "async",
-            "description": "If true, queue for async processing (we handle retries).\n If false, send synchronously and return message_id immediately.\n Note: Emails with attachments are always processed async."
+            "description": "Set to `true` to return immediately and send the email in the background.\n Recommended for bulk sending or when attachments are large."
           }
         },
         "title": "SendEmailRequest",
         "additionalProperties": false,
-        "description": "SendEmailRequest is the payload for sending an email."
+        "description": "Request to send an email."
       },
       "v1.SendEmailRequest.MetadataEntry": {
         "type": "object",
@@ -1454,27 +1425,27 @@
           "id": {
             "type": "string",
             "title": "id",
-            "description": "Unique identifier for tracking this email."
+            "description": "Unique system ID for this email. Use this to track events."
           },
           "status": {
             "title": "status",
-            "description": "Current status of the email.",
+            "description": "Current status.",
             "$ref": "#/components/schemas/v1.EmailStatus"
           },
           "messageId": {
             "type": "string",
             "title": "message_id",
-            "description": "SES Message-ID (only present if sync send succeeded)."
+            "description": "Upstream Message-ID (if available immediately)."
           },
           "statusMessage": {
             "type": "string",
             "title": "status_message",
-            "description": "Human-readable status message."
+            "description": "Human-readable description of the status."
           }
         },
         "title": "SendEmailResponse",
         "additionalProperties": false,
-        "description": "SendEmailResponse contains the result of a send request."
+        "description": "Response after sending an email."
       },
       "v1.StreamEventsRequest": {
         "type": "object",
@@ -1482,7 +1453,7 @@
           "cursor": {
             "type": "string",
             "title": "cursor",
-            "description": "Cursor position to start from (event ID).\n Empty string means start from latest events.\n Use \"0\" to start from the beginning of the stream."
+            "description": "Checkpoint to resume streaming from.\n - Leave empty to start from *now* (live events only).\n - Set to \"0\" to read from the very beginning.\n - Set to a specific event ID to resume from that event."
           },
           "eventTypes": {
             "type": "array",
@@ -1490,18 +1461,18 @@
               "$ref": "#/components/schemas/v1.EventType"
             },
             "title": "event_types",
-            "description": "Optional: Filter by event types."
+            "description": "Filter by specific event types."
           },
           "batchSize": {
             "type": "integer",
             "title": "batch_size",
             "format": "int32",
-            "description": "Number of events to batch (1-100, default: 10)."
+            "description": "Internal batch size hints."
           }
         },
         "title": "StreamEventsRequest",
         "additionalProperties": false,
-        "description": "StreamEventsRequest is the request for streaming events."
+        "description": "Request to stream events."
       },
       "v1.VerifyDomainRequest": {
         "type": "object",
@@ -1524,11 +1495,11 @@
           "wasRefreshed": {
             "type": "boolean",
             "title": "was_refreshed",
-            "description": "True if we actually checked (false if rate-limited)"
+            "description": "Whether we actually performed a fresh DNS lookup."
           },
           "nextRetryAt": {
             "title": "next_retry_at",
-            "description": "When next check is allowed (if rate-limited)",
+            "description": "When you can retry if rate limited.",
             "$ref": "#/components/schemas/google.protobuf.Timestamp"
           },
           "message": {
@@ -1545,11 +1516,11 @@
   "tags": [
     {
       "name": "v1.DomainService",
-      "description": "=============================================================================\n DomainService - Simple domain management for email sending\n =============================================================================\n\n Add your domain, configure DNS records, and start sending emails.\n MAIL FROM is auto-configured for best deliverability."
+      "description": "DomainService handles sending domains.\n To send emails with good deliverability, you need to:\n 1. Add a domain (AddDomain)\n 2. Configure the DNS records we give you\n 3. Verify the layout (VerifyDomain)"
     },
     {
       "name": "v1.EmailService",
-      "description": "EmailService handles email sending operations.\n This is a stateless, compliance-first API - no email content is stored."
+      "description": "EmailService is the core service for sending emails and listening to events.\n It provides a simple, stateless API designed for developer happiness."
     }
   ]
 }

@@ -50,19 +50,19 @@ const (
 
 // DomainServiceClient is a client for the v1.DomainService service.
 type DomainServiceClient interface {
-	// AddDomain registers a new sending domain.
-	// Returns everything you need: domain info, DNS records, and next steps.
-	// MAIL FROM (mail.yourdomain.com) is auto-configured.
+	// Register a new domain for sending.
+	// Returns the DNS records you need to add to your DNS provider (e.g. Cloudflare, GoDaddy).
 	AddDomain(context.Context, *connect.Request[v1.AddDomainRequest]) (*connect.Response[v1.AddDomainResponse], error)
-	// GetDomain retrieves a domain with its configuration and status.
-	// Automatically refreshes from SES if data is stale (>5 min).
+	// Get details for a specific domain, including current DNS status.
+	// We automatically refresh the status if it's stale (>5 minutes old).
 	GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.GetDomainResponse], error)
-	// ListDomains retrieves all domains with their status.
+	// List all your domains.
 	ListDomains(context.Context, *connect.Request[v1.ListDomainsRequest]) (*connect.Response[v1.ListDomainsResponse], error)
-	// DeleteDomain removes a domain from your account.
+	// Remove a domain. You won't be able to send from it anymore.
 	DeleteDomain(context.Context, *connect.Request[v1.DeleteDomainRequest]) (*connect.Response[v1.DeleteDomainResponse], error)
-	// VerifyDomain forces a fresh check of DNS records and SES status.
-	// Rate-limited to 30s between calls. Use after configuring DNS.
+	// Trigger an immediate check of DNS records.
+	// Useful if you just updated your DNS and don't want to wait for the auto-refresh.
+	// Rate limited to once every 30 seconds.
 	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error)
 }
 
@@ -146,19 +146,19 @@ func (c *domainServiceClient) VerifyDomain(ctx context.Context, req *connect.Req
 
 // DomainServiceHandler is an implementation of the v1.DomainService service.
 type DomainServiceHandler interface {
-	// AddDomain registers a new sending domain.
-	// Returns everything you need: domain info, DNS records, and next steps.
-	// MAIL FROM (mail.yourdomain.com) is auto-configured.
+	// Register a new domain for sending.
+	// Returns the DNS records you need to add to your DNS provider (e.g. Cloudflare, GoDaddy).
 	AddDomain(context.Context, *connect.Request[v1.AddDomainRequest]) (*connect.Response[v1.AddDomainResponse], error)
-	// GetDomain retrieves a domain with its configuration and status.
-	// Automatically refreshes from SES if data is stale (>5 min).
+	// Get details for a specific domain, including current DNS status.
+	// We automatically refresh the status if it's stale (>5 minutes old).
 	GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.GetDomainResponse], error)
-	// ListDomains retrieves all domains with their status.
+	// List all your domains.
 	ListDomains(context.Context, *connect.Request[v1.ListDomainsRequest]) (*connect.Response[v1.ListDomainsResponse], error)
-	// DeleteDomain removes a domain from your account.
+	// Remove a domain. You won't be able to send from it anymore.
 	DeleteDomain(context.Context, *connect.Request[v1.DeleteDomainRequest]) (*connect.Response[v1.DeleteDomainResponse], error)
-	// VerifyDomain forces a fresh check of DNS records and SES status.
-	// Rate-limited to 30s between calls. Use after configuring DNS.
+	// Trigger an immediate check of DNS records.
+	// Useful if you just updated your DNS and don't want to wait for the auto-refresh.
+	// Rate limited to once every 30 seconds.
 	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error)
 }
 

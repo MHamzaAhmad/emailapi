@@ -7,39 +7,53 @@ option go_package = "github.com/emailapi/api/gen/v1";
 import "google/protobuf/timestamp.proto";
 
 // =============================================================================
-// Public Event Types
-// These are the event types and payloads available in the public SDK.
-// Used for both webhook delivery and streaming API.
+// Events - Real-time stream of what's happening to your emails.
 // =============================================================================
+//
+// Every time an email changes state (sent, delivered, bounced, reply received),
+// an event is generated. You can consume these via:
+// 1. Webhooks (push)
+// 2. StreamEvents RPC (pull / real-time stream)
 
-// EventType defines the types of events that can be delivered.
+// EventType defines the specific kind of event that occurred.
 enum EventType {
   EVENT_TYPE_UNSPECIFIED = 0;
+  // Email has been accepted by our system and sent to the upstream provider.
   EVENT_TYPE_EMAIL_SENT = 1;
+  // Email has been successfully delivered to the recipient's inbox.
   EVENT_TYPE_EMAIL_DELIVERED = 2;
+  // Email delivery failed permanently (e.g. invalid address).
   EVENT_TYPE_EMAIL_FAILED = 3;
+  // Email bounced (permanent or transient).
   EVENT_TYPE_EMAIL_BOUNCED = 4;
+  // Recipient opened the email (requires open tracking).
   EVENT_TYPE_EMAIL_OPENED = 5;
+  // Recipient clicked a link in the email (requires click tracking).
   EVENT_TYPE_EMAIL_CLICKED = 6;
+  // Recipient replied to the email.
   EVENT_TYPE_EMAIL_REPLIED = 7;
+  // Recipient marked the email as spam.
   EVENT_TYPE_EMAIL_COMPLAINED = 8;
+  // Upstream provider rejected the email.
   EVENT_TYPE_EMAIL_REJECTED = 9;
+  // Email delivery is delayed (soft bounce, will retry).
   EVENT_TYPE_EMAIL_DELAYED = 10;
-  // Heartbeat event for keeping long-lived connections alive.
-  // Clients should filter this out - it carries no payload.
+  // Internal heartbeat to keep connections alive. safely ignore.
   EVENT_TYPE_HEARTBEAT = 99;
 }
 
-// Event is the envelope for all events.
-// Used for both webhook payloads and streaming responses.
+// Event is the wrapper for all event payloads.
 message Event {
-  // Unique event ID (Redis stream ID when streaming).
+  // Unique event ID. Use this as a cursor to resume streaming.
   string id = 1;
-  // Event type.
+  
+  // The type of event.
   EventType type = 2;
-  // Timestamp when the event occurred.
+  
+  // When the event occurred.
   google.protobuf.Timestamp timestamp = 3;
-  // Event-specific payload.
+  
+  // The actual event data.
   oneof payload {
     EmailSentEvent email_sent = 10;
     EmailDeliveredEvent email_delivered = 11;
@@ -56,130 +70,96 @@ message Event {
 // Event Payloads
 // =============================================================================
 
-// EmailSentEvent is sent when an email is accepted for delivery.
+// Email was accepted and sent to the upstream provider.
 message EmailSentEvent {
-  // Our internal email ID for tracking.
   string email_id = 1;
-  // User who sent the email.
   string user_id = 2;
-  // SES Message-ID.
   string message_id = 3;
-  // Sender email address.
   string from = 4;
-  // Primary recipients.
   repeated string to = 5;
-  // CC recipients.
   repeated string cc = 6;
-  // BCC recipients.
   repeated string bcc = 7;
-  // Email subject.
   string subject = 8;
-  // Custom metadata passed with the email.
   map<string, string> metadata = 9;
 }
 
-// EmailDeliveredEvent is sent when an email is delivered to the recipient's mailbox.
+// Email reached the recipient's mail server.
 message EmailDeliveredEvent {
-  // Our internal email ID.
   string email_id = 1;
-  // User who sent the email.
   string user_id = 2;
-  // SES Message-ID.
   string message_id = 3;
-  // Recipients who received the email.
   repeated string recipients = 4;
-  // SMTP response from the recipient's mail server.
+  // Detailed response from the SMTP server.
   string smtp_response = 5;
 }
 
-// EmailBouncedEvent is sent when an email bounces.
+// Email bounced.
 message EmailBouncedEvent {
-  // Our internal email ID.
   string email_id = 1;
-  // User who sent the email.
   string user_id = 2;
-  // SES Message-ID.
   string message_id = 3;
-  // Type of bounce: "Permanent" or "Transient".
+  // "Permanent" or "Transient"
   string bounce_type = 4;
-  // Subtype providing more detail (e.g., "General", "NoEmail").
+  // More specific reason (e.g. "MailboxFull", "General")
   string bounce_subtype = 5;
-  // Recipients who bounced.
   repeated string recipients = 6;
-  // Diagnostic codes for each bounced recipient.
+  // Technical error codes.
   repeated string diagnostic_codes = 7;
 }
 
-// EmailComplainedEvent is sent when a recipient marks the email as spam.
+// Recipient marked as spam.
 message EmailComplainedEvent {
-  // Our internal email ID.
   string email_id = 1;
-  // User who sent the email.
   string user_id = 2;
-  // SES Message-ID.
   string message_id = 3;
-  // Type of complaint feedback.
+  // e.g. "abuse", "fraud"
   string feedback_type = 4;
-  // Recipients who complained.
   repeated string recipients = 5;
 }
 
-// EmailRejectedEvent is sent when SES rejects the email.
+// Upstream rejected the request.
 message EmailRejectedEvent {
-  // Our internal email ID.
   string email_id = 1;
-  // User who sent the email.
   string user_id = 2;
-  // SES Message-ID.
   string message_id = 3;
-  // Reason for rejection.
   string reason = 4;
 }
 
-// EmailDelayedEvent is sent when email delivery is delayed.
+// Delivery is delayed but will be retried.
 message EmailDelayedEvent {
-  // Our internal email ID.
   string email_id = 1;
-  // User who sent the email.
   string user_id = 2;
-  // SES Message-ID.
   string message_id = 3;
-  // Type of delay.
   string delay_type = 4;
 }
 
-// EmailFailedEvent is sent when email sending fails permanently.
+// Sending failed permanently.
 message EmailFailedEvent {
-  // Our internal email ID.
   string email_id = 1;
-  // User who sent the email.
   string user_id = 2;
-  // Error message describing the failure.
   string error = 3;
 }
 
-// EmailRepliedEvent is sent when a reply to a sent email is received.
+// Inbound reply received.
 message EmailRepliedEvent {
-  // ID of this inbound email.
+  // ID of this new inbound email.
   string id = 1;
-  // User who owns the original email.
   string user_id = 2;
-  // Message-ID of this reply.
+  // Message-ID from the email headers.
   string message_id = 3;
-  // Message-ID of the email being replied to.
+  // Message-ID of the email that was replied to.
   string in_reply_to = 4;
-  // Full thread reference chain.
+  // Thread reference chain.
   repeated string references = 5;
-  // Sender of the reply.
+  // Who sent the reply.
   string from = 6;
-  // Recipients of the reply.
+  // Who received the reply (your address).
   repeated string to = 7;
-  // Subject of the reply.
   string subject = 8;
-  // Plain text body.
+  // Reply content (plain text).
   string body = 9;
-  // HTML body.
+  // Reply content (HTML).
   string html = 10;
-  // Our email ID of the original email being replied to.
+  // ID of the original email that was replied to (if found).
   string parent_email_id = 11;
 }

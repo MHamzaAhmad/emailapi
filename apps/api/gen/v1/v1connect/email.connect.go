@@ -42,17 +42,19 @@ const (
 
 // EmailServiceClient is a client for the v1.EmailService service.
 type EmailServiceClient interface {
-	// SendEmail sends an email immediately or queues it for async processing.
+	// Send an email to one or more recipients.
 	//
-	// Behavior:
-	// - async=false + no attachments: Send synchronously, return message_id
-	// - async=true OR has attachments: Queue for processing with retries
+	// By default, this method sends the email synchronously and returns a result only
+	// after the upstream provider has accepted it.
 	//
-	// Delivery status is sent to your webhook endpoint.
+	// For better performance with large attachments or batch sending, set `async: true`
+	// to queue the email for background processing.
 	SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error)
-	// StreamEvents streams email events to the client in real-time.
-	// Alternative to webhooks for consuming events.
-	// Use cursor to resume from a specific position.
+	// Stream real-time email events (delivery, bounces, clicks, replies).
+	//
+	// This is a robust alternative to webhooks. It provides a persistent stream of events
+	// that you can consume at your own pace. Use the `cursor` to resume reading
+	// from a specific point in time, ensuring no events are ever lost.
 	StreamEvents(context.Context, *connect.Request[v1.StreamEventsRequest]) (*connect.ServerStreamForClient[v1.Event], error)
 }
 
@@ -100,17 +102,19 @@ func (c *emailServiceClient) StreamEvents(ctx context.Context, req *connect.Requ
 
 // EmailServiceHandler is an implementation of the v1.EmailService service.
 type EmailServiceHandler interface {
-	// SendEmail sends an email immediately or queues it for async processing.
+	// Send an email to one or more recipients.
 	//
-	// Behavior:
-	// - async=false + no attachments: Send synchronously, return message_id
-	// - async=true OR has attachments: Queue for processing with retries
+	// By default, this method sends the email synchronously and returns a result only
+	// after the upstream provider has accepted it.
 	//
-	// Delivery status is sent to your webhook endpoint.
+	// For better performance with large attachments or batch sending, set `async: true`
+	// to queue the email for background processing.
 	SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error)
-	// StreamEvents streams email events to the client in real-time.
-	// Alternative to webhooks for consuming events.
-	// Use cursor to resume from a specific position.
+	// Stream real-time email events (delivery, bounces, clicks, replies).
+	//
+	// This is a robust alternative to webhooks. It provides a persistent stream of events
+	// that you can consume at your own pace. Use the `cursor` to resume reading
+	// from a specific point in time, ensuring no events are ever lost.
 	StreamEvents(context.Context, *connect.Request[v1.StreamEventsRequest], *connect.ServerStream[v1.Event]) error
 }
 

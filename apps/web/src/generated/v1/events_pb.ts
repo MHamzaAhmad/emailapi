@@ -15,35 +15,34 @@ export const file_v1_events: GenFile = /*@__PURE__*/
   fileDesc("Cg92MS9ldmVudHMucHJvdG8SAnYxIu4DCgVFdmVudBIKCgJpZBgBIAEoCRIbCgR0eXBlGAIgASgOMg0udjEuRXZlbnRUeXBlEi0KCXRpbWVzdGFtcBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKAoKZW1haWxfc2VudBgKIAEoCzISLnYxLkVtYWlsU2VudEV2ZW50SAASMgoPZW1haWxfZGVsaXZlcmVkGAsgASgLMhcudjEuRW1haWxEZWxpdmVyZWRFdmVudEgAEi4KDWVtYWlsX2JvdW5jZWQYDCABKAsyFS52MS5FbWFpbEJvdW5jZWRFdmVudEgAEjQKEGVtYWlsX2NvbXBsYWluZWQYDSABKAsyGC52MS5FbWFpbENvbXBsYWluZWRFdmVudEgAEjAKDmVtYWlsX3JlamVjdGVkGA4gASgLMhYudjEuRW1haWxSZWplY3RlZEV2ZW50SAASLgoNZW1haWxfZGVsYXllZBgPIAEoCzIVLnYxLkVtYWlsRGVsYXllZEV2ZW50SAASLgoNZW1haWxfcmVwbGllZBgQIAEoCzIVLnYxLkVtYWlsUmVwbGllZEV2ZW50SAASLAoMZW1haWxfZmFpbGVkGBEgASgLMhQudjEuRW1haWxGYWlsZWRFdmVudEgAQgkKB3BheWxvYWQi8AEKDkVtYWlsU2VudEV2ZW50EhAKCGVtYWlsX2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSEgoKbWVzc2FnZV9pZBgDIAEoCRIMCgRmcm9tGAQgASgJEgoKAnRvGAUgAygJEgoKAmNjGAYgAygJEgsKA2JjYxgHIAMoCRIPCgdzdWJqZWN0GAggASgJEjIKCG1ldGFkYXRhGAkgAygLMiAudjEuRW1haWxTZW50RXZlbnQuTWV0YWRhdGFFbnRyeRovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEidwoTRW1haWxEZWxpdmVyZWRFdmVudBIQCghlbWFpbF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhIKCm1lc3NhZ2VfaWQYAyABKAkSEgoKcmVjaXBpZW50cxgEIAMoCRIVCg1zbXRwX3Jlc3BvbnNlGAUgASgJIqUBChFFbWFpbEJvdW5jZWRFdmVudBIQCghlbWFpbF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhIKCm1lc3NhZ2VfaWQYAyABKAkSEwoLYm91bmNlX3R5cGUYBCABKAkSFgoOYm91bmNlX3N1YnR5cGUYBSABKAkSEgoKcmVjaXBpZW50cxgGIAMoCRIYChBkaWFnbm9zdGljX2NvZGVzGAcgAygJIngKFEVtYWlsQ29tcGxhaW5lZEV2ZW50EhAKCGVtYWlsX2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSEgoKbWVzc2FnZV9pZBgDIAEoCRIVCg1mZWVkYmFja190eXBlGAQgASgJEhIKCnJlY2lwaWVudHMYBSADKAkiWwoSRW1haWxSZWplY3RlZEV2ZW50EhAKCGVtYWlsX2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSEgoKbWVzc2FnZV9pZBgDIAEoCRIOCgZyZWFzb24YBCABKAkiXgoRRW1haWxEZWxheWVkRXZlbnQSEAoIZW1haWxfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCRISCgptZXNzYWdlX2lkGAMgASgJEhIKCmRlbGF5X3R5cGUYBCABKAkiRAoQRW1haWxGYWlsZWRFdmVudBIQCghlbWFpbF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEg0KBWVycm9yGAMgASgJIs0BChFFbWFpbFJlcGxpZWRFdmVudBIKCgJpZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEhIKCm1lc3NhZ2VfaWQYAyABKAkSEwoLaW5fcmVwbHlfdG8YBCABKAkSEgoKcmVmZXJlbmNlcxgFIAMoCRIMCgRmcm9tGAYgASgJEgoKAnRvGAcgAygJEg8KB3N1YmplY3QYCCABKAkSDAoEYm9keRgJIAEoCRIMCgRodG1sGAogASgJEhcKD3BhcmVudF9lbWFpbF9pZBgLIAEoCSruAgoJRXZlbnRUeXBlEhoKFkVWRU5UX1RZUEVfVU5TUEVDSUZJRUQQABIZChVFVkVOVF9UWVBFX0VNQUlMX1NFTlQQARIeChpFVkVOVF9UWVBFX0VNQUlMX0RFTElWRVJFRBACEhsKF0VWRU5UX1RZUEVfRU1BSUxfRkFJTEVEEAMSHAoYRVZFTlRfVFlQRV9FTUFJTF9CT1VOQ0VEEAQSGwoXRVZFTlRfVFlQRV9FTUFJTF9PUEVORUQQBRIcChhFVkVOVF9UWVBFX0VNQUlMX0NMSUNLRUQQBhIcChhFVkVOVF9UWVBFX0VNQUlMX1JFUExJRUQQBxIfChtFVkVOVF9UWVBFX0VNQUlMX0NPTVBMQUlORUQQCBIdChlFVkVOVF9UWVBFX0VNQUlMX1JFSkVDVEVEEAkSHAoYRVZFTlRfVFlQRV9FTUFJTF9ERUxBWUVEEAoSGAoURVZFTlRfVFlQRV9IRUFSVEJFQVQQY0JdCgZjb20udjFCC0V2ZW50c1Byb3RvUAFaHmdpdGh1Yi5jb20vZW1haWxhcGkvYXBpL2dlbi92MaICA1ZYWKoCAlYxygICVjHiAg5WMVxHUEJNZXRhZGF0YeoCAlYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
- * Event is the envelope for all events.
- * Used for both webhook payloads and streaming responses.
+ * Event is the wrapper for all event payloads.
  *
  * @generated from message v1.Event
  */
 export type Event = Message<"v1.Event"> & {
   /**
-   * Unique event ID (Redis stream ID when streaming).
+   * Unique event ID. Use this as a cursor to resume streaming.
    *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
-   * Event type.
+   * The type of event.
    *
    * @generated from field: v1.EventType type = 2;
    */
   type: EventType;
 
   /**
-   * Timestamp when the event occurred.
+   * When the event occurred.
    *
    * @generated from field: google.protobuf.Timestamp timestamp = 3;
    */
   timestamp?: Timestamp;
 
   /**
-   * Event-specific payload.
+   * The actual event data.
    *
    * @generated from oneof v1.Event.payload
    */
@@ -106,70 +105,52 @@ export const EventSchema: GenMessage<Event> = /*@__PURE__*/
   messageDesc(file_v1_events, 0);
 
 /**
- * EmailSentEvent is sent when an email is accepted for delivery.
+ * Email was accepted and sent to the upstream provider.
  *
  * @generated from message v1.EmailSentEvent
  */
 export type EmailSentEvent = Message<"v1.EmailSentEvent"> & {
   /**
-   * Our internal email ID for tracking.
-   *
    * @generated from field: string email_id = 1;
    */
   emailId: string;
 
   /**
-   * User who sent the email.
-   *
    * @generated from field: string user_id = 2;
    */
   userId: string;
 
   /**
-   * SES Message-ID.
-   *
    * @generated from field: string message_id = 3;
    */
   messageId: string;
 
   /**
-   * Sender email address.
-   *
    * @generated from field: string from = 4;
    */
   from: string;
 
   /**
-   * Primary recipients.
-   *
    * @generated from field: repeated string to = 5;
    */
   to: string[];
 
   /**
-   * CC recipients.
-   *
    * @generated from field: repeated string cc = 6;
    */
   cc: string[];
 
   /**
-   * BCC recipients.
-   *
    * @generated from field: repeated string bcc = 7;
    */
   bcc: string[];
 
   /**
-   * Email subject.
-   *
    * @generated from field: string subject = 8;
    */
   subject: string;
 
   /**
-   * Custom metadata passed with the email.
-   *
    * @generated from field: map<string, string> metadata = 9;
    */
   metadata: { [key: string]: string };
@@ -183,41 +164,33 @@ export const EmailSentEventSchema: GenMessage<EmailSentEvent> = /*@__PURE__*/
   messageDesc(file_v1_events, 1);
 
 /**
- * EmailDeliveredEvent is sent when an email is delivered to the recipient's mailbox.
+ * Email reached the recipient's mail server.
  *
  * @generated from message v1.EmailDeliveredEvent
  */
 export type EmailDeliveredEvent = Message<"v1.EmailDeliveredEvent"> & {
   /**
-   * Our internal email ID.
-   *
    * @generated from field: string email_id = 1;
    */
   emailId: string;
 
   /**
-   * User who sent the email.
-   *
    * @generated from field: string user_id = 2;
    */
   userId: string;
 
   /**
-   * SES Message-ID.
-   *
    * @generated from field: string message_id = 3;
    */
   messageId: string;
 
   /**
-   * Recipients who received the email.
-   *
    * @generated from field: repeated string recipients = 4;
    */
   recipients: string[];
 
   /**
-   * SMTP response from the recipient's mail server.
+   * Detailed response from the SMTP server.
    *
    * @generated from field: string smtp_response = 5;
    */
@@ -232,55 +205,47 @@ export const EmailDeliveredEventSchema: GenMessage<EmailDeliveredEvent> = /*@__P
   messageDesc(file_v1_events, 2);
 
 /**
- * EmailBouncedEvent is sent when an email bounces.
+ * Email bounced.
  *
  * @generated from message v1.EmailBouncedEvent
  */
 export type EmailBouncedEvent = Message<"v1.EmailBouncedEvent"> & {
   /**
-   * Our internal email ID.
-   *
    * @generated from field: string email_id = 1;
    */
   emailId: string;
 
   /**
-   * User who sent the email.
-   *
    * @generated from field: string user_id = 2;
    */
   userId: string;
 
   /**
-   * SES Message-ID.
-   *
    * @generated from field: string message_id = 3;
    */
   messageId: string;
 
   /**
-   * Type of bounce: "Permanent" or "Transient".
+   * "Permanent" or "Transient"
    *
    * @generated from field: string bounce_type = 4;
    */
   bounceType: string;
 
   /**
-   * Subtype providing more detail (e.g., "General", "NoEmail").
+   * More specific reason (e.g. "MailboxFull", "General")
    *
    * @generated from field: string bounce_subtype = 5;
    */
   bounceSubtype: string;
 
   /**
-   * Recipients who bounced.
-   *
    * @generated from field: repeated string recipients = 6;
    */
   recipients: string[];
 
   /**
-   * Diagnostic codes for each bounced recipient.
+   * Technical error codes.
    *
    * @generated from field: repeated string diagnostic_codes = 7;
    */
@@ -295,42 +260,34 @@ export const EmailBouncedEventSchema: GenMessage<EmailBouncedEvent> = /*@__PURE_
   messageDesc(file_v1_events, 3);
 
 /**
- * EmailComplainedEvent is sent when a recipient marks the email as spam.
+ * Recipient marked as spam.
  *
  * @generated from message v1.EmailComplainedEvent
  */
 export type EmailComplainedEvent = Message<"v1.EmailComplainedEvent"> & {
   /**
-   * Our internal email ID.
-   *
    * @generated from field: string email_id = 1;
    */
   emailId: string;
 
   /**
-   * User who sent the email.
-   *
    * @generated from field: string user_id = 2;
    */
   userId: string;
 
   /**
-   * SES Message-ID.
-   *
    * @generated from field: string message_id = 3;
    */
   messageId: string;
 
   /**
-   * Type of complaint feedback.
+   * e.g. "abuse", "fraud"
    *
    * @generated from field: string feedback_type = 4;
    */
   feedbackType: string;
 
   /**
-   * Recipients who complained.
-   *
    * @generated from field: repeated string recipients = 5;
    */
   recipients: string[];
@@ -344,35 +301,27 @@ export const EmailComplainedEventSchema: GenMessage<EmailComplainedEvent> = /*@_
   messageDesc(file_v1_events, 4);
 
 /**
- * EmailRejectedEvent is sent when SES rejects the email.
+ * Upstream rejected the request.
  *
  * @generated from message v1.EmailRejectedEvent
  */
 export type EmailRejectedEvent = Message<"v1.EmailRejectedEvent"> & {
   /**
-   * Our internal email ID.
-   *
    * @generated from field: string email_id = 1;
    */
   emailId: string;
 
   /**
-   * User who sent the email.
-   *
    * @generated from field: string user_id = 2;
    */
   userId: string;
 
   /**
-   * SES Message-ID.
-   *
    * @generated from field: string message_id = 3;
    */
   messageId: string;
 
   /**
-   * Reason for rejection.
-   *
    * @generated from field: string reason = 4;
    */
   reason: string;
@@ -386,35 +335,27 @@ export const EmailRejectedEventSchema: GenMessage<EmailRejectedEvent> = /*@__PUR
   messageDesc(file_v1_events, 5);
 
 /**
- * EmailDelayedEvent is sent when email delivery is delayed.
+ * Delivery is delayed but will be retried.
  *
  * @generated from message v1.EmailDelayedEvent
  */
 export type EmailDelayedEvent = Message<"v1.EmailDelayedEvent"> & {
   /**
-   * Our internal email ID.
-   *
    * @generated from field: string email_id = 1;
    */
   emailId: string;
 
   /**
-   * User who sent the email.
-   *
    * @generated from field: string user_id = 2;
    */
   userId: string;
 
   /**
-   * SES Message-ID.
-   *
    * @generated from field: string message_id = 3;
    */
   messageId: string;
 
   /**
-   * Type of delay.
-   *
    * @generated from field: string delay_type = 4;
    */
   delayType: string;
@@ -428,28 +369,22 @@ export const EmailDelayedEventSchema: GenMessage<EmailDelayedEvent> = /*@__PURE_
   messageDesc(file_v1_events, 6);
 
 /**
- * EmailFailedEvent is sent when email sending fails permanently.
+ * Sending failed permanently.
  *
  * @generated from message v1.EmailFailedEvent
  */
 export type EmailFailedEvent = Message<"v1.EmailFailedEvent"> & {
   /**
-   * Our internal email ID.
-   *
    * @generated from field: string email_id = 1;
    */
   emailId: string;
 
   /**
-   * User who sent the email.
-   *
    * @generated from field: string user_id = 2;
    */
   userId: string;
 
   /**
-   * Error message describing the failure.
-   *
    * @generated from field: string error = 3;
    */
   error: string;
@@ -463,83 +398,79 @@ export const EmailFailedEventSchema: GenMessage<EmailFailedEvent> = /*@__PURE__*
   messageDesc(file_v1_events, 7);
 
 /**
- * EmailRepliedEvent is sent when a reply to a sent email is received.
+ * Inbound reply received.
  *
  * @generated from message v1.EmailRepliedEvent
  */
 export type EmailRepliedEvent = Message<"v1.EmailRepliedEvent"> & {
   /**
-   * ID of this inbound email.
+   * ID of this new inbound email.
    *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
-   * User who owns the original email.
-   *
    * @generated from field: string user_id = 2;
    */
   userId: string;
 
   /**
-   * Message-ID of this reply.
+   * Message-ID from the email headers.
    *
    * @generated from field: string message_id = 3;
    */
   messageId: string;
 
   /**
-   * Message-ID of the email being replied to.
+   * Message-ID of the email that was replied to.
    *
    * @generated from field: string in_reply_to = 4;
    */
   inReplyTo: string;
 
   /**
-   * Full thread reference chain.
+   * Thread reference chain.
    *
    * @generated from field: repeated string references = 5;
    */
   references: string[];
 
   /**
-   * Sender of the reply.
+   * Who sent the reply.
    *
    * @generated from field: string from = 6;
    */
   from: string;
 
   /**
-   * Recipients of the reply.
+   * Who received the reply (your address).
    *
    * @generated from field: repeated string to = 7;
    */
   to: string[];
 
   /**
-   * Subject of the reply.
-   *
    * @generated from field: string subject = 8;
    */
   subject: string;
 
   /**
-   * Plain text body.
+   * Reply content (plain text).
    *
    * @generated from field: string body = 9;
    */
   body: string;
 
   /**
-   * HTML body.
+   * Reply content (HTML).
    *
    * @generated from field: string html = 10;
    */
   html: string;
 
   /**
-   * Our email ID of the original email being replied to.
+   * ID of the original email that was replied to (if found).
    *
    * @generated from field: string parent_email_id = 11;
    */
@@ -554,7 +485,7 @@ export const EmailRepliedEventSchema: GenMessage<EmailRepliedEvent> = /*@__PURE_
   messageDesc(file_v1_events, 8);
 
 /**
- * EventType defines the types of events that can be delivered.
+ * EventType defines the specific kind of event that occurred.
  *
  * @generated from enum v1.EventType
  */
@@ -565,58 +496,77 @@ export enum EventType {
   UNSPECIFIED = 0,
 
   /**
+   * Email has been accepted by our system and sent to the upstream provider.
+   *
    * @generated from enum value: EVENT_TYPE_EMAIL_SENT = 1;
    */
   EMAIL_SENT = 1,
 
   /**
+   * Email has been successfully delivered to the recipient's inbox.
+   *
    * @generated from enum value: EVENT_TYPE_EMAIL_DELIVERED = 2;
    */
   EMAIL_DELIVERED = 2,
 
   /**
+   * Email delivery failed permanently (e.g. invalid address).
+   *
    * @generated from enum value: EVENT_TYPE_EMAIL_FAILED = 3;
    */
   EMAIL_FAILED = 3,
 
   /**
+   * Email bounced (permanent or transient).
+   *
    * @generated from enum value: EVENT_TYPE_EMAIL_BOUNCED = 4;
    */
   EMAIL_BOUNCED = 4,
 
   /**
+   * Recipient opened the email (requires open tracking).
+   *
    * @generated from enum value: EVENT_TYPE_EMAIL_OPENED = 5;
    */
   EMAIL_OPENED = 5,
 
   /**
+   * Recipient clicked a link in the email (requires click tracking).
+   *
    * @generated from enum value: EVENT_TYPE_EMAIL_CLICKED = 6;
    */
   EMAIL_CLICKED = 6,
 
   /**
+   * Recipient replied to the email.
+   *
    * @generated from enum value: EVENT_TYPE_EMAIL_REPLIED = 7;
    */
   EMAIL_REPLIED = 7,
 
   /**
+   * Recipient marked the email as spam.
+   *
    * @generated from enum value: EVENT_TYPE_EMAIL_COMPLAINED = 8;
    */
   EMAIL_COMPLAINED = 8,
 
   /**
+   * Upstream provider rejected the email.
+   *
    * @generated from enum value: EVENT_TYPE_EMAIL_REJECTED = 9;
    */
   EMAIL_REJECTED = 9,
 
   /**
+   * Email delivery is delayed (soft bounce, will retry).
+   *
    * @generated from enum value: EVENT_TYPE_EMAIL_DELAYED = 10;
    */
   EMAIL_DELAYED = 10,
 
   /**
-   * Heartbeat event for keeping long-lived connections alive.
-   * Clients should filter this out - it carries no payload.
+   * Internal heartbeat to keep connections alive. safely ignore.
    *
    * @generated from enum value: EVENT_TYPE_HEARTBEAT = 99;
    */
