@@ -29,6 +29,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { useActivityLogs } from '@/hooks'
 import { ActivityLog } from '@/types'
 import { formatDate } from '@/lib/utils'
+import { Timestamp } from '@bufbuild/protobuf/wkt'
 
 export const Route = createFileRoute('/dashboard')(
     {
@@ -48,7 +49,12 @@ const columns: ColumnDef<ActivityLog>[] = [
     {
         accessorKey: "timestamp",
         header: "Time",
-        cell: ({ row }) => <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(row.getValue("timestamp"))}</span>,
+        cell: ({ row }) => {
+            const ts = row.getValue("timestamp") as Timestamp | undefined
+            if (!ts) return <span className="text-xs text-muted-foreground whitespace-nowrap">-</span>
+            const date = new Date(Number(ts.seconds) * 1000 + Math.round(ts.nanos / 1e6))
+            return <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(date)}</span>
+        },
     },
     {
         accessorKey: "entityType",
