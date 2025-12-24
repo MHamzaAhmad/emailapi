@@ -5,23 +5,27 @@ import (
 	"fmt"
 	"strings"
 
+	v1 "github.com/emailapi/api/gen/v1"
 	svixlib "github.com/svix/svix-webhooks/go"
 	"github.com/svix/svix-webhooks/go/models"
+	"google.golang.org/protobuf/proto"
 )
 
 // Event types for the email API.
+// Each event type includes its proto message for schema generation.
 var eventTypes = []struct {
 	Name        string
 	Description string
+	Message     proto.Message // Proto message for JSON Schema generation
 }{
-	{"email.sent", "Email was accepted by SES"},
-	{"email.delivered", "Email was delivered to recipient"},
-	{"email.failed", "Email sending failed"},
-	{"email.bounced", "Email bounced (hard bounce)"},
-	{"email.complained", "Recipient marked email as spam"},
-	{"email.rejected", "Email was rejected by SES"},
-	{"email.delayed", "Email delivery was delayed"},
-	{"email.reply_received", "Reply to a sent email was received"},
+	{"email.sent", "Email was accepted by SES", &v1.EmailSentEvent{}},
+	{"email.delivered", "Email was delivered to recipient", &v1.EmailDeliveredEvent{}},
+	{"email.failed", "Email sending failed", &v1.EmailFailedEvent{}},
+	{"email.bounced", "Email bounced (hard bounce)", &v1.EmailBouncedEvent{}},
+	{"email.complained", "Recipient marked email as spam", &v1.EmailComplainedEvent{}},
+	{"email.rejected", "Email was rejected by SES", &v1.EmailRejectedEvent{}},
+	{"email.delayed", "Email delivery was delayed", &v1.EmailDelayedEvent{}},
+	{"email.reply_received", "Reply to a sent email was received", &v1.EmailReplyReceivedEvent{}},
 }
 
 // svixClient implements the Client interface using Svix SDK.
@@ -39,19 +43,40 @@ func NewClient(apiKey string) (Client, error) {
 }
 
 // EnsureEventTypes registers all email event types in Svix.
-// Idempotent - creates if not exists, skips if already exists.
+// Schemas are generated from proto message definitions, making proto the single source of truth.
+// Idempotent - creates if not exists, updates if already exists.
 func (c *svixClient) EnsureEventTypes(ctx context.Context) error {
 	for _, et := range eventTypes {
 		desc := et.Description
+
+		// Generate JSON schema from proto message
+		schema := ProtoToJSONSchema(et.Message)
+
+		// Schemas map uses version "1" as the default schema version
+		// Type must be map[string]any for Svix SDK
+		schemas := map[string]any{
+			"1": schema,
+		}
+
 		_, err := c.client.EventType.Create(ctx, models.EventTypeIn{
 			Name:        et.Name,
 			Description: desc,
+			Schemas:     &schemas,
 		}, nil)
 		if err != nil {
-			// Ignore 409 conflict (already exists)
-			if !strings.Contains(err.Error(), "409") && !strings.Contains(err.Error(), "already exists") {
-				return fmt.Errorf("failed to register event type %s: %w", et.Name, err)
+			// Ignore 409 conflict (already exists) - but try to update the schema
+			if strings.Contains(err.Error(), "409") || strings.Contains(err.Error(), "already exists") {
+				// Update existing event type with latest schema
+				_, updateErr := c.client.EventType.Update(ctx, et.Name, models.EventTypeUpdate{
+					Description: desc,
+					Schemas:     &schemas,
+				})
+				if updateErr != nil {
+					return fmt.Errorf("failed to update event type %s: %w", et.Name, updateErr)
+				}
+				continue
 			}
+			return fmt.Errorf("failed to register event type %s: %w", et.Name, err)
 		}
 	}
 	return nil
