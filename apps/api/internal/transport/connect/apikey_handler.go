@@ -36,9 +36,8 @@ func (h *ApiKeyHandler) CreateApiKey(
 	}
 
 	domainReq := &domain.CreateAPIKeyRequest{
-		Name:        req.Msg.Name,
-		Scopes:      toScopes(req.Msg.Scopes),
-		Environment: toEnvironment(req.Msg.Environment),
+		Name:   req.Msg.Name,
+		Scopes: toScopes(req.Msg.Scopes),
 	}
 	if req.Msg.ExpiresAt != nil {
 		t := req.Msg.ExpiresAt.AsTime()
@@ -180,15 +179,14 @@ func (h *ApiKeyHandler) RevokeApiKey(
 
 func toProtoApiKey(k *domain.APIKey) *v1.ApiKey {
 	proto := &v1.ApiKey{
-		Id:          k.ID,
-		UserId:      k.UserID,
-		Name:        k.Name,
-		KeyPrefix:   k.KeyPrefix,
-		Scopes:      toProtoScopes(k.Scopes),
-		Environment: toProtoEnvironment(k.Environment),
-		IsActive:    k.IsActive,
-		CreatedAt:   timestamppb.New(k.CreatedAt),
-		UpdatedAt:   timestamppb.New(k.UpdatedAt),
+		Id:        k.ID,
+		UserId:    k.UserID,
+		Name:      k.Name,
+		KeyPrefix: k.KeyPrefix,
+		Scopes:    toProtoScopes(k.Scopes),
+		IsActive:  k.IsActive,
+		CreatedAt: timestamppb.New(k.CreatedAt),
+		UpdatedAt: timestamppb.New(k.UpdatedAt),
 	}
 
 	if k.LastUsedAt != nil {
@@ -249,26 +247,4 @@ func toProtoScopes(scopes []domain.Scope) []v1.Scope {
 		}
 	}
 	return protoScopes
-}
-
-func toEnvironment(env v1.Environment) domain.Environment {
-	switch env {
-	case v1.Environment_ENVIRONMENT_LIVE:
-		return domain.EnvLive
-	case v1.Environment_ENVIRONMENT_DEV:
-		return domain.EnvDev
-	default:
-		return domain.EnvLive
-	}
-}
-
-func toProtoEnvironment(env domain.Environment) v1.Environment {
-	switch env {
-	case domain.EnvLive:
-		return v1.Environment_ENVIRONMENT_LIVE
-	case domain.EnvDev:
-		return v1.Environment_ENVIRONMENT_DEV
-	default:
-		return v1.Environment_ENVIRONMENT_UNSPECIFIED
-	}
 }

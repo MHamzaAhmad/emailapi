@@ -22,56 +22,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Environment represents the API key environment.
-type Environment int32
-
-const (
-	Environment_ENVIRONMENT_UNSPECIFIED Environment = 0
-	Environment_ENVIRONMENT_LIVE        Environment = 1
-	Environment_ENVIRONMENT_DEV         Environment = 2
-)
-
-// Enum value maps for Environment.
-var (
-	Environment_name = map[int32]string{
-		0: "ENVIRONMENT_UNSPECIFIED",
-		1: "ENVIRONMENT_LIVE",
-		2: "ENVIRONMENT_DEV",
-	}
-	Environment_value = map[string]int32{
-		"ENVIRONMENT_UNSPECIFIED": 0,
-		"ENVIRONMENT_LIVE":        1,
-		"ENVIRONMENT_DEV":         2,
-	}
-)
-
-func (x Environment) Enum() *Environment {
-	p := new(Environment)
-	*p = x
-	return p
-}
-
-func (x Environment) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (Environment) Descriptor() protoreflect.EnumDescriptor {
-	return file_v1_apikey_proto_enumTypes[0].Descriptor()
-}
-
-func (Environment) Type() protoreflect.EnumType {
-	return &file_v1_apikey_proto_enumTypes[0]
-}
-
-func (x Environment) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use Environment.Descriptor instead.
-func (Environment) EnumDescriptor() ([]byte, []int) {
-	return file_v1_apikey_proto_rawDescGZIP(), []int{0}
-}
-
 // Scope represents an API key permission scope.
 type Scope int32
 
@@ -124,11 +74,11 @@ func (x Scope) String() string {
 }
 
 func (Scope) Descriptor() protoreflect.EnumDescriptor {
-	return file_v1_apikey_proto_enumTypes[1].Descriptor()
+	return file_v1_apikey_proto_enumTypes[0].Descriptor()
 }
 
 func (Scope) Type() protoreflect.EnumType {
-	return &file_v1_apikey_proto_enumTypes[1]
+	return &file_v1_apikey_proto_enumTypes[0]
 }
 
 func (x Scope) Number() protoreflect.EnumNumber {
@@ -137,7 +87,7 @@ func (x Scope) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Scope.Descriptor instead.
 func (Scope) EnumDescriptor() ([]byte, []int) {
-	return file_v1_apikey_proto_rawDescGZIP(), []int{1}
+	return file_v1_apikey_proto_rawDescGZIP(), []int{0}
 }
 
 // ApiKey represents an API key.
@@ -149,22 +99,20 @@ type ApiKey struct {
 	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// Human-readable name for the API key.
 	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	// Display prefix of the key (e.g., ep_live_abc123...).
+	// Display prefix of the key (e.g., ep_abc123...).
 	KeyPrefix string `protobuf:"bytes,4,opt,name=key_prefix,json=keyPrefix,proto3" json:"key_prefix,omitempty"`
 	// Scopes granted to this API key.
 	Scopes []Scope `protobuf:"varint,5,rep,packed,name=scopes,proto3,enum=v1.Scope" json:"scopes,omitempty"`
-	// Environment (live or dev).
-	Environment Environment `protobuf:"varint,6,opt,name=environment,proto3,enum=v1.Environment" json:"environment,omitempty"`
 	// Whether the API key is active.
-	IsActive bool `protobuf:"varint,7,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	IsActive bool `protobuf:"varint,6,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
 	// When the API key was last used.
-	LastUsedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
+	LastUsedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
 	// When the API key expires.
-	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	// When the API key was created.
-	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	// When the API key was last updated.
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -234,13 +182,6 @@ func (x *ApiKey) GetScopes() []Scope {
 	return nil
 }
 
-func (x *ApiKey) GetEnvironment() Environment {
-	if x != nil {
-		return x.Environment
-	}
-	return Environment_ENVIRONMENT_UNSPECIFIED
-}
-
 func (x *ApiKey) GetIsActive() bool {
 	if x != nil {
 		return x.IsActive
@@ -283,10 +224,8 @@ type CreateApiKeyRequest struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Scopes to grant to this API key.
 	Scopes []Scope `protobuf:"varint,2,rep,packed,name=scopes,proto3,enum=v1.Scope" json:"scopes,omitempty"`
-	// Environment (live or dev). Defaults to live.
-	Environment Environment `protobuf:"varint,3,opt,name=environment,proto3,enum=v1.Environment" json:"environment,omitempty"`
 	// Optional expiration time.
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -333,13 +272,6 @@ func (x *CreateApiKeyRequest) GetScopes() []Scope {
 		return x.Scopes
 	}
 	return nil
-}
-
-func (x *CreateApiKeyRequest) GetEnvironment() Environment {
-	if x != nil {
-		return x.Environment
-	}
-	return Environment_ENVIRONMENT_UNSPECIFIED
 }
 
 func (x *CreateApiKeyRequest) GetExpiresAt() *timestamppb.Timestamp {
@@ -784,31 +716,29 @@ var File_v1_apikey_proto protoreflect.FileDescriptor
 
 const file_v1_apikey_proto_rawDesc = "" +
 	"\n" +
-	"\x0fv1/apikey.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc6\x03\n" +
+	"\x0fv1/apikey.proto\x12\x02v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x93\x03\n" +
 	"\x06ApiKey\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
 	"key_prefix\x18\x04 \x01(\tR\tkeyPrefix\x12!\n" +
-	"\x06scopes\x18\x05 \x03(\x0e2\t.v1.ScopeR\x06scopes\x121\n" +
-	"\venvironment\x18\x06 \x01(\x0e2\x0f.v1.EnvironmentR\venvironment\x12\x1b\n" +
-	"\tis_active\x18\a \x01(\bR\bisActive\x12<\n" +
-	"\flast_used_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"\x06scopes\x18\x05 \x03(\x0e2\t.v1.ScopeR\x06scopes\x12\x1b\n" +
+	"\tis_active\x18\x06 \x01(\bR\bisActive\x12<\n" +
+	"\flast_used_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastUsedAt\x129\n" +
 	"\n" +
-	"expires_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x129\n" +
+	"expires_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x129\n" +
 	"\n" +
-	"created_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xba\x01\n" +
+	"updated_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x87\x01\n" +
 	"\x13CreateApiKeyRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
-	"\x06scopes\x18\x02 \x03(\x0e2\t.v1.ScopeR\x06scopes\x121\n" +
-	"\venvironment\x18\x03 \x01(\x0e2\x0f.v1.EnvironmentR\venvironment\x129\n" +
+	"\x06scopes\x18\x02 \x03(\x0e2\t.v1.ScopeR\x06scopes\x129\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"n\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"n\n" +
 	"\x14CreateApiKeyResponse\x12#\n" +
 	"\aapi_key\x18\x01 \x01(\v2\n" +
 	".v1.ApiKeyR\x06apiKey\x12\x17\n" +
@@ -837,11 +767,7 @@ const file_v1_apikey_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
 	"\x14DeleteApiKeyResponse\"%\n" +
 	"\x13RevokeApiKeyRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id*U\n" +
-	"\vEnvironment\x12\x1b\n" +
-	"\x17ENVIRONMENT_UNSPECIFIED\x10\x00\x12\x14\n" +
-	"\x10ENVIRONMENT_LIVE\x10\x01\x12\x13\n" +
-	"\x0fENVIRONMENT_DEV\x10\x02*\xd3\x01\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id*\xd3\x01\n" +
 	"\x05Scope\x12\x15\n" +
 	"\x11SCOPE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10SCOPE_EMAIL_SEND\x10\x01\x12\x14\n" +
@@ -876,54 +802,51 @@ func file_v1_apikey_proto_rawDescGZIP() []byte {
 	return file_v1_apikey_proto_rawDescData
 }
 
-var file_v1_apikey_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_v1_apikey_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_v1_apikey_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_v1_apikey_proto_goTypes = []any{
-	(Environment)(0),              // 0: v1.Environment
-	(Scope)(0),                    // 1: v1.Scope
-	(*ApiKey)(nil),                // 2: v1.ApiKey
-	(*CreateApiKeyRequest)(nil),   // 3: v1.CreateApiKeyRequest
-	(*CreateApiKeyResponse)(nil),  // 4: v1.CreateApiKeyResponse
-	(*GetApiKeyRequest)(nil),      // 5: v1.GetApiKeyRequest
-	(*ListApiKeysRequest)(nil),    // 6: v1.ListApiKeysRequest
-	(*ListApiKeysResponse)(nil),   // 7: v1.ListApiKeysResponse
-	(*UpdateApiKeyRequest)(nil),   // 8: v1.UpdateApiKeyRequest
-	(*DeleteApiKeyRequest)(nil),   // 9: v1.DeleteApiKeyRequest
-	(*DeleteApiKeyResponse)(nil),  // 10: v1.DeleteApiKeyResponse
-	(*RevokeApiKeyRequest)(nil),   // 11: v1.RevokeApiKeyRequest
-	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
+	(Scope)(0),                    // 0: v1.Scope
+	(*ApiKey)(nil),                // 1: v1.ApiKey
+	(*CreateApiKeyRequest)(nil),   // 2: v1.CreateApiKeyRequest
+	(*CreateApiKeyResponse)(nil),  // 3: v1.CreateApiKeyResponse
+	(*GetApiKeyRequest)(nil),      // 4: v1.GetApiKeyRequest
+	(*ListApiKeysRequest)(nil),    // 5: v1.ListApiKeysRequest
+	(*ListApiKeysResponse)(nil),   // 6: v1.ListApiKeysResponse
+	(*UpdateApiKeyRequest)(nil),   // 7: v1.UpdateApiKeyRequest
+	(*DeleteApiKeyRequest)(nil),   // 8: v1.DeleteApiKeyRequest
+	(*DeleteApiKeyResponse)(nil),  // 9: v1.DeleteApiKeyResponse
+	(*RevokeApiKeyRequest)(nil),   // 10: v1.RevokeApiKeyRequest
+	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
 }
 var file_v1_apikey_proto_depIdxs = []int32{
-	1,  // 0: v1.ApiKey.scopes:type_name -> v1.Scope
-	0,  // 1: v1.ApiKey.environment:type_name -> v1.Environment
-	12, // 2: v1.ApiKey.last_used_at:type_name -> google.protobuf.Timestamp
-	12, // 3: v1.ApiKey.expires_at:type_name -> google.protobuf.Timestamp
-	12, // 4: v1.ApiKey.created_at:type_name -> google.protobuf.Timestamp
-	12, // 5: v1.ApiKey.updated_at:type_name -> google.protobuf.Timestamp
-	1,  // 6: v1.CreateApiKeyRequest.scopes:type_name -> v1.Scope
-	0,  // 7: v1.CreateApiKeyRequest.environment:type_name -> v1.Environment
-	12, // 8: v1.CreateApiKeyRequest.expires_at:type_name -> google.protobuf.Timestamp
-	2,  // 9: v1.CreateApiKeyResponse.api_key:type_name -> v1.ApiKey
-	2,  // 10: v1.ListApiKeysResponse.data:type_name -> v1.ApiKey
-	1,  // 11: v1.UpdateApiKeyRequest.scopes:type_name -> v1.Scope
-	12, // 12: v1.UpdateApiKeyRequest.expires_at:type_name -> google.protobuf.Timestamp
-	3,  // 13: v1.ApiKeyService.CreateApiKey:input_type -> v1.CreateApiKeyRequest
-	5,  // 14: v1.ApiKeyService.GetApiKey:input_type -> v1.GetApiKeyRequest
-	6,  // 15: v1.ApiKeyService.ListApiKeys:input_type -> v1.ListApiKeysRequest
-	8,  // 16: v1.ApiKeyService.UpdateApiKey:input_type -> v1.UpdateApiKeyRequest
-	9,  // 17: v1.ApiKeyService.DeleteApiKey:input_type -> v1.DeleteApiKeyRequest
-	11, // 18: v1.ApiKeyService.RevokeApiKey:input_type -> v1.RevokeApiKeyRequest
-	4,  // 19: v1.ApiKeyService.CreateApiKey:output_type -> v1.CreateApiKeyResponse
-	2,  // 20: v1.ApiKeyService.GetApiKey:output_type -> v1.ApiKey
-	7,  // 21: v1.ApiKeyService.ListApiKeys:output_type -> v1.ListApiKeysResponse
-	2,  // 22: v1.ApiKeyService.UpdateApiKey:output_type -> v1.ApiKey
-	10, // 23: v1.ApiKeyService.DeleteApiKey:output_type -> v1.DeleteApiKeyResponse
-	2,  // 24: v1.ApiKeyService.RevokeApiKey:output_type -> v1.ApiKey
-	19, // [19:25] is the sub-list for method output_type
-	13, // [13:19] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	0,  // 0: v1.ApiKey.scopes:type_name -> v1.Scope
+	11, // 1: v1.ApiKey.last_used_at:type_name -> google.protobuf.Timestamp
+	11, // 2: v1.ApiKey.expires_at:type_name -> google.protobuf.Timestamp
+	11, // 3: v1.ApiKey.created_at:type_name -> google.protobuf.Timestamp
+	11, // 4: v1.ApiKey.updated_at:type_name -> google.protobuf.Timestamp
+	0,  // 5: v1.CreateApiKeyRequest.scopes:type_name -> v1.Scope
+	11, // 6: v1.CreateApiKeyRequest.expires_at:type_name -> google.protobuf.Timestamp
+	1,  // 7: v1.CreateApiKeyResponse.api_key:type_name -> v1.ApiKey
+	1,  // 8: v1.ListApiKeysResponse.data:type_name -> v1.ApiKey
+	0,  // 9: v1.UpdateApiKeyRequest.scopes:type_name -> v1.Scope
+	11, // 10: v1.UpdateApiKeyRequest.expires_at:type_name -> google.protobuf.Timestamp
+	2,  // 11: v1.ApiKeyService.CreateApiKey:input_type -> v1.CreateApiKeyRequest
+	4,  // 12: v1.ApiKeyService.GetApiKey:input_type -> v1.GetApiKeyRequest
+	5,  // 13: v1.ApiKeyService.ListApiKeys:input_type -> v1.ListApiKeysRequest
+	7,  // 14: v1.ApiKeyService.UpdateApiKey:input_type -> v1.UpdateApiKeyRequest
+	8,  // 15: v1.ApiKeyService.DeleteApiKey:input_type -> v1.DeleteApiKeyRequest
+	10, // 16: v1.ApiKeyService.RevokeApiKey:input_type -> v1.RevokeApiKeyRequest
+	3,  // 17: v1.ApiKeyService.CreateApiKey:output_type -> v1.CreateApiKeyResponse
+	1,  // 18: v1.ApiKeyService.GetApiKey:output_type -> v1.ApiKey
+	6,  // 19: v1.ApiKeyService.ListApiKeys:output_type -> v1.ListApiKeysResponse
+	1,  // 20: v1.ApiKeyService.UpdateApiKey:output_type -> v1.ApiKey
+	9,  // 21: v1.ApiKeyService.DeleteApiKey:output_type -> v1.DeleteApiKeyResponse
+	1,  // 22: v1.ApiKeyService.RevokeApiKey:output_type -> v1.ApiKey
+	17, // [17:23] is the sub-list for method output_type
+	11, // [11:17] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_v1_apikey_proto_init() }
@@ -937,7 +860,7 @@ func file_v1_apikey_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_apikey_proto_rawDesc), len(file_v1_apikey_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      1,
 			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,

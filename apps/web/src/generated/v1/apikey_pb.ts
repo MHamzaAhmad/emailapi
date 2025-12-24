@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/apikey.proto.
  */
 export const file_v1_apikey: GenFile = /*@__PURE__*/
-  fileDesc("Cg92MS9hcGlrZXkucHJvdG8SAnYxIt0CCgZBcGlLZXkSCgoCaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCRIMCgRuYW1lGAMgASgJEhIKCmtleV9wcmVmaXgYBCABKAkSGQoGc2NvcGVzGAUgAygOMgkudjEuU2NvcGUSJAoLZW52aXJvbm1lbnQYBiABKA4yDy52MS5FbnZpcm9ubWVudBIRCglpc19hY3RpdmUYByABKAgSMAoMbGFzdF91c2VkX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpleHBpcmVzX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX2F0GAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKUAQoTQ3JlYXRlQXBpS2V5UmVxdWVzdBIMCgRuYW1lGAEgASgJEhkKBnNjb3BlcxgCIAMoDjIJLnYxLlNjb3BlEiQKC2Vudmlyb25tZW50GAMgASgOMg8udjEuRW52aXJvbm1lbnQSLgoKZXhwaXJlc19hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiVQoUQ3JlYXRlQXBpS2V5UmVzcG9uc2USGwoHYXBpX2tleRgBIAEoCzIKLnYxLkFwaUtleRIPCgdyYXdfa2V5GAIgASgJEg8KB21lc3NhZ2UYAyABKAkiHgoQR2V0QXBpS2V5UmVxdWVzdBIKCgJpZBgBIAEoCSI1ChJMaXN0QXBpS2V5c1JlcXVlc3QSDAoEcGFnZRgBIAEoBRIRCglwYWdlX3NpemUYAiABKAUiPgoTTGlzdEFwaUtleXNSZXNwb25zZRIYCgRkYXRhGAEgAygLMgoudjEuQXBpS2V5Eg0KBXRvdGFsGAIgASgFIq4BChNVcGRhdGVBcGlLZXlSZXF1ZXN0EgoKAmlkGAEgASgJEhEKBG5hbWUYAiABKAlIAIgBARIZCgZzY29wZXMYAyADKA4yCS52MS5TY29wZRIWCglpc19hY3RpdmUYBCABKAhIAYgBARIuCgpleHBpcmVzX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIHCgVfbmFtZUIMCgpfaXNfYWN0aXZlIiEKE0RlbGV0ZUFwaUtleVJlcXVlc3QSCgoCaWQYASABKAkiFgoURGVsZXRlQXBpS2V5UmVzcG9uc2UiIQoTUmV2b2tlQXBpS2V5UmVxdWVzdBIKCgJpZBgBIAEoCSpVCgtFbnZpcm9ubWVudBIbChdFTlZJUk9OTUVOVF9VTlNQRUNJRklFRBAAEhQKEEVOVklST05NRU5UX0xJVkUQARITCg9FTlZJUk9OTUVOVF9ERVYQAirTAQoFU2NvcGUSFQoRU0NPUEVfVU5TUEVDSUZJRUQQABIUChBTQ09QRV9FTUFJTF9TRU5EEAESFAoQU0NPUEVfRU1BSUxfUkVBRBACEhUKEVNDT1BFX0RPTUFJTl9SRUFEEAMSFgoSU0NPUEVfRE9NQUlOX1dSSVRFEAQSFQoRU0NPUEVfQVBJS0VZX1JFQUQQBRIWChJTQ09QRV9BUElLRVlfV1JJVEUQBhITCg9TQ09QRV9VU0VSX1JFQUQQBxIUChBTQ09QRV9VU0VSX1dSSVRFEAgy+gIKDUFwaUtleVNlcnZpY2USQwoMQ3JlYXRlQXBpS2V5EhcudjEuQ3JlYXRlQXBpS2V5UmVxdWVzdBoYLnYxLkNyZWF0ZUFwaUtleVJlc3BvbnNlIgASLwoJR2V0QXBpS2V5EhQudjEuR2V0QXBpS2V5UmVxdWVzdBoKLnYxLkFwaUtleSIAEkAKC0xpc3RBcGlLZXlzEhYudjEuTGlzdEFwaUtleXNSZXF1ZXN0GhcudjEuTGlzdEFwaUtleXNSZXNwb25zZSIAEjUKDFVwZGF0ZUFwaUtleRIXLnYxLlVwZGF0ZUFwaUtleVJlcXVlc3QaCi52MS5BcGlLZXkiABJDCgxEZWxldGVBcGlLZXkSFy52MS5EZWxldGVBcGlLZXlSZXF1ZXN0GhgudjEuRGVsZXRlQXBpS2V5UmVzcG9uc2UiABI1CgxSZXZva2VBcGlLZXkSFy52MS5SZXZva2VBcGlLZXlSZXF1ZXN0GgoudjEuQXBpS2V5IgBCXQoGY29tLnYxQgtBcGlrZXlQcm90b1ABWh5naXRodWIuY29tL2VtYWlsYXBpL2FwaS9nZW4vdjGiAgNWWFiqAgJWMcoCAlYx4gIOVjFcR1BCTWV0YWRhdGHqAgJWMWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("Cg92MS9hcGlrZXkucHJvdG8SAnYxIrcCCgZBcGlLZXkSCgoCaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCRIMCgRuYW1lGAMgASgJEhIKCmtleV9wcmVmaXgYBCABKAkSGQoGc2NvcGVzGAUgAygOMgkudjEuU2NvcGUSEQoJaXNfYWN0aXZlGAYgASgIEjAKDGxhc3RfdXNlZF9hdBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKZXhwaXJlc19hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAibgoTQ3JlYXRlQXBpS2V5UmVxdWVzdBIMCgRuYW1lGAEgASgJEhkKBnNjb3BlcxgCIAMoDjIJLnYxLlNjb3BlEi4KCmV4cGlyZXNfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIlUKFENyZWF0ZUFwaUtleVJlc3BvbnNlEhsKB2FwaV9rZXkYASABKAsyCi52MS5BcGlLZXkSDwoHcmF3X2tleRgCIAEoCRIPCgdtZXNzYWdlGAMgASgJIh4KEEdldEFwaUtleVJlcXVlc3QSCgoCaWQYASABKAkiNQoSTGlzdEFwaUtleXNSZXF1ZXN0EgwKBHBhZ2UYASABKAUSEQoJcGFnZV9zaXplGAIgASgFIj4KE0xpc3RBcGlLZXlzUmVzcG9uc2USGAoEZGF0YRgBIAMoCzIKLnYxLkFwaUtleRINCgV0b3RhbBgCIAEoBSKuAQoTVXBkYXRlQXBpS2V5UmVxdWVzdBIKCgJpZBgBIAEoCRIRCgRuYW1lGAIgASgJSACIAQESGQoGc2NvcGVzGAMgAygOMgkudjEuU2NvcGUSFgoJaXNfYWN0aXZlGAQgASgISAGIAQESLgoKZXhwaXJlc19hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBwoFX25hbWVCDAoKX2lzX2FjdGl2ZSIhChNEZWxldGVBcGlLZXlSZXF1ZXN0EgoKAmlkGAEgASgJIhYKFERlbGV0ZUFwaUtleVJlc3BvbnNlIiEKE1Jldm9rZUFwaUtleVJlcXVlc3QSCgoCaWQYASABKAkq0wEKBVNjb3BlEhUKEVNDT1BFX1VOU1BFQ0lGSUVEEAASFAoQU0NPUEVfRU1BSUxfU0VORBABEhQKEFNDT1BFX0VNQUlMX1JFQUQQAhIVChFTQ09QRV9ET01BSU5fUkVBRBADEhYKElNDT1BFX0RPTUFJTl9XUklURRAEEhUKEVNDT1BFX0FQSUtFWV9SRUFEEAUSFgoSU0NPUEVfQVBJS0VZX1dSSVRFEAYSEwoPU0NPUEVfVVNFUl9SRUFEEAcSFAoQU0NPUEVfVVNFUl9XUklURRAIMvoCCg1BcGlLZXlTZXJ2aWNlEkMKDENyZWF0ZUFwaUtleRIXLnYxLkNyZWF0ZUFwaUtleVJlcXVlc3QaGC52MS5DcmVhdGVBcGlLZXlSZXNwb25zZSIAEi8KCUdldEFwaUtleRIULnYxLkdldEFwaUtleVJlcXVlc3QaCi52MS5BcGlLZXkiABJACgtMaXN0QXBpS2V5cxIWLnYxLkxpc3RBcGlLZXlzUmVxdWVzdBoXLnYxLkxpc3RBcGlLZXlzUmVzcG9uc2UiABI1CgxVcGRhdGVBcGlLZXkSFy52MS5VcGRhdGVBcGlLZXlSZXF1ZXN0GgoudjEuQXBpS2V5IgASQwoMRGVsZXRlQXBpS2V5EhcudjEuRGVsZXRlQXBpS2V5UmVxdWVzdBoYLnYxLkRlbGV0ZUFwaUtleVJlc3BvbnNlIgASNQoMUmV2b2tlQXBpS2V5EhcudjEuUmV2b2tlQXBpS2V5UmVxdWVzdBoKLnYxLkFwaUtleSIAQl0KBmNvbS52MUILQXBpa2V5UHJvdG9QAVoeZ2l0aHViLmNvbS9lbWFpbGFwaS9hcGkvZ2VuL3YxogIDVlhYqgICVjHKAgJWMeICDlYxXEdQQk1ldGFkYXRh6gICVjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
  * ApiKey represents an API key.
@@ -42,7 +42,7 @@ export type ApiKey = Message<"v1.ApiKey"> & {
   name: string;
 
   /**
-   * Display prefix of the key (e.g., ep_live_abc123...).
+   * Display prefix of the key (e.g., ep_abc123...).
    *
    * @generated from field: string key_prefix = 4;
    */
@@ -56,44 +56,37 @@ export type ApiKey = Message<"v1.ApiKey"> & {
   scopes: Scope[];
 
   /**
-   * Environment (live or dev).
-   *
-   * @generated from field: v1.Environment environment = 6;
-   */
-  environment: Environment;
-
-  /**
    * Whether the API key is active.
    *
-   * @generated from field: bool is_active = 7;
+   * @generated from field: bool is_active = 6;
    */
   isActive: boolean;
 
   /**
    * When the API key was last used.
    *
-   * @generated from field: google.protobuf.Timestamp last_used_at = 8;
+   * @generated from field: google.protobuf.Timestamp last_used_at = 7;
    */
   lastUsedAt?: Timestamp;
 
   /**
    * When the API key expires.
    *
-   * @generated from field: google.protobuf.Timestamp expires_at = 9;
+   * @generated from field: google.protobuf.Timestamp expires_at = 8;
    */
   expiresAt?: Timestamp;
 
   /**
    * When the API key was created.
    *
-   * @generated from field: google.protobuf.Timestamp created_at = 10;
+   * @generated from field: google.protobuf.Timestamp created_at = 9;
    */
   createdAt?: Timestamp;
 
   /**
    * When the API key was last updated.
    *
-   * @generated from field: google.protobuf.Timestamp updated_at = 11;
+   * @generated from field: google.protobuf.Timestamp updated_at = 10;
    */
   updatedAt?: Timestamp;
 };
@@ -126,16 +119,9 @@ export type CreateApiKeyRequest = Message<"v1.CreateApiKeyRequest"> & {
   scopes: Scope[];
 
   /**
-   * Environment (live or dev). Defaults to live.
-   *
-   * @generated from field: v1.Environment environment = 3;
-   */
-  environment: Environment;
-
-  /**
    * Optional expiration time.
    *
-   * @generated from field: google.protobuf.Timestamp expires_at = 4;
+   * @generated from field: google.protobuf.Timestamp expires_at = 3;
    */
   expiresAt?: Timestamp;
 };
@@ -366,34 +352,6 @@ export const RevokeApiKeyRequestSchema: GenMessage<RevokeApiKeyRequest> = /*@__P
   messageDesc(file_v1_apikey, 9);
 
 /**
- * Environment represents the API key environment.
- *
- * @generated from enum v1.Environment
- */
-export enum Environment {
-  /**
-   * @generated from enum value: ENVIRONMENT_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: ENVIRONMENT_LIVE = 1;
-   */
-  LIVE = 1,
-
-  /**
-   * @generated from enum value: ENVIRONMENT_DEV = 2;
-   */
-  DEV = 2,
-}
-
-/**
- * Describes the enum v1.Environment.
- */
-export const EnvironmentSchema: GenEnum<Environment> = /*@__PURE__*/
-  enumDesc(file_v1_apikey, 0);
-
-/**
  * Scope represents an API key permission scope.
  *
  * @generated from enum v1.Scope
@@ -449,7 +407,7 @@ export enum Scope {
  * Describes the enum v1.Scope.
  */
 export const ScopeSchema: GenEnum<Scope> = /*@__PURE__*/
-  enumDesc(file_v1_apikey, 1);
+  enumDesc(file_v1_apikey, 0);
 
 /**
  * ApiKeyService handles API key operations.

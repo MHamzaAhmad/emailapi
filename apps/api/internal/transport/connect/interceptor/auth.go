@@ -3,11 +3,13 @@ package interceptor
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/clerk/clerk-sdk-go/v2/jwt"
 
+	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/service"
 )
 
@@ -26,6 +28,7 @@ const (
 	ContextKeyUserID     contextKey = "user_id"
 	ContextKeyAuthMethod contextKey = "auth_method"
 	ContextKeyAPIKeyID   contextKey = "api_key_id"
+	ContextKeyAPIKey     contextKey = "api_key"
 )
 
 // UserLookup interface for looking up users by external ID.
@@ -45,6 +48,7 @@ var publicProcedures = map[string]bool{
 	// Currently none - add procedures here if needed
 }
 
+// apiKeyAllowedProcedures defines which procedures allow API key authentication.
 var apiKeyAllowedProcedures = map[string]bool{
 	"/v1.EmailService/SendEmail":     true,
 	"/v1.DomainService/AddDomain":    true,
@@ -52,6 +56,33 @@ var apiKeyAllowedProcedures = map[string]bool{
 	"/v1.DomainService/ListDomains":  true,
 	"/v1.DomainService/VerifyDomain": true,
 	"/v1.DomainService/DeleteDomain": true,
+}
+
+// requiredScopes maps procedures to their required scopes.
+// API key must have ALL listed scopes to access the procedure.
+var requiredScopes = map[string][]domain.Scope{
+	"/v1.EmailService/SendEmail":     {domain.ScopeEmailSend},
+	"/v1.DomainService/AddDomain":    {domain.ScopeDomainWrite},
+	"/v1.DomainService/GetDomain":    {domain.ScopeDomainRead},
+	"/v1.DomainService/ListDomains":  {domain.ScopeDomainRead},
+	"/v1.DomainService/VerifyDomain": {domain.ScopeDomainWrite},
+	"/v1.DomainService/DeleteDomain": {domain.ScopeDomainWrite},
+}
+
+// checkAPIKeyScopes verifies the API key has all required scopes for the procedure.
+func checkAPIKeyScopes(apiKey *domain.APIKey, procedure string) error {
+	scopes, ok := requiredScopes[procedure]
+	if !ok {
+		// No scopes required for this procedure
+		return nil
+	}
+
+	for _, required := range scopes {
+		if !apiKey.HasScope(required) {
+			return fmt.Errorf("API key missing required scope: %s", required)
+		}
+	}
+	return nil
 }
 
 // NewAuthInterceptor creates an interceptor that validates Clerk JWTs and API keys.
@@ -91,8 +122,8 @@ func NewAuthInterceptor(cfg AuthConfig) connect.UnaryInterceptorFunc {
 				return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("empty authorization token"))
 			}
 
-			// Determine if token looks like an API key (starts with em_)
-			isAPIKey := strings.HasPrefix(token, "em_")
+			// Determine if token looks like an API key (starts with ep_)
+			isAPIKey := strings.HasPrefix(token, "ep_")
 
 			if isAPIKey {
 				// Check if this endpoint allows API key auth
@@ -106,10 +137,16 @@ func NewAuthInterceptor(cfg AuthConfig) connect.UnaryInterceptorFunc {
 					return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid API key"))
 				}
 
+				// Check API key scopes
+				if err := checkAPIKeyScopes(apiKey, procedure); err != nil {
+					return nil, connect.NewError(connect.CodePermissionDenied, err)
+				}
+
 				// Add auth info to context
 				ctx = context.WithValue(ctx, ContextKeyUserID, user.ID)
 				ctx = context.WithValue(ctx, ContextKeyAuthMethod, AuthMethodAPIKey)
 				ctx = context.WithValue(ctx, ContextKeyAPIKeyID, apiKey.ID)
+				ctx = context.WithValue(ctx, ContextKeyAPIKey, apiKey)
 
 				return next(ctx, req)
 			}
@@ -124,9 +161,14 @@ func NewAuthInterceptor(cfg AuthConfig) connect.UnaryInterceptorFunc {
 				if apiKeyAllowedProcedures[procedure] {
 					user, apiKey, apiKeyErr := cfg.APIKeyService.ValidateAndGetUser(ctx, token)
 					if apiKeyErr == nil {
+						// Check API key scopes
+						if scopeErr := checkAPIKeyScopes(apiKey, procedure); scopeErr != nil {
+							return nil, connect.NewError(connect.CodePermissionDenied, scopeErr)
+						}
 						ctx = context.WithValue(ctx, ContextKeyUserID, user.ID)
 						ctx = context.WithValue(ctx, ContextKeyAuthMethod, AuthMethodAPIKey)
 						ctx = context.WithValue(ctx, ContextKeyAPIKeyID, apiKey.ID)
+						ctx = context.WithValue(ctx, ContextKeyAPIKey, apiKey)
 						return next(ctx, req)
 					}
 				}

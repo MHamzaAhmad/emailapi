@@ -3,11 +3,8 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
     Add01Icon,
     Copy01Icon,
-    Delete01Icon,
-    ViewIcon,
-    ViewOffIcon,
     AlertCircleIcon,
-    Key01Icon
+    Tick02Icon,
 } from '@hugeicons/core-free-icons'
 import { Shell } from '@/components/shell'
 import { AuthGuard } from '@/components/auth-guard'
@@ -17,7 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import { useAPIKeys, useDeleteAPIKey, useRevokeAPIKey } from '@/hooks'
-import { ApiKey, Environment } from '@/generated/v1/apikey_pb'
+import { ApiKey, Scope } from '@/generated/v1/apikey_pb'
 import { formatDate } from '@/lib/utils'
 import {
     Dialog,
@@ -31,14 +28,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCreateAPIKey } from '@/hooks'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
 
 export const Route = createFileRoute('/api-keys')({
     component: APIKeysPage,
@@ -70,7 +59,7 @@ function CopyButton({ text }: { text: string }) {
             title="Copy value"
         >
             <HugeiconsIcon
-                icon={copied ? ViewIcon : Copy01Icon} // Using ViewIcon as checkmark proxy or need Check icon import
+                icon={copied ? Tick02Icon : Copy01Icon}
                 size={12}
                 strokeWidth={1.5}
                 className={copied ? "text-emerald-500" : ""}
@@ -78,6 +67,29 @@ function CopyButton({ text }: { text: string }) {
         </Button>
     )
 }
+
+// Available scopes for API keys
+const AVAILABLE_SCOPES = [
+    { value: Scope.EMAIL_SEND, label: 'Email Send', description: 'Send emails' },
+    { value: Scope.EMAIL_READ, label: 'Email Read', description: 'Read email data' },
+    { value: Scope.DOMAIN_READ, label: 'Domain Read', description: 'View domains' },
+    { value: Scope.DOMAIN_WRITE, label: 'Domain Write', description: 'Manage domains' },
+] as const;
+
+// Helper to get scope label
+const getScopeLabel = (scope: Scope): string => {
+    switch (scope) {
+        case Scope.EMAIL_SEND: return 'email:send';
+        case Scope.EMAIL_READ: return 'email:read';
+        case Scope.DOMAIN_READ: return 'domain:read';
+        case Scope.DOMAIN_WRITE: return 'domain:write';
+        case Scope.APIKEY_READ: return 'apikey:read';
+        case Scope.APIKEY_WRITE: return 'apikey:write';
+        case Scope.USER_READ: return 'user:read';
+        case Scope.USER_WRITE: return 'user:write';
+        default: return 'unknown';
+    }
+};
 
 function APIKeysContent() {
     const [pagination, setPagination] = useState({
@@ -88,7 +100,7 @@ function APIKeysContent() {
     // Create Key Dialog State
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [newKeyName, setNewKeyName] = useState('')
-    const [newKeyEnv, setNewKeyEnv] = useState<Environment>(Environment.LIVE)
+    const [selectedScopes, setSelectedScopes] = useState<Scope[]>([Scope.EMAIL_SEND, Scope.DOMAIN_READ])
     const [createdKey, setCreatedKey] = useState<{ key: ApiKey, raw: string } | null>(null)
 
     const { data: apiKeysResponse, isLoading } = useAPIKeys(pagination.pageIndex + 1, pagination.pageSize)
@@ -99,10 +111,13 @@ function APIKeysContent() {
     const createMutation = useCreateAPIKey()
     const deleteMutation = useDeleteAPIKey()
     const revokeMutation = useRevokeAPIKey()
-    const [showKeys, setShowKeys] = useState<Record<string, boolean>>({})
 
-    const toggleShow = (id: string) => {
-        setShowKeys(prev => ({ ...prev, [id]: !prev[id] }))
+    const toggleScope = (scope: Scope) => {
+        setSelectedScopes(prev =>
+            prev.includes(scope)
+                ? prev.filter(s => s !== scope)
+                : [...prev, scope]
+        )
     }
 
     const handleCreate = async () => {
@@ -110,11 +125,11 @@ function APIKeysContent() {
         try {
             const response = await createMutation.mutateAsync({
                 name: newKeyName,
-                environment: newKeyEnv,
-                scopes: [], // Default scopes handled by backend
+                scopes: selectedScopes,
             })
             setCreatedKey({ key: response.apiKey!, raw: response.rawKey })
             setNewKeyName('')
+            setSelectedScopes([Scope.EMAIL_SEND, Scope.DOMAIN_READ])
             // Don't close dialog yet, show the raw key
         } catch (err) {
             console.error('Failed to create API key:', err)
@@ -146,24 +161,27 @@ function APIKeysContent() {
                 cell: ({ row }) => (
                     <div className="flex items-center gap-2 font-mono text-xs text-muted-foreground group">
                         <span className="bg-muted px-1.5 py-0.5 rounded text-foreground/80">
-                            {row.original.keyPrefix}...
+                            {row.original.keyPrefix}
                         </span>
-                        {/* We don't have the full key to show/hide here anymore, only prefix is stored/returned for security usually? 
-                            Actually proto has key_prefix. Real key is only shown on creation. 
-                            So view/hide logic might not apply to list unless we store masked version? 
-                            The original code had view/hide, but backend usually doesn't return full key.
-                            We'll just show prefix.
-                        */}
                     </div>
                 ),
             },
             {
-                accessorKey: 'environment',
-                header: 'Environment',
+                accessorKey: 'scopes',
+                header: 'Scopes',
                 cell: ({ row }) => (
-                    <Badge variant={row.original.environment === Environment.LIVE ? 'default' : 'secondary'} className="text-[10px] px-2 py-0 uppercase tracking-wider font-semibold">
-                        {row.original.environment === Environment.LIVE ? 'Live' : 'Test'}
-                    </Badge>
+                    <div className="flex flex-wrap gap-1">
+                        {row.original.scopes.slice(0, 2).map((scope) => (
+                            <Badge key={scope} variant="outline" className="text-[10px] px-1.5 py-0">
+                                {getScopeLabel(scope)}
+                            </Badge>
+                        ))}
+                        {row.original.scopes.length > 2 && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                +{row.original.scopes.length - 2}
+                            </Badge>
+                        )}
+                    </div>
                 ),
             },
             {
@@ -275,20 +293,30 @@ function APIKeysContent() {
                                                     onChange={(e) => setNewKeyName(e.target.value)}
                                                 />
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor="env">Environment</Label>
-                                                <Select
-                                                    value={String(newKeyEnv)}
-                                                    onValueChange={(v) => setNewKeyEnv(Number(v))}
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value={String(Environment.LIVE)}>Live</SelectItem>
-                                                        <SelectItem value={String(Environment.DEV)}>Test</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
+                                            <div className="space-y-2">
+                                                <Label>Scopes</Label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {AVAILABLE_SCOPES.map((scope) => {
+                                                        const isActive = selectedScopes.includes(scope.value)
+                                                        return (
+                                                            <button
+                                                                key={scope.value}
+                                                                type="button"
+                                                                onClick={() => toggleScope(scope.value)}
+                                                                className={`
+                                                                    h-8 px-3 rounded-md text-xs font-medium border transition-all duration-200 select-none
+                                                                    ${isActive
+                                                                        ? 'border-solid border-primary bg-primary/10 text-primary shadow-sm'
+                                                                        : 'border-dashed border-border text-muted-foreground hover:border-border hover:bg-secondary/50 hover:text-foreground bg-transparent'
+                                                                    }
+                                                                `}
+                                                            >
+                                                                {scope.label}
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+                                                <p className="text-[10px] text-muted-foreground">Select the permissions for this API key</p>
                                             </div>
                                         </div>
                                         <DialogFooter>

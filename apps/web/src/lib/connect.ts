@@ -116,7 +116,6 @@ export type {
 
 export type {
     ApiKey,
-    Environment,
     Scope,
     CreateApiKeyRequest,
     CreateApiKeyResponse,

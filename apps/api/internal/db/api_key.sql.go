@@ -34,23 +34,22 @@ func (q *Queries) CountApiKeysByUserID(ctx context.Context, userID string) (int6
 }
 
 const createApiKey = `-- name: CreateApiKey :one
-INSERT INTO api_keys (id, user_id, name, key_hash, key_prefix, scopes, environment, is_active, expires_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-RETURNING id, user_id, name, key_hash, key_prefix, scopes, environment, is_active, last_used_at, expires_at, created_at, updated_at
+INSERT INTO api_keys (id, user_id, name, key_hash, key_prefix, scopes, is_active, expires_at, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING id, user_id, name, key_hash, key_prefix, scopes, is_active, last_used_at, expires_at, created_at, updated_at
 `
 
 type CreateApiKeyParams struct {
-	ID          string             `json:"id"`
-	UserID      string             `json:"user_id"`
-	Name        string             `json:"name"`
-	KeyHash     string             `json:"key_hash"`
-	KeyPrefix   string             `json:"key_prefix"`
-	Scopes      []string           `json:"scopes"`
-	Environment string             `json:"environment"`
-	IsActive    bool               `json:"is_active"`
-	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID        string             `json:"id"`
+	UserID    string             `json:"user_id"`
+	Name      string             `json:"name"`
+	KeyHash   string             `json:"key_hash"`
+	KeyPrefix string             `json:"key_prefix"`
+	Scopes    []string           `json:"scopes"`
+	IsActive  bool               `json:"is_active"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error) {
@@ -61,7 +60,6 @@ func (q *Queries) CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (Api
 		arg.KeyHash,
 		arg.KeyPrefix,
 		arg.Scopes,
-		arg.Environment,
 		arg.IsActive,
 		arg.ExpiresAt,
 		arg.CreatedAt,
@@ -75,7 +73,6 @@ func (q *Queries) CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (Api
 		&i.KeyHash,
 		&i.KeyPrefix,
 		&i.Scopes,
-		&i.Environment,
 		&i.IsActive,
 		&i.LastUsedAt,
 		&i.ExpiresAt,
@@ -95,7 +92,7 @@ func (q *Queries) DeleteApiKey(ctx context.Context, id string) error {
 }
 
 const getApiKeyByHash = `-- name: GetApiKeyByHash :one
-SELECT id, user_id, name, key_hash, key_prefix, scopes, environment, is_active, last_used_at, expires_at, created_at, updated_at
+SELECT id, user_id, name, key_hash, key_prefix, scopes, is_active, last_used_at, expires_at, created_at, updated_at
 FROM api_keys WHERE key_hash = $1 AND is_active = true
 `
 
@@ -109,7 +106,6 @@ func (q *Queries) GetApiKeyByHash(ctx context.Context, keyHash string) (ApiKey, 
 		&i.KeyHash,
 		&i.KeyPrefix,
 		&i.Scopes,
-		&i.Environment,
 		&i.IsActive,
 		&i.LastUsedAt,
 		&i.ExpiresAt,
@@ -120,7 +116,7 @@ func (q *Queries) GetApiKeyByHash(ctx context.Context, keyHash string) (ApiKey, 
 }
 
 const getApiKeyByID = `-- name: GetApiKeyByID :one
-SELECT id, user_id, name, key_hash, key_prefix, scopes, environment, is_active, last_used_at, expires_at, created_at, updated_at
+SELECT id, user_id, name, key_hash, key_prefix, scopes, is_active, last_used_at, expires_at, created_at, updated_at
 FROM api_keys WHERE id = $1
 `
 
@@ -134,7 +130,6 @@ func (q *Queries) GetApiKeyByID(ctx context.Context, id string) (ApiKey, error) 
 		&i.KeyHash,
 		&i.KeyPrefix,
 		&i.Scopes,
-		&i.Environment,
 		&i.IsActive,
 		&i.LastUsedAt,
 		&i.ExpiresAt,
@@ -145,7 +140,7 @@ func (q *Queries) GetApiKeyByID(ctx context.Context, id string) (ApiKey, error) 
 }
 
 const getApiKeyByPrefix = `-- name: GetApiKeyByPrefix :one
-SELECT id, user_id, name, key_hash, key_prefix, scopes, environment, is_active, last_used_at, expires_at, created_at, updated_at
+SELECT id, user_id, name, key_hash, key_prefix, scopes, is_active, last_used_at, expires_at, created_at, updated_at
 FROM api_keys WHERE key_prefix = $1
 `
 
@@ -159,7 +154,6 @@ func (q *Queries) GetApiKeyByPrefix(ctx context.Context, keyPrefix string) (ApiK
 		&i.KeyHash,
 		&i.KeyPrefix,
 		&i.Scopes,
-		&i.Environment,
 		&i.IsActive,
 		&i.LastUsedAt,
 		&i.ExpiresAt,
@@ -170,23 +164,22 @@ func (q *Queries) GetApiKeyByPrefix(ctx context.Context, keyPrefix string) (ApiK
 }
 
 const listApiKeysByUserID = `-- name: ListApiKeysByUserID :many
-SELECT id, user_id, name, key_prefix, scopes, environment, is_active, last_used_at, expires_at, created_at, updated_at
+SELECT id, user_id, name, key_prefix, scopes, is_active, last_used_at, expires_at, created_at, updated_at
 FROM api_keys WHERE user_id = $1
 ORDER BY created_at DESC
 `
 
 type ListApiKeysByUserIDRow struct {
-	ID          string             `json:"id"`
-	UserID      string             `json:"user_id"`
-	Name        string             `json:"name"`
-	KeyPrefix   string             `json:"key_prefix"`
-	Scopes      []string           `json:"scopes"`
-	Environment string             `json:"environment"`
-	IsActive    bool               `json:"is_active"`
-	LastUsedAt  pgtype.Timestamptz `json:"last_used_at"`
-	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID         string             `json:"id"`
+	UserID     string             `json:"user_id"`
+	Name       string             `json:"name"`
+	KeyPrefix  string             `json:"key_prefix"`
+	Scopes     []string           `json:"scopes"`
+	IsActive   bool               `json:"is_active"`
+	LastUsedAt pgtype.Timestamptz `json:"last_used_at"`
+	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) ListApiKeysByUserID(ctx context.Context, userID string) ([]ListApiKeysByUserIDRow, error) {
@@ -204,7 +197,6 @@ func (q *Queries) ListApiKeysByUserID(ctx context.Context, userID string) ([]Lis
 			&i.Name,
 			&i.KeyPrefix,
 			&i.Scopes,
-			&i.Environment,
 			&i.IsActive,
 			&i.LastUsedAt,
 			&i.ExpiresAt,
@@ -222,7 +214,7 @@ func (q *Queries) ListApiKeysByUserID(ctx context.Context, userID string) ([]Lis
 }
 
 const listApiKeysByUserIDPaginated = `-- name: ListApiKeysByUserIDPaginated :many
-SELECT id, user_id, name, key_prefix, scopes, environment, is_active, last_used_at, expires_at, created_at, updated_at
+SELECT id, user_id, name, key_prefix, scopes, is_active, last_used_at, expires_at, created_at, updated_at
 FROM api_keys
 WHERE user_id = $1
 ORDER BY created_at DESC
@@ -236,17 +228,16 @@ type ListApiKeysByUserIDPaginatedParams struct {
 }
 
 type ListApiKeysByUserIDPaginatedRow struct {
-	ID          string             `json:"id"`
-	UserID      string             `json:"user_id"`
-	Name        string             `json:"name"`
-	KeyPrefix   string             `json:"key_prefix"`
-	Scopes      []string           `json:"scopes"`
-	Environment string             `json:"environment"`
-	IsActive    bool               `json:"is_active"`
-	LastUsedAt  pgtype.Timestamptz `json:"last_used_at"`
-	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID         string             `json:"id"`
+	UserID     string             `json:"user_id"`
+	Name       string             `json:"name"`
+	KeyPrefix  string             `json:"key_prefix"`
+	Scopes     []string           `json:"scopes"`
+	IsActive   bool               `json:"is_active"`
+	LastUsedAt pgtype.Timestamptz `json:"last_used_at"`
+	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) ListApiKeysByUserIDPaginated(ctx context.Context, arg ListApiKeysByUserIDPaginatedParams) ([]ListApiKeysByUserIDPaginatedRow, error) {
@@ -264,7 +255,6 @@ func (q *Queries) ListApiKeysByUserIDPaginated(ctx context.Context, arg ListApiK
 			&i.Name,
 			&i.KeyPrefix,
 			&i.Scopes,
-			&i.Environment,
 			&i.IsActive,
 			&i.LastUsedAt,
 			&i.ExpiresAt,
@@ -283,7 +273,7 @@ func (q *Queries) ListApiKeysByUserIDPaginated(ctx context.Context, arg ListApiK
 
 const revokeApiKey = `-- name: RevokeApiKey :one
 UPDATE api_keys SET is_active = false, updated_at = NOW() WHERE id = $1
-RETURNING id, user_id, name, key_hash, key_prefix, scopes, environment, is_active, last_used_at, expires_at, created_at, updated_at
+RETURNING id, user_id, name, key_hash, key_prefix, scopes, is_active, last_used_at, expires_at, created_at, updated_at
 `
 
 func (q *Queries) RevokeApiKey(ctx context.Context, id string) (ApiKey, error) {
@@ -296,7 +286,6 @@ func (q *Queries) RevokeApiKey(ctx context.Context, id string) (ApiKey, error) {
 		&i.KeyHash,
 		&i.KeyPrefix,
 		&i.Scopes,
-		&i.Environment,
 		&i.IsActive,
 		&i.LastUsedAt,
 		&i.ExpiresAt,
@@ -314,7 +303,7 @@ UPDATE api_keys SET
     expires_at = $5,
     updated_at = $6
 WHERE id = $1
-RETURNING id, user_id, name, key_hash, key_prefix, scopes, environment, is_active, last_used_at, expires_at, created_at, updated_at
+RETURNING id, user_id, name, key_hash, key_prefix, scopes, is_active, last_used_at, expires_at, created_at, updated_at
 `
 
 type UpdateApiKeyParams struct {
@@ -343,7 +332,6 @@ func (q *Queries) UpdateApiKey(ctx context.Context, arg UpdateApiKeyParams) (Api
 		&i.KeyHash,
 		&i.KeyPrefix,
 		&i.Scopes,
-		&i.Environment,
 		&i.IsActive,
 		&i.LastUsedAt,
 		&i.ExpiresAt,

@@ -27,12 +27,7 @@ service ApiKeyService {
   rpc RevokeApiKey(RevokeApiKeyRequest) returns (ApiKey) {}
 }
 
-// Environment represents the API key environment.
-enum Environment {
-  ENVIRONMENT_UNSPECIFIED = 0;
-  ENVIRONMENT_LIVE = 1;
-  ENVIRONMENT_DEV = 2;
-}
+
 
 // Scope represents an API key permission scope.
 enum Scope {
@@ -55,22 +50,20 @@ message ApiKey {
   string user_id = 2;
   // Human-readable name for the API key.
   string name = 3;
-  // Display prefix of the key (e.g., ep_live_abc123...).
+  // Display prefix of the key (e.g., ep_abc123...).
   string key_prefix = 4;
   // Scopes granted to this API key.
   repeated Scope scopes = 5;
-  // Environment (live or dev).
-  Environment environment = 6;
   // Whether the API key is active.
-  bool is_active = 7;
+  bool is_active = 6;
   // When the API key was last used.
-  google.protobuf.Timestamp last_used_at = 8;
+  google.protobuf.Timestamp last_used_at = 7;
   // When the API key expires.
-  google.protobuf.Timestamp expires_at = 9;
+  google.protobuf.Timestamp expires_at = 8;
   // When the API key was created.
-  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp created_at = 9;
   // When the API key was last updated.
-  google.protobuf.Timestamp updated_at = 11;
+  google.protobuf.Timestamp updated_at = 10;
 }
 
 // CreateApiKeyRequest is the request to create a new API key.
@@ -79,10 +72,8 @@ message CreateApiKeyRequest {
   string name = 1;
   // Scopes to grant to this API key.
   repeated Scope scopes = 2;
-  // Environment (live or dev). Defaults to live.
-  Environment environment = 3;
   // Optional expiration time.
-  google.protobuf.Timestamp expires_at = 4;
+  google.protobuf.Timestamp expires_at = 3;
 }
 
 // CreateApiKeyResponse is the response for creating an API key.

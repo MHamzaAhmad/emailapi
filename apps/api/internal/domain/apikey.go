@@ -4,14 +4,6 @@ import (
 	"time"
 )
 
-// Environment represents the API key environment (live or dev).
-type Environment string
-
-const (
-	EnvLive Environment = "live"
-	EnvDev  Environment = "dev"
-)
-
 // Scope represents an API key permission scope.
 type Scope string
 
@@ -74,18 +66,17 @@ func ValidateScopes(scopes []Scope) bool {
 
 // APIKey represents an API key entity in the system.
 type APIKey struct {
-	ID          string      `json:"id"`
-	UserID      string      `json:"user_id"`
-	Name        string      `json:"name"`
-	KeyHash     string      `json:"-"` // Never expose in JSON
-	KeyPrefix   string      `json:"key_prefix"`
-	Scopes      []Scope     `json:"scopes"`
-	Environment Environment `json:"environment"`
-	IsActive    bool        `json:"is_active"`
-	LastUsedAt  *time.Time  `json:"last_used_at,omitempty"`
-	ExpiresAt   *time.Time  `json:"expires_at,omitempty"`
-	CreatedAt   time.Time   `json:"created_at"`
-	UpdatedAt   time.Time   `json:"updated_at"`
+	ID         string     `json:"id"`
+	UserID     string     `json:"user_id"`
+	Name       string     `json:"name"`
+	KeyHash    string     `json:"-"` // Never expose in JSON
+	KeyPrefix  string     `json:"key_prefix"`
+	Scopes     []Scope    `json:"scopes"`
+	IsActive   bool       `json:"is_active"`
+	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
+	ExpiresAt  *time.Time `json:"expires_at,omitempty"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
 }
 
 // IsExpired checks if the API key has expired.
@@ -108,10 +99,9 @@ func (k *APIKey) HasScope(scope Scope) bool {
 
 // CreateAPIKeyRequest represents a request to create a new API key.
 type CreateAPIKeyRequest struct {
-	Name        string      `json:"name" binding:"required"`
-	Scopes      []Scope     `json:"scopes,omitempty"`
-	Environment Environment `json:"environment,omitempty"`
-	ExpiresAt   *time.Time  `json:"expires_at,omitempty"`
+	Name      string     `json:"name" binding:"required"`
+	Scopes    []Scope    `json:"scopes,omitempty"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
 }
 
 // UpdateAPIKeyRequest represents a request to update an API key.

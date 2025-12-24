@@ -34,17 +34,16 @@ func (r *APIKeyRepository) Create(ctx context.Context, apiKey *domain.APIKey) er
 	}
 
 	result, err := r.queries.CreateApiKey(ctx, db.CreateApiKeyParams{
-		ID:          apiKey.ID,
-		UserID:      apiKey.UserID,
-		Name:        apiKey.Name,
-		KeyHash:     apiKey.KeyHash,
-		KeyPrefix:   apiKey.KeyPrefix,
-		Scopes:      scopes,
-		Environment: string(apiKey.Environment),
-		IsActive:    apiKey.IsActive,
-		ExpiresAt:   toPgTimestamptzPtr(apiKey.ExpiresAt),
-		CreatedAt:   toPgTimestampNow(),
-		UpdatedAt:   toPgTimestampNow(),
+		ID:        apiKey.ID,
+		UserID:    apiKey.UserID,
+		Name:      apiKey.Name,
+		KeyHash:   apiKey.KeyHash,
+		KeyPrefix: apiKey.KeyPrefix,
+		Scopes:    scopes,
+		IsActive:  apiKey.IsActive,
+		ExpiresAt: toPgTimestamptzPtr(apiKey.ExpiresAt),
+		CreatedAt: toPgTimestampNow(),
+		UpdatedAt: toPgTimestampNow(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create API key: %w", err)
@@ -176,16 +175,15 @@ func dbApiKeyToDomain(row db.ApiKey) *domain.APIKey {
 	}
 
 	apiKey := &domain.APIKey{
-		ID:          row.ID,
-		UserID:      row.UserID,
-		Name:        row.Name,
-		KeyHash:     row.KeyHash,
-		KeyPrefix:   row.KeyPrefix,
-		Scopes:      scopes,
-		Environment: domain.Environment(row.Environment),
-		IsActive:    row.IsActive,
-		CreatedAt:   row.CreatedAt.Time,
-		UpdatedAt:   row.UpdatedAt.Time,
+		ID:        row.ID,
+		UserID:    row.UserID,
+		Name:      row.Name,
+		KeyHash:   row.KeyHash,
+		KeyPrefix: row.KeyPrefix,
+		Scopes:    scopes,
+		IsActive:  row.IsActive,
+		CreatedAt: row.CreatedAt.Time,
+		UpdatedAt: row.UpdatedAt.Time,
 	}
 
 	if row.LastUsedAt.Valid {
@@ -206,15 +204,14 @@ func dbListApiKeyRowToDomain(row db.ListApiKeysByUserIDPaginatedRow) *domain.API
 	}
 
 	apiKey := &domain.APIKey{
-		ID:          row.ID,
-		UserID:      row.UserID,
-		Name:        row.Name,
-		KeyPrefix:   row.KeyPrefix,
-		Scopes:      scopes,
-		Environment: domain.Environment(row.Environment),
-		IsActive:    row.IsActive,
-		CreatedAt:   row.CreatedAt.Time,
-		UpdatedAt:   row.UpdatedAt.Time,
+		ID:        row.ID,
+		UserID:    row.UserID,
+		Name:      row.Name,
+		KeyPrefix: row.KeyPrefix,
+		Scopes:    scopes,
+		IsActive:  row.IsActive,
+		CreatedAt: row.CreatedAt.Time,
+		UpdatedAt: row.UpdatedAt.Time,
 	}
 
 	if row.LastUsedAt.Valid {

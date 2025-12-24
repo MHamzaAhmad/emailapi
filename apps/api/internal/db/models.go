@@ -9,18 +9,17 @@ import (
 )
 
 type ApiKey struct {
-	ID          string             `json:"id"`
-	UserID      string             `json:"user_id"`
-	Name        string             `json:"name"`
-	KeyHash     string             `json:"key_hash"`
-	KeyPrefix   string             `json:"key_prefix"`
-	Scopes      []string           `json:"scopes"`
-	Environment string             `json:"environment"`
-	IsActive    bool               `json:"is_active"`
-	LastUsedAt  pgtype.Timestamptz `json:"last_used_at"`
-	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID         string             `json:"id"`
+	UserID     string             `json:"user_id"`
+	Name       string             `json:"name"`
+	KeyHash    string             `json:"key_hash"`
+	KeyPrefix  string             `json:"key_prefix"`
+	Scopes     []string           `json:"scopes"`
+	IsActive   bool               `json:"is_active"`
+	LastUsedAt pgtype.Timestamptz `json:"last_used_at"`
+	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Domain struct {

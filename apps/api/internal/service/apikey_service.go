@@ -45,12 +45,6 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 		return nil, "", fmt.Errorf("user not found: %w", err)
 	}
 
-	// Set default environment if not specified
-	env := req.Environment
-	if env == "" {
-		env = domain.EnvLive
-	}
-
 	// Set default scopes if not specified
 	scopes := req.Scopes
 	if len(scopes) == 0 {
@@ -62,8 +56,8 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 		return nil, "", fmt.Errorf("invalid scopes provided")
 	}
 
-	// Generate API key with ep_{env}_ prefix format
-	rawKey, err := s.generateRawKey(env)
+	// Generate API key with ep_ prefix format
+	rawKey, err := s.generateRawKey()
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to generate API key: %w", err)
 	}
@@ -74,8 +68,8 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 		return nil, "", fmt.Errorf("failed to hash API key: %w", err)
 	}
 
-	// Generate display prefix (first 16 chars + ...)
-	keyPrefix := rawKey[:16] + "..."
+	// Generate display prefix (first 12 chars + ...)
+	keyPrefix := rawKey[:12] + "..."
 
 	// Generate unique ID (non-UUID, alphanumeric)
 	id, err := s.generateKeyID()
@@ -84,15 +78,14 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 	}
 
 	apiKey := &domain.APIKey{
-		ID:          id,
-		UserID:      userID,
-		Name:        req.Name,
-		KeyHash:     hashedKey,
-		KeyPrefix:   keyPrefix,
-		Scopes:      scopes,
-		Environment: env,
-		IsActive:    true,
-		ExpiresAt:   req.ExpiresAt,
+		ID:        id,
+		UserID:    userID,
+		Name:      req.Name,
+		KeyHash:   hashedKey,
+		KeyPrefix: keyPrefix,
+		Scopes:    scopes,
+		IsActive:  true,
+		ExpiresAt: req.ExpiresAt,
 	}
 
 	if err := s.store.APIKeys().Create(ctx, apiKey); err != nil {
@@ -297,11 +290,11 @@ func (s *APIKeyService) ValidateAndGetUser(ctx context.Context, rawKey string) (
 	// allows verification. Standard approach: extract prefix, find candidate keys,
 	// then verify.
 
-	// Extract the prefix for lookup (ep_live_ or ep_dev_ plus first few chars)
-	if len(rawKey) < 16 {
+	// Extract the prefix for lookup (ep_ plus first few chars)
+	if len(rawKey) < 12 {
 		return nil, nil, fmt.Errorf("invalid API key format")
 	}
-	prefix := rawKey[:16] + "..."
+	prefix := rawKey[:12] + "..."
 
 	apiKey, err := s.store.APIKeys().GetByPrefix(ctx, prefix)
 	if err != nil {
@@ -339,9 +332,9 @@ func (s *APIKeyService) ValidateAndGetUser(ctx context.Context, rawKey string) (
 	return user, apiKey, nil
 }
 
-// generateRawKey generates a raw API key with the ep_{env}_ prefix.
-// Format: ep_live_<32 chars base62> or ep_dev_<32 chars base62>
-func (s *APIKeyService) generateRawKey(env domain.Environment) (string, error) {
+// generateRawKey generates a raw API key with the ep_ prefix.
+// Format: ep_<32 chars base62>
+func (s *APIKeyService) generateRawKey() (string, error) {
 	// Generate 32 random bytes
 	bytes := make([]byte, 32)
 	if _, err := rand.Read(bytes); err != nil {
@@ -357,7 +350,7 @@ func (s *APIKeyService) generateRawKey(env domain.Environment) (string, error) {
 		alphanumeric = alphanumeric[:32]
 	}
 
-	return fmt.Sprintf("ep_%s_%s", env, alphanumeric), nil
+	return fmt.Sprintf("ep_%s", alphanumeric), nil
 }
 
 // generateKeyID generates a unique alphanumeric key ID.
