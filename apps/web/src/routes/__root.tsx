@@ -8,7 +8,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { getQueryClient } from '@/lib/queryClient'
 
 import appCss from '../styles.css?url'
-import { ThemeProvider } from '@/providers/themeProvider'
+import { ThemeProvider, useTheme } from '@/providers/themeProvider'
 
 // Get Clerk publishable key from env
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
@@ -35,13 +35,25 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
+  return (
+    <ThemeProvider attribute="class" defaultTheme="dark">
+      <TooltipProvider delayDuration={300}>
+        <InnerRoot />
+      </TooltipProvider>
+    </ThemeProvider>
+  )
+}
+
+function InnerRoot() {
   const queryClient = getQueryClient()
+  const { theme, systemTheme } = useTheme()
+  const resolvedTheme = theme === 'system' ? systemTheme : theme
 
   return (
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY || ''}
       appearance={{
-        baseTheme: dark,
+        baseTheme: resolvedTheme === 'dark' ? dark : undefined,
         variables: {
           colorPrimary: 'hsl(var(--primary))',
           colorBackground: 'hsl(var(--background))',
@@ -49,7 +61,7 @@ function RootComponent() {
           colorTextSecondary: 'hsl(var(--muted-foreground))',
           colorInputBackground: 'hsl(var(--secondary))',
           colorInputText: 'hsl(var(--foreground))',
-          borderRadius: '0.375rem',
+          borderRadius: '0.5rem',
           fontFamily: 'Plus Jakarta Sans, sans-serif',
           fontSize: '13px',
         },
@@ -72,11 +84,7 @@ function RootComponent() {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider delayDuration={300}>
-          <ThemeProvider attribute="class" defaultTheme="dark">
-            <Outlet />
-          </ThemeProvider>
-        </TooltipProvider>
+        <Outlet />
         {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>
     </ClerkProvider>
