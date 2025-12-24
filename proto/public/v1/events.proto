@@ -25,6 +25,9 @@ enum EventType {
   EVENT_TYPE_EMAIL_COMPLAINED = 8;
   EVENT_TYPE_EMAIL_REJECTED = 9;
   EVENT_TYPE_EMAIL_DELAYED = 10;
+  // Heartbeat event for keeping long-lived connections alive.
+  // Clients should filter this out - it carries no payload.
+  EVENT_TYPE_HEARTBEAT = 99;
 }
 
 // Event is the envelope for all events.

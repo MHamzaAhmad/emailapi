@@ -88,7 +88,7 @@ func (r *Repository) Add(ctx context.Context, entry *Entry) error {
 	// Write to PostgreSQL (backup/durability)
 	params := db.InsertSuppressionParams{
 		EmailHash: entry.EmailHash,
-		UserID:    entry.UserID,
+		UserID:    pgtype.Text{String: entry.UserID, Valid: entry.UserID != ""},
 		Reason:    string(entry.Reason),
 		ExpiresAt: expiresAt,
 	}

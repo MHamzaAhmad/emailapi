@@ -36,8 +36,9 @@ import { createGrpcTransport } from '@connectrpc/connect-node'
 import type { Interceptor, Transport } from '@connectrpc/connect'
 
 // Generated service definitions (source of truth)
-import { EmailService } from './gen/v1/email_pb'
+import { EmailService, type StreamEventsRequest } from './gen/v1/email_pb'
 import { DomainService } from './gen/v1/domain_pb'
+import { EventType, type Event } from './gen/v1/events_pb'
 
 // Re-export all proto types for SDK consumers
 export * from './gen/v1/email_pb'
@@ -109,7 +110,7 @@ export interface EmailApiClient {
 
     /**
      * Stream events in real-time.
-     * Shortcut for `client.email.streamEvents()`.
+     * Heartbeat events are automatically filtered out.
      * 
      * @example
      * ```ts
@@ -118,7 +119,7 @@ export interface EmailApiClient {
      * }
      * ```
      */
-    onReceive: Client<typeof EmailService>['streamEvents']
+    onReceive: (request: StreamEventsRequest) => AsyncIterable<Event>
 }
 
 /**
@@ -168,11 +169,24 @@ export function createClient(options: ClientOptions): EmailApiClient {
     const email = createConnectClient(EmailService, transport)
     const domains = createConnectClient(DomainService, transport)
 
+    // Wrap streamEvents to filter out heartbeat events
+    async function* onReceive(request: StreamEventsRequest): AsyncIterable<Event> {
+        const stream = email.streamEvents(request)
+        for await (const event of stream) {
+            // Filter out heartbeat events - they're internal keepalive only
+            if (event.type === EventType.HEARTBEAT) {
+                continue
+            }
+            yield event
+        }
+    }
+
     return {
         email,
         domains,
         // Convenience shortcuts
         send: email.sendEmail.bind(email),
-        onReceive: email.streamEvents.bind(email),
+        onReceive,
     }
 }
+

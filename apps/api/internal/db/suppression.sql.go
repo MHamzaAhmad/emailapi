@@ -15,7 +15,7 @@ const countSuppressionsByUser = `-- name: CountSuppressionsByUser :one
 SELECT COUNT(*) FROM suppression_list WHERE user_id = $1
 `
 
-func (q *Queries) CountSuppressionsByUser(ctx context.Context, userID string) (int64, error) {
+func (q *Queries) CountSuppressionsByUser(ctx context.Context, userID pgtype.Text) (int64, error) {
 	row := q.db.QueryRow(ctx, countSuppressionsByUser, userID)
 	var count int64
 	err := row.Scan(&count)
@@ -76,7 +76,7 @@ ON CONFLICT (email_hash) DO UPDATE SET
 
 type InsertSuppressionParams struct {
 	EmailHash       string             `json:"email_hash"`
-	UserID          string             `json:"user_id"`
+	UserID          pgtype.Text        `json:"user_id"`
 	Reason          string             `json:"reason"`
 	BounceType      pgtype.Text        `json:"bounce_type"`
 	SourceMessageID pgtype.Text        `json:"source_message_id"`
@@ -103,7 +103,7 @@ WHERE expires_at IS NULL OR expires_at > NOW()
 
 type ListActiveSuppressionsRow struct {
 	EmailHash  string             `json:"email_hash"`
-	UserID     string             `json:"user_id"`
+	UserID     pgtype.Text        `json:"user_id"`
 	Reason     string             `json:"reason"`
 	BounceType pgtype.Text        `json:"bounce_type"`
 	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
@@ -146,9 +146,9 @@ LIMIT $2 OFFSET $3
 `
 
 type ListSuppressionsByUserParams struct {
-	UserID string `json:"user_id"`
-	Limit  int32  `json:"limit"`
-	Offset int32  `json:"offset"`
+	UserID pgtype.Text `json:"user_id"`
+	Limit  int32       `json:"limit"`
+	Offset int32       `json:"offset"`
 }
 
 type ListSuppressionsByUserRow struct {

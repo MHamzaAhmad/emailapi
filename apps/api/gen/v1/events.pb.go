@@ -37,6 +37,9 @@ const (
 	EventType_EVENT_TYPE_EMAIL_COMPLAINED EventType = 8
 	EventType_EVENT_TYPE_EMAIL_REJECTED   EventType = 9
 	EventType_EVENT_TYPE_EMAIL_DELAYED    EventType = 10
+	// Heartbeat event for keeping long-lived connections alive.
+	// Clients should filter this out - it carries no payload.
+	EventType_EVENT_TYPE_HEARTBEAT EventType = 99
 )
 
 // Enum value maps for EventType.
@@ -53,6 +56,7 @@ var (
 		8:  "EVENT_TYPE_EMAIL_COMPLAINED",
 		9:  "EVENT_TYPE_EMAIL_REJECTED",
 		10: "EVENT_TYPE_EMAIL_DELAYED",
+		99: "EVENT_TYPE_HEARTBEAT",
 	}
 	EventType_value = map[string]int32{
 		"EVENT_TYPE_UNSPECIFIED":      0,
@@ -66,6 +70,7 @@ var (
 		"EVENT_TYPE_EMAIL_COMPLAINED": 8,
 		"EVENT_TYPE_EMAIL_REJECTED":   9,
 		"EVENT_TYPE_EMAIL_DELAYED":    10,
+		"EVENT_TYPE_HEARTBEAT":        99,
 	}
 )
 
@@ -1129,7 +1134,7 @@ const file_v1_events_proto_rawDesc = "" +
 	"\x04body\x18\t \x01(\tR\x04body\x12\x12\n" +
 	"\x04html\x18\n" +
 	" \x01(\tR\x04html\x12&\n" +
-	"\x0fparent_email_id\x18\v \x01(\tR\rparentEmailId*\xd4\x02\n" +
+	"\x0fparent_email_id\x18\v \x01(\tR\rparentEmailId*\xee\x02\n" +
 	"\tEventType\x12\x1a\n" +
 	"\x16EVENT_TYPE_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15EVENT_TYPE_EMAIL_SENT\x10\x01\x12\x1e\n" +
@@ -1142,7 +1147,8 @@ const file_v1_events_proto_rawDesc = "" +
 	"\x1bEVENT_TYPE_EMAIL_COMPLAINED\x10\b\x12\x1d\n" +
 	"\x19EVENT_TYPE_EMAIL_REJECTED\x10\t\x12\x1c\n" +
 	"\x18EVENT_TYPE_EMAIL_DELAYED\x10\n" +
-	"B]\n" +
+	"\x12\x18\n" +
+	"\x14EVENT_TYPE_HEARTBEAT\x10cB]\n" +
 	"\x06com.v1B\vEventsProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (

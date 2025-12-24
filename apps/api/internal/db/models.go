@@ -40,7 +40,7 @@ type Domain struct {
 
 type SuppressionList struct {
 	EmailHash       string             `json:"email_hash"`
-	UserID          string             `json:"user_id"`
+	UserID          pgtype.Text        `json:"user_id"`
 	Reason          string             `json:"reason"`
 	BounceType      pgtype.Text        `json:"bounce_type"`
 	SourceMessageID pgtype.Text        `json:"source_message_id"`

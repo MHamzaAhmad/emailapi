@@ -201,26 +201,42 @@ func (s *SNSNotificationService) handleDelivery(ctx context.Context, notificatio
 }
 
 // handleBounce processes email bounces.
+// Hard bounces are added to GLOBAL suppression (all users blocked) even without routing.
 func (s *SNSNotificationService) handleBounce(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
+	isHardBounce := notification.Bounce.BounceType == "Permanent"
 
+	// Add bounced recipients to suppression list
+	// Hard bounces are GLOBAL (empty UserID) - no user should send to invalid addresses
+	// Soft bounces are per-user (need routing to get UserID)
+	if s.suppressRepo != nil && isHardBounce {
+		for _, recipient := range notification.Bounce.BouncedRecipients {
+			if err := s.suppressRepo.Add(ctx, &suppression.Entry{
+				EmailHash:       suppression.HashEmail(recipient.EmailAddress),
+				UserID:          "", // Empty = global suppression
+				Reason:          suppression.ReasonBounceHard,
+				BounceType:      notification.Bounce.BounceType,
+				SourceMessageID: messageID,
+			}); err != nil {
+				fmt.Printf("Warning: failed to add %s to global suppression list: %v\n", recipient.EmailAddress, err)
+			}
+		}
+	}
+
+	// Try to get routing for webhook/activity logging
 	routing, err := s.chRepo.LookupRouting(ctx, messageID)
 	if err != nil {
+		// No routing - suppression was added above for hard bounces, skip webhook/activity
 		return nil
 	}
 
-	// Add bounced recipients to suppression list
-	if s.suppressRepo != nil {
+	// Add soft bounces to per-user suppression (has TTL)
+	if s.suppressRepo != nil && !isHardBounce {
 		for _, recipient := range notification.Bounce.BouncedRecipients {
-			reason := suppression.ReasonBounceSoft
-			if notification.Bounce.BounceType == "Permanent" {
-				reason = suppression.ReasonBounceHard
-			}
-
 			if err := s.suppressRepo.Add(ctx, &suppression.Entry{
 				EmailHash:       suppression.HashEmail(recipient.EmailAddress),
 				UserID:          routing.UserID,
-				Reason:          reason,
+				Reason:          suppression.ReasonBounceSoft,
 				BounceType:      notification.Bounce.BounceType,
 				SourceMessageID: messageID,
 			}); err != nil {
@@ -267,26 +283,30 @@ func (s *SNSNotificationService) handleBounce(ctx context.Context, notification 
 }
 
 // handleComplaint processes spam complaints.
+// Complaints are added to GLOBAL suppression (all users blocked) even without routing.
 func (s *SNSNotificationService) handleComplaint(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	routing, err := s.chRepo.LookupRouting(ctx, messageID)
-	if err != nil {
-		return nil
-	}
-
-	// Add complained recipients to suppression list (permanent)
+	// Add complained recipients to GLOBAL suppression list (permanent)
+	// If someone marks your email as spam, no one on the platform should email them
 	if s.suppressRepo != nil {
 		for _, recipient := range notification.Complaint.ComplainedRecipients {
 			if err := s.suppressRepo.Add(ctx, &suppression.Entry{
 				EmailHash:       suppression.HashEmail(recipient.EmailAddress),
-				UserID:          routing.UserID,
+				UserID:          "", // Empty = global suppression
 				Reason:          suppression.ReasonComplaint,
 				SourceMessageID: messageID,
 			}); err != nil {
-				fmt.Printf("Warning: failed to add %s to suppression list: %v\n", recipient.EmailAddress, err)
+				fmt.Printf("Warning: failed to add %s to global suppression list: %v\n", recipient.EmailAddress, err)
 			}
 		}
+	}
+
+	// Try to get routing for webhook/activity logging
+	routing, err := s.chRepo.LookupRouting(ctx, messageID)
+	if err != nil {
+		// No routing - suppression was added above, skip webhook/activity
+		return nil
 	}
 
 	complainedRecipients := make([]string, len(notification.Complaint.ComplainedRecipients))

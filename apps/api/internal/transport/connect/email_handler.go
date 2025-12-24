@@ -3,8 +3,10 @@ package connect
 import (
 	"context"
 	"errors"
+	"time"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/gen/v1/v1connect"
@@ -45,6 +47,7 @@ func (h *EmailHandler) SendEmail(
 }
 
 // StreamEvents streams email events to the client.
+// Sends heartbeat events every 30 seconds to keep the connection alive.
 func (h *EmailHandler) StreamEvents(
 	ctx context.Context,
 	req *connect.Request[v1.StreamEventsRequest],
@@ -68,10 +71,29 @@ func (h *EmailHandler) StreamEvents(
 		return connect.NewError(connect.CodeInternal, err)
 	}
 
+	// Heartbeat ticker - sends keepalive every 25 seconds (before 31s WriteTimeout)
+	heartbeatTicker := time.NewTicker(25 * time.Second)
+	defer heartbeatTicker.Stop()
+
+	heartbeatCounter := int64(0)
+
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
+
+		case <-heartbeatTicker.C:
+			// Send heartbeat event to keep connection alive
+			heartbeatCounter++
+			heartbeat := &v1.Event{
+				Id:        "heartbeat-" + string(rune(heartbeatCounter)),
+				Type:      v1.EventType_EVENT_TYPE_HEARTBEAT,
+				Timestamp: timestamppb.Now(),
+			}
+			if err := stream.Send(heartbeat); err != nil {
+				return err
+			}
+
 		case event, ok := <-events:
 			if !ok {
 				return nil // Channel closed

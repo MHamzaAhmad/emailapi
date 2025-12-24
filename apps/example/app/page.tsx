@@ -1,12 +1,16 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { sendEmail, type SendEmailInput, type SendEmailResult } from './actions'
+import { useState, useTransition, useEffect, useRef, useCallback } from 'react'
+import { sendEmail, type SendEmailInput, type SendEmailResult, type EventData } from './actions'
 
 export default function Home() {
   const [isPending, startTransition] = useTransition()
   const [result, setResult] = useState<SendEmailResult | null>(null)
-  const [events, setEvents] = useState<Array<{ id: string; type: string; timestamp: string; data: string }>>([])
+  const [events, setEvents] = useState<EventData[]>([])
+  const [isStreaming, setIsStreaming] = useState(false)
+  const [streamError, setStreamError] = useState<string | null>(null)
+  const [cursor, setCursor] = useState('0')
+  const eventSourceRef = useRef<EventSource | null>(null)
 
   const [form, setForm] = useState<SendEmailInput>({
     from: '',
@@ -16,19 +20,79 @@ export default function Home() {
     async: false,
   })
 
+  const startStreaming = useCallback(async () => {
+    if (isStreaming) return
+
+    setIsStreaming(true)
+    setStreamError(null)
+
+    try {
+      // Use EventSource to consume the streaming API route
+      const eventSource = new EventSource(`/api/events?cursor=${cursor}`)
+
+      eventSource.onmessage = (event) => {
+        try {
+          const eventData = JSON.parse(event.data)
+
+          // Check for error
+          if (eventData.error) {
+            setStreamError(eventData.error)
+            eventSource.close()
+            setIsStreaming(false)
+            return
+          }
+
+          setEvents((prev) => {
+            // Avoid duplicates
+            if (prev.some(e => e.id === eventData.id)) return prev
+            return [{
+              id: eventData.id,
+              type: eventData.type,
+              timestamp: eventData.timestamp,
+              data: JSON.stringify(eventData.data, null, 2),
+              cursor: eventData.cursor,
+            }, ...prev].slice(0, 100) // Keep last 100 events
+          })
+          setCursor(eventData.cursor)
+        } catch (err) {
+          console.error('Failed to parse event:', err)
+        }
+      }
+
+      eventSource.onerror = (err) => {
+        console.error('EventSource error:', err)
+        eventSource.close()
+        setStreamError('Connection lost')
+        setIsStreaming(false)
+      }
+
+      // Store eventSource in a ref or state so we can close it
+      eventSourceRef.current = eventSource
+    } catch (error) {
+      setStreamError(error instanceof Error ? error.message : 'Stream error')
+      setIsStreaming(false)
+    }
+  }, [isStreaming, cursor])
+
+  const stopStreaming = useCallback(() => {
+    eventSourceRef.current?.close()
+    setIsStreaming(false)
+  }, [])
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(async () => {
       const res = await sendEmail(form)
       setResult(res)
       if (res.success && res.data) {
-        // Add to events list
+        // Add to events list locally (server stream will also pick it up)
         setEvents((prev) => [
           {
             id: res.data!.id,
             type: 'email.sent',
             timestamp: new Date().toISOString(),
             data: JSON.stringify(res.data, null, 2),
+            cursor: res.data!.id,
           },
           ...prev,
         ])
@@ -144,20 +208,53 @@ export default function Home() {
 
           {/* Events Panel */}
           <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
-            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
-              Events
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${isStreaming ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`}></span>
+                Events
+              </h2>
+              <div className="flex items-center gap-2">
+                {!isStreaming ? (
+                  <button
+                    onClick={startStreaming}
+                    className="px-3 py-1 text-sm bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+                  >
+                    Start Listening
+                  </button>
+                ) : (
+                  <button
+                    onClick={stopStreaming}
+                    className="px-3 py-1 text-sm bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+                  >
+                    Stop
+                  </button>
+                )}
+                <button
+                  onClick={() => setEvents([])}
+                  className="px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            {streamError && (
+              <div className="mb-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-sm text-red-400">
+                {streamError}
+              </div>
+            )}
 
             {events.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <p>No events yet.</p>
-                <p className="text-sm mt-1">Send an email to see events appear here.</p>
+                <p className="text-sm mt-1">
+                  {isStreaming ? 'Listening for events...' : 'Click "Start Listening" and send an email.'}
+                </p>
               </div>
             ) : (
               <div className="space-y-4 max-h-[600px] overflow-auto">
                 {events.map((event, i) => (
-                  <div key={i} className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+                  <div key={`${event.id}-${i}`} className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-mono text-purple-400">{event.type}</span>
                       <span className="text-xs text-gray-500">{new Date(event.timestamp).toLocaleTimeString()}</span>

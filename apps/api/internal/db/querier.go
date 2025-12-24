@@ -14,7 +14,7 @@ type Querier interface {
 	CountActiveApiKeysByUserID(ctx context.Context, userID string) (int64, error)
 	CountApiKeysByUserID(ctx context.Context, userID string) (int64, error)
 	CountDomainsByUserID(ctx context.Context, userID string) (int64, error)
-	CountSuppressionsByUser(ctx context.Context, userID string) (int64, error)
+	CountSuppressionsByUser(ctx context.Context, userID pgtype.Text) (int64, error)
 	CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error)
 	CreateDomain(ctx context.Context, arg CreateDomainParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)

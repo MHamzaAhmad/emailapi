@@ -225,7 +225,7 @@ func main() {
 		interceptor.NewWebhookInterceptor(interceptor.WebhookConfig{
 			InternalWebhookSecret: cfg.InternalWebhookSecret,
 		}),
-		interceptor.NewAuthInterceptor(interceptor.AuthConfig{
+		interceptor.NewCombinedAuthInterceptor(interceptor.AuthConfig{
 			APIKeyService:  svc.APIKey,
 			UserLookup:     svc.User,
 			ClerkSecretKey: cfg.ClerkSecretKey,
@@ -291,11 +291,12 @@ func main() {
 	corsHandler := corsMiddleware(rawBodyHandler)
 
 	// Create HTTP server with h2c (HTTP/2 Cleartext) for gRPC support
+	// IdleTimeout closes truly idle connections. WriteTimeout not used - it limits total response time.
 	srv := &http.Server{
-		Addr:         ":" + cfg.Port,
-		Handler:      h2c.NewHandler(corsHandler, &http2.Server{}),
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		Addr:        ":" + cfg.Port,
+		Handler:     h2c.NewHandler(corsHandler, &http2.Server{}),
+		ReadTimeout: 15 * time.Second,
+		IdleTimeout: 120 * time.Second, // Close connections idle for 2 minutes
 	}
 
 	// Start server in goroutine

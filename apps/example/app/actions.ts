@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, type SendEmailRequest, type SendEmailResponse, EventType, type Event } from '@emailapi/sdk'
+import { createClient } from '@emailapi/sdk'
 
 // Create SDK client (uses environment variable for API key)
 function getClient() {
@@ -32,6 +32,14 @@ export type SendEmailResult = {
         statusMessage?: string
     }
     error?: string
+}
+
+export type EventData = {
+    id: string
+    type: string
+    timestamp: string
+    data: string
+    cursor: string
 }
 
 /**
