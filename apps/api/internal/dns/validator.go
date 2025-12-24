@@ -10,16 +10,35 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
+	"github.com/rs/zerolog/log"
 )
 
 const (
-	// DefaultTimeout is the default timeout for DNS queries.
-	DefaultTimeout = 5 * time.Second
+	// DefaultTimeout is the default timeout for a single DNS query.
+	DefaultTimeout = 3 * time.Second
+
+	// DefaultRetries is the number of retry attempts per resolver.
+	DefaultRetries = 2
+
+	// DefaultRetryDelay is the base delay for exponential backoff.
+	DefaultRetryDelay = 100 * time.Millisecond
+
+	// ConsensusThreshold is the minimum fraction of resolvers that must agree.
+	// 0.5 means majority (at least half) must agree.
+	ConsensusThreshold = 0.5
 )
 
 var (
-	// DefaultResolvers are the DNS servers to query.
-	DefaultResolvers = []string{"8.8.8.8:53", "1.1.1.1:53"}
+	// DefaultResolvers are the DNS servers to query for consensus.
+	// Using multiple providers ensures we don't rely on a single source.
+	DefaultResolvers = []string{
+		"8.8.8.8:53",        // Google Primary
+		"8.8.4.4:53",        // Google Secondary
+		"1.1.1.1:53",        // Cloudflare Primary
+		"1.0.0.1:53",        // Cloudflare Secondary
+		"9.9.9.9:53",        // Quad9
+		"208.67.222.222:53", // OpenDNS
+	}
 )
 
 // RecordStatus represents the status of a DNS record check.
@@ -54,23 +73,48 @@ type ValidationResult struct {
 	CheckedAt time.Time
 }
 
-// Validator handles DNS record validation.
-type Validator struct {
-	resolvers []string
-	timeout   time.Duration
-	client    *dns.Client
+// ValidatorConfig holds configuration for the DNS validator.
+type ValidatorConfig struct {
+	Resolvers          []string
+	Timeout            time.Duration
+	Retries            int
+	RetryDelay         time.Duration
+	ConsensusThreshold float64
 }
 
-// NewValidator creates a new DNS validator.
-func NewValidator() *Validator {
-	return &Validator{
-		resolvers: DefaultResolvers,
-		timeout:   DefaultTimeout,
-		client: &dns.Client{
-			Timeout: DefaultTimeout,
-			Net:     "udp",
-		},
+// DefaultConfig returns the default validator configuration.
+func DefaultConfig() ValidatorConfig {
+	return ValidatorConfig{
+		Resolvers:          DefaultResolvers,
+		Timeout:            DefaultTimeout,
+		Retries:            DefaultRetries,
+		RetryDelay:         DefaultRetryDelay,
+		ConsensusThreshold: ConsensusThreshold,
 	}
+}
+
+// Validator handles DNS record validation with consensus-based lookups.
+type Validator struct {
+	config ValidatorConfig
+}
+
+// NewValidator creates a new DNS validator with default configuration.
+func NewValidator() *Validator {
+	return NewValidatorWithConfig(DefaultConfig())
+}
+
+// NewValidatorWithConfig creates a new DNS validator with custom configuration.
+func NewValidatorWithConfig(config ValidatorConfig) *Validator {
+	if len(config.Resolvers) == 0 {
+		config.Resolvers = DefaultResolvers
+	}
+	if config.Timeout == 0 {
+		config.Timeout = DefaultTimeout
+	}
+	if config.ConsensusThreshold == 0 {
+		config.ConsensusThreshold = ConsensusThreshold
+	}
+	return &Validator{config: config}
 }
 
 // ValidateRecords checks multiple DNS records in parallel.
@@ -85,7 +129,7 @@ func (v *Validator) ValidateRecords(ctx context.Context, expected []ExpectedReco
 		wg.Add(1)
 		go func(idx int, exp ExpectedRecord) {
 			defer wg.Done()
-			result.Records[idx] = v.checkRecord(ctx, exp)
+			result.Records[idx] = v.checkRecordWithConsensus(ctx, exp)
 		}(i, rec)
 	}
 	wg.Wait()
@@ -93,67 +137,178 @@ func (v *Validator) ValidateRecords(ctx context.Context, expected []ExpectedReco
 	return result
 }
 
-// checkRecord verifies a single DNS record.
-func (v *Validator) checkRecord(ctx context.Context, expected ExpectedRecord) RecordResult {
+// resolverResult holds the result from a single resolver query.
+type resolverResult struct {
+	resolver string
+	value    string
+	found    bool
+	err      error
+}
+
+// checkRecordWithConsensus verifies a DNS record using multiple resolvers.
+// It requires a majority of resolvers to agree for a "found" status.
+func (v *Validator) checkRecordWithConsensus(ctx context.Context, expected ExpectedRecord) RecordResult {
 	result := RecordResult{
 		ExpectedRecord: expected,
 		Status:         RecordStatusMissing,
 	}
 
-	var discoveredValue string
-	var err error
+	// Query all resolvers in parallel
+	results := v.queryAllResolvers(ctx, expected)
 
-	switch strings.ToUpper(expected.Type) {
-	case "CNAME":
-		discoveredValue, err = v.lookupCNAME(ctx, expected.Name)
-	case "TXT":
-		var values []string
-		values, err = v.lookupTXT(ctx, expected.Name)
-		if len(values) > 0 {
-			discoveredValue = strings.Join(values, "; ")
+	// Analyze results for consensus
+	foundCount := 0
+	mismatchCount := 0
+	missingCount := 0
+	var discoveredValues []string
+
+	for _, r := range results {
+		if r.err != nil {
+			// Treat errors as missing (resolver failure)
+			missingCount++
+			continue
 		}
-	case "MX":
-		var mxRecords []MXRecord
-		mxRecords, err = v.lookupMX(ctx, expected.Name)
-		if len(mxRecords) > 0 {
-			// Format: "10 mail.example.com"
-			parts := make([]string, len(mxRecords))
-			for i, mx := range mxRecords {
-				parts[i] = fmt.Sprintf("%d %s", mx.Priority, mx.Host)
-			}
-			discoveredValue = strings.Join(parts, "; ")
+
+		if !r.found || r.value == "" {
+			missingCount++
+			continue
 		}
-	default:
-		result.Error = fmt.Sprintf("unsupported record type: %s", expected.Type)
-		return result
-	}
 
-	result.DiscoveredValue = discoveredValue
-
-	if err != nil {
-		// Check if it's a NXDOMAIN (record doesn't exist)
-		if strings.Contains(err.Error(), "NXDOMAIN") || strings.Contains(err.Error(), "no such host") {
-			result.Status = RecordStatusMissing
+		// Record was found, check if value matches
+		if v.valuesMatch(expected.Type, expected.Value, r.value) {
+			foundCount++
+			discoveredValues = append(discoveredValues, r.value)
 		} else {
-			result.Error = err.Error()
-			result.Status = RecordStatusMissing
+			mismatchCount++
+			discoveredValues = append(discoveredValues, r.value)
 		}
-		return result
 	}
 
-	if discoveredValue == "" {
+	// Use the most common discovered value
+	if len(discoveredValues) > 0 {
+		result.DiscoveredValue = getMostCommon(discoveredValues)
+	}
+
+	// Calculate consensus
+	totalResponses := foundCount + mismatchCount + missingCount
+	if totalResponses == 0 {
 		result.Status = RecordStatusMissing
+		result.Error = "all DNS resolvers failed"
 		return result
 	}
 
-	// Check if value matches
-	if v.valuesMatch(expected.Type, expected.Value, discoveredValue) {
+	threshold := int(float64(len(v.config.Resolvers)) * v.config.ConsensusThreshold)
+	if threshold < 1 {
+		threshold = 1
+	}
+
+	log.Debug().
+		Str("record", expected.Name).
+		Str("type", expected.Type).
+		Int("found", foundCount).
+		Int("mismatch", mismatchCount).
+		Int("missing", missingCount).
+		Int("threshold", threshold).
+		Msg("DNS consensus check")
+
+	// Determine status based on consensus
+	if foundCount >= threshold {
 		result.Status = RecordStatusFound
-	} else {
+	} else if mismatchCount >= threshold {
 		result.Status = RecordStatusMismatch
+	} else if missingCount >= threshold {
+		result.Status = RecordStatusMissing
+	} else {
+		// No clear consensus - be conservative and report missing
+		// This handles cases where results are split
+		result.Status = RecordStatusMissing
+		result.Error = "no consensus among DNS resolvers"
 	}
 
 	return result
+}
+
+// queryAllResolvers queries all configured resolvers in parallel with retries.
+func (v *Validator) queryAllResolvers(ctx context.Context, expected ExpectedRecord) []resolverResult {
+	results := make([]resolverResult, len(v.config.Resolvers))
+	var wg sync.WaitGroup
+
+	for i, resolver := range v.config.Resolvers {
+		wg.Add(1)
+		go func(idx int, resolver string) {
+			defer wg.Done()
+			results[idx] = v.queryWithRetry(ctx, resolver, expected)
+		}(i, resolver)
+	}
+
+	wg.Wait()
+	return results
+}
+
+// queryWithRetry queries a single resolver with exponential backoff retry.
+func (v *Validator) queryWithRetry(ctx context.Context, resolver string, expected ExpectedRecord) resolverResult {
+	result := resolverResult{resolver: resolver}
+
+	for attempt := 0; attempt <= v.config.Retries; attempt++ {
+		if attempt > 0 {
+			// Exponential backoff: 100ms, 200ms, 400ms, ...
+			delay := v.config.RetryDelay * time.Duration(1<<(attempt-1))
+			select {
+			case <-ctx.Done():
+				result.err = ctx.Err()
+				return result
+			case <-time.After(delay):
+			}
+		}
+
+		value, found, err := v.querySingleResolver(ctx, resolver, expected)
+		if err == nil {
+			result.value = value
+			result.found = found
+			return result
+		}
+
+		result.err = err
+		// Continue to retry on error
+	}
+
+	return result
+}
+
+// querySingleResolver performs a single DNS query to a specific resolver.
+func (v *Validator) querySingleResolver(ctx context.Context, resolver string, expected ExpectedRecord) (string, bool, error) {
+	// Create a context with timeout for this specific query
+	queryCtx, cancel := context.WithTimeout(ctx, v.config.Timeout)
+	defer cancel()
+
+	switch strings.ToUpper(expected.Type) {
+	case "CNAME":
+		return v.lookupCNAME(queryCtx, resolver, expected.Name)
+	case "TXT":
+		values, err := v.lookupTXT(queryCtx, resolver, expected.Name)
+		if err != nil {
+			return "", false, err
+		}
+		if len(values) == 0 {
+			return "", false, nil
+		}
+		return strings.Join(values, "; "), true, nil
+	case "MX":
+		mxRecords, err := v.lookupMX(queryCtx, resolver, expected.Name)
+		if err != nil {
+			return "", false, err
+		}
+		if len(mxRecords) == 0 {
+			return "", false, nil
+		}
+		parts := make([]string, len(mxRecords))
+		for i, mx := range mxRecords {
+			parts[i] = fmt.Sprintf("%d %s", mx.Priority, mx.Host)
+		}
+		return strings.Join(parts, "; "), true, nil
+	default:
+		return "", false, fmt.Errorf("unsupported record type: %s", expected.Type)
+	}
 }
 
 // valuesMatch compares expected and discovered values with type-specific normalization.
@@ -176,33 +331,33 @@ func (v *Validator) valuesMatch(recordType, expected, discovered string) bool {
 	}
 }
 
-// lookupCNAME looks up a CNAME record.
-func (v *Validator) lookupCNAME(ctx context.Context, name string) (string, error) {
+// lookupCNAME looks up a CNAME record from a specific resolver.
+func (v *Validator) lookupCNAME(ctx context.Context, resolver, name string) (string, bool, error) {
 	name = dns.Fqdn(name)
 	msg := new(dns.Msg)
 	msg.SetQuestion(name, dns.TypeCNAME)
 
-	resp, err := v.query(ctx, msg)
+	resp, err := v.query(ctx, resolver, msg)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	for _, ans := range resp.Answer {
 		if cname, ok := ans.(*dns.CNAME); ok {
-			return strings.TrimSuffix(cname.Target, "."), nil
+			return strings.TrimSuffix(cname.Target, "."), true, nil
 		}
 	}
 
-	return "", fmt.Errorf("no CNAME record found for %s", name)
+	return "", false, nil
 }
 
-// lookupTXT looks up TXT records.
-func (v *Validator) lookupTXT(ctx context.Context, name string) ([]string, error) {
+// lookupTXT looks up TXT records from a specific resolver.
+func (v *Validator) lookupTXT(ctx context.Context, resolver, name string) ([]string, error) {
 	name = dns.Fqdn(name)
 	msg := new(dns.Msg)
 	msg.SetQuestion(name, dns.TypeTXT)
 
-	resp, err := v.query(ctx, msg)
+	resp, err := v.query(ctx, resolver, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -214,10 +369,6 @@ func (v *Validator) lookupTXT(ctx context.Context, name string) ([]string, error
 		}
 	}
 
-	if len(values) == 0 {
-		return nil, fmt.Errorf("no TXT record found for %s", name)
-	}
-
 	return values, nil
 }
 
@@ -227,13 +378,13 @@ type MXRecord struct {
 	Priority int
 }
 
-// lookupMX looks up MX records.
-func (v *Validator) lookupMX(ctx context.Context, name string) ([]MXRecord, error) {
+// lookupMX looks up MX records from a specific resolver.
+func (v *Validator) lookupMX(ctx context.Context, resolver, name string) ([]MXRecord, error) {
 	name = dns.Fqdn(name)
 	msg := new(dns.Msg)
 	msg.SetQuestion(name, dns.TypeMX)
 
-	resp, err := v.query(ctx, msg)
+	resp, err := v.query(ctx, resolver, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -248,50 +399,68 @@ func (v *Validator) lookupMX(ctx context.Context, name string) ([]MXRecord, erro
 		}
 	}
 
-	if len(records) == 0 {
-		return nil, fmt.Errorf("no MX record found for %s", name)
-	}
-
 	return records, nil
 }
 
-// query sends a DNS query to resolvers and returns the first successful response.
-func (v *Validator) query(ctx context.Context, msg *dns.Msg) (*dns.Msg, error) {
-	var lastErr error
+// query sends a DNS query to a specific resolver.
+func (v *Validator) query(ctx context.Context, resolver string, msg *dns.Msg) (*dns.Msg, error) {
+	// Create UDP connection with timeout
+	dialer := net.Dialer{Timeout: v.config.Timeout}
+	conn, err := dialer.DialContext(ctx, "udp", resolver)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to %s: %w", resolver, err)
+	}
+	defer conn.Close()
 
-	for _, resolver := range v.resolvers {
-		// Create a new connection for each resolver
-		conn, err := net.DialTimeout("udp", resolver, v.timeout)
-		if err != nil {
-			lastErr = err
-			continue
+	// Set deadline based on context
+	if deadline, ok := ctx.Deadline(); ok {
+		if err := conn.SetDeadline(deadline); err != nil {
+			return nil, fmt.Errorf("failed to set deadline: %w", err)
 		}
-		defer conn.Close()
+	}
 
-		dnsConn := &dns.Conn{Conn: conn}
-		defer dnsConn.Close()
+	dnsConn := &dns.Conn{Conn: conn}
 
-		if err := dnsConn.WriteMsg(msg); err != nil {
-			lastErr = err
-			continue
-		}
+	if err := dnsConn.WriteMsg(msg); err != nil {
+		return nil, fmt.Errorf("failed to write DNS query: %w", err)
+	}
 
-		resp, err := dnsConn.ReadMsg()
-		if err != nil {
-			lastErr = err
-			continue
-		}
+	resp, err := dnsConn.ReadMsg()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read DNS response: %w", err)
+	}
 
-		if resp.Rcode == dns.RcodeNameError {
-			return nil, fmt.Errorf("NXDOMAIN: domain does not exist")
-		}
-
+	if resp.Rcode == dns.RcodeNameError {
+		// NXDOMAIN - domain doesn't exist
 		return resp, nil
 	}
 
-	if lastErr != nil {
-		return nil, fmt.Errorf("all DNS resolvers failed: %w", lastErr)
+	if resp.Rcode != dns.RcodeSuccess {
+		return nil, fmt.Errorf("DNS query failed with rcode: %d", resp.Rcode)
 	}
 
-	return nil, fmt.Errorf("no DNS resolvers configured")
+	return resp, nil
+}
+
+// getMostCommon returns the most common string from a slice.
+func getMostCommon(values []string) string {
+	if len(values) == 0 {
+		return ""
+	}
+
+	counts := make(map[string]int)
+	for _, v := range values {
+		counts[v]++
+	}
+
+	maxCount := 0
+	mostCommon := values[0]
+	for v, count := range counts {
+		if count > maxCount {
+			maxCount = count
+			mostCommon = v
+		}
+	}
+
+	return mostCommon
 }

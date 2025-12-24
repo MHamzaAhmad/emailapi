@@ -9,20 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WebhooksRouteImport } from './routes/webhooks'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as ApiKeysRouteImport } from './routes/api-keys'
+import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DomainsIndexRouteImport } from './routes/domains/index'
-import { Route as DomainsDomainIdRouteImport } from './routes/domains/$domainId'
+import { Route as AuthedWebhooksRouteImport } from './routes/_authed/webhooks'
+import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedApiKeysRouteImport } from './routes/_authed/api-keys'
+import { Route as AuthedDomainsIndexRouteImport } from './routes/_authed/domains/index'
+import { Route as AuthedDomainsDomainIdRouteImport } from './routes/_authed/domains/$domainId'
 
-const WebhooksRoute = WebhooksRouteImport.update({
-  id: '/webhooks',
-  path: '/webhooks',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
   path: '/sign-up',
@@ -33,14 +29,8 @@ const SignInRoute = SignInRouteImport.update({
   path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiKeysRoute = ApiKeysRouteImport.update({
-  id: '/api-keys',
-  path: '/api-keys',
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -48,101 +38,107 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DomainsIndexRoute = DomainsIndexRouteImport.update({
+const AuthedWebhooksRoute = AuthedWebhooksRouteImport.update({
+  id: '/webhooks',
+  path: '/webhooks',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedApiKeysRoute = AuthedApiKeysRouteImport.update({
+  id: '/api-keys',
+  path: '/api-keys',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDomainsIndexRoute = AuthedDomainsIndexRouteImport.update({
   id: '/domains/',
   path: '/domains/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthedRoute,
 } as any)
-const DomainsDomainIdRoute = DomainsDomainIdRouteImport.update({
+const AuthedDomainsDomainIdRoute = AuthedDomainsDomainIdRouteImport.update({
   id: '/domains/$domainId',
   path: '/domains/$domainId',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/api-keys': typeof ApiKeysRoute
-  '/dashboard': typeof DashboardRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/webhooks': typeof WebhooksRoute
-  '/domains/$domainId': typeof DomainsDomainIdRoute
-  '/domains': typeof DomainsIndexRoute
+  '/api-keys': typeof AuthedApiKeysRoute
+  '/dashboard': typeof AuthedDashboardRoute
+  '/webhooks': typeof AuthedWebhooksRoute
+  '/domains/$domainId': typeof AuthedDomainsDomainIdRoute
+  '/domains': typeof AuthedDomainsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api-keys': typeof ApiKeysRoute
-  '/dashboard': typeof DashboardRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/webhooks': typeof WebhooksRoute
-  '/domains/$domainId': typeof DomainsDomainIdRoute
-  '/domains': typeof DomainsIndexRoute
+  '/api-keys': typeof AuthedApiKeysRoute
+  '/dashboard': typeof AuthedDashboardRoute
+  '/webhooks': typeof AuthedWebhooksRoute
+  '/domains/$domainId': typeof AuthedDomainsDomainIdRoute
+  '/domains': typeof AuthedDomainsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/api-keys': typeof ApiKeysRoute
-  '/dashboard': typeof DashboardRoute
+  '/_authed': typeof AuthedRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
-  '/webhooks': typeof WebhooksRoute
-  '/domains/$domainId': typeof DomainsDomainIdRoute
-  '/domains/': typeof DomainsIndexRoute
+  '/_authed/api-keys': typeof AuthedApiKeysRoute
+  '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/_authed/webhooks': typeof AuthedWebhooksRoute
+  '/_authed/domains/$domainId': typeof AuthedDomainsDomainIdRoute
+  '/_authed/domains/': typeof AuthedDomainsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/api-keys'
-    | '/dashboard'
     | '/sign-in'
     | '/sign-up'
+    | '/api-keys'
+    | '/dashboard'
     | '/webhooks'
     | '/domains/$domainId'
     | '/domains'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/api-keys'
-    | '/dashboard'
     | '/sign-in'
     | '/sign-up'
+    | '/api-keys'
+    | '/dashboard'
     | '/webhooks'
     | '/domains/$domainId'
     | '/domains'
   id:
     | '__root__'
     | '/'
-    | '/api-keys'
-    | '/dashboard'
+    | '/_authed'
     | '/sign-in'
     | '/sign-up'
-    | '/webhooks'
-    | '/domains/$domainId'
-    | '/domains/'
+    | '/_authed/api-keys'
+    | '/_authed/dashboard'
+    | '/_authed/webhooks'
+    | '/_authed/domains/$domainId'
+    | '/_authed/domains/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ApiKeysRoute: typeof ApiKeysRoute
-  DashboardRoute: typeof DashboardRoute
+  AuthedRoute: typeof AuthedRouteWithChildren
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
-  WebhooksRoute: typeof WebhooksRoute
-  DomainsDomainIdRoute: typeof DomainsDomainIdRoute
-  DomainsIndexRoute: typeof DomainsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/webhooks': {
-      id: '/webhooks'
-      path: '/webhooks'
-      fullPath: '/webhooks'
-      preLoaderRoute: typeof WebhooksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/sign-up': {
       id: '/sign-up'
       path: '/sign-up'
@@ -157,18 +153,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api-keys': {
-      id: '/api-keys'
-      path: '/api-keys'
-      fullPath: '/api-keys'
-      preLoaderRoute: typeof ApiKeysRouteImport
+    '/_authed': {
+      id: '/_authed'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -178,32 +167,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/domains/': {
-      id: '/domains/'
+    '/_authed/webhooks': {
+      id: '/_authed/webhooks'
+      path: '/webhooks'
+      fullPath: '/webhooks'
+      preLoaderRoute: typeof AuthedWebhooksRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/dashboard': {
+      id: '/_authed/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedDashboardRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/api-keys': {
+      id: '/_authed/api-keys'
+      path: '/api-keys'
+      fullPath: '/api-keys'
+      preLoaderRoute: typeof AuthedApiKeysRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/domains/': {
+      id: '/_authed/domains/'
       path: '/domains'
       fullPath: '/domains'
-      preLoaderRoute: typeof DomainsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthedDomainsIndexRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/domains/$domainId': {
-      id: '/domains/$domainId'
+    '/_authed/domains/$domainId': {
+      id: '/_authed/domains/$domainId'
       path: '/domains/$domainId'
       fullPath: '/domains/$domainId'
-      preLoaderRoute: typeof DomainsDomainIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthedDomainsDomainIdRouteImport
+      parentRoute: typeof AuthedRoute
     }
   }
 }
 
+interface AuthedRouteChildren {
+  AuthedApiKeysRoute: typeof AuthedApiKeysRoute
+  AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedWebhooksRoute: typeof AuthedWebhooksRoute
+  AuthedDomainsDomainIdRoute: typeof AuthedDomainsDomainIdRoute
+  AuthedDomainsIndexRoute: typeof AuthedDomainsIndexRoute
+}
+
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedApiKeysRoute: AuthedApiKeysRoute,
+  AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedWebhooksRoute: AuthedWebhooksRoute,
+  AuthedDomainsDomainIdRoute: AuthedDomainsDomainIdRoute,
+  AuthedDomainsIndexRoute: AuthedDomainsIndexRoute,
+}
+
+const AuthedRouteWithChildren =
+  AuthedRoute._addFileChildren(AuthedRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ApiKeysRoute: ApiKeysRoute,
-  DashboardRoute: DashboardRoute,
+  AuthedRoute: AuthedRouteWithChildren,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
-  WebhooksRoute: WebhooksRoute,
-  DomainsDomainIdRoute: DomainsDomainIdRoute,
-  DomainsIndexRoute: DomainsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

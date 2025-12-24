@@ -6,8 +6,6 @@ import {
     AlertCircleIcon,
     Tick02Icon,
 } from '@hugeicons/core-free-icons'
-import { Shell } from '@/components/shell'
-import { AuthGuard } from '@/components/auth-guard'
 import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -29,17 +27,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCreateAPIKey } from '@/hooks'
 
-export const Route = createFileRoute('/api-keys')({
-    component: APIKeysPage,
+export const Route = createFileRoute('/_authed/api-keys')({
+    component: APIKeysContent,
 })
-
-function APIKeysPage() {
-    return (
-        <AuthGuard>
-            <APIKeysContent />
-        </AuthGuard>
-    )
-}
 
 function CopyButton({ text }: { text: string }) {
     const [copied, setCopied] = useState(false)
@@ -236,7 +226,7 @@ function APIKeysContent() {
     )
 
     return (
-        <Shell>
+        <>
             <div className="flex flex-col gap-6 mb-8 mt-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div /> {/* Spacer for alignment */}
@@ -349,6 +339,6 @@ function APIKeysContent() {
             <div className="mt-4 text-xs text-muted-foreground/60 text-right">
                 Security: Never share your API keys or commit them to version control.
             </div>
-        </Shell>
+        </>
     )
 }

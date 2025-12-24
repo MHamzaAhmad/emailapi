@@ -11,8 +11,6 @@ import {
 } from '@hugeicons/core-free-icons'
 import { useState, useMemo } from 'react'
 import { ColumnDef } from '@tanstack/react-table'
-import { Shell } from '@/components/shell'
-import { AuthGuard } from '@/components/auth-guard'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -21,17 +19,9 @@ import { useDomain, useVerifyDomain } from '@/hooks'
 import { RecordStatus, RecordType } from '@/generated/v1/domain_pb'
 import type { DnsRecord } from '@/generated/v1/domain_pb'
 
-export const Route = createFileRoute('/domains/$domainId')({
-    component: DomainDetailPage,
+export const Route = createFileRoute('/_authed/domains/$domainId')({
+    component: DomainDetailContent,
 })
-
-function DomainDetailPage() {
-    return (
-        <AuthGuard>
-            <DomainDetailContent />
-        </AuthGuard>
-    )
-}
 
 function getRecordStatusBadge(status: RecordStatus) {
     const className = "px-2 py-0.5 uppercase tracking-wider font-medium text-[10px]" // Keeping compact for badges inside table
@@ -114,14 +104,17 @@ function DomainDetailContent() {
     const columns = useMemo<ColumnDef<DnsRecord>[]>(
         () => [
             {
-                accessorKey: 'recordType',
-                header: 'Type',
+                accessorKey: 'type',
+                header: 'Record',
                 cell: ({ row }) => (
                     <div className="font-medium text-sm whitespace-nowrap">
-                        {getRecordTypeName(row.original.recordType)}
+                        <span className="font-mono">{row.original.type}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">
+                            ({getRecordTypeName(row.original.recordType)})
+                        </span>
                     </div>
                 ),
-                size: 100,
+                size: 140,
             },
             {
                 accessorKey: 'name',
@@ -183,18 +176,18 @@ function DomainDetailContent() {
 
     if (isLoading) {
         return (
-            <Shell>
+            <>
                 <div className="flex items-center justify-center py-12">
                     <HugeiconsIcon icon={Loading01Icon} size={16} strokeWidth={1.5} className="animate-spin" />
                     <span className="ml-2 text-xs text-muted-foreground">Loading...</span>
                 </div>
-            </Shell>
+            </>
         )
     }
 
     if (!domain) {
         return (
-            <Shell>
+            <>
                 <div className="mb-4">
                     <Link to="/domains" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
                         <HugeiconsIcon icon={ArrowLeft02Icon} size={14} strokeWidth={1.5} />
@@ -207,14 +200,14 @@ function DomainDetailContent() {
                         <span className="text-xs">Domain not found</span>
                     </CardContent>
                 </Card>
-            </Shell>
+            </>
         )
     }
 
     const { summary } = domain
 
     return (
-        <Shell>
+        <>
             {/* Header Actions */}
             <div className="flex flex-col gap-6 mb-8 mt-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -293,6 +286,6 @@ function DomainDetailContent() {
                     />
                 </div>
             </div>
-        </Shell>
+        </>
     )
 }

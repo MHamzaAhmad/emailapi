@@ -7,8 +7,6 @@ import {
 } from '@hugeicons/core-free-icons'
 import { DateRange } from "react-day-picker"
 import { DatePickerWithRange } from "@/components/ui/date-range-picker"
-import { Shell } from '@/components/shell'
-import { AuthGuard } from '@/components/auth-guard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/data-table'
@@ -31,19 +29,9 @@ import { ActivityLog } from '@/types'
 import { formatDate } from '@/lib/utils'
 import { Timestamp } from '@bufbuild/protobuf/wkt'
 
-export const Route = createFileRoute('/dashboard')(
-    {
-        component: DashboardPage,
-    }
-)
-
-function DashboardPage() {
-    return (
-        <AuthGuard>
-            <DashboardContent />
-        </AuthGuard>
-    )
-}
+export const Route = createFileRoute('/_authed/dashboard')({
+    component: DashboardContent,
+})
 
 const columns: ColumnDef<ActivityLog>[] = [
     {
@@ -205,7 +193,7 @@ function DashboardContent() {
     }
 
     return (
-        <Shell>
+        <>
             {/* Header / Filters Section */}
             <div className="flex flex-col gap-6 mb-8 mt-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -370,6 +358,6 @@ function DashboardContent() {
             <div className="mt-4 text-xs text-muted-foreground/60 text-right">
                 Displaying most recent events from real-time stream
             </div>
-        </Shell>
+        </>
     )
 }

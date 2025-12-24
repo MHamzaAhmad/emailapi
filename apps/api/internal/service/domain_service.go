@@ -603,13 +603,13 @@ func (s *DomainService) buildDomainRecords(d *domain.SendingDomain) *domain.Doma
 }
 
 // buildDkimRecords creates DKIM CNAME records from tokens.
+// Records always start with pending status - DNS validation will update the actual status.
 func (s *DomainService) buildDkimRecords(d *domain.SendingDomain) []domain.DnsRecord {
 	if len(d.DkimTokens) == 0 {
 		return nil
 	}
 
 	records := make([]domain.DnsRecord, len(d.DkimTokens))
-	status := toRecordStatusFromDomainStatus(d.DkimStatus)
 
 	for i, token := range d.DkimTokens {
 		fullName := fmt.Sprintf("%s._domainkey.%s", token, d.Domain)
@@ -618,7 +618,7 @@ func (s *DomainService) buildDkimRecords(d *domain.SendingDomain) []domain.DnsRe
 			Name:         fullName,
 			Value:        fmt.Sprintf("%s.dkim.amazonses.com", token),
 			RecordType:   domain.RecordTypeDKIM,
-			Status:       status,
+			Status:       domain.RecordStatusPending, // Always start pending, DNS validation will update
 			NameShort:    fmt.Sprintf("%s._domainkey", token),
 			Instructions: "Add this CNAME record for DKIM email signing.",
 		}
@@ -670,12 +670,11 @@ func (s *DomainService) buildMxInboundRecords(d *domain.SendingDomain) []domain.
 }
 
 // buildMailFromRecords creates MX and SPF records for custom MAIL FROM.
+// Records always start with pending status - DNS validation will update the actual status.
 func (s *DomainService) buildMailFromRecords(d *domain.SendingDomain) []domain.DnsRecord {
 	if d.MailFromDomain == "" {
 		return nil
 	}
-
-	status := toRecordStatusFromDomainStatus(d.MailFromStatus)
 
 	// Extract short name (e.g., "mail" from "mail.example.com")
 	shortName := strings.TrimSuffix(d.MailFromDomain, "."+d.Domain)
@@ -687,7 +686,7 @@ func (s *DomainService) buildMailFromRecords(d *domain.SendingDomain) []domain.D
 			Value:        fmt.Sprintf("feedback-smtp.%s.amazonses.com", s.region),
 			Priority:     10,
 			RecordType:   domain.RecordTypeMailFromMX,
-			Status:       status,
+			Status:       domain.RecordStatusPending, // Always start pending, DNS validation will update
 			NameShort:    shortName,
 			Instructions: "Add this MX record for bounce handling.",
 		},
@@ -696,7 +695,7 @@ func (s *DomainService) buildMailFromRecords(d *domain.SendingDomain) []domain.D
 			Name:         d.MailFromDomain,
 			Value:        "v=spf1 include:amazonses.com ~all",
 			RecordType:   domain.RecordTypeMailFromSPF,
-			Status:       status,
+			Status:       domain.RecordStatusPending, // Always start pending, DNS validation will update
 			NameShort:    shortName,
 			Instructions: "Add this SPF record for MAIL FROM authentication.",
 		},
@@ -731,14 +730,6 @@ func toRecordStatus(status internaldns.RecordStatus) domain.RecordStatus {
 	}
 }
 
-// toRecordStatusFromDomainStatus converts DomainStatus to RecordStatus.
-func toRecordStatusFromDomainStatus(status domain.DomainStatus) domain.RecordStatus {
-	switch status {
-	case domain.DomainStatusReady:
-		return domain.RecordStatusFound
-	case domain.DomainStatusFailed:
-		return domain.RecordStatusMissing
-	default:
-		return domain.RecordStatusPending
-	}
-}
+// Note: toRecordStatusFromDomainStatus was removed.
+// Record status should always be determined by live DNS validation,
+// not derived from SES domain status.

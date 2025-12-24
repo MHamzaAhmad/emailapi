@@ -1,22 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { AppPortal } from 'svix-react'
 import 'svix-react/style.css'
-import { Shell } from '@/components/shell'
-import { AuthGuard } from '@/components/auth-guard'
 import { useWebhookPortal } from '@/hooks'
 import { useEffect, useState } from 'react'
 
-export const Route = createFileRoute('/webhooks')({
-    component: WebhooksPage,
+export const Route = createFileRoute('/_authed/webhooks')({
+    component: WebhooksContent,
 })
-
-function WebhooksPage() {
-    return (
-        <AuthGuard>
-            <WebhooksContent />
-        </AuthGuard>
-    )
-}
 
 function WebhooksContent() {
     const { data, isLoading, isError, error } = useWebhookPortal()
@@ -58,7 +48,7 @@ function WebhooksContent() {
     }
 
     return (
-        <Shell>
+        <>
             <div className="relative min-h-[600px] mt-4">
                 {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -92,6 +82,6 @@ function WebhooksContent() {
                     </div>
                 )}
             </div>
-        </Shell>
+        </>
     )
 }

@@ -1,8 +1,7 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import { UserButton, useUser, SignedIn } from '@clerk/clerk-react'
+import { UserButton } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-    ArrowRight01Icon,
     PackageIcon,
     Home01Icon,
     GlobeIcon,
@@ -12,6 +11,7 @@ import {
     Settings01Icon
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
+import { ModeToggle } from '@/components/mode-toggle'
 
 interface ShellProps {
     children: React.ReactNode
@@ -25,17 +25,8 @@ const mainNav = [
 ]
 
 export function Shell({ children }: ShellProps) {
-    const { user } = useUser()
     const routerState = useRouterState()
     const currentPath = routerState.location.pathname
-
-    const breadcrumbs = currentPath.split('/').filter(Boolean).map((segment, index, array) => {
-        const href = `/${array.slice(0, index + 1).join('/')}`
-        const isLast = index === array.length - 1
-        const title = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')
-
-        return { title, href, isLast }
-    })
 
     return (
         <div className="min-h-screen bg-background flex flex-col font-sans">
@@ -83,6 +74,7 @@ export function Shell({ children }: ShellProps) {
                                 <HugeiconsIcon icon={Settings01Icon} size={16} />
                             </Link>
                         </Button>
+                        <ModeToggle />
                         <div className="h-4 w-[1px] bg-border/60 mx-1" />
                         <UserButton
                             appearance={{

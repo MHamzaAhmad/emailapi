@@ -2,6 +2,7 @@ import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-r
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ClerkProvider } from '@clerk/clerk-react'
+import { dark } from '@clerk/themes'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { getQueryClient } from '@/lib/queryClient'
 
@@ -39,29 +40,33 @@ function RootComponent() {
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY || ''}
       appearance={{
-        baseTheme: undefined,
+        baseTheme: dark,
         variables: {
-          colorPrimary: '#fff',
-          colorBackground: '#000',
-          colorText: '#fafafa',
-          colorTextSecondary: '#888',
-          colorInputBackground: '#0a0a0a',
-          colorInputText: '#fafafa',
+          colorPrimary: 'hsl(var(--primary))',
+          colorBackground: 'hsl(var(--background))',
+          colorText: 'hsl(var(--foreground))',
+          colorTextSecondary: 'hsl(var(--muted-foreground))',
+          colorInputBackground: 'hsl(var(--secondary))',
+          colorInputText: 'hsl(var(--foreground))',
           borderRadius: '0.375rem',
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'Plus Jakarta Sans, sans-serif',
           fontSize: '13px',
         },
         elements: {
-          card: 'bg-background border border-border shadow-none',
+          card: 'bg-background border border-border shadow-2xl',
           headerTitle: 'text-foreground text-sm font-medium',
           headerSubtitle: 'text-muted-foreground text-xs',
-          formButtonPrimary: 'bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-7',
-          formFieldInput: 'bg-background border-border text-foreground text-xs h-7',
-          formFieldLabel: 'text-foreground text-xs',
-          footerActionLink: 'text-primary text-xs',
-          dividerLine: 'bg-border',
-          dividerText: 'text-muted-foreground text-2xs',
-          socialButtonsBlockButton: 'bg-secondary text-secondary-foreground border-border text-xs h-8',
+          formButtonPrimary: 'bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-8 font-medium shadow-sm transition-all',
+          formFieldInput: 'bg-secondary/50 border-transparent focus:border-primary/50 transition-colors text-foreground text-xs h-8',
+          formFieldLabel: 'text-foreground text-xs font-medium',
+          footerActionLink: 'text-primary hover:text-primary/90 text-xs font-medium',
+          dividerLine: 'bg-border/60',
+          dividerText: 'text-muted-foreground/60 text-[10px] uppercase tracking-wider font-medium',
+          socialButtonsBlockButton: 'bg-background text-foreground border-border hover:bg-secondary/80 transition-colors text-xs h-8 font-medium',
+          socialButtonsBlockButtonText: 'text-xs font-medium',
+          formFieldAction: 'text-primary hover:text-primary/90 text-xs',
+          identityPreviewText: 'text-foreground text-xs font-medium',
+          identityPreviewEditButton: 'text-primary text-xs',
         },
       }}
     >

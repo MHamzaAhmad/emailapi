@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { SignedIn, SignedOut } from '@clerk/clerk-react'
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   PackageIcon,
@@ -11,6 +11,7 @@ import {
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { CodeWindow } from '@/components/ui/code-window'
+import { ModeToggle } from '@/components/mode-toggle'
 
 export const Route = createFileRoute('/')(
   {
@@ -54,13 +55,18 @@ function LandingContent() {
             <span className="text-sm">emailapi.dev</span>
           </div>
           <div className="hidden md:flex items-center gap-4">
+            <ModeToggle />
             <Link to="/docs" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Documentation</Link>
-            <Link to="/sign-in" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Login</Link>
-            <Button asChild size="sm" className="h-8 px-4 text-xs font-medium">
-              <Link to="/sign-up">
-                Get Started
-              </Link>
-            </Button>
+            <SignedOut>
+              <SignInButton mode="modal">
+                <Button size="sm" className="h-8 px-4 text-xs font-medium">
+                  Login
+                </Button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
           </div>
         </div>
       </nav>

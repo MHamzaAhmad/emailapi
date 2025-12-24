@@ -5,8 +5,6 @@ import {
     Add01Icon,
 } from '@hugeicons/core-free-icons'
 import { ColumnDef } from '@tanstack/react-table'
-import { Shell } from '@/components/shell'
-import { AuthGuard } from '@/components/auth-guard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,17 +23,9 @@ import { useDomains, useAddDomain, useDeleteDomain, useVerifyDomain } from '@/ho
 import { DomainStatus } from '@/generated/v1/domain_pb'
 import type { Domain } from '@/generated/v1/domain_pb'
 
-export const Route = createFileRoute('/domains/')({
-    component: DomainsPage,
+export const Route = createFileRoute('/_authed/domains/')({
+    component: DomainsContent,
 })
-
-function DomainsPage() {
-    return (
-        <AuthGuard>
-            <DomainsContent />
-        </AuthGuard>
-    )
-}
 
 function getStatusBadge(status: DomainStatus) {
     const className = "text-[10px] px-2 py-0.5 uppercase tracking-wider font-medium"
@@ -156,7 +146,7 @@ function DomainsContent() {
     )
 
     return (
-        <Shell>
+        <>
             {/* Header Actions */}
             <div className="flex flex-col gap-6 mb-8 mt-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -218,6 +208,6 @@ function DomainsContent() {
                     onPaginationChange={setPagination}
                 />
             </div>
-        </Shell>
+        </>
     )
 }
