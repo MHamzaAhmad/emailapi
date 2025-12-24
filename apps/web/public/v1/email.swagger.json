@@ -1,0 +1,437 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "v1/email.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "EmailService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1Attachment": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string",
+          "description": "Filename of the attachment."
+        },
+        "contentType": {
+          "type": "string",
+          "description": "MIME type of the attachment (e.g., application/pdf)."
+        },
+        "url": {
+          "type": "string",
+          "description": "URL to download the attachment from."
+        },
+        "base64Content": {
+          "type": "string",
+          "description": "Base64-encoded content of the attachment."
+        }
+      },
+      "description": "Attachment represents a file to be attached to the email."
+    },
+    "v1EmailBouncedEvent": {
+      "type": "object",
+      "properties": {
+        "emailId": {
+          "type": "string",
+          "description": "Our internal email ID."
+        },
+        "userId": {
+          "type": "string",
+          "description": "User who sent the email."
+        },
+        "messageId": {
+          "type": "string",
+          "description": "SES Message-ID."
+        },
+        "bounceType": {
+          "type": "string",
+          "description": "Type of bounce: \"Permanent\" or \"Transient\"."
+        },
+        "bounceSubtype": {
+          "type": "string",
+          "description": "Subtype providing more detail (e.g., \"General\", \"NoEmail\")."
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Recipients who bounced."
+        },
+        "diagnosticCodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Diagnostic codes for each bounced recipient."
+        }
+      },
+      "description": "EmailBouncedEvent is sent when an email bounces."
+    },
+    "v1EmailComplainedEvent": {
+      "type": "object",
+      "properties": {
+        "emailId": {
+          "type": "string",
+          "description": "Our internal email ID."
+        },
+        "userId": {
+          "type": "string",
+          "description": "User who sent the email."
+        },
+        "messageId": {
+          "type": "string",
+          "description": "SES Message-ID."
+        },
+        "feedbackType": {
+          "type": "string",
+          "description": "Type of complaint feedback."
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Recipients who complained."
+        }
+      },
+      "description": "EmailComplainedEvent is sent when a recipient marks the email as spam."
+    },
+    "v1EmailDelayedEvent": {
+      "type": "object",
+      "properties": {
+        "emailId": {
+          "type": "string",
+          "description": "Our internal email ID."
+        },
+        "userId": {
+          "type": "string",
+          "description": "User who sent the email."
+        },
+        "messageId": {
+          "type": "string",
+          "description": "SES Message-ID."
+        },
+        "delayType": {
+          "type": "string",
+          "description": "Type of delay."
+        }
+      },
+      "description": "EmailDelayedEvent is sent when email delivery is delayed."
+    },
+    "v1EmailDeliveredEvent": {
+      "type": "object",
+      "properties": {
+        "emailId": {
+          "type": "string",
+          "description": "Our internal email ID."
+        },
+        "userId": {
+          "type": "string",
+          "description": "User who sent the email."
+        },
+        "messageId": {
+          "type": "string",
+          "description": "SES Message-ID."
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Recipients who received the email."
+        },
+        "smtpResponse": {
+          "type": "string",
+          "description": "SMTP response from the recipient's mail server."
+        }
+      },
+      "description": "EmailDeliveredEvent is sent when an email is delivered to the recipient's mailbox."
+    },
+    "v1EmailFailedEvent": {
+      "type": "object",
+      "properties": {
+        "emailId": {
+          "type": "string",
+          "description": "Our internal email ID."
+        },
+        "userId": {
+          "type": "string",
+          "description": "User who sent the email."
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message describing the failure."
+        }
+      },
+      "description": "EmailFailedEvent is sent when email sending fails permanently."
+    },
+    "v1EmailRejectedEvent": {
+      "type": "object",
+      "properties": {
+        "emailId": {
+          "type": "string",
+          "description": "Our internal email ID."
+        },
+        "userId": {
+          "type": "string",
+          "description": "User who sent the email."
+        },
+        "messageId": {
+          "type": "string",
+          "description": "SES Message-ID."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for rejection."
+        }
+      },
+      "description": "EmailRejectedEvent is sent when SES rejects the email."
+    },
+    "v1EmailRepliedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID of this inbound email."
+        },
+        "userId": {
+          "type": "string",
+          "description": "User who owns the original email."
+        },
+        "messageId": {
+          "type": "string",
+          "description": "Message-ID of this reply."
+        },
+        "inReplyTo": {
+          "type": "string",
+          "description": "Message-ID of the email being replied to."
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Full thread reference chain."
+        },
+        "from": {
+          "type": "string",
+          "description": "Sender of the reply."
+        },
+        "to": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Recipients of the reply."
+        },
+        "subject": {
+          "type": "string",
+          "description": "Subject of the reply."
+        },
+        "body": {
+          "type": "string",
+          "description": "Plain text body."
+        },
+        "html": {
+          "type": "string",
+          "description": "HTML body."
+        },
+        "parentEmailId": {
+          "type": "string",
+          "description": "Our email ID of the original email being replied to."
+        }
+      },
+      "description": "EmailRepliedEvent is sent when a reply to a sent email is received."
+    },
+    "v1EmailSentEvent": {
+      "type": "object",
+      "properties": {
+        "emailId": {
+          "type": "string",
+          "description": "Our internal email ID for tracking."
+        },
+        "userId": {
+          "type": "string",
+          "description": "User who sent the email."
+        },
+        "messageId": {
+          "type": "string",
+          "description": "SES Message-ID."
+        },
+        "from": {
+          "type": "string",
+          "description": "Sender email address."
+        },
+        "to": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Primary recipients."
+        },
+        "cc": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "CC recipients."
+        },
+        "bcc": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "BCC recipients."
+        },
+        "subject": {
+          "type": "string",
+          "description": "Email subject."
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Custom metadata passed with the email."
+        }
+      },
+      "description": "EmailSentEvent is sent when an email is accepted for delivery."
+    },
+    "v1EmailStatus": {
+      "type": "string",
+      "enum": [
+        "EMAIL_STATUS_UNSPECIFIED",
+        "EMAIL_STATUS_QUEUED",
+        "EMAIL_STATUS_PROCESSING",
+        "EMAIL_STATUS_SENT",
+        "EMAIL_STATUS_FAILED"
+      ],
+      "default": "EMAIL_STATUS_UNSPECIFIED",
+      "description": "EmailStatus represents the current processing status."
+    },
+    "v1Event": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique event ID (Redis stream ID when streaming)."
+        },
+        "type": {
+          "$ref": "#/definitions/v1EventType",
+          "description": "Event type."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the event occurred."
+        },
+        "emailSent": {
+          "$ref": "#/definitions/v1EmailSentEvent"
+        },
+        "emailDelivered": {
+          "$ref": "#/definitions/v1EmailDeliveredEvent"
+        },
+        "emailBounced": {
+          "$ref": "#/definitions/v1EmailBouncedEvent"
+        },
+        "emailComplained": {
+          "$ref": "#/definitions/v1EmailComplainedEvent"
+        },
+        "emailRejected": {
+          "$ref": "#/definitions/v1EmailRejectedEvent"
+        },
+        "emailDelayed": {
+          "$ref": "#/definitions/v1EmailDelayedEvent"
+        },
+        "emailReplied": {
+          "$ref": "#/definitions/v1EmailRepliedEvent"
+        },
+        "emailFailed": {
+          "$ref": "#/definitions/v1EmailFailedEvent"
+        }
+      },
+      "description": "Event is the envelope for all events.\nUsed for both webhook payloads and streaming responses."
+    },
+    "v1EventType": {
+      "type": "string",
+      "enum": [
+        "EVENT_TYPE_UNSPECIFIED",
+        "EVENT_TYPE_EMAIL_SENT",
+        "EVENT_TYPE_EMAIL_DELIVERED",
+        "EVENT_TYPE_EMAIL_FAILED",
+        "EVENT_TYPE_EMAIL_BOUNCED",
+        "EVENT_TYPE_EMAIL_OPENED",
+        "EVENT_TYPE_EMAIL_CLICKED",
+        "EVENT_TYPE_EMAIL_REPLIED",
+        "EVENT_TYPE_EMAIL_COMPLAINED",
+        "EVENT_TYPE_EMAIL_REJECTED",
+        "EVENT_TYPE_EMAIL_DELAYED",
+        "EVENT_TYPE_HEARTBEAT"
+      ],
+      "default": "EVENT_TYPE_UNSPECIFIED",
+      "description": "EventType defines the types of events that can be delivered.\n\n - EVENT_TYPE_HEARTBEAT: Heartbeat event for keeping long-lived connections alive.\nClients should filter this out - it carries no payload."
+    },
+    "v1SendEmailResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for tracking this email."
+        },
+        "status": {
+          "$ref": "#/definitions/v1EmailStatus",
+          "description": "Current status of the email."
+        },
+        "messageId": {
+          "type": "string",
+          "description": "SES Message-ID (only present if sync send succeeded)."
+        },
+        "statusMessage": {
+          "type": "string",
+          "description": "Human-readable status message."
+        }
+      },
+      "description": "SendEmailResponse contains the result of a send request."
+    }
+  }
+}

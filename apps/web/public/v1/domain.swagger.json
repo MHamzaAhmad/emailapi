@@ -1,0 +1,297 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "v1/domain.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "DomainService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AddDomainResponse": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "$ref": "#/definitions/v1Domain"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DeleteDomainResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DnsRecord": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "title": "DNS record type: CNAME, TXT, MX"
+        },
+        "name": {
+          "type": "string",
+          "title": "Full record name (e.g., \"abc._domainkey.example.com\")"
+        },
+        "value": {
+          "type": "string",
+          "title": "Record value to set"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Priority (MX records only)"
+        },
+        "recordType": {
+          "$ref": "#/definitions/v1RecordType",
+          "title": "Purpose of this record"
+        },
+        "status": {
+          "$ref": "#/definitions/v1RecordStatus",
+          "title": "Current status"
+        },
+        "nameShort": {
+          "type": "string",
+          "title": "Short name for DNS providers that want just the subdomain (e.g., \"abc._domainkey\")"
+        },
+        "discoveredValue": {
+          "type": "string",
+          "title": "What we found in DNS (after verification)"
+        },
+        "instructions": {
+          "type": "string",
+          "title": "Human-readable instructions"
+        }
+      },
+      "description": "DnsRecord represents a single DNS record to configure."
+    },
+    "v1Domain": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/v1DomainStatus"
+        },
+        "region": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastCheckedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "summary": {
+          "$ref": "#/definitions/v1DomainSummary",
+          "title": "Human-readable summary for lazy users"
+        },
+        "records": {
+          "$ref": "#/definitions/v1DomainRecords",
+          "title": "All DNS records needed"
+        }
+      },
+      "description": "Domain represents a sending domain with all its configuration."
+    },
+    "v1DomainRecords": {
+      "type": "object",
+      "properties": {
+        "dkimRecords": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1DnsRecord"
+          }
+        },
+        "spfRecord": {
+          "$ref": "#/definitions/v1DnsRecord"
+        },
+        "dmarcRecord": {
+          "$ref": "#/definitions/v1DnsRecord"
+        },
+        "mxRecords": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1DnsRecord"
+          }
+        },
+        "mailFromRecords": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1DnsRecord"
+          }
+        }
+      },
+      "description": "DomainRecords contains all DNS records needed for email."
+    },
+    "v1DomainStatus": {
+      "type": "string",
+      "enum": [
+        "DOMAIN_STATUS_UNSPECIFIED",
+        "DOMAIN_STATUS_PENDING",
+        "DOMAIN_STATUS_VERIFYING",
+        "DOMAIN_STATUS_READY",
+        "DOMAIN_STATUS_DEGRADED",
+        "DOMAIN_STATUS_FAILED"
+      ],
+      "default": "DOMAIN_STATUS_UNSPECIFIED",
+      "description": "- DOMAIN_STATUS_PENDING: Just added, waiting for DNS configuration\n - DOMAIN_STATUS_VERIFYING: DNS check in progress\n - DOMAIN_STATUS_READY: Ready to send emails!\n - DOMAIN_STATUS_DEGRADED: Works but missing optional records (SPF, DMARC, MAIL FROM)\n - DOMAIN_STATUS_FAILED: Cannot send, action required",
+      "title": "DomainStatus represents the overall status of a domain.\nUse in code: if (domain.status === DomainStatus.READY)"
+    },
+    "v1DomainSummary": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "title": "e.g., \"Add 3 DNS records to start sending\" or \"Ready to send emails!\""
+        },
+        "nextAction": {
+          "type": "string",
+          "title": "What the user should do next: CONFIGURE_DNS, WAIT, NONE"
+        },
+        "recordsPending": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Quick stats"
+        },
+        "recordsConfigured": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "canSend": {
+          "type": "boolean"
+        },
+        "canReceive": {
+          "type": "boolean"
+        }
+      },
+      "description": "DomainSummary provides human-readable status for lazy users."
+    },
+    "v1GetDomainResponse": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "$ref": "#/definitions/v1Domain"
+        }
+      }
+    },
+    "v1ListDomainsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Domain"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Total number of domains for pagination"
+        }
+      }
+    },
+    "v1RecordStatus": {
+      "type": "string",
+      "enum": [
+        "RECORD_STATUS_UNSPECIFIED",
+        "RECORD_STATUS_PENDING",
+        "RECORD_STATUS_FOUND",
+        "RECORD_STATUS_MISMATCH",
+        "RECORD_STATUS_MISSING"
+      ],
+      "default": "RECORD_STATUS_UNSPECIFIED",
+      "description": "- RECORD_STATUS_PENDING: Not configured yet\n - RECORD_STATUS_FOUND: Found in DNS with correct value ✓\n - RECORD_STATUS_MISMATCH: Found but wrong value\n - RECORD_STATUS_MISSING: Not found in DNS",
+      "title": "RecordStatus represents the status of a single DNS record.\nUse in code: if (record.status === RecordStatus.FOUND)"
+    },
+    "v1RecordType": {
+      "type": "string",
+      "enum": [
+        "RECORD_TYPE_UNSPECIFIED",
+        "RECORD_TYPE_DKIM",
+        "RECORD_TYPE_SPF",
+        "RECORD_TYPE_DMARC",
+        "RECORD_TYPE_MX_INBOUND",
+        "RECORD_TYPE_MAIL_FROM_MX",
+        "RECORD_TYPE_MAIL_FROM_SPF"
+      ],
+      "default": "RECORD_TYPE_UNSPECIFIED",
+      "description": "RecordType identifies the purpose of a DNS record."
+    },
+    "v1VerifyDomainResponse": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "$ref": "#/definitions/v1Domain"
+        },
+        "wasRefreshed": {
+          "type": "boolean",
+          "title": "True if we actually checked (false if rate-limited)"
+        },
+        "nextRetryAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "When next check is allowed (if rate-limited)"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

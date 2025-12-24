@@ -1,0 +1,15 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      module: buf.build/emailapi/public
+      value: github.com/emailapi/api/gen
+    - file_option: go_package_prefix
+      module: buf.build/emailapi/private
+      value: github.com/emailapi/api/gen
+
+plugins:
+  - remote: buf.build/grpc-ecosystem/openapiv2
+    out: ../apps/web/public
+
