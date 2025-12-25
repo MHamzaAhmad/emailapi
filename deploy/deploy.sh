@@ -2,7 +2,7 @@
 set -e
 
 # Directory where the app is cloned
-APP_DIR="/opt/emailapi"
+APP_DIR="/home/muhammadusama_mofx/emailapi"
 
 # Navigate to app dir
 cd "$APP_DIR" || exit
