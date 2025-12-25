@@ -52,6 +52,10 @@ type Config struct {
 	// Clerk Configuration (for verifying Clerk JWTs and webhook signatures)
 	ClerkSecretKey     string `envconfig:"CLERK_SECRET_KEY" required:"true"`
 	ClerkWebhookSecret string `envconfig:"CLERK_WEBHOOK_SECRET" required:"true"`
+
+	// Web Risk Configuration (for URL safety validation)
+	WebRiskAPIKey    string `envconfig:"WEB_RISK_API_KEY"`
+	WebRiskProjectID string `envconfig:"WEB_RISK_PROJECT_ID"`
 }
 
 // Load reads configuration from environment variables.

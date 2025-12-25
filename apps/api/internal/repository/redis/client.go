@@ -89,6 +89,79 @@ func (c *Client) Underlying() *redis.Client {
 	return c.rdb
 }
 
+// =============================================================================
+// Bloom Filter Operations (requires RedisBloom module)
+// =============================================================================
+
+// BFReserve creates a Bloom filter with specified error rate and capacity.
+// This should be called once when initializing the filter.
+func (c *Client) BFReserve(ctx context.Context, key string, errorRate float64, capacity int64) error {
+	return c.rdb.Do(ctx, "BF.RESERVE", key, errorRate, capacity).Err()
+}
+
+// BFAdd adds an item to a Bloom filter.
+// Creates the filter with default parameters if it doesn't exist.
+func (c *Client) BFAdd(ctx context.Context, key string, item string) (bool, error) {
+	result, err := c.rdb.Do(ctx, "BF.ADD", key, item).Int()
+	if err != nil {
+		return false, err
+	}
+	return result == 1, nil
+}
+
+// BFMAdd adds multiple items to a Bloom filter.
+// Returns a slice of booleans indicating if each item was newly added.
+func (c *Client) BFMAdd(ctx context.Context, key string, items ...string) ([]bool, error) {
+	args := make([]interface{}, 0, len(items)+2)
+	args = append(args, "BF.MADD", key)
+	for _, item := range items {
+		args = append(args, item)
+	}
+
+	result, err := c.rdb.Do(ctx, args...).Int64Slice()
+	if err != nil {
+		return nil, err
+	}
+
+	bools := make([]bool, len(result))
+	for i, v := range result {
+		bools[i] = v == 1
+	}
+	return bools, nil
+}
+
+// BFExists checks if an item exists in a Bloom filter.
+// Returns true if the item might exist (possible false positive).
+// Returns false if the item definitely does not exist.
+func (c *Client) BFExists(ctx context.Context, key string, item string) (bool, error) {
+	result, err := c.rdb.Do(ctx, "BF.EXISTS", key, item).Int()
+	if err != nil {
+		return false, err
+	}
+	return result == 1, nil
+}
+
+// BFMExists checks if multiple items exist in a Bloom filter.
+// Returns a slice of booleans for each item.
+func (c *Client) BFMExists(ctx context.Context, key string, items ...string) ([]bool, error) {
+	args := make([]interface{}, 0, len(items)+2)
+	args = append(args, "BF.MEXISTS", key)
+	for _, item := range items {
+		args = append(args, item)
+	}
+
+	result, err := c.rdb.Do(ctx, args...).Int64Slice()
+	if err != nil {
+		return nil, err
+	}
+
+	bools := make([]bool, len(result))
+	for i, v := range result {
+		bools[i] = v == 1
+	}
+	return bools, nil
+}
+
 // Close closes the Redis connection.
 func (c *Client) Close() error {
 	return c.rdb.Close()

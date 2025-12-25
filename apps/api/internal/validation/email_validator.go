@@ -27,11 +27,12 @@ type EmailValidator struct {
 	verifier           *emailverifier.Verifier
 	domainChecker      DomainChecker
 	suppressionChecker SuppressionChecker
+	bodyValidator      *BodyValidator
 }
 
 // NewEmailValidator creates a new EmailValidator.
 // SMTP checking is disabled, as noted by the user.
-func NewEmailValidator(domainChecker DomainChecker, suppressionChecker SuppressionChecker) *EmailValidator {
+func NewEmailValidator(domainChecker DomainChecker, suppressionChecker SuppressionChecker, bodyValidator *BodyValidator) *EmailValidator {
 	verifier := emailverifier.NewVerifier().
 		EnableDomainSuggest() // Enable typo detection
 
@@ -42,6 +43,7 @@ func NewEmailValidator(domainChecker DomainChecker, suppressionChecker Suppressi
 		verifier:           verifier,
 		domainChecker:      domainChecker,
 		suppressionChecker: suppressionChecker,
+		bodyValidator:      bodyValidator,
 	}
 }
 
@@ -119,6 +121,15 @@ func (v *EmailValidator) ValidateSendEmail(ctx context.Context, userID, from str
 		return errors
 	}
 	return nil
+}
+
+// ValidateBody validates email body content for unsafe URLs.
+// Returns nil if validation passes or body validator is not configured.
+func (v *EmailValidator) ValidateBody(ctx context.Context, body, html string) error {
+	if v.bodyValidator == nil {
+		return nil
+	}
+	return v.bodyValidator.ValidateURLs(ctx, body, html)
 }
 
 // validateAllAddresses performs all address validations in parallel.

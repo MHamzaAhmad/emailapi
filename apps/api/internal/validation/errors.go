@@ -22,6 +22,9 @@ const (
 
 	// Suppression errors
 	ErrCodeEmailSuppressed ValidationErrorCode = "EMAIL_SUPPRESSED"
+
+	// Content safety errors
+	ErrCodeUnsafeURL ValidationErrorCode = "UNSAFE_URL"
 )
 
 // ValidationError represents a single validation error.

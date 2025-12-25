@@ -5,6 +5,7 @@ import (
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/external/svix"
+	"github.com/emailapi/api/internal/external/webrisk"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	rediscache "github.com/emailapi/api/internal/repository/redis"
 	"github.com/emailapi/api/internal/repository/suppression"
@@ -61,6 +62,9 @@ type ServiceDeps struct {
 	EventConsumer eventstream.Consumer
 	// Clerk configuration
 	ClerkWebhookSecret string
+	// Web Risk client for URL safety validation
+	WebRiskClient webrisk.Client
+	RedisClient   *rediscache.Client
 }
 
 // NewWithDeps creates a new Service with all dependencies.
@@ -69,8 +73,14 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.DomainCache, deps.CHActivityRepo, deps.Region, deps.SESConfigurationSet)
 	svc.APIKey = NewAPIKeyService(deps.Store, deps.APIKeyCache, deps.CHActivityRepo)
 
-	// Create email validator with domain checker and suppression checker
-	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo)
+	// Create body validator for URL safety checking (optional if Web Risk not configured)
+	var bodyValidator *validation.BodyValidator
+	if deps.WebRiskClient != nil && deps.RedisClient != nil {
+		bodyValidator = validation.NewBodyValidator(deps.RedisClient, deps.WebRiskClient)
+	}
+
+	// Create email validator with domain checker, suppression checker, and body validator
+	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo, bodyValidator)
 
 	svc.Email = NewEmailService(deps.RiverClient, deps.CHEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer)
 	svc.Internal = NewInternalService(InternalServiceConfig{

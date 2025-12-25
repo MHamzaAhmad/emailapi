@@ -69,6 +69,10 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 		if err := s.validator.ValidateSendEmail(ctx, userID, req.From, req.To, req.Cc, req.Bcc); err != nil {
 			return nil, fmt.Errorf("email validation failed: %w", err)
 		}
+		// Validate body content for unsafe URLs
+		if err := s.validator.ValidateBody(ctx, req.Body, req.Html); err != nil {
+			return nil, fmt.Errorf("body validation failed: %w", err)
+		}
 	}
 
 	emailID := uuid.New().String()
