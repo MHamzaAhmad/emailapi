@@ -37,7 +37,7 @@ export function Shell({ children }: ShellProps) {
                         <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
                             <HugeiconsIcon icon={PackageIcon} size={14} strokeWidth={2.5} />
                         </div>
-                        <span className="hidden md:inline-block text-sm">emailapi</span>
+                        <span className="hidden md:inline-block text-sm">msgmorph</span>
                     </Link>
 
                     <nav className="flex items-center gap-1">

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
+import { SignedIn, SignedOut, SignInButton, Waitlist, UserButton } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   PackageIcon,
@@ -13,6 +13,11 @@ import { Button } from '@/components/ui/button'
 import { CodeWindow } from '@/components/ui/code-window'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Features } from '@/components/landing/Features'
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 export const Route = createFileRoute('/')(
   {
@@ -53,7 +58,7 @@ function LandingContent() {
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
               <HugeiconsIcon icon={PackageIcon} size={14} strokeWidth={2.5} />
             </div>
-            <span className="text-sm">emailapi.dev</span>
+            <span className="text-sm">msgmorph</span>
           </div>
           <div className="hidden md:flex items-center gap-4">
             <ModeToggle />
@@ -81,15 +86,21 @@ function LandingContent() {
               The Simplest API for <br /> <span className="text-primary">Inbound & Outbound</span>
             </h1>
             <p className="mx-auto mb-10 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl">
-              High-performance email infrastructure without the complexity. <br className="hidden sm:block" />
-              Send transactional emails or build powerful reply flows in minutes.
+              High-performance email infrastructure for modern teams. <br className="hidden sm:block" />
+              Currently in private beta. Login if you have an invite.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-20">
-              <Button asChild className="h-9 px-6 text-sm shadow-sm rounded-md">
-                {/* @ts-expect-error auth route */}
-                <Link to="/sign-up">Start Building</Link>
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="h-9 px-6 text-sm shadow-sm rounded-md">
+                    Join Waitlist
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-fit border-none bg-transparent p-0 shadow-none">
+                  <Waitlist />
+                </DialogContent>
+              </Dialog>
               <Button asChild variant="outline" className="h-9 px-6 text-sm bg-background hover:bg-muted/50 rounded-md">
                 {/* @ts-expect-error docs route */}
                 <Link to="/docs">
@@ -161,35 +172,60 @@ client.onReceive({
         {/* Simple CTA */}
         <section className="py-24 px-6 border-t border-dashed border-border/40">
           <div className="mx-auto max-w-xl text-center">
-            <h2 className="text-2xl font-bold tracking-tight mb-4">Ready to Ship?</h2>
+            <h2 className="text-2xl font-bold tracking-tight mb-4">Join the Private Beta</h2>
             <p className="text-muted-foreground mb-8 text-sm">
-              Get your API key in seconds. 5,000 free emails per month.
+              We are currently in invite-only mode. If you have an invite code, login to get started.
             </p>
-            <Button asChild className="h-9 px-8 rounded-md text-sm">
-              {/* @ts-expect-error auth route */}
-              <Link to="/sign-up">Start Building Now</Link>
-            </Button>
+            <SignInButton mode="modal">
+              <Button className="h-9 px-8 rounded-md text-sm">
+                Login
+              </Button>
+            </SignInButton>
           </div>
         </section>
 
       </main>
 
-      {/* Minimal Footer */}
-      <footer className="border-t py-12 px-6 bg-background">
-        <div className="mx-auto max-w-5xl flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all">
-            <div className="flex h-5 w-5 items-center justify-center rounded-sm bg-foreground text-background">
-              <HugeiconsIcon icon={PackageIcon} size={12} strokeWidth={3} />
+      {/* Value Driven Footer */}
+      <footer className="relative border-t bg-background overflow-hidden">
+        {/* Huge BG Text */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full select-none overflow-hidden pointer-events-none">
+          <h1 className="text-[15rem] md:text-[20rem] font-bold text-foreground/5 whitespace-nowrap text-center tracking-tighter leading-none">
+            EMAILS
+          </h1>
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-7xl px-6 py-20">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div className="col-span-1 md:col-span-2 space-y-6">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                  <HugeiconsIcon icon={PackageIcon} size={18} strokeWidth={2.5} />
+                </div>
+                <span className="text-lg font-bold tracking-tight">msgmorph</span>
+              </div>
+              <p className="text-muted-foreground max-w-xs leading-relaxed">
+                The easiest way to send and receive emails. Built for developers.
+              </p>
             </div>
-            <span className="text-xs font-bold tracking-widest text-foreground uppercase">emailapi</span>
+
+            <div className="md:col-start-4 space-y-4">
+              <h4 className="text-sm font-semibold tracking-wider uppercase text-foreground">Product</h4>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li>
+                  {/* @ts-expect-error docs route */}
+                  <Link to="/docs" className="hover:text-foreground transition-colors">Documentation</Link>
+                </li>
+              </ul>
+            </div>
           </div>
-          <div className="flex gap-6 text-xs text-muted-foreground">
-            {/* @ts-expect-error docs route */}
-            <Link to="/docs" className="hover:text-foreground">Docs</Link>
-            {/* @ts-expect-error status route */}
-            <Link to="/status" className="hover:text-foreground">Status</Link>
-            {/* @ts-expect-error legal route */}
-            <Link to="/legal" className="hover:text-foreground">Legal</Link>
+
+          <div className="mt-20 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
+            <p>&copy; {new Date().getFullYear()} msgmorph. All rights reserved.</p>
+            <div className="flex gap-2 items-center">
+              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+              <span className="font-mono">All systems operational</span>
+            </div>
           </div>
         </div>
       </footer>
