@@ -6,6 +6,7 @@ import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
 import mdx from 'fumadocs-mdx/vite';
 import * as MdxConfig from './source.config';
+import { nitro } from 'nitro/vite'
 
 const config = defineConfig({
   server: {
@@ -19,8 +20,8 @@ const config = defineConfig({
       projects: ['./tsconfig.json'],
     }),
     tailwindcss(),
-    // tanstackStart handles SSR/server integration - no need for separate nitro()
     tanstackStart(),
+    nitro(),
     // react's vite plugin must come after start's vite plugin
     viteReact(),
   ],
