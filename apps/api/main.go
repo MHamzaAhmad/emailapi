@@ -116,6 +116,10 @@ func main() {
 	mxCache := redisrepo.NewMXCache(redisClient)
 	logger.Info().Msg("✓ Initialized cache repositories")
 
+	// Initialize rate limiter
+	rateLimiter := redisrepo.NewRateLimiter(redisClient)
+	logger.Info().Msg("✓ Initialized rate limiter")
+
 	// Sync suppression list from PostgreSQL to Redis on startup
 	go func() {
 		if err := suppressionRepo.SyncFromPostgres(context.Background()); err != nil {
@@ -214,6 +218,7 @@ func main() {
 	clerk.SetKey(cfg.ClerkSecretKey)
 
 	// Create Connect interceptors
+	// Order matters: logging -> SNS/webhook preprocessing -> auth -> rate limit
 	interceptors := connect.WithInterceptors(
 		interceptor.NewLoggingInterceptor(logger),
 		interceptor.NewSNSInterceptor(),
@@ -224,6 +229,12 @@ func main() {
 			APIKeyService:  svc.APIKey,
 			UserLookup:     svc.User,
 			ClerkSecretKey: cfg.ClerkSecretKey,
+		}),
+		interceptor.NewRateLimitInterceptor(interceptor.RateLimitConfig{
+			RateLimiter:          rateLimiter,
+			RequestsPerMinute:    cfg.RateLimitPerMinute,
+			MaxConcurrentStreams: cfg.MaxConcurrentStreams,
+			Enabled:              cfg.RateLimitEnabled,
 		}),
 	)
 

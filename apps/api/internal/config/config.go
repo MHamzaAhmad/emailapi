@@ -27,7 +27,9 @@ type Config struct {
 	RedisURL string `envconfig:"REDIS_URL" required:"true"`
 
 	// Rate limiting
-	RateLimitPerMinute int `envconfig:"RATE_LIMIT_PER_MINUTE" default:"100"`
+	RateLimitPerMinute   int  `envconfig:"RATE_LIMIT_PER_MINUTE" default:"100"`
+	RateLimitEnabled     bool `envconfig:"RATE_LIMIT_ENABLED" default:"true"`
+	MaxConcurrentStreams int  `envconfig:"MAX_CONCURRENT_STREAMS" default:"5"`
 
 	// AWS/S3 Configuration
 	AWSRegion          string `envconfig:"AWS_REGION" required:"true"`
