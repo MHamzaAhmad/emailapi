@@ -1,6 +1,8 @@
 DESCRIPTION >
     Count activity logs with optional filters.
 
+TOKEN emailapi_server READ
+
 NODE count
 SQL >
     %

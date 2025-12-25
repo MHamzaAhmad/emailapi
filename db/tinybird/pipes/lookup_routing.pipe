@@ -1,6 +1,8 @@
 DESCRIPTION >
     Lookup routing info for a given message_id. Used for reply routing.
 
+TOKEN emailapi_server READ
+
 NODE lookup
 SQL >
     %

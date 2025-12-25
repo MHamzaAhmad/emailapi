@@ -1,6 +1,8 @@
 DESCRIPTION >
     List activity logs with pagination and optional filters.
 
+TOKEN emailapi_server READ
+
 NODE list
 SQL >
     %
