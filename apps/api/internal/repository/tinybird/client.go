@@ -153,6 +153,8 @@ func (c *Client) Ping(ctx context.Context) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		fmt.Println(string(body))
 		return fmt.Errorf("tinybird ping failed with status %d", resp.StatusCode)
 	}
 
