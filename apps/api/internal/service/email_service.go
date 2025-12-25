@@ -17,7 +17,7 @@ import (
 	emailapi "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/eventstream"
 	"github.com/emailapi/api/internal/external/ses"
-	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
+	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/validation"
 	"github.com/emailapi/api/internal/webhook"
 	"github.com/emailapi/api/internal/worker"
@@ -27,7 +27,7 @@ import (
 // This is a stateless, compliance-first service - no email content is stored permanently.
 type EmailService struct {
 	riverClient   *river.Client[pgx.Tx]
-	chRepo        *chrepo.EmailRepository
+	tbRepo        *tbrepo.EmailRepository
 	validator     *validation.EmailValidator
 	ses           ses.Client
 	webhookSender webhook.Sender
@@ -37,7 +37,7 @@ type EmailService struct {
 // NewEmailService creates a new EmailService.
 func NewEmailService(
 	riverClient *river.Client[pgx.Tx],
-	chRepo *chrepo.EmailRepository,
+	tbRepo *tbrepo.EmailRepository,
 	validator *validation.EmailValidator,
 	sesClient ses.Client,
 	webhookSender webhook.Sender,
@@ -45,7 +45,7 @@ func NewEmailService(
 ) *EmailService {
 	return &EmailService{
 		riverClient:   riverClient,
-		chRepo:        chRepo,
+		tbRepo:        tbRepo,
 		validator:     validator,
 		ses:           sesClient,
 		webhookSender: webhookSender,
@@ -106,9 +106,9 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 	}
 
 	// Write routing entry for reply tracking (async - don't block response)
-	if s.chRepo != nil {
+	if s.tbRepo != nil {
 		go func() {
-			if err := s.chRepo.InsertRouting(context.Background(), messageID, emailID, userID); err != nil {
+			if err := s.tbRepo.InsertRouting(context.Background(), messageID, emailID, userID); err != nil {
 				// Log but don't fail - routing is for reply tracking, not critical path
 				fmt.Printf("Warning: failed to insert routing entry: %v\n", err)
 			}
@@ -313,7 +313,7 @@ func (s *EmailService) sendToSES(ctx context.Context, req *emailapi.SendEmailReq
 
 // logActivity logs an activity for debugging (compliant - no email content stored).
 func (s *EmailService) logActivity(ctx context.Context, userID, emailID, action, details string, req *emailapi.SendEmailRequest) {
-	if s.chRepo == nil {
+	if s.tbRepo == nil {
 		return
 	}
 
@@ -330,7 +330,7 @@ func (s *EmailService) logActivity(ctx context.Context, userID, emailID, action,
 		"async":           req.Async,
 	}
 
-	s.chRepo.LogEmailEvent(ctx, userID, emailID, action, status, details, metadata)
+	s.tbRepo.LogEmailEvent(ctx, userID, emailID, action, status, details, metadata)
 }
 
 // sendWebhook sends a webhook notification for email events.

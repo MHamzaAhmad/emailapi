@@ -15,26 +15,26 @@ import (
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/autoresponse"
 	"github.com/emailapi/api/internal/external/s3"
-	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
+	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/webhook"
 )
 
 // InboundEmailService handles inbound email processing (replies) from SNS/SES.
 type InboundEmailService struct {
 	s3Factory     *s3.Factory
-	chRepo        *chrepo.EmailRepository
+	tbRepo        *tbrepo.EmailRepository
 	webhookSender webhook.Sender
 }
 
 // NewInboundEmailService creates a new InboundEmailService.
 func NewInboundEmailService(
 	s3Factory *s3.Factory,
-	chRepo *chrepo.EmailRepository,
+	tbRepo *tbrepo.EmailRepository,
 	webhookSender webhook.Sender,
 ) *InboundEmailService {
 	return &InboundEmailService{
 		s3Factory:     s3Factory,
-		chRepo:        chRepo,
+		tbRepo:        tbRepo,
 		webhookSender: webhookSender,
 	}
 }
@@ -171,7 +171,7 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 	}
 
 	// Use routing table as single source of truth
-	routing, err := s.chRepo.LookupRouting(ctx, inboundEmail.InReplyTo)
+	routing, err := s.tbRepo.LookupRouting(ctx, inboundEmail.InReplyTo)
 	if err != nil {
 		return nil // Reply to email we didn't send (not in our routing table)
 	}
@@ -180,14 +180,14 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 	inboundEmail.UserID = routing.UserID
 
 	// Add inbound email to routing table so replies to this email can be tracked too
-	if err := s.chRepo.InsertRouting(ctx, inboundEmail.MessageID, inboundEmail.ID, inboundEmail.UserID); err != nil {
+	if err := s.tbRepo.InsertRouting(ctx, inboundEmail.MessageID, inboundEmail.ID, inboundEmail.UserID); err != nil {
 		fmt.Printf("Warning: failed to insert routing entry for inbound email: %v\n", err)
 	}
 
 	// Check if this is an auto-response (OOO, vacation, bounce, etc.)
 	if inboundEmail.IsAutoResponse {
 		// Log auto-response but skip webhook delivery
-		s.chRepo.LogEmailEvent(
+		s.tbRepo.LogEmailEvent(
 			ctx,
 			routing.UserID,
 			routing.EmailID,
@@ -207,7 +207,7 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 	}
 
 	// Log the reply event to ClickHouse activity_logs
-	s.chRepo.LogEmailEvent(
+	s.tbRepo.LogEmailEvent(
 		ctx,
 		routing.UserID,
 		routing.EmailID,

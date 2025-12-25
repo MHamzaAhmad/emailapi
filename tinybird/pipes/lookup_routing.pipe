@@ -1,0 +1,12 @@
+DESCRIPTION >
+    Lookup routing info for a given message_id. Used for reply routing.
+
+NODE lookup
+SQL >
+    %
+    SELECT message_id, email_id, user_id, sent_at
+    FROM email_routing
+    WHERE message_id = {{String(message_id, '')}}
+    LIMIT 1
+
+TYPE endpoint

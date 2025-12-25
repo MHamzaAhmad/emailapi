@@ -22,17 +22,16 @@ import (
 	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/external/svix"
 	"github.com/emailapi/api/internal/external/webrisk"
-	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/repository/postgres"
 	redisrepo "github.com/emailapi/api/internal/repository/redis"
 	"github.com/emailapi/api/internal/repository/suppression"
+	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/service"
 	connecttransport "github.com/emailapi/api/internal/transport/connect"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
 	"github.com/emailapi/api/internal/webhook"
 	worker "github.com/emailapi/api/internal/worker"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
@@ -85,32 +84,15 @@ func main() {
 	s3Factory.RegisterBucket(s3.BucketInbound, cfg.S3InboundBucket)
 	logger.Info().Msg("✓ Initialized S3 factory")
 
-	// Initialize ClickHouse
-	chConn, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{cfg.ClickHouseHost},
-		Auth: clickhouse.Auth{
-			Database: cfg.ClickHouseDatabase,
-			Username: cfg.ClickHouseUsername,
-			Password: cfg.ClickHousePassword,
-		},
-		ClientInfo: clickhouse.ClientInfo{
-			Products: []struct {
-				Name, Version string
-			}{
-				{Name: "email-api", Version: "0.1.0"},
-			},
-		},
-	})
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to connect to ClickHouse")
+	// Initialize Tinybird client
+	tbClient := tbrepo.NewClient(cfg.TinybirdToken, cfg.TinybirdBaseURL)
+	if err := tbClient.Ping(context.Background()); err != nil {
+		logger.Fatal().Err(err).Msg("Failed to ping Tinybird")
 	}
-	if err := chConn.Ping(context.Background()); err != nil {
-		logger.Fatal().Err(err).Msg("Failed to ping ClickHouse")
-	}
-	logger.Info().Msg("✓ Connected to ClickHouse")
-	chRepo := chrepo.NewEmailRepository(chConn)
-	chActivityRepo := chrepo.NewActivityRepository(chConn)
-	logger.Info().Msg("✓ Initialized ClickHouse repositories")
+	logger.Info().Msg("✓ Connected to Tinybird")
+	tbEmailRepo := tbrepo.NewEmailRepository(tbClient)
+	tbActivityRepo := tbrepo.NewActivityRepository(tbClient)
+	logger.Info().Msg("✓ Initialized Tinybird repositories")
 
 	// Initialize Redis client
 	redisClient, err := redisrepo.NewClient(cfg.RedisURL)
@@ -178,7 +160,7 @@ func main() {
 
 	// Create and register workers
 	workers := river.NewWorkers()
-	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, chRepo, webhookSender)
+	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, tbEmailRepo, webhookSender)
 	river.AddWorker(workers, emailWorker)
 	logger.Info().Msg("✓ Registered River workers")
 
@@ -212,8 +194,8 @@ func main() {
 		Region:              cfg.AWSRegion,
 		SESConfigurationSet: cfg.SESConfigurationSet,
 		RiverClient:         riverClient,
-		CHEmailRepo:         chRepo,
-		CHActivityRepo:      chActivityRepo,
+		TBEmailRepo:         tbEmailRepo,
+		TBActivityRepo:      tbActivityRepo,
 		SvixClient:          svixClient,
 		WebhookSender:       webhookSender,
 		SuppressionRepo:     suppressionRepo,

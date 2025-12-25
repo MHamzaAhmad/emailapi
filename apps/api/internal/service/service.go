@@ -6,9 +6,9 @@ import (
 	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/external/svix"
 	"github.com/emailapi/api/internal/external/webrisk"
-	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	rediscache "github.com/emailapi/api/internal/repository/redis"
 	"github.com/emailapi/api/internal/repository/suppression"
+	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/validation"
 	"github.com/emailapi/api/internal/webhook"
 
@@ -49,8 +49,8 @@ type ServiceDeps struct {
 	Region              string
 	SESConfigurationSet string
 	RiverClient         *river.Client[pgx.Tx]
-	CHEmailRepo         *chrepo.EmailRepository
-	CHActivityRepo      *chrepo.ActivityRepository
+	TBEmailRepo         *tbrepo.EmailRepository
+	TBActivityRepo      *tbrepo.ActivityRepository
 	SvixClient          svix.Client // Used for WebhookService (portal access)
 	WebhookSender       webhook.Sender
 	SuppressionRepo     *suppression.Repository
@@ -73,8 +73,8 @@ type ServiceDeps struct {
 // NewWithDeps creates a new Service with all dependencies.
 func NewWithDeps(deps ServiceDeps) *Service {
 	svc := New(deps.Store)
-	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.DomainCache, deps.CHActivityRepo, deps.Region, deps.SESConfigurationSet)
-	svc.APIKey = NewAPIKeyService(deps.Store, deps.APIKeyCache, deps.CHActivityRepo, deps.APIKeyHMACSecret)
+	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.DomainCache, deps.TBActivityRepo, deps.Region, deps.SESConfigurationSet)
+	svc.APIKey = NewAPIKeyService(deps.Store, deps.APIKeyCache, deps.TBActivityRepo, deps.APIKeyHMACSecret)
 	svc.User = NewUserService(deps.Store, svc.APIKey, deps.UserCache)
 
 	// Create body validator for URL safety checking (optional if Web Risk not configured)
@@ -86,7 +86,7 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	// Create email validator with domain checker, suppression checker, body validator, and MX cache
 	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo, bodyValidator, deps.MXCache)
 
-	svc.Email = NewEmailService(deps.RiverClient, deps.CHEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer)
+	svc.Email = NewEmailService(deps.RiverClient, deps.TBEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer)
 	svc.Internal = NewInternalService(InternalServiceConfig{
 		UserService:        svc.User,
 		ClerkWebhookSecret: deps.ClerkWebhookSecret,
@@ -94,14 +94,14 @@ func NewWithDeps(deps ServiceDeps) *Service {
 
 	// Initialize SNS notification service
 	svc.SNSNotification = NewSNSNotificationService(
-		deps.CHEmailRepo,
-		deps.CHActivityRepo,
+		deps.TBEmailRepo,
+		deps.TBActivityRepo,
 		deps.WebhookSender,
 		deps.SuppressionRepo,
 	)
 
 	// Initialize Activity service
-	svc.Activity = NewActivityService(deps.CHActivityRepo)
+	svc.Activity = NewActivityService(deps.TBActivityRepo)
 
 	// Initialize Svix-dependent services if client is available
 	if deps.SvixClient != nil {
@@ -110,7 +110,7 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	if deps.WebhookSender != nil {
 		svc.InboundEmail = NewInboundEmailService(
 			deps.S3Factory,
-			deps.CHEmailRepo,
+			deps.TBEmailRepo,
 			deps.WebhookSender,
 		)
 	}

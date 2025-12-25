@@ -17,7 +17,7 @@ import (
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
-	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
+	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/webhook"
 )
 
@@ -56,7 +56,7 @@ type EmailWorker struct {
 	river.WorkerDefaults[SendEmailArgs]
 	sesClient     ses.Client
 	s3Factory     *s3.Factory
-	chRepo        chrepo.EmailRepositoryInterface
+	tbRepo        tbrepo.EmailRepositoryInterface
 	webhookSender webhook.Sender
 }
 
@@ -64,13 +64,13 @@ type EmailWorker struct {
 func NewEmailWorker(
 	sesClient ses.Client,
 	s3Factory *s3.Factory,
-	chRepo chrepo.EmailRepositoryInterface,
+	tbRepo tbrepo.EmailRepositoryInterface,
 	webhookSender webhook.Sender,
 ) *EmailWorker {
 	return &EmailWorker{
 		sesClient:     sesClient,
 		s3Factory:     s3Factory,
-		chRepo:        chRepo,
+		tbRepo:        tbRepo,
 		webhookSender: webhookSender,
 	}
 }
@@ -117,7 +117,7 @@ func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) e
 	}
 
 	// Write routing entry for reply tracking
-	if err := w.chRepo.InsertRouting(ctx, messageID, args.EmailID, args.UserID); err != nil {
+	if err := w.tbRepo.InsertRouting(ctx, messageID, args.EmailID, args.UserID); err != nil {
 		fmt.Printf("Warning: failed to insert routing entry: %v\n", err)
 	}
 
@@ -158,8 +158,8 @@ func (w *EmailWorker) logActivity(ctx context.Context, args SendEmailArgs, actio
 		}
 	}
 
-	if w.chRepo != nil {
-		w.chRepo.LogActivity(ctx, args.UserID, "email", args.EmailID, action, status, details, metadata)
+	if w.tbRepo != nil {
+		w.tbRepo.LogActivity(ctx, args.UserID, "email", args.EmailID, action, status, details, metadata)
 	}
 }
 

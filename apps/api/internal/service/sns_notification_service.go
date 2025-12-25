@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	v1 "github.com/emailapi/api/gen/v1"
-	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/repository/suppression"
+	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/webhook"
 )
 
@@ -16,21 +16,21 @@ import (
 // This includes: Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay.
 // Uses routing table to map message_id -> user_id for webhook delivery.
 type SNSNotificationService struct {
-	chRepo        *chrepo.EmailRepository
-	activityRepo  *chrepo.ActivityRepository
+	tbRepo        *tbrepo.EmailRepository
+	activityRepo  *tbrepo.ActivityRepository
 	webhookSender webhook.Sender
 	suppressRepo  *suppression.Repository
 }
 
 // NewSNSNotificationService creates a new SNSNotificationService.
 func NewSNSNotificationService(
-	chRepo *chrepo.EmailRepository,
-	activityRepo *chrepo.ActivityRepository,
+	tbRepo *tbrepo.EmailRepository,
+	activityRepo *tbrepo.ActivityRepository,
 	webhookSender webhook.Sender,
 	suppressRepo *suppression.Repository,
 ) *SNSNotificationService {
 	return &SNSNotificationService{
-		chRepo:        chRepo,
+		tbRepo:        tbRepo,
 		activityRepo:  activityRepo,
 		webhookSender: webhookSender,
 		suppressRepo:  suppressRepo,
@@ -171,7 +171,7 @@ func (s *SNSNotificationService) handleDelivery(ctx context.Context, notificatio
 	messageID := notification.Mail.MessageID
 
 	// Look up routing to get user_id
-	routing, err := s.chRepo.LookupRouting(ctx, messageID)
+	routing, err := s.tbRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		// Can't find routing - log and skip (might be old email)
 		return nil
@@ -224,7 +224,7 @@ func (s *SNSNotificationService) handleBounce(ctx context.Context, notification 
 	}
 
 	// Try to get routing for webhook/activity logging
-	routing, err := s.chRepo.LookupRouting(ctx, messageID)
+	routing, err := s.tbRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		// No routing - suppression was added above for hard bounces, skip webhook/activity
 		return nil
@@ -303,7 +303,7 @@ func (s *SNSNotificationService) handleComplaint(ctx context.Context, notificati
 	}
 
 	// Try to get routing for webhook/activity logging
-	routing, err := s.chRepo.LookupRouting(ctx, messageID)
+	routing, err := s.tbRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		// No routing - suppression was added above, skip webhook/activity
 		return nil
@@ -341,7 +341,7 @@ func (s *SNSNotificationService) handleComplaint(ctx context.Context, notificati
 func (s *SNSNotificationService) handleSend(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	routing, err := s.chRepo.LookupRouting(ctx, messageID)
+	routing, err := s.tbRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		return nil
 	}
@@ -358,7 +358,7 @@ func (s *SNSNotificationService) handleSend(ctx context.Context, notification *S
 func (s *SNSNotificationService) handleReject(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	routing, err := s.chRepo.LookupRouting(ctx, messageID)
+	routing, err := s.tbRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		return nil
 	}
@@ -385,7 +385,7 @@ func (s *SNSNotificationService) handleReject(ctx context.Context, notification 
 func (s *SNSNotificationService) handleDeliveryDelay(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	routing, err := s.chRepo.LookupRouting(ctx, messageID)
+	routing, err := s.tbRepo.LookupRouting(ctx, messageID)
 	if err != nil {
 		return nil
 	}

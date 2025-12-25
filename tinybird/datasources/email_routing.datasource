@@ -1,0 +1,13 @@
+DESCRIPTION >
+    Email routing table for reply mapping. Maps message_id to user_id for webhook routing.
+
+SCHEMA >
+    `message_id` String `json:$.message_id`,
+    `email_id` String `json:$.email_id`,
+    `user_id` String `json:$.user_id`,
+    `sent_at` DateTime `json:$.sent_at`
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(sent_at)"
+ENGINE_SORTING_KEY "message_id, sent_at"
+ENGINE_TTL "sent_at + toIntervalDay(90)"

@@ -33,19 +33,12 @@ migrate-pg-create:
 	@read -p "Migration name: " name; \
 	goose -dir db/postgres/migrations postgres "$(DATABASE_URL)" create $$name sql
 
-# ClickHouse
-migrate-ch-up:
-	goose -dir db/clickhouse/migrations clickhouse "$(CLICKHOUSE_URL)" up
+# Tinybird
+tinybird-push:
+	cd tinybird && tb push
 
-migrate-ch-down:
-	goose -dir db/clickhouse/migrations clickhouse "$(CLICKHOUSE_URL)" down
-
-migrate-ch-status:
-	goose -dir db/clickhouse/migrations clickhouse "$(CLICKHOUSE_URL)" status
-
-migrate-ch-create:
-	@read -p "Migration name: " name; \
-	goose -dir db/clickhouse/migrations clickhouse "$(CLICKHOUSE_URL)" create $$name sql
+tinybird-test:
+	cd tinybird && tb pipe data list_activity --user_id "test" --limit 10
 
 # River
 migrate-river:

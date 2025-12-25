@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/emailapi/api/internal/domain"
-	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	rediscache "github.com/emailapi/api/internal/repository/redis"
+	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 )
 
 const (
@@ -25,12 +25,12 @@ const (
 type APIKeyService struct {
 	store      Store
 	cache      rediscache.APIKeyCacheInterface
-	activity   chrepo.ActivityRepositoryInterface
+	activity   tbrepo.ActivityRepositoryInterface
 	hmacSecret []byte
 }
 
 // NewAPIKeyService creates a new APIKeyService.
-func NewAPIKeyService(store Store, cache rediscache.APIKeyCacheInterface, activity chrepo.ActivityRepositoryInterface, hmacSecret string) *APIKeyService {
+func NewAPIKeyService(store Store, cache rediscache.APIKeyCacheInterface, activity tbrepo.ActivityRepositoryInterface, hmacSecret string) *APIKeyService {
 	return &APIKeyService{
 		store:      store,
 		cache:      cache,

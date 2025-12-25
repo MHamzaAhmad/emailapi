@@ -19,11 +19,9 @@ type Config struct {
 	// Database configuration
 	DatabaseURL string `envconfig:"DATABASE_URL" required:"true"`
 
-	// ClickHouse configuration
-	ClickHouseHost     string `envconfig:"CLICKHOUSE_HOST" default:"localhost:9000"`
-	ClickHouseDatabase string `envconfig:"CLICKHOUSE_DATABASE" default:"emailapi"`
-	ClickHouseUsername string `envconfig:"CLICKHOUSE_USERNAME" default:"emailapi"`
-	ClickHousePassword string `envconfig:"CLICKHOUSE_PASSWORD" default:"emailapi"`
+	// Tinybird configuration (analytics)
+	TinybirdToken   string `envconfig:"TINYBIRD_TOKEN" required:"true"`
+	TinybirdBaseURL string `envconfig:"TINYBIRD_BASE_URL" default:"https://api.tinybird.co"`
 
 	// Redis configuration
 	RedisURL string `envconfig:"REDIS_URL" required:"true"`

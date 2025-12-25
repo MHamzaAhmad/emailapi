@@ -1,0 +1,18 @@
+DESCRIPTION >
+    Activity logs for analytics and debugging. Tracks all system events.
+
+SCHEMA >
+    `id` String `json:$.id`,
+    `user_id` String `json:$.user_id`,
+    `entity_type` LowCardinality(String) `json:$.entity_type`,
+    `entity_id` String `json:$.entity_id`,
+    `action` LowCardinality(String) `json:$.action`,
+    `status` LowCardinality(String) `json:$.status`,
+    `details` String `json:$.details`,
+    `metadata` String `json:$.metadata`,
+    `timestamp` DateTime64(3) `json:$.timestamp`
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(timestamp)"
+ENGINE_SORTING_KEY "user_id, entity_type, timestamp"
+ENGINE_TTL "timestamp + toIntervalDay(90)"

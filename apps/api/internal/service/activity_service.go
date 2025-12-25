@@ -3,16 +3,16 @@ package service
 import (
 	"context"
 
-	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
+	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 )
 
 // ActivityService handles activity log business logic.
 type ActivityService struct {
-	activityRepo chrepo.ActivityRepositoryInterface
+	activityRepo tbrepo.ActivityRepositoryInterface
 }
 
 // NewActivityService creates a new ActivityService.
-func NewActivityService(activityRepo chrepo.ActivityRepositoryInterface) *ActivityService {
+func NewActivityService(activityRepo tbrepo.ActivityRepositoryInterface) *ActivityService {
 	return &ActivityService{
 		activityRepo: activityRepo,
 	}
@@ -28,7 +28,7 @@ type ListFilters struct {
 
 // List retrieves activity logs for a user with pagination and filters.
 // userID is extracted from authenticated context in the transport layer.
-func (s *ActivityService) List(ctx context.Context, userID string, filters ListFilters, limit, offset int) ([]chrepo.ActivityLog, int, error) {
+func (s *ActivityService) List(ctx context.Context, userID string, filters ListFilters, limit, offset int) ([]tbrepo.ActivityLog, int, error) {
 	// Apply default limits
 	if limit <= 0 {
 		limit = 20
@@ -37,7 +37,7 @@ func (s *ActivityService) List(ctx context.Context, userID string, filters ListF
 		limit = 100
 	}
 
-	repoFilters := chrepo.ActivityFilters{}
+	repoFilters := tbrepo.ActivityFilters{}
 	if filters.EntityType != nil {
 		repoFilters.EntityType = *filters.EntityType
 	}

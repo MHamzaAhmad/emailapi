@@ -13,8 +13,8 @@ import (
 	internaldns "github.com/emailapi/api/internal/dns"
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/external/ses"
-	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	rediscache "github.com/emailapi/api/internal/repository/redis"
+	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 )
 
 const (
@@ -34,13 +34,13 @@ type DomainService struct {
 	ses              ses.Client
 	dns              *internaldns.Validator
 	cache            rediscache.DomainCacheInterface
-	activity         chrepo.ActivityRepositoryInterface
+	activity         tbrepo.ActivityRepositoryInterface
 	region           string
 	configurationSet string // SES configuration set for notifications
 }
 
 // NewDomainService creates a new DomainService.
-func NewDomainService(store Store, sesClient ses.Client, cache rediscache.DomainCacheInterface, activity chrepo.ActivityRepositoryInterface, region, configurationSet string) *DomainService {
+func NewDomainService(store Store, sesClient ses.Client, cache rediscache.DomainCacheInterface, activity tbrepo.ActivityRepositoryInterface, region, configurationSet string) *DomainService {
 	if region == "" {
 		region = defaultRegion
 	}

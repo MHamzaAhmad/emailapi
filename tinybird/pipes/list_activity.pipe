@@ -1,0 +1,56 @@
+DESCRIPTION >
+    List activity logs with pagination and optional filters.
+
+NODE list
+SQL >
+    %
+    SELECT 
+        id,
+        user_id,
+        entity_type,
+        entity_id,
+        action,
+        status,
+        details,
+        metadata,
+        toUnixTimestamp64Milli(timestamp) as timestamp
+    FROM activity_logs
+    WHERE user_id = {{String(user_id, '')}}
+    {% if defined(entity_type) %}
+        AND entity_type = {{String(entity_type)}}
+    {% end %}
+    {% if defined(action) %}
+        AND action = {{String(action)}}
+    {% end %}
+    {% if defined(start_time) %}
+        AND timestamp >= fromUnixTimestamp64Milli({{Int64(start_time)}})
+    {% end %}
+    {% if defined(end_time) %}
+        AND timestamp <= fromUnixTimestamp64Milli({{Int64(end_time)}})
+    {% end %}
+    ORDER BY timestamp DESC
+    LIMIT {{Int32(limit, 50)}}
+    OFFSET {{Int32(offset, 0)}}
+
+TYPE endpoint
+
+NODE count
+SQL >
+    %
+    SELECT count() as total
+    FROM activity_logs
+    WHERE user_id = {{String(user_id, '')}}
+    {% if defined(entity_type) %}
+        AND entity_type = {{String(entity_type)}}
+    {% end %}
+    {% if defined(action) %}
+        AND action = {{String(action)}}
+    {% end %}
+    {% if defined(start_time) %}
+        AND timestamp >= fromUnixTimestamp64Milli({{Int64(start_time)}})
+    {% end %}
+    {% if defined(end_time) %}
+        AND timestamp <= fromUnixTimestamp64Milli({{Int64(end_time)}})
+    {% end %}
+
+TYPE endpoint
