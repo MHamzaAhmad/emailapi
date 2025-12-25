@@ -25,11 +25,11 @@ jobs:
 
       - name: Apply migrations
         run: |
-          # Add statement_cache_capacity=0 to disable prepared statements for Neon's PgBouncer
+          # Use simple protocol to avoid prepared statements with Neon's PgBouncer
           if [[ "$DATABASE_URL" == *"?"* ]]; then
-            MIGRATION_URL="${DATABASE_URL}&statement_cache_capacity=0"
+            MIGRATION_URL="${DATABASE_URL}&prefer_simple_protocol=true"
           else
-            MIGRATION_URL="${DATABASE_URL}?statement_cache_capacity=0"
+            MIGRATION_URL="${DATABASE_URL}?prefer_simple_protocol=true"
           fi
           goose -dir db/postgres/migrations postgres "$MIGRATION_URL" up
         env:
