@@ -24,8 +24,9 @@ func NewUserCache(client *Client, ttl time.Duration) *UserCache {
 }
 
 // Key patterns - centralized in one place
-func keyUser(id string) string         { return "user:" + id }
-func keyUserEmail(email string) string { return "user:email:" + email }
+func keyUser(id string) string                   { return "user:" + id }
+func keyUserEmail(email string) string           { return "user:email:" + email }
+func keyUserExternalID(externalID string) string { return "user:external_id:" + externalID }
 
 // GetByID retrieves a cached user by ID.
 // Returns nil, nil if not found in cache.
@@ -91,4 +92,37 @@ func (c *UserCache) InvalidateByEmail(ctx context.Context, email string) error {
 // Use on Update/Delete operations.
 func (c *UserCache) InvalidateAll(ctx context.Context, id, email string) error {
 	return c.client.Del(ctx, keyUser(id), keyUserEmail(email))
+}
+
+// GetByExternalID retrieves a cached user by external ID (Clerk ID).
+// Returns nil, nil if not found in cache.
+func (c *UserCache) GetByExternalID(ctx context.Context, externalID string) (*domain.User, error) {
+	data, err := c.client.Get(ctx, keyUserExternalID(externalID))
+	if err != nil {
+		return nil, nil // Cache miss
+	}
+
+	var u domain.User
+	if err := json.Unmarshal([]byte(data), &u); err != nil {
+		return nil, nil // Invalid cache data, treat as miss
+	}
+
+	return &u, nil
+}
+
+// SetByExternalID caches a user by external ID (Clerk ID).
+func (c *UserCache) SetByExternalID(ctx context.Context, u *domain.User) error {
+	if u.ExternalID == nil || *u.ExternalID == "" {
+		return nil // Skip caching if no external ID
+	}
+	data, err := json.Marshal(u)
+	if err != nil {
+		return err
+	}
+	return c.client.Set(ctx, keyUserExternalID(*u.ExternalID), string(data), c.ttl)
+}
+
+// InvalidateByExternalID removes a user from cache by external ID.
+func (c *UserCache) InvalidateByExternalID(ctx context.Context, externalID string) error {
+	return c.client.Del(ctx, keyUserExternalID(externalID))
 }

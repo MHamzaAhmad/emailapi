@@ -7,19 +7,22 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/emailapi/api/internal/domain"
+	rediscache "github.com/emailapi/api/internal/repository/redis"
 )
 
 // UserService handles user business logic.
 type UserService struct {
 	store  Store
 	apiKey *APIKeyService
+	cache  rediscache.UserCacheInterface
 }
 
 // NewUserService creates a new UserService.
-func NewUserService(store Store, apiKey *APIKeyService) *UserService {
+func NewUserService(store Store, apiKey *APIKeyService, cache rediscache.UserCacheInterface) *UserService {
 	return &UserService{
 		store:  store,
 		apiKey: apiKey,
+		cache:  cache,
 	}
 }
 
@@ -73,11 +76,26 @@ func (s *UserService) GetByEmail(ctx context.Context, email string) (*domain.Use
 
 // GetByExternalID retrieves a user by their Clerk external ID.
 // Returns the internal user ID and error.
+// Uses cache-first approach for performance.
 func (s *UserService) GetByExternalID(ctx context.Context, externalID string) (string, error) {
+	// Try cache first
+	if s.cache != nil {
+		if cached, _ := s.cache.GetByExternalID(ctx, externalID); cached != nil {
+			return cached.ID, nil
+		}
+	}
+
+	// Cache miss - query DB
 	user, err := s.store.Users().GetByExternalID(ctx, externalID)
 	if err != nil {
 		return "", err
 	}
+
+	// Cache the result
+	if s.cache != nil {
+		_ = s.cache.SetByExternalID(ctx, user)
+	}
+
 	return user.ID, nil
 }
 

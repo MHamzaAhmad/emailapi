@@ -2,38 +2,47 @@ package service
 
 import (
 	"context"
+	"crypto/hmac"
 	"crypto/rand"
-	"crypto/subtle"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
+	"hash/crc32"
+	"os"
 	"strings"
-
-	"golang.org/x/crypto/argon2"
 
 	"github.com/emailapi/api/internal/domain"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	rediscache "github.com/emailapi/api/internal/repository/redis"
 )
 
-// Argon2id parameters for API key hashing
 const (
-	argon2Time    = 1
-	argon2Memory  = 64 * 1024 // 64 MB
-	argon2Threads = 4
-	argon2KeyLen  = 32
-	argon2SaltLen = 16
+	apiKeySecretLength   = 32 // 32 characters for the secret part
+	apiKeyChecksumLength = 4  // 4 characters for CRC32 checksum
 )
 
 // APIKeyService handles API key business logic.
 type APIKeyService struct {
-	store    Store
-	cache    rediscache.APIKeyCacheInterface
-	activity chrepo.ActivityRepositoryInterface
+	store      Store
+	cache      rediscache.APIKeyCacheInterface
+	activity   chrepo.ActivityRepositoryInterface
+	hmacSecret []byte
 }
 
 // NewAPIKeyService creates a new APIKeyService.
 func NewAPIKeyService(store Store, cache rediscache.APIKeyCacheInterface, activity chrepo.ActivityRepositoryInterface) *APIKeyService {
-	return &APIKeyService{store: store, cache: cache, activity: activity}
+	// Get HMAC secret from environment, fallback to a default for dev
+	hmacSecret := []byte(os.Getenv("API_KEY_HMAC_SECRET"))
+	if len(hmacSecret) == 0 {
+		hmacSecret = []byte("dev-secret-please-change-in-production")
+	}
+	return &APIKeyService{
+		store:      store,
+		cache:      cache,
+		activity:   activity,
+		hmacSecret: hmacSecret,
+	}
 }
 
 // Create creates a new API key for a user.
@@ -63,10 +72,7 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 	}
 
 	// Hash the key for storage
-	hashedKey, err := s.hashKey(rawKey)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to hash API key: %w", err)
-	}
+	hashedKey := s.hashKey(rawKey)
 
 	// Generate display prefix (first 12 chars + ...)
 	keyPrefix := rawKey[:12] + "..."
@@ -268,41 +274,53 @@ func (s *APIKeyService) Revoke(ctx context.Context, userID, keyID string) (*doma
 	if s.activity != nil {
 		_ = s.activity.LogAPIKey(ctx, userID, apiKey.ID, "revoke", "success", fmt.Sprintf("API Key %s revoked", apiKey.Name))
 	}
-
 	return result, nil
 }
 
 // ValidateAndGetUser validates an API key and returns the associated user.
-// This is used by authentication middleware.
+// Fast-path optimization: Checksum -> Redis Cache -> DB fallback.
 func (s *APIKeyService) ValidateAndGetUser(ctx context.Context, rawKey string) (*domain.User, *domain.APIKey, error) {
-	// Extract environment from key prefix
-	if !strings.HasPrefix(rawKey, "ep_") {
-		return nil, nil, fmt.Errorf("invalid API key format")
+	//  Step 1: Validate checksum (instant rejection for invalid keys)
+	if !s.validateChecksum(rawKey) {
+		return nil, nil, fmt.Errorf("invalid API key format or checksum")
 	}
 
-	// Hash the key for lookup
-	// First we need to find the key by iterating - this is inefficient
-	// In production, you'd use a key prefix lookup first
-	// For now, we'll use a different approach - store the salt with the hash
+	// Step 2: Hash the key for lookups
+	keyHash := s.hashKey(rawKey)
 
-	// Actually, since we're using Argon2id with unique salts per key,
-	// we need a different approach. We'll store the hash in a way that
-	// allows verification. Standard approach: extract prefix, find candidate keys,
-	// then verify.
+	// Step 3: Try Redis cache first (fast path)
+	if s.cache != nil {
+		if cachedKey, _ := s.cache.GetByKeyHash(ctx, keyHash); cachedKey != nil {
+			// Verify key is still active and not expired
+			if !cachedKey.IsActive {
+				return nil, nil, fmt.Errorf("API key is inactive")
+			}
+			if cachedKey.IsExpired() {
+				return nil, nil, fmt.Errorf("API key has expired")
+			}
 
-	// Extract the prefix for lookup (ep_ plus first few chars)
-	if len(rawKey) < 12 {
-		return nil, nil, fmt.Errorf("invalid API key format")
+			// Get user (this should also be cached)
+			user, err := s.store.Users().GetByID(ctx, cachedKey.UserID)
+			if err != nil {
+				return nil, nil, fmt.Errorf("user not found")
+			}
+
+			if !user.IsActive {
+				return nil, nil, fmt.Errorf("user is inactive")
+			}
+
+			// Async update last used (fire and forget)
+			go func() {
+				_ = s.store.APIKeys().UpdateLastUsed(context.Background(), cachedKey.ID)
+			}()
+
+			return user, cachedKey, nil
+		}
 	}
-	prefix := rawKey[:12] + "..."
 
-	apiKey, err := s.store.APIKeys().GetByPrefix(ctx, prefix)
+	// Step 4: Cache miss - look up in DB by hash
+	apiKey, err := s.store.APIKeys().GetByHash(ctx, keyHash)
 	if err != nil {
-		return nil, nil, fmt.Errorf("invalid API key")
-	}
-
-	// Verify the key matches the stored hash
-	if !s.verifyKey(rawKey, apiKey.KeyHash) {
 		return nil, nil, fmt.Errorf("invalid API key")
 	}
 
@@ -316,10 +334,17 @@ func (s *APIKeyService) ValidateAndGetUser(ctx context.Context, rawKey string) (
 		return nil, nil, fmt.Errorf("API key has expired")
 	}
 
-	// Update last used timestamp
-	_ = s.store.APIKeys().UpdateLastUsed(ctx, apiKey.ID)
+	// Cache the validated key for next time
+	if s.cache != nil {
+		_ = s.cache.SetByKeyHash(ctx, keyHash, apiKey)
+	}
 
-	// Get the user
+	// Async update last used (fire and forget)
+	go func() {
+		_ = s.store.APIKeys().UpdateLastUsed(context.Background(), apiKey.ID)
+	}()
+
+	// Get  the user
 	user, err := s.store.Users().GetByID(ctx, apiKey.UserID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("user not found")
@@ -332,25 +357,72 @@ func (s *APIKeyService) ValidateAndGetUser(ctx context.Context, rawKey string) (
 	return user, apiKey, nil
 }
 
-// generateRawKey generates a raw API key with the ep_ prefix.
-// Format: ep_<32 chars base62>
+// generateRawKey generates a raw API key with checksum.
+// Format: em_live_<32 chars>_<4 char checksum>
 func (s *APIKeyService) generateRawKey() (string, error) {
-	// Generate 32 random bytes
-	bytes := make([]byte, 32)
+	// Generate secret part
+	secret, err := s.generateSecret(apiKeySecretLength)
+	if err != nil {
+		return "", err
+	}
+
+	// Generate checksum
+	checksum := s.generateChecksum(secret)
+
+	// Format: em_live_<secret>_<checksum>
+	return fmt.Sprintf("em_live_%s_%s", secret, checksum), nil
+}
+
+// generateSecret generates a cryptographically random secret string.
+func (s *APIKeyService) generateSecret(length int) (string, error) {
+	bytes := make([]byte, length)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
 
-	// Encode to base62-like string (alphanumeric)
+	// Encode to base64 URL encoding (alphanumeric + - and _)
 	encoded := base64.RawURLEncoding.EncodeToString(bytes)
-	// Remove non-alphanumeric chars and limit to 32 chars
+	// Remove - and _ to make it cleaner (optional)
 	alphanumeric := strings.ReplaceAll(encoded, "-", "")
 	alphanumeric = strings.ReplaceAll(alphanumeric, "_", "")
-	if len(alphanumeric) > 32 {
-		alphanumeric = alphanumeric[:32]
+
+	// Truncate to desired length
+	if len(alphanumeric) > length {
+		alphanumeric = alphanumeric[:length]
 	}
 
-	return fmt.Sprintf("ep_%s", alphanumeric), nil
+	return alphanumeric, nil
+}
+
+// generateChecksum generates a CRC32 checksum for the secret.
+func (s *APIKeyService) generateChecksum(secret string) string {
+	crc := crc32.ChecksumIEEE([]byte(secret))
+	// Return last 4 hex digits
+	return fmt.Sprintf("%04x", crc&0xFFFF)
+}
+
+// validateChecksum validates that the key's checksum matches its secret.
+func (s *APIKeyService) validateChecksum(key string) bool {
+	// Parse key format: em_live_<secret>_<checksum>
+	parts := strings.Split(key, "_")
+	if len(parts) != 4 {
+		return false // Invalid format
+	}
+
+	if parts[0] != "em" || (parts[1] != "live" && parts[1] != "test") {
+		return false // Invalid prefix
+	}
+
+	secret := parts[2]
+	providedChecksum := parts[3]
+
+	if len(providedChecksum) != apiKeyChecksumLength {
+		return false
+	}
+
+	// Verify checksum
+	expectedChecksum := s.generateChecksum(secret)
+	return expectedChecksum == providedChecksum
 }
 
 // generateKeyID generates a unique alphanumeric key ID.
@@ -371,46 +443,17 @@ func (s *APIKeyService) generateKeyID() (string, error) {
 	return "ak_" + alphanumeric, nil
 }
 
-// hashKey creates an Argon2id hash of the API key.
-func (s *APIKeyService) hashKey(key string) (string, error) {
-	// Generate salt
-	salt := make([]byte, argon2SaltLen)
-	if _, err := rand.Read(salt); err != nil {
-		return "", err
-	}
-
-	// Hash with Argon2id
-	hash := argon2.IDKey([]byte(key), salt, argon2Time, argon2Memory, argon2Threads, argon2KeyLen)
-
-	// Encode as salt$hash (both base64)
-	saltB64 := base64.RawStdEncoding.EncodeToString(salt)
-	hashB64 := base64.RawStdEncoding.EncodeToString(hash)
-
-	return saltB64 + "$" + hashB64, nil
+// hashKey creates an HMAC-SHA256 hash of the API key.
+func (s *APIKeyService) hashKey(key string) string {
+	h := hmac.New(sha256.New, s.hmacSecret)
+	h.Write([]byte(key))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // verifyKey verifies an API key against its stored hash.
 func (s *APIKeyService) verifyKey(key, storedHash string) bool {
-	parts := strings.Split(storedHash, "$")
-	if len(parts) != 2 {
-		return false
-	}
-
-	salt, err := base64.RawStdEncoding.DecodeString(parts[0])
-	if err != nil {
-		return false
-	}
-
-	expectedHash, err := base64.RawStdEncoding.DecodeString(parts[1])
-	if err != nil {
-		return false
-	}
-
-	// Compute hash with same parameters
-	computedHash := argon2.IDKey([]byte(key), salt, argon2Time, argon2Memory, argon2Threads, argon2KeyLen)
-
-	// Constant-time comparison
-	return subtle.ConstantTimeCompare(computedHash, expectedHash) == 1
+	computedHash := s.hashKey(key)
+	return computedHash == storedHash
 }
 
 // GetScopes returns the scopes for an API key.

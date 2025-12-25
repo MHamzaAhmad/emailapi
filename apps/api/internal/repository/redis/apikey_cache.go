@@ -26,6 +26,7 @@ func NewAPIKeyCache(client *Client, ttl time.Duration) *APIKeyCache {
 // Key patterns - centralized in one place
 func keyAPIKey(id string) string            { return "apikey:" + id }
 func keyAPIKeyPrefix(prefix string) string  { return "apikey:prefix:" + prefix }
+func keyAPIKeyHash(keyHash string) string   { return "apikey:hash:" + keyHash }
 func keyAPIKeysByUser(userID string) string { return "apikeys:user:" + userID }
 
 // GetByID retrieves a cached API key by ID.
@@ -122,4 +123,34 @@ func (c *APIKeyCache) InvalidateByUserID(ctx context.Context, userID string) err
 // Use on Update/Delete/Revoke operations.
 func (c *APIKeyCache) InvalidateAll(ctx context.Context, id, prefix, userID string) error {
 	return c.client.Del(ctx, keyAPIKey(id), keyAPIKeyPrefix(prefix), keyAPIKeysByUser(userID))
+}
+
+// GetByKeyHash retrieves a cached API key by its hash (for fast-path auth).
+// Returns nil, nil if not found in cache.
+func (c *APIKeyCache) GetByKeyHash(ctx context.Context, keyHash string) (*domain.APIKey, error) {
+	data, err := c.client.Get(ctx, keyAPIKeyHash(keyHash))
+	if err != nil {
+		return nil, nil // Cache miss
+	}
+
+	var k domain.APIKey
+	if err := json.Unmarshal([]byte(data), &k); err != nil {
+		return nil, nil // Invalid cache data, treat as miss
+	}
+
+	return &k, nil
+}
+
+// SetByKeyHash caches an API key by its hash (for fast-path auth).
+func (c *APIKeyCache) SetByKeyHash(ctx context.Context, keyHash string, k *domain.APIKey) error {
+	data, err := json.Marshal(k)
+	if err != nil {
+		return err
+	}
+	return c.client.Set(ctx, keyAPIKeyHash(keyHash), string(data), c.ttl)
+}
+
+// InvalidateByKeyHash removes an API key from cache by its hash.
+func (c *APIKeyCache) InvalidateByKeyHash(ctx context.Context, keyHash string) error {
+	return c.client.Del(ctx, keyAPIKeyHash(keyHash))
 }

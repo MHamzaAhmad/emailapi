@@ -36,6 +36,11 @@ type APIKeyCacheInterface interface {
 	InvalidateByPrefix(ctx context.Context, prefix string) error
 	InvalidateByUserID(ctx context.Context, userID string) error
 	InvalidateAll(ctx context.Context, id, prefix, userID string) error
+
+	// Fast-path methods for auth validation (high-frequency, low-latency)
+	GetByKeyHash(ctx context.Context, keyHash string) (*domain.APIKey, error)
+	SetByKeyHash(ctx context.Context, keyHash string, k *domain.APIKey) error
+	InvalidateByKeyHash(ctx context.Context, keyHash string) error
 }
 
 // UserCacheInterface defines the interface for user caching operations.
@@ -47,6 +52,11 @@ type UserCacheInterface interface {
 	InvalidateByID(ctx context.Context, id string) error
 	InvalidateByEmail(ctx context.Context, email string) error
 	InvalidateAll(ctx context.Context, id, email string) error
+
+	// External ID lookup cache (for Clerk JWT authentication)
+	GetByExternalID(ctx context.Context, externalID string) (*domain.User, error)
+	SetByExternalID(ctx context.Context, u *domain.User) error
+	InvalidateByExternalID(ctx context.Context, externalID string) error
 }
 
 // Ensure concrete types implement interfaces
