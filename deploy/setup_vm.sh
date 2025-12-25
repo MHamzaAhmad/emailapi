@@ -27,7 +27,7 @@ sudo apt-get install -y certbot python3-certbot-nginx
 
 # Install Go (latest stable)
 echo "Installing Go..."
-GO_VERSION="1.23.0" # Update this to the desired version
+GO_VERSION="1.25.0" # Update this to the desired version
 wget "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz"
 sudo rm -rf /usr/local/go
 sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
