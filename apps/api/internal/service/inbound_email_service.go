@@ -13,6 +13,7 @@ import (
 	"github.com/jordan-wright/email"
 
 	v1 "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/internal/autoresponse"
 	"github.com/emailapi/api/internal/external/s3"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/webhook"
@@ -70,17 +71,20 @@ type SESNotification struct {
 
 // InboundEmail represents a parsed inbound email.
 type InboundEmail struct {
-	ID              string   `json:"id"`
-	MessageID       string   `json:"message_id"`
-	InReplyTo       string   `json:"in_reply_to"`
-	References      []string `json:"references"`
-	From            string   `json:"from"`
-	To              []string `json:"to"`
-	Subject         string   `json:"subject"`
-	Body            string   `json:"body"`
-	HTML            string   `json:"html"`
-	OriginalEmailID string   `json:"original_email_id"`
-	UserID          string   `json:"user_id"`
+	ID               string   `json:"id"`
+	MessageID        string   `json:"message_id"`
+	InReplyTo        string   `json:"in_reply_to"`
+	References       []string `json:"references"`
+	From             string   `json:"from"`
+	To               []string `json:"to"`
+	Subject          string   `json:"subject"`
+	Body             string   `json:"body"`
+	HTML             string   `json:"html"`
+	OriginalEmailID  string   `json:"original_email_id"`
+	UserID           string   `json:"user_id"`
+	IsAutoResponse   bool     `json:"is_auto_response"`
+	AutoResponseType string   `json:"auto_response_type,omitempty"`
+	AutoResponseInfo string   `json:"auto_response_info,omitempty"`
 }
 
 // SNSNotificationInput contains all fields from an SNS notification for verification and processing.
@@ -180,6 +184,28 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 		fmt.Printf("Warning: failed to insert routing entry for inbound email: %v\n", err)
 	}
 
+	// Check if this is an auto-response (OOO, vacation, bounce, etc.)
+	if inboundEmail.IsAutoResponse {
+		// Log auto-response but skip webhook delivery
+		s.chRepo.LogEmailEvent(
+			ctx,
+			routing.UserID,
+			routing.EmailID,
+			"auto_response",
+			"ignored",
+			fmt.Sprintf("Auto-response (%s) from %s: %s", inboundEmail.AutoResponseType, inboundEmail.From, inboundEmail.Subject),
+			map[string]interface{}{
+				"inbound_email_id":     inboundEmail.ID,
+				"message_id":           inboundEmail.MessageID,
+				"from":                 inboundEmail.From,
+				"subject":              inboundEmail.Subject,
+				"auto_response_type":   inboundEmail.AutoResponseType,
+				"auto_response_reason": inboundEmail.AutoResponseInfo,
+			},
+		)
+		return nil // Skip webhook for auto-responses
+	}
+
 	// Log the reply event to ClickHouse activity_logs
 	s.chRepo.LogEmailEvent(
 		ctx,
@@ -206,14 +232,21 @@ func (s *InboundEmailService) parseEmail(rawEmail []byte) (*InboundEmail, error)
 		return nil, fmt.Errorf("failed to parse email: %w", err)
 	}
 
+	// Detect auto-responses (OOO, vacation, bounces, etc.)
+	detector := autoresponse.NewDetector()
+	autoInfo := detector.Detect(parsed.Headers)
+
 	inbound := &InboundEmail{
-		ID:        uuid.New().String(),
-		MessageID: cleanMessageID(parsed.Headers.Get("Message-ID")),
-		InReplyTo: cleanMessageID(parsed.Headers.Get("In-Reply-To")),
-		From:      parsed.From,
-		Subject:   parsed.Subject,
-		Body:      string(parsed.Text),
-		HTML:      string(parsed.HTML),
+		ID:               uuid.New().String(),
+		MessageID:        cleanMessageID(parsed.Headers.Get("Message-ID")),
+		InReplyTo:        cleanMessageID(parsed.Headers.Get("In-Reply-To")),
+		From:             parsed.From,
+		Subject:          parsed.Subject,
+		Body:             string(parsed.Text),
+		HTML:             string(parsed.HTML),
+		IsAutoResponse:   autoInfo.IsAutoResponse,
+		AutoResponseType: string(autoInfo.Type),
+		AutoResponseInfo: autoInfo.Reason,
 	}
 
 	// Parse References header
