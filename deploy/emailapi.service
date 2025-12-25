@@ -1,0 +1,15 @@
+[Unit]
+Description=Email API Service
+After=network.target redis-server.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/emailapi/apps/api
+ExecStart=/opt/emailapi/apps/api/emailapi
+EnvironmentFile=/opt/emailapi/deploy/.env
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
