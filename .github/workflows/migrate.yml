@@ -24,7 +24,10 @@ jobs:
       - name: Install Goose
         run: go install github.com/pressly/goose/v3/cmd/goose@latest
 
-      - name: Apply migrations
+      - name: Install River CLI
+        run: go install github.com/riverqueue/river/cmd/river@latest
+
+      - name: Apply Goose migrations
         run: |
           # Use simple protocol to avoid prepared statements with Neon's PgBouncer
           if [[ "$DATABASE_URL" == *"?"* ]]; then
@@ -33,5 +36,10 @@ jobs:
             MIGRATION_URL="${DATABASE_URL}?prefer_simple_protocol=true"
           fi
           goose -dir db/postgres/migrations postgres "$MIGRATION_URL" up
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Apply River migrations
+        run: river migrate-up --database-url "$DATABASE_URL"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

@@ -13,10 +13,10 @@ git pull origin main
 echo "Installing dependencies..."
 # Assuming we are in the root of the monorepo
 cd apps/api
-/usr/local/go/bin/go mod download
+go mod download
 
 echo "Building application..."
-/usr/local/go/bin/go build -o emailapi main.go
+go build -o emailapi main.go
 
 echo "Restarting service..."
 sudo systemctl restart emailapi
