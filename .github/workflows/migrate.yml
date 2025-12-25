@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'db/postgres/migrations/**'
+  workflow_dispatch:
 
 jobs:
   apply_migrations:
