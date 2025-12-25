@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - main
-    # paths:
-    #   - 'db/postgres/migrations/**'
+    paths:
+      - 'db/postgres/migrations/**'
 
 jobs:
   apply_migrations:
