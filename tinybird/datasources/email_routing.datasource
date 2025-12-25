@@ -10,4 +10,4 @@ SCHEMA >
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(sent_at)"
 ENGINE_SORTING_KEY "message_id, sent_at"
-ENGINE_TTL "sent_at + toIntervalDay(90)"
+ENGINE_TTL "toDateTime(sent_at) + toIntervalDay(90)"

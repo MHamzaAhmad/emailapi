@@ -1,19 +1,10 @@
 DESCRIPTION >
-    List activity logs with pagination and optional filters.
+    Count activity logs with optional filters.
 
-NODE list
+NODE count
 SQL >
     %
-    SELECT 
-        id,
-        user_id,
-        entity_type,
-        entity_id,
-        action,
-        status,
-        details,
-        metadata,
-        toUnixTimestamp64Milli(timestamp) as timestamp
+    SELECT count() as total
     FROM activity_logs
     WHERE user_id = {{String(user_id, '')}}
     {% if defined(entity_type) %}
@@ -28,8 +19,5 @@ SQL >
     {% if defined(end_time) %}
         AND timestamp <= fromUnixTimestamp64Milli({{Int64(end_time)}})
     {% end %}
-    ORDER BY timestamp DESC
-    LIMIT {{Int32(limit, 50)}}
-    OFFSET {{Int32(offset, 0)}}
 
 TYPE endpoint

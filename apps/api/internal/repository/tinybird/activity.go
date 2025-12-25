@@ -114,14 +114,14 @@ func (r *ActivityRepository) List(ctx context.Context, userID string, filters Ac
 		return nil, 0, fmt.Errorf("failed to list activity: %w", err)
 	}
 
-	// Query count endpoint (same pipe, different node - accessed via query param)
+	// Query count endpoint (separate pipe)
 	countParams := make(map[string]string)
 	for k, v := range params {
-		countParams[k] = v
+		if k != "limit" && k != "offset" {
+			countParams[k] = v
+		}
 	}
-	// Note: Tinybird uses node query param to select which node to execute
-	// The count node returns total count
-	countResp, err := r.client.QueryPipe(ctx, "list_activity__count", params)
+	countResp, err := r.client.QueryPipe(ctx, "count_activity", countParams)
 	if err != nil {
 		// If count fails, we can still return results with unknown total
 		countResp = &PipeResponse{Data: []map[string]interface{}{{"total": float64(0)}}}
