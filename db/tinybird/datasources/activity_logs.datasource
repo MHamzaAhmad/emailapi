@@ -2,6 +2,7 @@ DESCRIPTION >
     Activity logs for analytics and debugging. Tracks all system events.
 
 TOKEN emailapi_server APPEND
+TOKEN emailapi_server READ
 
 SCHEMA >
     `id` String `json:$.id`,

@@ -2,6 +2,7 @@ DESCRIPTION >
     Email routing table for reply mapping. Maps message_id to user_id for webhook routing.
 
 TOKEN emailapi_server APPEND
+TOKEN emailapi_server READ
 
 SCHEMA >
     `message_id` String `json:$.message_id`,
