@@ -17,6 +17,11 @@ type DomainCacheInterface interface {
 	InvalidateByID(ctx context.Context, id string) error
 	InvalidateByUserID(ctx context.Context, userID string) error
 	InvalidateAll(ctx context.Context, id, userID string) error
+
+	// Fast-path methods for sending validation (high-frequency, low-latency)
+	GetSendingStatus(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error)
+	SetSendingStatus(ctx context.Context, d *domain.SendingDomain) error
+	InvalidateSendingStatus(ctx context.Context, userID, domainName string) error
 }
 
 // APIKeyCacheInterface defines the interface for API key caching operations.

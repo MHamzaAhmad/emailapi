@@ -258,11 +258,26 @@ func (s *DomainService) List(ctx context.Context, userID string, page, pageSize 
 }
 
 // GetVerifiedDomainForSending retrieves a domain by name for sender validation.
+// Uses a fast-path Redis cache for high-frequency lookups during email sending.
 func (s *DomainService) GetVerifiedDomainForSending(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error) {
+	// Fast-path: check Redis cache first (sub-ms latency)
+	if s.cache != nil {
+		if cached, _ := s.cache.GetSendingStatus(ctx, userID, domainName); cached != nil {
+			return cached, nil
+		}
+	}
+
+	// Cache miss: query database
 	d, err := s.store.Domains().GetByDomainName(ctx, userID, domainName)
 	if err != nil {
 		return nil, fmt.Errorf("domain not found: %w", err)
 	}
+
+	// Populate cache for next lookup
+	if s.cache != nil {
+		_ = s.cache.SetSendingStatus(ctx, d)
+	}
+
 	return d, nil
 }
 
@@ -287,9 +302,10 @@ func (s *DomainService) Delete(ctx context.Context, userID, domainID string) err
 		return fmt.Errorf("failed to delete domain: %w", err)
 	}
 
-	// Invalidate cache
+	// Invalidate cache (including fast-path sending cache)
 	if s.cache != nil {
 		_ = s.cache.InvalidateAll(ctx, domainID, userID)
+		_ = s.cache.InvalidateSendingStatus(ctx, userID, d.Domain)
 	}
 
 	// Log activity

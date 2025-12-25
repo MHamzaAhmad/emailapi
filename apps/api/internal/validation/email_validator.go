@@ -22,17 +22,24 @@ type SuppressionChecker interface {
 	CheckBatch(ctx context.Context, hashes []string) ([]string, error)
 }
 
+// MXCache caches MX record lookup results.
+type MXCache interface {
+	HasMX(ctx context.Context, domain string) (*bool, error)
+	SetMX(ctx context.Context, domain string, hasMX bool) error
+}
+
 // EmailValidator validates email addresses for sending.
 type EmailValidator struct {
 	verifier           *emailverifier.Verifier
 	domainChecker      DomainChecker
 	suppressionChecker SuppressionChecker
 	bodyValidator      *BodyValidator
+	mxCache            MXCache
 }
 
 // NewEmailValidator creates a new EmailValidator.
 // SMTP checking is disabled, as noted by the user.
-func NewEmailValidator(domainChecker DomainChecker, suppressionChecker SuppressionChecker, bodyValidator *BodyValidator) *EmailValidator {
+func NewEmailValidator(domainChecker DomainChecker, suppressionChecker SuppressionChecker, bodyValidator *BodyValidator, mxCache MXCache) *EmailValidator {
 	verifier := emailverifier.NewVerifier().
 		EnableDomainSuggest() // Enable typo detection
 
@@ -44,17 +51,19 @@ func NewEmailValidator(domainChecker DomainChecker, suppressionChecker Suppressi
 		domainChecker:      domainChecker,
 		suppressionChecker: suppressionChecker,
 		bodyValidator:      bodyValidator,
+		mxCache:            mxCache,
 	}
 }
 
-// ValidateSendEmail validates all email addresses in a send email request.
-// Runs email validation and suppression check in parallel using errgroup.
+// ValidateSendEmail validates all email addresses and body content in a send email request.
+// Runs email validation, suppression check, and body URL safety check in parallel using errgroup.
 // Returns nil if all validations pass, or ValidationErrors with all failures.
-func (v *EmailValidator) ValidateSendEmail(ctx context.Context, userID, from string, to, cc, bcc []string) error {
+func (v *EmailValidator) ValidateSendEmail(ctx context.Context, userID, from string, to, cc, bcc []string, body, html string) error {
 	g, ctx := errgroup.WithContext(ctx)
 
 	var validationErrors *ValidationErrors
 	var suppressedHashes []string
+	var bodyError error
 
 	// Goroutine 1: Standard email validation (sender domain + recipient format)
 	g.Go(func() error {
@@ -93,7 +102,16 @@ func (v *EmailValidator) ValidateSendEmail(ctx context.Context, userID, from str
 		return err
 	})
 
-	// Wait for both to complete
+	// Goroutine 3: Body URL safety validation (runs in parallel)
+	g.Go(func() error {
+		if v.bodyValidator == nil {
+			return nil
+		}
+		bodyError = v.bodyValidator.ValidateURLs(ctx, body, html)
+		return bodyError
+	})
+
+	// Wait for all to complete
 	if err := g.Wait(); err != nil {
 		// If it's a validation error, return it directly
 		if ve, ok := err.(*ValidationErrors); ok {
@@ -117,19 +135,19 @@ func (v *EmailValidator) ValidateSendEmail(ctx context.Context, userID, from str
 		errors.Add(SuppressionError("recipients", len(suppressedHashes)))
 	}
 
+	// Add body errors if any
+	if bodyError != nil {
+		if ve, ok := bodyError.(*ValidationErrors); ok {
+			for _, e := range ve.Errors {
+				errors.Add(e)
+			}
+		}
+	}
+
 	if errors.HasErrors() {
 		return errors
 	}
 	return nil
-}
-
-// ValidateBody validates email body content for unsafe URLs.
-// Returns nil if validation passes or body validator is not configured.
-func (v *EmailValidator) ValidateBody(ctx context.Context, body, html string) error {
-	if v.bodyValidator == nil {
-		return nil
-	}
-	return v.bodyValidator.ValidateURLs(ctx, body, html)
 }
 
 // validateAllAddresses performs all address validations in parallel.
@@ -159,7 +177,7 @@ func (v *EmailValidator) validateAllAddresses(ctx context.Context, userID, from 
 		wg.Add(1)
 		go func(idx int, e string) {
 			defer wg.Done()
-			if err := v.validateRecipient(e, formatField("to", idx)); err != nil {
+			if err := v.validateRecipient(ctx, e, formatField("to", idx)); err != nil {
 				addError(err)
 			}
 		}(i, email)
@@ -170,7 +188,7 @@ func (v *EmailValidator) validateAllAddresses(ctx context.Context, userID, from 
 		wg.Add(1)
 		go func(idx int, e string) {
 			defer wg.Done()
-			if err := v.validateRecipient(e, formatField("cc", idx)); err != nil {
+			if err := v.validateRecipient(ctx, e, formatField("cc", idx)); err != nil {
 				addError(err)
 			}
 		}(i, email)
@@ -181,7 +199,7 @@ func (v *EmailValidator) validateAllAddresses(ctx context.Context, userID, from 
 		wg.Add(1)
 		go func(idx int, e string) {
 			defer wg.Done()
-			if err := v.validateRecipient(e, formatField("bcc", idx)); err != nil {
+			if err := v.validateRecipient(ctx, e, formatField("bcc", idx)); err != nil {
 				addError(err)
 			}
 		}(i, email)
@@ -213,8 +231,9 @@ func (v *EmailValidator) validateSender(ctx context.Context, userID, from string
 	return nil
 }
 
-// validateRecipient validates a recipient email address.
-func (v *EmailValidator) validateRecipient(email, field string) *ValidationError {
+// validateRecipient validates a recipient email address with MX cache support.
+func (v *EmailValidator) validateRecipient(ctx context.Context, email, field string) *ValidationError {
+	// First, do quick syntax check via the verifier
 	result, err := v.verifier.Verify(email)
 	if err != nil {
 		// If verification fails entirely, treat as invalid
@@ -233,9 +252,29 @@ func (v *EmailValidator) validateRecipient(email, field string) *ValidationError
 		return InvalidDomainWithSuggestion(field, email, suggestedEmail)
 	}
 
-	// Check MX records
-	if !result.HasMxRecords {
-		return NoMXRecordsError(field, email, result.Syntax.Domain)
+	domainName := result.Syntax.Domain
+
+	// Fast-path: check MX cache first (sub-ms lookup)
+	if v.mxCache != nil {
+		if hasMX, _ := v.mxCache.HasMX(ctx, domainName); hasMX != nil {
+			if !*hasMX {
+				return NoMXRecordsError(field, email, domainName)
+			}
+			// Domain has MX records, validation passed
+			return nil
+		}
+	}
+
+	// Cache miss: use result from email-verifier (which already did MX lookup)
+	hasMX := result.HasMxRecords
+
+	// Cache the result for next time
+	if v.mxCache != nil {
+		_ = v.mxCache.SetMX(ctx, domainName, hasMX)
+	}
+
+	if !hasMX {
+		return NoMXRecordsError(field, email, domainName)
 	}
 
 	// Note: Disposable email check is intentionally skipped per user request

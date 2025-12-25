@@ -130,6 +130,7 @@ func main() {
 	domainCache := redisrepo.NewDomainCache(redisClient, cacheTTL)
 	apiKeyCache := redisrepo.NewAPIKeyCache(redisClient, cacheTTL)
 	userCache := redisrepo.NewUserCache(redisClient, cacheTTL)
+	mxCache := redisrepo.NewMXCache(redisClient)
 	logger.Info().Msg("✓ Initialized cache repositories")
 
 	// Sync suppression list from PostgreSQL to Redis on startup
@@ -211,6 +212,7 @@ func main() {
 		DomainCache:         domainCache,
 		APIKeyCache:         apiKeyCache,
 		UserCache:           userCache,
+		MXCache:             mxCache,
 		EventConsumer:       eventConsumer,
 		ClerkWebhookSecret:  cfg.ClerkWebhookSecret,
 	})

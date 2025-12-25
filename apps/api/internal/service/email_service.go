@@ -64,14 +64,10 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 		return nil, fmt.Errorf("user_id not found in context")
 	}
 
-	// Validate all email addresses before processing
+	// Validate all email addresses and body content in parallel
 	if s.validator != nil {
-		if err := s.validator.ValidateSendEmail(ctx, userID, req.From, req.To, req.Cc, req.Bcc); err != nil {
-			return nil, fmt.Errorf("email validation failed: %w", err)
-		}
-		// Validate body content for unsafe URLs
-		if err := s.validator.ValidateBody(ctx, req.Body, req.Html); err != nil {
-			return nil, fmt.Errorf("body validation failed: %w", err)
+		if err := s.validator.ValidateSendEmail(ctx, userID, req.From, req.To, req.Cc, req.Bcc, req.Body, req.Html); err != nil {
+			return nil, fmt.Errorf("validation failed: %w", err)
 		}
 	}
 
@@ -109,15 +105,20 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 		return nil, fmt.Errorf("send failed: %w", err)
 	}
 
-	// Write routing entry for reply tracking
+	// Write routing entry for reply tracking (async - don't block response)
 	if s.chRepo != nil {
-		_ = s.chRepo.InsertRouting(ctx, messageID, emailID, userID)
+		go func() {
+			if err := s.chRepo.InsertRouting(context.Background(), messageID, emailID, userID); err != nil {
+				// Log but don't fail - routing is for reply tracking, not critical path
+				fmt.Printf("Warning: failed to insert routing entry: %v\n", err)
+			}
+		}()
 	}
 
-	// Log success
-	s.logActivity(ctx, userID, emailID, "sent", fmt.Sprintf("Message ID: %s", messageID), req)
+	// Log success (async - don't block response)
+	go s.logActivity(context.Background(), userID, emailID, "sent", fmt.Sprintf("Message ID: %s", messageID), req)
 
-	// Send webhook notification
+	// Send webhook notification (already async)
 	s.sendWebhook(ctx, userID, emailID, messageID, req, "sent")
 
 	return &emailapi.SendEmailResponse{

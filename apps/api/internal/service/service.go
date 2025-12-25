@@ -58,6 +58,7 @@ type ServiceDeps struct {
 	DomainCache *rediscache.DomainCache
 	APIKeyCache *rediscache.APIKeyCache
 	UserCache   *rediscache.UserCache
+	MXCache     *rediscache.MXCache
 	// Event streaming
 	EventConsumer eventstream.Consumer
 	// Clerk configuration
@@ -79,8 +80,8 @@ func NewWithDeps(deps ServiceDeps) *Service {
 		bodyValidator = validation.NewBodyValidator(deps.RedisClient, deps.WebRiskClient)
 	}
 
-	// Create email validator with domain checker, suppression checker, and body validator
-	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo, bodyValidator)
+	// Create email validator with domain checker, suppression checker, body validator, and MX cache
+	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo, bodyValidator, deps.MXCache)
 
 	svc.Email = NewEmailService(deps.RiverClient, deps.CHEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer)
 	svc.Internal = NewInternalService(InternalServiceConfig{

@@ -92,3 +92,42 @@ func (c *DomainCache) InvalidateByUserID(ctx context.Context, userID string) err
 func (c *DomainCache) InvalidateAll(ctx context.Context, id, userID string) error {
 	return c.client.Del(ctx, keyDomain(id), keyDomainsByUser(userID))
 }
+
+// Fast-path key for sending validation lookups
+func keySendingStatus(userID, domainName string) string {
+	return "domain:sending:" + userID + ":" + domainName
+}
+
+// sendingStatusTTL is shorter than the main cache TTL for responsiveness to DNS changes.
+const sendingStatusTTL = 5 * time.Minute
+
+// GetSendingStatus retrieves a cached domain for sending validation.
+// This is a high-frequency, low-latency path optimized for email sending.
+// Returns nil, nil if not found in cache.
+func (c *DomainCache) GetSendingStatus(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error) {
+	data, err := c.client.Get(ctx, keySendingStatus(userID, domainName))
+	if err != nil {
+		return nil, nil // Cache miss
+	}
+
+	var d domain.SendingDomain
+	if err := json.Unmarshal([]byte(data), &d); err != nil {
+		return nil, nil // Invalid cache data, treat as miss
+	}
+
+	return &d, nil
+}
+
+// SetSendingStatus caches a domain for sending validation.
+func (c *DomainCache) SetSendingStatus(ctx context.Context, d *domain.SendingDomain) error {
+	data, err := json.Marshal(d)
+	if err != nil {
+		return err
+	}
+	return c.client.Set(ctx, keySendingStatus(d.UserID, d.Domain), string(data), sendingStatusTTL)
+}
+
+// InvalidateSendingStatus removes the sending status cache for a domain.
+func (c *DomainCache) InvalidateSendingStatus(ctx context.Context, userID, domainName string) error {
+	return c.client.Del(ctx, keySendingStatus(userID, domainName))
+}
