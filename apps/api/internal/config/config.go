@@ -17,7 +17,11 @@ type Config struct {
 	Env      string `envconfig:"ENV" default:"development"`
 
 	// Database configuration
+	// DatabaseURL is for pooled connections (app queries)
 	DatabaseURL string `envconfig:"DATABASE_URL" required:"true"`
+	// DatabaseURLDirect is for direct (non-pooled) connections
+	// Required by River work coordinator which uses LISTEN/NOTIFY
+	DatabaseURLDirect string `envconfig:"DATABASE_URL_DIRECT" required:"true"`
 
 	// Tinybird configuration (analytics)
 	TinybirdToken   string `envconfig:"TINYBIRD_TOKEN" required:"true"`

@@ -28,14 +28,7 @@ jobs:
         run: go install github.com/riverqueue/river/cmd/river@latest
 
       - name: Apply Goose migrations
-        run: |
-          # Use simple protocol to avoid prepared statements with Neon's PgBouncer
-          if [[ "$DATABASE_URL" == *"?"* ]]; then
-            MIGRATION_URL="${DATABASE_URL}&prefer_simple_protocol=true"
-          else
-            MIGRATION_URL="${DATABASE_URL}?prefer_simple_protocol=true"
-          fi
-          goose -dir db/postgres/migrations postgres "$MIGRATION_URL" up
+        run: goose -dir db/postgres/migrations postgres "$DATABASE_URL" up
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 

@@ -128,12 +128,15 @@ func main() {
 	}()
 	logger.Info().Msg("✓ Initialized suppression repository")
 
-	// Initialize River
-	riverPool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+	// Initialize River with direct (non-pooled) connection
+	// River work coordinator requires direct connection for LISTEN/NOTIFY
+	// See: https://riverqueue.com/docs/pgbouncer
+	riverPool, err := pgxpool.New(context.Background(), cfg.DatabaseURLDirect)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create River connection pool")
 	}
 	defer riverPool.Close()
+	logger.Info().Msg("✓ Connected River to database (direct connection)")
 
 	// Initialize Svix client first (needed for workers)
 	svixClient, err := svix.NewClient(cfg.SvixAPIKey)
