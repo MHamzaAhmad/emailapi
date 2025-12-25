@@ -92,8 +92,15 @@ export async function GET(request: Request) {
                     }
                 }, 15000)
 
-                // Stream events from backend
-                for await (const event of client.onReceive({ cursor, eventTypes: [], batchSize: 10 })) {
+                // Stream events from backend using the raw email service
+                const eventStream = client.email.streamEvents({ cursor, eventTypes: [], batchSize: 10 })
+
+                for await (const event of eventStream) {
+                    // Skip heartbeat events
+                    if (event.type === EventType.HEARTBEAT) {
+                        continue
+                    }
+
                     const payloadData = extractPayloadData(event)
 
                     const eventData = {

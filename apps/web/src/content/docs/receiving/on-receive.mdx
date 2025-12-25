@@ -1,49 +1,61 @@
 ---
 title: On Receive
-description: Listen for real-time email events with a persistent stream.
+description: Listen for real-time email events with typed callbacks.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
 # On Receive (Streaming)
 
-The `onReceive` method provides a powerful, persistent connection to our event stream. Unlike webhooks, you don't need to expose a public URL or handle signature verification.
+The `onReceive` method provides a persistent connection to our event stream with **typed callbacks** for each event type. Unlike webhooks, you don't need to expose a public URL or handle signature verification.
 
 <Callout type="info">
-  This is the recommended way to handle "reply-to-bot" flows, chat interfaces, or real-time dashboards.
+  This is the recommended way to handle reply-to-bot flows, chat interfaces, or real-time dashboards.
 </Callout>
 
 ## Usage
 
-Pass a `cursor` to start listening. If you crash or restart, pass the last event ID you processed as the cursor to resume exactly where you left off.
+Pass only the callbacks you need. Each callback receives a strongly-typed event payload.
 
 ```ts
-import { createClient, EventType } from 'emailapi-sdk';
+import { createClient } from '@emailapi/sdk'
 
-const client = createClient({ apiKey: 'em_...' });
+const client = createClient({ apiKey: 'em_...' })
 
-// "0" means start from the beginning of time. 
-// Empty string "" means start from now.
-const cursor = ""; 
-
-console.log("Listening for events...");
-
-for await (const event of client.onReceive({ cursor })) {
-  
-  // 1. Handle Inbound Replies
-  if (event.type === EventType.EMAIL_REPLIED) {
-    const reply = event.payload.value;
-    console.log(`User replied: ${reply.body}`);
+// Listen for replies
+client.onReceive({
+  onReplied: (reply) => {
+    console.log('Reply from:', reply.from)
+    console.log('Message:', reply.body)
   }
+})
+```
 
-  // 2. Handle Delivery Status
-  if (event.type === EventType.EMAIL_BOUNCED) {
-    const bounce = event.payload.value;
-    console.error(`Bounce for ${bounce.recipients.join(', ')}`);
-  }
-}
+## All Event Handlers
+
+Handle only what you need — no switch statements required.
+
+```ts
+const controller = client.onReceive({
+  cursor: '0',        // Start from beginning, or pass last event ID to resume
+  batchSize: 10,      // Optional: events per batch
+
+  onSent: (event) => console.log('Sent:', event.subject),
+  onDelivered: (event) => console.log('Delivered to:', event.recipients),
+  onReplied: (event) => console.log('Reply:', event.body),
+  onBounced: (event) => console.log('Bounced:', event.bounceType),
+  onFailed: (event) => console.log('Failed:', event.error),
+  onComplained: (event) => console.log('Spam complaint'),
+  onRejected: (event) => console.log('Rejected:', event.reason),
+  onDelayed: (event) => console.log('Delayed:', event.delayType),
+
+  onError: (err) => console.error('Stream error:', err)
+})
+
+// Stop listening when done
+controller.abort()
 ```
 
 ## Resiliency
 
-The stream automatically handles keep-alives (heartbeats). If the connection drops, our SDK will throw an error, allowing your application logic to reconnect (with the last cursor).
+The stream automatically handles keep-alives (heartbeats). If the connection drops, the `onError` callback fires so your application can reconnect with the last cursor.

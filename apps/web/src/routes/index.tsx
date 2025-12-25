@@ -12,6 +12,7 @@ import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { CodeWindow } from '@/components/ui/code-window'
 import { ModeToggle } from '@/components/mode-toggle'
+import { Features } from '@/components/landing/Features'
 
 export const Route = createFileRoute('/')(
   {
@@ -86,6 +87,7 @@ function LandingContent() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-20">
               <Button asChild className="h-9 px-6 text-sm shadow-sm rounded-md">
+                {/* @ts-expect-error auth route */}
                 <Link to="/sign-up">Start Building</Link>
               </Button>
               <Button asChild variant="outline" className="h-9 px-6 text-sm bg-background hover:bg-muted/50 rounded-md">
@@ -109,7 +111,22 @@ function LandingContent() {
                     label: "TypeScript",
                     value: "ts",
                     language: "typescript",
-                    content: `import { EmailClient } from '@emailapi/sdk';\n\nconst client = new EmailClient('em_live_...');\n\n// Send an email\nawait client.send({\n  from: 'updates@app.com',\n  to: 'user@example.com',\n  subject: 'Welcome!',\n  body: 'Thanks for signing up.'\n});\n\n// Listen for replies (Real-time)\nclient.onReceive(async (email) => {\n  console.log('New reply:', email.subject);\n});`
+                    content: `import { createClient } from 'emailapi-sdk'
+
+const client = createClient({ apiKey: 'em_...' })
+
+// Send an email
+await client.send({
+  from: 'hello@yourapp.com',
+  to: ['user@example.com'],
+  subject: 'Welcome!',
+  body: 'Thanks for signing up.'
+})
+
+// Listen for replies
+client.onReceive({
+  onReplied: (reply) => console.log('New reply:', reply.body)
+})`
                   },
                   {
                     label: "cURL",
@@ -138,28 +155,8 @@ function LandingContent() {
           <div className="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
         </section>
 
-        {/* Minimal Features Section */}
-        <section className="py-24">
-          <div className="mx-auto max-w-5xl px-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
-              <MinimalFeature
-                icon={Mail01Icon}
-                title="Direct & Replyable"
-                description="Every email sent helps build a conversation. Listen to replies directly in your app via our SDKs or webhooks."
-              />
-              <MinimalFeature
-                icon={ZapIcon}
-                title="High Performance"
-                description="Built on gRPC and HTTP/2. Global edge network ensures your emails are dispatched in milliseconds."
-              />
-              <MinimalFeature
-                icon={LockKeyIcon}
-                title="Private & Secure"
-                description="We don't read your emails. Ephemeral storage options available for GDPR compliance. Full encryption."
-              />
-            </div>
-          </div>
-        </section>
+        {/* Bento Grid Features Section */}
+        <Features />
 
         {/* Simple CTA */}
         <section className="py-24 px-6 border-t border-dashed border-border/40">
@@ -169,6 +166,7 @@ function LandingContent() {
               Get your API key in seconds. 5,000 free emails per month.
             </p>
             <Button asChild className="h-9 px-8 rounded-md text-sm">
+              {/* @ts-expect-error auth route */}
               <Link to="/sign-up">Start Building Now</Link>
             </Button>
           </div>
@@ -195,18 +193,6 @@ function LandingContent() {
           </div>
         </div>
       </footer>
-    </div>
-  )
-}
-
-function MinimalFeature({ icon, title, description }: { icon: any, title: string, description: string }) {
-  return (
-    <div className="flex flex-col items-center text-center gap-3">
-      <div className="h-10 w-10 rounded-md bg-secondary/50 flex items-center justify-center text-foreground mb-1">
-        <HugeiconsIcon icon={icon} size={20} strokeWidth={1.5} />
-      </div>
-      <h3 className="text-base font-bold tracking-tight">{title}</h3>
-      <p className="text-muted-foreground leading-relaxed text-sm max-w-[280px]">{description}</p>
     </div>
   )
 }
