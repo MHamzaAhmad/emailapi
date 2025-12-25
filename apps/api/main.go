@@ -21,6 +21,7 @@ import (
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/external/svix"
+	"github.com/emailapi/api/internal/external/webrisk"
 	chrepo "github.com/emailapi/api/internal/repository/clickhouse"
 	"github.com/emailapi/api/internal/repository/postgres"
 	redisrepo "github.com/emailapi/api/internal/repository/redis"
@@ -160,6 +161,13 @@ func main() {
 	}
 	logger.Info().Msg("✓ Initialized Svix client")
 
+	// Initialize Web Risk client
+	webRiskClient, err := webrisk.NewClient(context.Background(), cfg.WebRiskProjectID, cfg.WebRiskAPIKey)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create Web Risk client")
+	}
+	logger.Info().Msg("✓ Initialized Web Risk client")
+
 	// Create event stream publisher and consumer
 	eventPublisher := eventstream.NewPublisher(redisClient)
 	eventConsumer := eventstream.NewConsumer(redisClient)
@@ -217,6 +225,7 @@ func main() {
 		ClerkWebhookSecret:  cfg.ClerkWebhookSecret,
 		APIKeyHMACSecret:    cfg.APIKeyHMACSecret,
 		RedisClient:         redisClient,
+		WebRiskClient:       webRiskClient,
 	})
 
 	// Initialize Clerk SDK with secret key
