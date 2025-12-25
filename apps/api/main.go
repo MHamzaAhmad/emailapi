@@ -215,6 +215,8 @@ func main() {
 		MXCache:             mxCache,
 		EventConsumer:       eventConsumer,
 		ClerkWebhookSecret:  cfg.ClerkWebhookSecret,
+		APIKeyHMACSecret:    cfg.APIKeyHMACSecret,
+		RedisClient:         redisClient,
 	})
 
 	// Initialize Clerk SDK with secret key

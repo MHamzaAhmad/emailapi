@@ -53,6 +53,9 @@ type Config struct {
 	ClerkSecretKey     string `envconfig:"CLERK_SECRET_KEY" required:"true"`
 	ClerkWebhookSecret string `envconfig:"CLERK_WEBHOOK_SECRET" required:"true"`
 
+	// API Key Configuration
+	APIKeyHMACSecret string `envconfig:"API_KEY_HMAC_SECRET" default:"dev-secret-please-change-in-production"`
+
 	// Web Risk Configuration (for URL safety validation)
 	WebRiskAPIKey    string `envconfig:"WEB_RISK_API_KEY"`
 	WebRiskProjectID string `envconfig:"WEB_RISK_PROJECT_ID"`

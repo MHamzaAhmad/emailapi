@@ -36,8 +36,8 @@ type Service struct {
 // Note: DomainService requires SES client and must be set separately using SetDomainService.
 func New(store Store) *Service {
 	svc := &Service{store: store}
-	svc.APIKey = NewAPIKeyService(store, nil, nil)    // Cache and Activity set via NewWithDeps
-	svc.User = NewUserService(store, svc.APIKey, nil) // Cache set via NewWithDeps
+	svc.APIKey = NewAPIKeyService(store, nil, nil, "") // Cache, Activity, and HMAC secret set via NewWithDeps
+	svc.User = NewUserService(store, svc.APIKey, nil)  // Cache set via NewWithDeps
 	return svc
 }
 
@@ -63,6 +63,8 @@ type ServiceDeps struct {
 	EventConsumer eventstream.Consumer
 	// Clerk configuration
 	ClerkWebhookSecret string
+	// API Key Configuration
+	APIKeyHMACSecret string
 	// Web Risk client for URL safety validation
 	WebRiskClient webrisk.Client
 	RedisClient   *rediscache.Client
@@ -72,7 +74,7 @@ type ServiceDeps struct {
 func NewWithDeps(deps ServiceDeps) *Service {
 	svc := New(deps.Store)
 	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.DomainCache, deps.CHActivityRepo, deps.Region, deps.SESConfigurationSet)
-	svc.APIKey = NewAPIKeyService(deps.Store, deps.APIKeyCache, deps.CHActivityRepo)
+	svc.APIKey = NewAPIKeyService(deps.Store, deps.APIKeyCache, deps.CHActivityRepo, deps.APIKeyHMACSecret)
 	svc.User = NewUserService(deps.Store, svc.APIKey, deps.UserCache)
 
 	// Create body validator for URL safety checking (optional if Web Risk not configured)

@@ -9,7 +9,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"hash/crc32"
-	"os"
 	"strings"
 
 	"github.com/emailapi/api/internal/domain"
@@ -31,17 +30,12 @@ type APIKeyService struct {
 }
 
 // NewAPIKeyService creates a new APIKeyService.
-func NewAPIKeyService(store Store, cache rediscache.APIKeyCacheInterface, activity chrepo.ActivityRepositoryInterface) *APIKeyService {
-	// Get HMAC secret from environment, fallback to a default for dev
-	hmacSecret := []byte(os.Getenv("API_KEY_HMAC_SECRET"))
-	if len(hmacSecret) == 0 {
-		hmacSecret = []byte("dev-secret-please-change-in-production")
-	}
+func NewAPIKeyService(store Store, cache rediscache.APIKeyCacheInterface, activity chrepo.ActivityRepositoryInterface, hmacSecret string) *APIKeyService {
 	return &APIKeyService{
 		store:      store,
 		cache:      cache,
 		activity:   activity,
-		hmacSecret: hmacSecret,
+		hmacSecret: []byte(hmacSecret),
 	}
 }
 
