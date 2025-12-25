@@ -12,6 +12,9 @@ const config = defineConfig({
   server: {
     port: 3000,
   },
+  define: {
+    'process.env': {},
+  },
   plugins: [
     mdx(MdxConfig),
     devtools(),
