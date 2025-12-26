@@ -337,7 +337,7 @@ func main() {
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Set CORS headers
-		w.Header().Set("Access-Control-Allow-Origin", "*") // In production, specify exact origins
+		w.Header().Set("Access-Control-Allow-Origin", "https://simpleemailapi.dev,http://localhost:3000,https://www.simpleemailapi.dev") // In production, specify exact origins
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, X-Webhook-Secret, Connect-Protocol-Version, Connect-Timeout-Ms, Grpc-Timeout, X-Grpc-Web, X-User-Agent")
 		w.Header().Set("Access-Control-Expose-Headers", "Content-Length, Content-Type, Grpc-Status, Grpc-Message")
