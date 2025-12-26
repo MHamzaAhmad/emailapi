@@ -26,15 +26,13 @@
     },
     "tabs": [
         {
-            "name": "API Reference",
-            "url": "api-reference"
-        }
-    ],
-    "anchors": [
+            "name": "Documentation",
+            "url": "docs"
+        },
         {
-            "name": "GitHub",
-            "icon": "github",
-            "url": "https://github.com/msgmorph"
+            "name": "API Reference",
+            "url": "api-reference",
+            "openapi": "/api-reference/openapi.json"
         }
     ],
     "navigation": [
@@ -60,51 +58,11 @@
             ]
         },
         {
-            "group": "API Reference",
+            "group": "Overview",
             "pages": [
                 "api-reference/introduction"
             ]
-        },
-        {
-            "group": "Emails",
-            "pages": [
-                "api-reference/emails/send-email",
-                "api-reference/emails/list-emails",
-                "api-reference/emails/get-email"
-            ]
-        },
-        {
-            "group": "Webhooks",
-            "pages": [
-                "api-reference/webhooks/create-webhook",
-                "api-reference/webhooks/list-webhooks",
-                "api-reference/webhooks/get-webhook",
-                "api-reference/webhooks/update-webhook",
-                "api-reference/webhooks/delete-webhook"
-            ]
-        },
-        {
-            "group": "Users",
-            "pages": [
-                "api-reference/users/get-current-user",
-                "api-reference/users/regenerate-api-key"
-            ]
         }
     ],
-    "openapi": [
-        "api-reference/openapi.json"
-    ],
-    "api": {
-        "baseUrl": "https://api.msgmorph.com",
-        "auth": {
-            "method": "bearer",
-            "name": "Authorization"
-        },
-        "playground": {
-            "mode": "simple"
-        }
-    },
-    "footerSocials": {
-        "github": "https://github.com/msgmorph"
-    }
+    "footerSocials": {}
 }

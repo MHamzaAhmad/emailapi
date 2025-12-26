@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "github.com/emailapi/api/gen/v1";
+
+import "gnostic/openapi/v3/annotations.proto";
+
+// Document-level OpenAPI configuration for MsgMorph API.
+// This file provides metadata for the generated OpenAPI spec used by Mintlify.
+option (gnostic.openapi.v3.document) = {
+  info: {
+    title: "MsgMorph API";
+    version: "1.0.0";
+    description: "The MsgMorph API is a type-safe email API for sending transactional emails with real-time event streaming. Built on Connect RPC for maximum type safety and developer experience.";
+    contact: {
+      name: "MsgMorph Support";
+      url: "https://msgmorph.com";
+      email: "support@msgmorph.com";
+    }
+  }
+  servers: [
+    {
+      url: "https://api.msgmorph.com";
+      description: "Production";
+    }
+  ]
+  components: {
+    security_schemes: {
+      additional_properties: [
+        {
+          name: "BearerAuth";
+          value: {
+            security_scheme: {
+              type: "http";
+              scheme: "bearer";
+              description: "API key authentication. Get your API key from the MsgMorph dashboard and include it in the Authorization header as: Bearer em_live_xxxxx";
+            }
+          }
+        }
+      ]
+    }
+  }
+  security: [
+    {
+      additional_properties: [
+        {
+          name: "BearerAuth";
+          value: {
+            value: []
+          }
+        }
+      ]
+    }
+  ]
+};

@@ -1,6 +1,21 @@
 {
   "openapi": "3.1.0",
-  "info": {},
+  "info": {
+    "title": "MsgMorph API",
+    "description": "The MsgMorph API is a type-safe email API for sending transactional emails with real-time event streaming. Built on Connect RPC for maximum type safety and developer experience.",
+    "contact": {
+      "name": "MsgMorph Support",
+      "url": "https://msgmorph.com",
+      "email": "support@msgmorph.com"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.msgmorph.com",
+      "description": "Production"
+    }
+  ],
   "paths": {
     "/v1.DomainService/AddDomain": {
       "post": {
@@ -1510,9 +1525,20 @@
         "title": "VerifyDomainResponse",
         "additionalProperties": false
       }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "description": "API key authentication. Get your API key from the MsgMorph dashboard and include it in the Authorization header as: Bearer em_live_xxxxx",
+        "scheme": "bearer"
+      }
     }
   },
-  "security": [],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
   "tags": [
     {
       "name": "v1.DomainService",
