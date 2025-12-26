@@ -116,7 +116,7 @@ function RichCodeRenderer({ content, language }: { content: string; language: st
     if (language === "bash" || language === "curl") {
         return (
             <span className="text-foreground/80">
-                <Keyword>curl</Keyword> <Operator>-</Operator><Keyword>X</Keyword> POST https://api.simpleemailapi.dev/v1/send <Operator>{"\\"}</Operator>
+                <Keyword>curl</Keyword> <Operator>-</Operator><Keyword>X</Keyword> POST https://api.simpleemailapi.dev/v1.EmailService/Send <Operator>{"\\"}</Operator>
                 {"\n"}
                 {"  "}<Operator>-</Operator><Keyword>H</Keyword> <String>"Authorization: Bearer em_live_..."</String> <Operator>{"\\"}</Operator>
                 {"\n"}
