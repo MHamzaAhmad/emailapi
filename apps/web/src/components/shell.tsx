@@ -7,8 +7,7 @@ import {
     GlobeIcon,
     Key01Icon,
     WebhookIcon,
-    Book02Icon,
-    Settings01Icon
+    Book02Icon
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/mode-toggle'
@@ -37,7 +36,7 @@ export function Shell({ children }: ShellProps) {
                         <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
                             <HugeiconsIcon icon={PackageIcon} size={14} strokeWidth={2.5} />
                         </div>
-                        <span className="hidden md:inline-block text-sm">msgmorph</span>
+                        <span className="hidden md:inline-block text-sm">SimpleEmailAPI</span>
                     </Link>
 
                     <nav className="flex items-center gap-1">

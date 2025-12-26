@@ -2,17 +2,13 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { SignedIn, SignedOut, SignInButton, Waitlist, UserButton } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  PackageIcon,
-  ZapIcon,
-  Mail01Icon,
-  LockKeyIcon,
-  Book02Icon
+  PackageIcon
 } from '@hugeicons/core-free-icons'
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { CodeWindow } from '@/components/ui/code-window'
 import { ModeToggle } from '@/components/mode-toggle'
-import { Features } from '@/components/landing/Features'
+import { GridOfTruth } from '@/components/landing/GridOfTruth'
 import {
   Dialog,
   DialogContent,
@@ -50,49 +46,56 @@ function RedirectToDashboard() {
 
 function LandingContent() {
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans flex flex-col">
-      {/* Navigation - Matching Shell Header Exactly */}
+    <div className="min-h-screen bg-background text-foreground font-sans flex flex-col antialiased">
+      {/* Navigation - Aligned with Dashboard Shell */}
       <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-2 font-bold tracking-tight text-foreground/90 hover:text-foreground transition-colors">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-6 gap-4">
+          <div className="flex items-center gap-2 font-bold tracking-tight text-foreground/90 mr-6">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
               <HugeiconsIcon icon={PackageIcon} size={14} strokeWidth={2.5} />
             </div>
             <span className="text-sm">SimpleEmailAPI</span>
           </div>
-          <div className="hidden md:flex items-center gap-4">
-            <ModeToggle />
+          <div className="flex items-center gap-4">
             <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Documentation</a>
             <SignedOut>
               <SignInButton mode="modal">
-                <Button size="sm" className="h-8 px-4 text-xs font-medium">
+                <Button size="sm" variant="outline" className="h-8 px-4 text-xs font-medium border-dashed border-border hover:bg-muted/50 rounded-md">
                   Login
                 </Button>
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <UserButton />
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "h-7 w-7 rounded-full ring-2 ring-background hover:ring-muted transition-all"
+                  }
+                }}
+              />
             </SignedIn>
+            <div className="h-4 w-[1px] bg-border/60 mx-1" />
+            <ModeToggle />
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
       <main className="flex-1">
-        <section className="relative px-6 pt-24 pb-12 overflow-hidden">
+        <section className="relative px-6 pt-24 pb-20 overflow-hidden border-b border-dashed border-border/40">
           <div className="mx-auto max-w-4xl text-center">
-            <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl leading-[1.1]">
-              The Simplest API for <br /> <span className="text-primary">Inbound & Outbound</span>
+            <h1 className="mb-6 text-5xl font-bold tracking-tighter sm:text-7xl leading-[1.05] text-foreground">
+              Simple. Performant. <br /> <span className="text-muted-foreground/40 font-medium">Privacy Focused.</span>
             </h1>
-            <p className="mx-auto mb-10 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl">
-              High-performance email infrastructure for modern teams. <br className="hidden sm:block" />
-              Currently in private beta. Login if you have an invite.
+            <p className="mx-auto mb-10 text-base text-muted-foreground leading-relaxed max-w-2xl font-medium">
+              Enterprise-grade email infrastructure for modern engineering teams. <br className="hidden sm:block" />
+              Pay only for what you use. <span className="text-foreground">$0.25 per 1,000 emails</span>.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-20">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-24">
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button className="h-9 px-6 text-sm shadow-sm rounded-md">
+                  <Button className="h-9 px-6 text-xs font-semibold shadow-sm rounded-md">
                     Join Waitlist
                   </Button>
                 </DialogTrigger>
@@ -100,21 +103,18 @@ function LandingContent() {
                   <Waitlist />
                 </DialogContent>
               </Dialog>
-              <Button asChild variant="outline" className="h-9 px-6 text-sm bg-background hover:bg-muted/50 rounded-md">
+              <Button asChild variant="outline" className="h-9 px-6 text-xs font-semibold bg-background hover:bg-muted/50 rounded-md border-dashed border-border">
                 <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer">
-                  <HugeiconsIcon icon={Book02Icon} size={14} className="mr-2 text-muted-foreground" />
-                  Documentation
+                  API Documentation
                 </a>
               </Button>
             </div>
 
             {/* Centered Code Window */}
             <div className="relative mx-auto max-w-3xl">
-              {/* Subtle Back Glow */}
-              <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-b from-primary/5 to-transparent blur-3xl opacity-50" />
-
+              <div className="absolute -inset-10 rounded-[3rem] bg-primary/5 blur-3xl -z-10" />
               <CodeWindow
-                className="w-full border-border/60 shadow-xl"
+                className="w-full border-border/60 rounded-xl shadow-2xl"
                 tabs={[
                   {
                     label: "TypeScript",
@@ -141,88 +141,95 @@ client.onReceive({
                     label: "cURL",
                     value: "curl",
                     language: "bash",
-                    content: `curl -X POST https://api.simpleemailapi.dev/v1/send \\\n  -H "Authorization: Bearer em_live_..." \\\n  -d '{\n    "from": "updates@app.com",\n    "to": ["user@example.com"],\n    "subject": "Welcome!",\n    "body": "Thanks for signing up."\n  }'`
+                    content: `curl -X POST https://api.simpleemailapi.dev/v1/send \\
+  -H "Authorization: Bearer em_live_..." \\
+  -d '{
+    "from": "updates@app.com",
+    "to": ["user@example.com"],
+    "subject": "Welcome!",
+    "body": "Thanks for signing up."
+  }'`
                   },
                   {
                     label: "Go",
                     value: "go",
                     language: "go",
-                    content: `package main\n\nimport "github.com/simpleemailapi/go-sdk"\n\nfunc main() {\n  client := simpleemailapi.NewClient("em_live_...")\n\n  // Send Email\n  client.Send(&simpleemailapi.Message{\n    From:    "updates@app.com",\n    To:      []string{"user@example.com"},\n    Subject: "Welcome!",\n    Body:    "Thanks for signing up.",\n  })\n}`
-                  },
-                  {
-                    label: "gRPC",
-                    value: "grpc",
-                    language: "bash",
-                    content: `grpcurl -d '{\n  "from": "updates@app.com",\n  "to": ["user@example.com"],\n  "subject": "Welcome!",\n  "body": "Thanks for signing up."\n}' \\\n  -H "Authorization: Bearer em_live_..." \\\n  api.simpleemailapi.dev:443 simpleemailapi.v1.EmailService/Send`
+                    content: `package main
+
+import "github.com/simpleemailapi/go-sdk"
+
+func main() {
+  client := simpleemailapi.NewClient("em_live_...")
+
+  // Send Email
+  client.Send(&simpleemailapi.Message{
+    From:    "updates@app.com",
+    To:      []string{"user@example.com"},
+    Subject: "Welcome!",
+    Body:    "Thanks for signing up.",
+  })
+}`
                   }
                 ]}
               />
             </div>
           </div>
 
-          {/* Background Grid */}
+          {/* Background Grid - Subtle Dashed */}
           <div className="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
         </section>
 
-        {/* Bento Grid Features Section */}
-        <Features />
+        {/* Symmetric Grid of Truth */}
+        <GridOfTruth />
 
         {/* Simple CTA */}
-        <section className="py-24 px-6 border-t border-dashed border-border/40">
-          <div className="mx-auto max-w-xl text-center">
-            <h2 className="text-2xl font-bold tracking-tight mb-4">Join the Private Beta</h2>
-            <p className="text-muted-foreground mb-8 text-sm">
-              We are currently in invite-only mode. If you have an invite code, login to get started.
+        <section className="py-24 px-6 border-t border-dashed border-border/40 bg-secondary/20">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter mb-6 text-foreground">Build with integrity.</h2>
+            <p className="text-muted-foreground mb-10 text-base font-medium">
+              Join the private beta and experience the next generation of email infrastructure.
             </p>
-            <SignInButton mode="modal">
-              <Button className="h-9 px-8 rounded-md text-sm">
-                Login
-              </Button>
-            </SignInButton>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <SignInButton mode="modal">
+                <Button className="h-9 px-8 rounded-md text-xs font-semibold w-full sm:w-auto">
+                  Login to Console
+                </Button>
+              </SignInButton>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="h-9 px-8 rounded-md text-xs font-semibold border-dashed border-border bg-background w-full sm:w-auto">
+                    Join Waitlist
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-fit border-none bg-transparent p-0 shadow-none">
+                  <Waitlist />
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </section>
 
       </main>
 
-      {/* Value Driven Footer */}
-      <footer className="relative border-t bg-background overflow-hidden">
-        {/* Huge BG Text */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full select-none overflow-hidden pointer-events-none">
-          <h1 className="text-[15rem] md:text-[20rem] font-bold text-foreground/5 whitespace-nowrap text-center tracking-tighter leading-none">
-            EMAILS
-          </h1>
-        </div>
-
-        <div className="relative z-10 mx-auto max-w-7xl px-6 py-20">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div className="col-span-1 md:col-span-2 space-y-6">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                  <HugeiconsIcon icon={PackageIcon} size={18} strokeWidth={2.5} />
-                </div>
-                <span className="text-lg font-bold tracking-tight">SimpleEmailAPI</span>
-              </div>
-              <p className="text-muted-foreground max-w-xs leading-relaxed">
-                The easiest way to send and receive emails. Built for developers.
-              </p>
+      {/* Minimalist Footer */}
+      <footer className="border-t border-dashed border-border/40 bg-background py-14 px-6">
+        <div className="mx-auto max-w-7xl flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex items-center gap-2 font-bold tracking-tight text-foreground/80">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-secondary text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+              <HugeiconsIcon icon={PackageIcon} size={14} strokeWidth={2.5} />
             </div>
-
-            <div className="md:col-start-4 space-y-4">
-              <h4 className="text-sm font-semibold tracking-wider uppercase text-foreground">Product</h4>
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li>
-                  <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Documentation</a>
-                </li>
-              </ul>
-            </div>
+            <span className="text-xs">SimpleEmailAPI</span>
           </div>
 
-          <div className="mt-20 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} SimpleEmailAPI. All rights reserved.</p>
-            <div className="flex gap-2 items-center">
-              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="font-mono">All systems operational</span>
-            </div>
+          <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Documentation</a>
+            <span className="text-border/40">|</span>
+            <p>&copy; {new Date().getFullYear()} SimpleEmailAPI</p>
+          </div>
+
+          <div className="flex gap-2 items-center px-3 py-1 rounded-md border border-dashed border-border/60 bg-secondary/30">
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse ring-2 ring-emerald-500/20"></div>
+            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Systems Nominal</span>
           </div>
         </div>
       </footer>
