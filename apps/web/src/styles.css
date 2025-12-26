@@ -7,6 +7,12 @@
 @import '@fontsource/plus-jakarta-sans/600.css';
 @import '@fontsource/plus-jakarta-sans/700.css';
 
+/* Ensure text is visible while fonts load (prevents FOIT) */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-display: swap;
+}
+
 @plugin 'tailwindcss-animate';
 
 @custom-variant dark (&:is(.dark *));

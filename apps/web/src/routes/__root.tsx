@@ -25,6 +25,12 @@ export const Route = createRootRoute({
       { name: 'description', content: 'The simplest email API for developers' },
     ],
     links: [
+      // Preconnect to critical origins (~300ms LCP savings)
+      { rel: 'preconnect', href: 'https://clerk.simpleemailapi.dev' },
+      { rel: 'preconnect', href: 'https://us.i.posthog.com' },
+      { rel: 'preconnect', href: 'https://us-assets.i.posthog.com', crossOrigin: 'anonymous' },
+      // Preload critical CSS to reduce render blocking
+      { rel: 'preload', as: 'style', href: appCss },
       { rel: 'stylesheet', href: appCss },
       { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
     ],
