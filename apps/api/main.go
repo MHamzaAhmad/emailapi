@@ -335,9 +335,26 @@ func main() {
 
 // corsMiddleware adds CORS headers to allow cross-origin requests from the frontend.
 func corsMiddleware(next http.Handler) http.Handler {
+	// Define allowed origins
+	allowedOrigins := map[string]bool{
+		"https://simpleemailapi.dev":     true,
+		"https://www.simpleemailapi.dev": true,
+		"http://localhost:3000":          true,
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Set CORS headers
-		w.Header().Set("Access-Control-Allow-Origin", "https://simpleemailapi.dev,http://localhost:3000,https://www.simpleemailapi.dev") // In production, specify exact origins
+		origin := r.Header.Get("Origin")
+
+		// Check if the origin is allowed
+		if allowedOrigins[origin] {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		} else if origin == "" {
+			// If no Origin header (e.g., same-origin or non-browser request), allow the first origin
+			w.Header().Set("Access-Control-Allow-Origin", "https://simpleemailapi.dev")
+		}
+
+		// Set other CORS headers
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, X-Webhook-Secret, Connect-Protocol-Version, Connect-Timeout-Ms, Grpc-Timeout, X-Grpc-Web, X-User-Agent")
 		w.Header().Set("Access-Control-Expose-Headers", "Content-Length, Content-Type, Grpc-Status, Grpc-Message")
