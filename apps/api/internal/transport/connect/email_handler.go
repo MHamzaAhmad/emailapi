@@ -38,6 +38,12 @@ func (h *EmailHandler) SendEmail(
 	// Add user_id to context for service layer (backwards compatibility)
 	ctx = context.WithValue(ctx, "user_id", userID)
 
+	// Check for dry-run header (for performance testing without sending emails)
+	// Header: X-Dry-Run: true
+	if dryRun := req.Header().Get("X-Dry-Run"); dryRun == "true" {
+		ctx = context.WithValue(ctx, "dry_run", true)
+	}
+
 	result, err := h.svc.SendEmail(ctx, req.Msg)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)

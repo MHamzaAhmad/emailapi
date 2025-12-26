@@ -68,12 +68,14 @@ func main() {
 	defer store.Close()
 	logger.Info().Msg("✓ Connected to database")
 
-	// Initialize SES client
-	sesClient, err := ses.NewClient(context.Background(), cfg.AWSRegion)
+	// Initialize SES client with dry-run support
+	// When requests have "dry_run" in context, emails won't actually be sent
+	baseSESClient, err := ses.NewClient(context.Background(), cfg.AWSRegion)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create SES client")
 	}
-	logger.Info().Msg("✓ Initialized SES client")
+	sesClient := ses.NewDryRunClient(baseSESClient)
+	logger.Info().Msg("✓ Initialized SES client (with dry-run support)")
 
 	// Initialize S3 factory with bucket mappings
 	s3Factory, err := s3.NewFactory(context.Background(), cfg.AWSRegion, cfg.AWSAccessKeyID, cfg.AWSSecretAccessKey)

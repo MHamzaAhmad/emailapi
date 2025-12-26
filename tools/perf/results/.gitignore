@@ -1,0 +1,4 @@
+# Performance test results - auto-generated, do not commit
+*.json
+*.html
+*.csv
