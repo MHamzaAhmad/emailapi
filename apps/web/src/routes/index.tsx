@@ -58,11 +58,11 @@ function LandingContent() {
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
               <HugeiconsIcon icon={PackageIcon} size={14} strokeWidth={2.5} />
             </div>
-            <span className="text-sm">msgmorph</span>
+            <span className="text-sm">SimpleEmailAPI</span>
           </div>
           <div className="hidden md:flex items-center gap-4">
             <ModeToggle />
-            <a href="https://docs.msgmorph.com" target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Documentation</a>
+            <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Documentation</a>
             <SignedOut>
               <SignInButton mode="modal">
                 <Button size="sm" className="h-8 px-4 text-xs font-medium">
@@ -101,7 +101,7 @@ function LandingContent() {
                 </DialogContent>
               </Dialog>
               <Button asChild variant="outline" className="h-9 px-6 text-sm bg-background hover:bg-muted/50 rounded-md">
-                <a href="https://docs.msgmorph.com" target="_blank" rel="noopener noreferrer">
+                <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer">
                   <HugeiconsIcon icon={Book02Icon} size={14} className="mr-2 text-muted-foreground" />
                   Documentation
                 </a>
@@ -120,7 +120,7 @@ function LandingContent() {
                     label: "TypeScript",
                     value: "ts",
                     language: "typescript",
-                    content: `import { createClient } from 'emailapi-sdk'
+                    content: `import { createClient } from 'simpleemailapi-sdk'
 
 const client = createClient({ apiKey: 'em_...' })
 
@@ -141,19 +141,19 @@ client.onReceive({
                     label: "cURL",
                     value: "curl",
                     language: "bash",
-                    content: `curl -X POST https://api.emailapi.dev/v1/send \\\n  -H "Authorization: Bearer em_live_..." \\\n  -d '{\n    "from": "updates@app.com",\n    "to": ["user@example.com"],\n    "subject": "Welcome!",\n    "body": "Thanks for signing up."\n  }'`
+                    content: `curl -X POST https://api.simpleemailapi.dev/v1/send \\\n  -H "Authorization: Bearer em_live_..." \\\n  -d '{\n    "from": "updates@app.com",\n    "to": ["user@example.com"],\n    "subject": "Welcome!",\n    "body": "Thanks for signing up."\n  }'`
                   },
                   {
                     label: "Go",
                     value: "go",
                     language: "go",
-                    content: `package main\n\nimport "github.com/emailapi/go-sdk"\n\nfunc main() {\n  client := emailapi.NewClient("em_live_...")\n\n  // Send Email\n  client.Send(&emailapi.Message{\n    From:    "updates@app.com",\n    To:      []string{"user@example.com"},\n    Subject: "Welcome!",\n    Body:    "Thanks for signing up.",\n  })\n}`
+                    content: `package main\n\nimport "github.com/simpleemailapi/go-sdk"\n\nfunc main() {\n  client := simpleemailapi.NewClient("em_live_...")\n\n  // Send Email\n  client.Send(&simpleemailapi.Message{\n    From:    "updates@app.com",\n    To:      []string{"user@example.com"},\n    Subject: "Welcome!",\n    Body:    "Thanks for signing up.",\n  })\n}`
                   },
                   {
                     label: "gRPC",
                     value: "grpc",
                     language: "bash",
-                    content: `grpcurl -d '{\n  "from": "updates@app.com",\n  "to": ["user@example.com"],\n  "subject": "Welcome!",\n  "body": "Thanks for signing up."\n}' \\\n  -H "Authorization: Bearer em_live_..." \\\n  api.emailapi.dev:443 emailapi.v1.EmailService/Send`
+                    content: `grpcurl -d '{\n  "from": "updates@app.com",\n  "to": ["user@example.com"],\n  "subject": "Welcome!",\n  "body": "Thanks for signing up."\n}' \\\n  -H "Authorization: Bearer em_live_..." \\\n  api.simpleemailapi.dev:443 simpleemailapi.v1.EmailService/Send`
                   }
                 ]}
               />
@@ -200,7 +200,7 @@ client.onReceive({
                 <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   <HugeiconsIcon icon={PackageIcon} size={18} strokeWidth={2.5} />
                 </div>
-                <span className="text-lg font-bold tracking-tight">msgmorph</span>
+                <span className="text-lg font-bold tracking-tight">SimpleEmailAPI</span>
               </div>
               <p className="text-muted-foreground max-w-xs leading-relaxed">
                 The easiest way to send and receive emails. Built for developers.
@@ -211,14 +211,14 @@ client.onReceive({
               <h4 className="text-sm font-semibold tracking-wider uppercase text-foreground">Product</h4>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 <li>
-                  <a href="https://docs.msgmorph.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Documentation</a>
+                  <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Documentation</a>
                 </li>
               </ul>
             </div>
           </div>
 
           <div className="mt-20 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} msgmorph. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} SimpleEmailAPI. All rights reserved.</p>
             <div className="flex gap-2 items-center">
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
               <span className="font-mono">All systems operational</span>

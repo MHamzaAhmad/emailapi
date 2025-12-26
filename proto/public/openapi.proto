@@ -10,18 +10,18 @@ import "gnostic/openapi/v3/annotations.proto";
 // This file provides metadata for the generated OpenAPI spec used by Mintlify.
 option (gnostic.openapi.v3.document) = {
   info: {
-    title: "MsgMorph API";
+    title: "SimpleEmailAPI";
     version: "1.0.0";
-    description: "The MsgMorph API is a type-safe email API for sending transactional emails with real-time event streaming. Built on Connect RPC for maximum type safety and developer experience.";
+    description: "The SimpleEmailAPI is a type-safe email API for sending transactional emails with real-time event streaming. Built on Connect RPC for maximum type safety and developer experience.";
     contact: {
-      name: "MsgMorph Support";
-      url: "https://msgmorph.com";
-      email: "support@msgmorph.com";
+      name: "SimpleEmailAPI Support";
+      url: "https://simpleemailapi.dev";
+      email: "support@simpleemailapi.dev";
     }
   }
   servers: [
     {
-      url: "https://api.msgmorph.com";
+      url: "https://api.simpleemailapi.dev";
       description: "Production";
     }
   ]
@@ -34,7 +34,7 @@ option (gnostic.openapi.v3.document) = {
             security_scheme: {
               type: "http";
               scheme: "bearer";
-              description: "API key authentication. Get your API key from the MsgMorph dashboard and include it in the Authorization header as: Bearer em_live_xxxxx";
+              description: "API key authentication. Get your API key from the SimpleEmailAPI dashboard and include it in the Authorization header as: Bearer em_live_xxxxx";
             }
           }
         }

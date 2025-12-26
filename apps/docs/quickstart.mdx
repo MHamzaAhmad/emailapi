@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Get started with MsgMorph in under 2 minutes.
+description: Get started with SimpleEmailAPI in under 2 minutes.
 ---
 
 # Quickstart
@@ -13,28 +13,28 @@ This guide will get you sending emails in minutes using our TypeScript SDK.
 
     <CodeGroup>
     ```bash npm
-    npm install @msgmorph/sdk
+    npm install emailapi-sdk
     ```
 
     ```bash pnpm
-    pnpm add @msgmorph/sdk
+    pnpm add emailapi-sdk
     ```
 
     ```bash yarn
-    yarn add @msgmorph/sdk
+    yarn add emailapi-sdk
     ```
     </CodeGroup>
   </Step>
   
   <Step title="Get your API Key">
-    Sign up on the [dashboard](https://msgmorph.com/dashboard), create a workspace, and grab your API key (starts with `em_`).
+    Sign up on the [dashboard](https://simpleemailapi.dev/dashboard), create a workspace, and grab your API key (starts with `em_`).
   </Step>
   
   <Step title="Send your first email">
     Create a client and send!
 
     ```typescript
-    import { createClient } from '@msgmorph/sdk';
+    import { createClient } from 'emailapi-sdk';
 
     const client = createClient({
       apiKey: 'em_prod_123...'
@@ -43,7 +43,7 @@ This guide will get you sending emails in minutes using our TypeScript SDK.
     await client.send({
       from: 'onboarding@yourdomain.com',
       to: ['you@example.com'],
-      subject: 'Hello from MsgMorph',
+      subject: 'Hello from SimpleEmailAPI',
       body: 'It works!'
     });
     ```

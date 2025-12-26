@@ -39,7 +39,7 @@ console.log(`Sent: ${result.id}`);
 You can call the API directly using any HTTP client.
 
 ```bash
-curl -X POST https://api.msgmorph.com/v1/send \
+curl -X POST https://api.simpleemailapi.dev/v1/send \
   -H "Authorization: Bearer em_test_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -68,7 +68,7 @@ We publish our Protocol Buffers publicly. You can generate a client in any langu
     func main() {
         client := emailv1connect.NewEmailServiceClient(
             http.DefaultClient,
-            "https://api.msgmorph.com",
+            "https://api.simpleemailapi.dev",
         )
 
         req := &emailv1.SendEmailRequest{
@@ -88,7 +88,7 @@ We publish our Protocol Buffers publicly. You can generate a client in any langu
     import grpc
     from msgmorph.v1 import email_pb2, email_pb2_grpc
 
-    channel = grpc.secure_channel('api.msgmorph.com:443', grpc.ssl_channel_credentials())
+    channel = grpc.secure_channel('api.simpleemailapi.dev:443', grpc.ssl_channel_credentials())
     stub = email_pb2_grpc.EmailServiceStub(channel)
 
     request = email_pb2.SendEmailRequest(
