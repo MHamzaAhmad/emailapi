@@ -20,6 +20,7 @@ RESULTS_DIR="$SCRIPT_DIR/results"
 PROTO_DIR="$SCRIPT_DIR/../../proto"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 REPORT_FILE="$RESULTS_DIR/benchmark-report-$TIMESTAMP.md"
+RESULTS_FILE="$RESULTS_DIR/.results-$TIMESTAMP.tmp"
 
 # Colors
 RED='\033[0;31m'
@@ -36,8 +37,19 @@ QUICK_MODE=""
 HTTP_ONLY=""
 GRPC_ONLY=""
 
-# Results storage
-declare -A RESULTS
+# =============================================================================
+# Results Storage (bash 3.2 compatible - uses temp file instead of associative array)
+# =============================================================================
+save_result() {
+    local key="$1"
+    local value="$2"
+    echo "${key}=${value}" >> "$RESULTS_FILE"
+}
+
+get_result() {
+    local key="$1"
+    grep "^${key}=" "$RESULTS_FILE" 2>/dev/null | cut -d'=' -f2 || echo ""
+}
 
 # =============================================================================
 # Parse Arguments
@@ -136,25 +148,28 @@ print_banner() {
 # =============================================================================
 # HTTP Tests with k6
 # =============================================================================
-run_http_sync_test() {
-    local name=$1
+run_http_test() {
+    local mode=$1  # sync or async
     local rps=$2
     local duration=$3
     
-    echo -e "${CYAN}► HTTP Sync Mode @ ${rps} RPS (${duration})${NC}"
+    local async_flag="false"
+    [[ "$mode" == "async" ]] && async_flag="true"
     
-    local output_file="$RESULTS_DIR/http-sync-${rps}rps-$TIMESTAMP.json"
+    local mode_cap=$(echo "$mode" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+    echo -e "${CYAN}► HTTP ${mode_cap} Mode @ ${rps} RPS (${duration})${NC}"
+    
+    local output_file="$RESULTS_DIR/http-${mode}-${rps}rps-$TIMESTAMP.json"
     local dry_run_env=""
     [[ -n "$DRY_RUN" ]] && dry_run_env="--env DRY_RUN=true"
     
-    # Create inline k6 script for sync mode
     k6 run --quiet \
         --env API_KEY="$PERF_API_KEY" \
         --env API_HOST="$PERF_API_HOST" \
         --env API_PORT="$PERF_HTTP_PORT" \
         --env FROM_EMAIL="$PERF_FROM_EMAIL" \
         --env TO_EMAIL="$PERF_TO_EMAIL" \
-        --env ASYNC_MODE="false" \
+        --env ASYNC_MODE="$async_flag" \
         --env TARGET_RPS="$rps" \
         --env DURATION="$duration" \
         $dry_run_env \
@@ -206,7 +221,7 @@ export default function () {
     });
 
     const start = Date.now();
-    const res = http.post(`${BASE_URL}/v1/email`, payload, { headers, timeout: '30s' });
+    const res = http.post(`${BASE_URL}/v1.EmailService/SendEmail`, payload, { headers, timeout: '30s' });
     latency.add(Date.now() - start);
 
     check(res, { 'status is 200': (r) => r.status === 200 });
@@ -215,108 +230,23 @@ SCRIPT
 
     # Parse results
     if [[ -f "$output_file" ]]; then
-        local p50=$(jq -r '.metrics.email_latency.values.med // .metrics.http_req_duration.values.med // 0' "$output_file")
-        local p95=$(jq -r '.metrics.email_latency.values["p(95)"] // .metrics.http_req_duration.values["p(95)"] // 0' "$output_file")
-        local p99=$(jq -r '.metrics.email_latency.values["p(99)"] // .metrics.http_req_duration.values["p(99)"] // 0' "$output_file")
-        local success=$(jq -r '.metrics.checks.values.rate // 1' "$output_file")
+        local p50=$(jq -r '.metrics.http_req_duration.med // 0' "$output_file")
+        local p95=$(jq -r '.metrics.http_req_duration["p(95)"] // 0' "$output_file")
+        local p99=$(jq -r '.metrics.http_req_duration["p(99)"] // .metrics.http_req_duration["p(95)"] // 0' "$output_file")
+        local success=$(jq -r '.metrics.checks.value // 1' "$output_file")
         
-        RESULTS["http_sync_${rps}_p50"]="${p50%.*}"
-        RESULTS["http_sync_${rps}_p95"]="${p95%.*}"
-        RESULTS["http_sync_${rps}_p99"]="${p99%.*}"
-        RESULTS["http_sync_${rps}_success"]=$(echo "$success * 100" | bc | cut -d'.' -f1)
+        # Round to integer
+        p50="${p50%.*}"
+        p95="${p95%.*}"
+        p99="${p99%.*}"
+        local success_pct=$(printf "%.0f" "$(echo "$success * 100" | bc)")
         
-        echo -e "  P50: ${p50%.*}ms | P95: ${p95%.*}ms | P99: ${p99%.*}ms | Success: $(echo "$success * 100" | bc | cut -d'.' -f1)%"
-    fi
-}
-
-run_http_async_test() {
-    local name=$1
-    local rps=$2
-    local duration=$3
-    
-    echo -e "${CYAN}► HTTP Async Mode @ ${rps} RPS (${duration})${NC}"
-    
-    local output_file="$RESULTS_DIR/http-async-${rps}rps-$TIMESTAMP.json"
-    local dry_run_env=""
-    [[ -n "$DRY_RUN" ]] && dry_run_env="--env DRY_RUN=true"
-    
-    k6 run --quiet \
-        --env API_KEY="$PERF_API_KEY" \
-        --env API_HOST="$PERF_API_HOST" \
-        --env API_PORT="$PERF_HTTP_PORT" \
-        --env FROM_EMAIL="$PERF_FROM_EMAIL" \
-        --env TO_EMAIL="$PERF_TO_EMAIL" \
-        --env ASYNC_MODE="true" \
-        --env TARGET_RPS="$rps" \
-        --env DURATION="$duration" \
-        $dry_run_env \
-        --summary-export="$output_file" \
-        - <<'SCRIPT'
-import http from 'k6/http';
-import { check } from 'k6';
-import { Trend } from 'k6/metrics';
-
-const latency = new Trend('email_latency', true);
-const API_KEY = __ENV.API_KEY;
-const API_HOST = __ENV.API_HOST || 'api.simpleemailapi.dev';
-const API_PORT = __ENV.API_PORT || '443';
-const FROM_EMAIL = __ENV.FROM_EMAIL;
-const TO_EMAIL = __ENV.TO_EMAIL;
-const DRY_RUN = __ENV.DRY_RUN === 'true';
-const ASYNC_MODE = __ENV.ASYNC_MODE === 'true';
-const TARGET_RPS = parseInt(__ENV.TARGET_RPS) || 10;
-const DURATION = __ENV.DURATION || '15s';
-
-const BASE_URL = API_PORT === '443' ? `https://${API_HOST}` : `http://${API_HOST}:${API_PORT}`;
-
-export const options = {
-    scenarios: {
-        benchmark: {
-            executor: 'constant-arrival-rate',
-            rate: TARGET_RPS,
-            timeUnit: '1s',
-            duration: DURATION,
-            preAllocatedVUs: Math.max(50, TARGET_RPS * 2),
-            maxVUs: Math.max(100, TARGET_RPS * 3),
-        },
-    },
-};
-
-export default function () {
-    const headers = {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-    };
-    if (DRY_RUN) headers['X-Dry-Run'] = 'true';
-
-    const payload = JSON.stringify({
-        from: FROM_EMAIL,
-        to: [TO_EMAIL],
-        subject: `Benchmark ${Date.now()}`,
-        body: 'Performance benchmark test',
-        async: ASYNC_MODE,
-    });
-
-    const start = Date.now();
-    const res = http.post(`${BASE_URL}/v1/email`, payload, { headers, timeout: '30s' });
-    latency.add(Date.now() - start);
-
-    check(res, { 'status is 200': (r) => r.status === 200 });
-}
-SCRIPT
-
-    if [[ -f "$output_file" ]]; then
-        local p50=$(jq -r '.metrics.email_latency.values.med // .metrics.http_req_duration.values.med // 0' "$output_file")
-        local p95=$(jq -r '.metrics.email_latency.values["p(95)"] // .metrics.http_req_duration.values["p(95)"] // 0' "$output_file")
-        local p99=$(jq -r '.metrics.email_latency.values["p(99)"] // .metrics.http_req_duration.values["p(99)"] // 0' "$output_file")
-        local success=$(jq -r '.metrics.checks.values.rate // 1' "$output_file")
+        save_result "http_${mode}_${rps}_p50" "$p50"
+        save_result "http_${mode}_${rps}_p95" "$p95"
+        save_result "http_${mode}_${rps}_p99" "$p99"
+        save_result "http_${mode}_${rps}_success" "$success_pct"
         
-        RESULTS["http_async_${rps}_p50"]="${p50%.*}"
-        RESULTS["http_async_${rps}_p95"]="${p95%.*}"
-        RESULTS["http_async_${rps}_p99"]="${p99%.*}"
-        RESULTS["http_async_${rps}_success"]=$(echo "$success * 100" | bc | cut -d'.' -f1)
-        
-        echo -e "  P50: ${p50%.*}ms | P95: ${p95%.*}ms | P99: ${p99%.*}ms | Success: $(echo "$success * 100" | bc | cut -d'.' -f1)%"
+        echo -e "  P50: ${p50}ms | P95: ${p95}ms | P99: ${p99}ms | Success: ${success_pct}%"
     fi
 }
 
@@ -328,7 +258,8 @@ run_grpc_test() {
     local rps=$2
     local duration=$3
     
-    echo -e "${CYAN}► gRPC ${mode^} Mode @ ${rps} RPS (${duration})${NC}"
+    local mode_cap=$(echo "$mode" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+    echo -e "${CYAN}► gRPC ${mode_cap} Mode @ ${rps} RPS (${duration})${NC}"
     
     local output_file="$RESULTS_DIR/grpc-${mode}-${rps}rps-$TIMESTAMP.json"
     
@@ -363,16 +294,15 @@ run_grpc_test() {
         local total=$(jq -r '.count' "$output_file" 2>/dev/null || echo "0")
         local errors=$(jq -r '.errorCount // 0' "$output_file" 2>/dev/null || echo "0")
         
+        local success=0
         if [[ "$total" -gt 0 ]]; then
-            local success=$(echo "scale=0; (($total - $errors) * 100) / $total" | bc)
-        else
-            local success=0
+            success=$(echo "scale=0; (($total - $errors) * 100) / $total" | bc)
         fi
         
-        RESULTS["grpc_${mode}_${rps}_p50"]="${p50%.*}"
-        RESULTS["grpc_${mode}_${rps}_p95"]="${p95%.*}"
-        RESULTS["grpc_${mode}_${rps}_p99"]="${p99%.*}"
-        RESULTS["grpc_${mode}_${rps}_success"]="$success"
+        save_result "grpc_${mode}_${rps}_p50" "${p50%.*}"
+        save_result "grpc_${mode}_${rps}_p95" "${p95%.*}"
+        save_result "grpc_${mode}_${rps}_p99" "${p99%.*}"
+        save_result "grpc_${mode}_${rps}_success" "$success"
         
         echo -e "  P50: ${p50}ms | P95: ${p95}ms | P99: ${p99}ms | Success: ${success}%"
     fi
@@ -399,34 +329,22 @@ generate_report() {
 |----------|------|-----|----------|----------|----------|---------|
 EOF
 
-    # Add HTTP results
-    for rps in 10 50 100; do
-        local key_prefix="http_sync_${rps}"
-        if [[ -n "${RESULTS[${key_prefix}_p50]}" ]]; then
-            echo "| HTTP | Sync | $rps | ${RESULTS[${key_prefix}_p50]} | ${RESULTS[${key_prefix}_p95]} | ${RESULTS[${key_prefix}_p99]} | ${RESULTS[${key_prefix}_success]}% |" >> "$REPORT_FILE"
-        fi
-    done
-    
-    for rps in 10 50 100; do
-        local key_prefix="http_async_${rps}"
-        if [[ -n "${RESULTS[${key_prefix}_p50]}" ]]; then
-            echo "| HTTP | Async | $rps | ${RESULTS[${key_prefix}_p50]} | ${RESULTS[${key_prefix}_p95]} | ${RESULTS[${key_prefix}_p99]} | ${RESULTS[${key_prefix}_success]}% |" >> "$REPORT_FILE"
-        fi
-    done
-    
-    # Add gRPC results
-    for rps in 10 50 100; do
-        local key_prefix="grpc_sync_${rps}"
-        if [[ -n "${RESULTS[${key_prefix}_p50]}" ]]; then
-            echo "| gRPC | Sync | $rps | ${RESULTS[${key_prefix}_p50]} | ${RESULTS[${key_prefix}_p95]} | ${RESULTS[${key_prefix}_p99]} | ${RESULTS[${key_prefix}_success]}% |" >> "$REPORT_FILE"
-        fi
-    done
-    
-    for rps in 10 50 100; do
-        local key_prefix="grpc_async_${rps}"
-        if [[ -n "${RESULTS[${key_prefix}_p50]}" ]]; then
-            echo "| gRPC | Async | $rps | ${RESULTS[${key_prefix}_p50]} | ${RESULTS[${key_prefix}_p95]} | ${RESULTS[${key_prefix}_p99]} | ${RESULTS[${key_prefix}_success]}% |" >> "$REPORT_FILE"
-        fi
+    # Add results to table
+    for proto in http grpc; do
+        for mode in sync async; do
+            for rps in 10 50 100; do
+                local p50=$(get_result "${proto}_${mode}_${rps}_p50")
+                local p95=$(get_result "${proto}_${mode}_${rps}_p95")
+                local p99=$(get_result "${proto}_${mode}_${rps}_p99")
+                local success=$(get_result "${proto}_${mode}_${rps}_success")
+                
+                if [[ -n "$p50" ]]; then
+                local proto_upper=$(echo "$proto" | tr '[:lower:]' '[:upper:]')
+                local mode_cap=$(echo "$mode" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+                    echo "| ${proto_upper} | ${mode_cap} | $rps | $p50 | $p95 | $p99 | ${success}% |" >> "$REPORT_FILE"
+                fi
+            done
+        done
     done
 
     cat >> "$REPORT_FILE" << 'EOF'
@@ -470,6 +388,9 @@ main() {
     check_tools
     mkdir -p "$RESULTS_DIR"
     
+    # Initialize results file
+    > "$RESULTS_FILE"
+    
     print_banner
     
     # Determine test duration
@@ -482,17 +403,15 @@ main() {
     if [[ -z "$GRPC_ONLY" ]]; then
         echo -e "${YELLOW}━━━ HTTP Endpoint Tests ━━━${NC}"
         
-        # Sync mode at different RPS
-        run_http_sync_test "baseline" 10 "$duration"
-        run_http_sync_test "moderate" 50 "$duration"
-        run_http_sync_test "high" 100 "$duration"
+        run_http_test "sync" 10 "$duration"
+        run_http_test "sync" 50 "$duration"
+        run_http_test "sync" 100 "$duration"
         
         echo ""
         
-        # Async mode at different RPS
-        run_http_async_test "baseline" 10 "$duration"
-        run_http_async_test "moderate" 50 "$duration"
-        run_http_async_test "high" 100 "$duration"
+        run_http_test "async" 10 "$duration"
+        run_http_test "async" 50 "$duration"
+        run_http_test "async" 100 "$duration"
         
         echo ""
     fi
@@ -501,14 +420,12 @@ main() {
     if [[ -z "$HTTP_ONLY" ]]; then
         echo -e "${YELLOW}━━━ gRPC Endpoint Tests ━━━${NC}"
         
-        # Sync mode
         run_grpc_test "sync" 10 "$duration"
         run_grpc_test "sync" 50 "$duration"
         run_grpc_test "sync" 100 "$duration"
         
         echo ""
         
-        # Async mode
         run_grpc_test "async" 10 "$duration"
         run_grpc_test "async" 50 "$duration"
         run_grpc_test "async" 100 "$duration"
@@ -519,33 +436,15 @@ main() {
     # Generate report
     generate_report
     
+    # Cleanup temp file
+    rm -f "$RESULTS_FILE"
+    
     echo ""
     echo -e "${GREEN}╔══════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${GREEN}║${NC}${BOLD}                    Benchmark Complete!                    ${NC}${GREEN}║${NC}"
     echo -e "${GREEN}╚══════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "View full report: ${BLUE}$REPORT_FILE${NC}"
-    echo ""
-    
-    # Print quick summary table
-    echo -e "${BOLD}Quick Summary:${NC}"
-    echo ""
-    printf "%-8s %-6s %8s %8s %8s %8s\n" "Protocol" "Mode" "P50" "P95" "P99" "Success"
-    printf "%-8s %-6s %8s %8s %8s %8s\n" "--------" "------" "--------" "--------" "--------" "--------"
-    
-    for proto in http grpc; do
-        for mode in sync async; do
-            local key="${proto}_${mode}_50"
-            if [[ -n "${RESULTS[${key}_p50]}" ]]; then
-                printf "%-8s %-6s %6sms %6sms %6sms %7s%%\n" \
-                    "${proto^^}" "${mode^}" \
-                    "${RESULTS[${key}_p50]}" \
-                    "${RESULTS[${key}_p95]}" \
-                    "${RESULTS[${key}_p99]}" \
-                    "${RESULTS[${key}_success]}"
-            fi
-        done
-    done
     echo ""
 }
 

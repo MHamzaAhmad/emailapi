@@ -79,7 +79,7 @@ if [[ "$PROTOCOL" == "http" || "$PROTOCOL" == "both" ]]; then
     START_TIME=$(python3 -c 'import time; print(int(time.time() * 1000))')
     
     RESPONSE=$(curl -s -w "\n%{http_code}\n%{time_total}" \
-        -X POST "https://$PERF_API_HOST/v1/email" \
+        -X POST "https://$PERF_API_HOST/v1.EmailService/SendEmail" \
         "${HEADERS[@]}" \
         -d "{
             \"from\": \"$PERF_FROM_EMAIL\",

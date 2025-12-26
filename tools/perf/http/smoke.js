@@ -73,7 +73,7 @@ export default function () {
     };
 
     const startTime = Date.now();
-    const res = http.post(`${BASE_URL}/v1/email`, payload, params);
+    const res = http.post(`${BASE_URL}/v1.EmailService/SendEmail`, payload, params);
     const duration = Date.now() - startTime;
 
     // Record custom metrics
