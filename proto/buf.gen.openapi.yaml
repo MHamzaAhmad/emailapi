@@ -11,7 +11,7 @@ managed:
 plugins:
   # The magic plugin for Connect + OpenAPI
   - remote: buf.build/community/sudorandom-connect-openapi
-    out: ../apps/web/public/api
+    out: ../apps/docs/api-reference
     opt:
       - format=json
       - path=openapi.json

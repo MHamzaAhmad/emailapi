@@ -4,8 +4,6 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
-import mdx from 'fumadocs-mdx/vite';
-import * as MdxConfig from './source.config';
 import { nitro } from 'nitro/vite'
 
 const config = defineConfig({
@@ -16,7 +14,6 @@ const config = defineConfig({
     'process.env': {},
   },
   plugins: [
-    mdx(MdxConfig),
     devtools(),
     // this is the plugin that enables path aliases
     viteTsConfigPaths({

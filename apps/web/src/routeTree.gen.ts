@@ -11,9 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DocsApiReferenceRouteImport } from './routes/docs/api-reference'
-import { Route as DocsSplatRouteImport } from './routes/docs/$'
-import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as AuthedWebhooksRouteImport } from './routes/_authed/webhooks'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedApiKeysRouteImport } from './routes/_authed/api-keys'
@@ -27,21 +24,6 @@ const AuthedRoute = AuthedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocsApiReferenceRoute = DocsApiReferenceRouteImport.update({
-  id: '/docs/api-reference',
-  path: '/docs/api-reference',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocsSplatRoute = DocsSplatRouteImport.update({
-  id: '/docs/$',
-  path: '/docs/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSearchRoute = ApiSearchRouteImport.update({
-  id: '/api/search',
-  path: '/api/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedWebhooksRoute = AuthedWebhooksRouteImport.update({
@@ -75,9 +57,6 @@ export interface FileRoutesByFullPath {
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/webhooks': typeof AuthedWebhooksRoute
-  '/api/search': typeof ApiSearchRoute
-  '/docs/$': typeof DocsSplatRoute
-  '/docs/api-reference': typeof DocsApiReferenceRoute
   '/domains/$domainId': typeof AuthedDomainsDomainIdRoute
   '/domains': typeof AuthedDomainsIndexRoute
 }
@@ -86,9 +65,6 @@ export interface FileRoutesByTo {
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/webhooks': typeof AuthedWebhooksRoute
-  '/api/search': typeof ApiSearchRoute
-  '/docs/$': typeof DocsSplatRoute
-  '/docs/api-reference': typeof DocsApiReferenceRoute
   '/domains/$domainId': typeof AuthedDomainsDomainIdRoute
   '/domains': typeof AuthedDomainsIndexRoute
 }
@@ -99,9 +75,6 @@ export interface FileRoutesById {
   '/_authed/api-keys': typeof AuthedApiKeysRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/webhooks': typeof AuthedWebhooksRoute
-  '/api/search': typeof ApiSearchRoute
-  '/docs/$': typeof DocsSplatRoute
-  '/docs/api-reference': typeof DocsApiReferenceRoute
   '/_authed/domains/$domainId': typeof AuthedDomainsDomainIdRoute
   '/_authed/domains/': typeof AuthedDomainsIndexRoute
 }
@@ -112,9 +85,6 @@ export interface FileRouteTypes {
     | '/api-keys'
     | '/dashboard'
     | '/webhooks'
-    | '/api/search'
-    | '/docs/$'
-    | '/docs/api-reference'
     | '/domains/$domainId'
     | '/domains'
   fileRoutesByTo: FileRoutesByTo
@@ -123,9 +93,6 @@ export interface FileRouteTypes {
     | '/api-keys'
     | '/dashboard'
     | '/webhooks'
-    | '/api/search'
-    | '/docs/$'
-    | '/docs/api-reference'
     | '/domains/$domainId'
     | '/domains'
   id:
@@ -135,9 +102,6 @@ export interface FileRouteTypes {
     | '/_authed/api-keys'
     | '/_authed/dashboard'
     | '/_authed/webhooks'
-    | '/api/search'
-    | '/docs/$'
-    | '/docs/api-reference'
     | '/_authed/domains/$domainId'
     | '/_authed/domains/'
   fileRoutesById: FileRoutesById
@@ -145,9 +109,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
-  ApiSearchRoute: typeof ApiSearchRoute
-  DocsSplatRoute: typeof DocsSplatRoute
-  DocsApiReferenceRoute: typeof DocsApiReferenceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -164,27 +125,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/docs/api-reference': {
-      id: '/docs/api-reference'
-      path: '/docs/api-reference'
-      fullPath: '/docs/api-reference'
-      preLoaderRoute: typeof DocsApiReferenceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/docs/$': {
-      id: '/docs/$'
-      path: '/docs/$'
-      fullPath: '/docs/$'
-      preLoaderRoute: typeof DocsSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/search': {
-      id: '/api/search'
-      path: '/api/search'
-      fullPath: '/api/search'
-      preLoaderRoute: typeof ApiSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed/webhooks': {
@@ -247,9 +187,6 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
-  ApiSearchRoute: ApiSearchRoute,
-  DocsSplatRoute: DocsSplatRoute,
-  DocsApiReferenceRoute: DocsApiReferenceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

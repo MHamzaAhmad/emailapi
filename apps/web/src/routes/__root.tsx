@@ -1,5 +1,4 @@
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
-import { RootProvider } from 'fumadocs-ui/provider/tanstack'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ClerkProvider } from '@clerk/clerk-react'
@@ -98,7 +97,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <RootProvider>{children}</RootProvider>
+        {children}
         <Scripts />
       </body>
     </html>

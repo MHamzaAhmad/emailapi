@@ -1,0 +1,87 @@
+---
+title: Webhooks
+description: Receive HTTP POST callbacks for email events.
+---
+
+# Webhooks
+
+If you prefer the traditional push model, you can configure webhooks. We will send a `POST` request to your URL for every event.
+
+## Payload
+
+The payload structure is identical to the Event object used in streams.
+
+```json
+{
+  "id": "evt_8923...",
+  "type": "EMAIL_DELIVERED",
+  "timestamp": "2024-01-01T12:00:00Z",
+  "payload": {
+    "email_id": "msg_123...",
+    "recipients": ["user@example.com"],
+    "smtp_response": "250 OK"
+  }
+}
+```
+
+## Event Types
+
+| Event | Description |
+|-------|-------------|
+| `email.sent` | Email successfully queued for delivery |
+| `email.delivered` | Email delivered to recipient's mailserver |
+| `email.failed` | Email delivery permanently failed |
+| `email.bounced` | Email bounced (hard or soft) |
+| `email.opened` | Recipient opened the email |
+| `email.clicked` | Recipient clicked a link |
+
+## Security: Verifying Signatures
+
+We verify the identity of the sender using **Svix** conventions (standard HTTP headers).
+
+```typescript
+import { Webhook } from 'svix';
+
+const secret = "whsec_...";
+const headers = request.headers;
+const payload = request.body;
+
+const wh = new Webhook(secret);
+const evt = wh.verify(payload, headers);
+
+// Safe to process 'evt'
+```
+
+<Warning>
+  Always verify webhook signatures before processing. Never trust the payload without verification.
+</Warning>
+
+## Creating a Webhook
+
+You can create webhooks via the dashboard or the API:
+
+```typescript
+const webhook = await client.webhooks.create({
+  name: 'My Webhook',
+  url: 'https://your-app.com/webhooks/email',
+  events: ['email.delivered', 'email.bounced']
+});
+
+// Store webhook.secret securely - it's only shown once!
+console.log('Secret:', webhook.secret);
+```
+
+## Retry Policy
+
+We retry failed webhook deliveries with exponential backoff:
+
+| Attempt | Delay |
+|---------|-------|
+| 1 | Immediate |
+| 2 | 5 seconds |
+| 3 | 30 seconds |
+| 4 | 2 minutes |
+| 5 | 10 minutes |
+| 6 | 1 hour |
+
+After 6 failed attempts, the webhook is marked as failing and paused. You can re-enable it from the dashboard.

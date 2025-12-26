@@ -1,7 +1,4 @@
 @import 'tailwindcss';
-@import 'fumadocs-ui/css/neutral.css';
-@import 'fumadocs-ui/css/preset.css';
-
 
 /* Premium Typography - Plus Jakarta Sans */
 
@@ -19,36 +16,6 @@
    ============================================================================= */
 
 :root {
-  /* Fumadocs Overrides */
-  --fd-background: var(--background);
-  --fd-foreground: var(--foreground);
-  --fd-card: var(--card);
-  --fd-card-foreground: var(--card-foreground);
-  --fd-popover: var(--popover);
-  --fd-popover-foreground: var(--popover-foreground);
-  --fd-primary: var(--primary);
-  --fd-primary-foreground: var(--primary-foreground);
-  --fd-secondary: var(--secondary);
-  --fd-secondary-foreground: var(--secondary-foreground);
-  --fd-muted: var(--muted);
-  --fd-muted-foreground: var(--muted-foreground);
-  --fd-accent: var(--accent);
-  --fd-accent-foreground: var(--accent-foreground);
-  --fd-destructive: var(--destructive);
-  --fd-destructive-foreground: var(--destructive-foreground);
-  --fd-border: var(--border);
-  --fd-input: var(--input);
-  --fd-ring: var(--ring);
-
-  /* Layout & Typography */
-  --fd-font-sans: var(--font-sans);
-  --fd-font-mono: var(--font-mono);
-
-  --fd-sidebar-width: 260px;
-  --fd-nav-height: 3.5rem;
-  /* Match 14 (56px) from shell */
-  --fd-layout-width: 1400px;
-  /* Wider constrained width */
 
   /* Light Mode - Pure White & Crisp Zinc */
   --background: 0 0% 100%;

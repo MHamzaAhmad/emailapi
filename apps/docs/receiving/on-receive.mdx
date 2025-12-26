@@ -1,0 +1,89 @@
+---
+title: On Receive
+description: Listen for real-time email events with typed callbacks.
+---
+
+# On Receive (Streaming)
+
+The `onReceive` method provides a persistent connection to our event stream with **typed callbacks** for each event type. Unlike webhooks, you don't need to expose a public URL or handle signature verification.
+
+<Info>
+  This is the recommended way to handle reply-to-bot flows, chat interfaces, or real-time dashboards.
+</Info>
+
+## Usage
+
+Pass only the callbacks you need. Each callback receives a strongly-typed event payload.
+
+```typescript
+import { createClient } from '@msgmorph/sdk'
+
+const client = createClient({ apiKey: 'em_...' })
+
+// Listen for replies
+client.onReceive({
+  onReplied: (reply) => {
+    console.log('Reply from:', reply.from)
+    console.log('Message:', reply.body)
+  }
+})
+```
+
+## All Event Handlers
+
+Handle only what you need — no switch statements required.
+
+```typescript
+const controller = client.onReceive({
+  cursor: '0',        // Start from beginning, or pass last event ID to resume
+  batchSize: 10,      // Optional: events per batch
+
+  onSent: (event) => console.log('Sent:', event.subject),
+  onDelivered: (event) => console.log('Delivered to:', event.recipients),
+  onReplied: (event) => console.log('Reply:', event.body),
+  onBounced: (event) => console.log('Bounced:', event.bounceType),
+  onFailed: (event) => console.log('Failed:', event.error),
+  onComplained: (event) => console.log('Spam complaint'),
+  onRejected: (event) => console.log('Rejected:', event.reason),
+  onDelayed: (event) => console.log('Delayed:', event.delayType),
+
+  onError: (err) => console.error('Stream error:', err)
+})
+
+// Stop listening when done
+controller.abort()
+```
+
+## Event Types
+
+<ResponseField name="onSent" type="function">
+  Called when an email is successfully queued for sending.
+</ResponseField>
+
+<ResponseField name="onDelivered" type="function">
+  Called when the receiving mail server confirms delivery.
+</ResponseField>
+
+<ResponseField name="onReplied" type="function">
+  Called when a recipient replies to your email.
+</ResponseField>
+
+<ResponseField name="onBounced" type="function">
+  Called when an email bounces (hard or soft bounce).
+</ResponseField>
+
+<ResponseField name="onFailed" type="function">
+  Called when sending fails permanently.
+</ResponseField>
+
+<ResponseField name="onComplained" type="function">
+  Called when a recipient marks your email as spam.
+</ResponseField>
+
+## Resiliency
+
+The stream automatically handles keep-alives (heartbeats). If the connection drops, the `onError` callback fires so your application can reconnect with the last cursor.
+
+<Tip>
+  Store the last event cursor in your database so you can resume from where you left off after a restart.
+</Tip>

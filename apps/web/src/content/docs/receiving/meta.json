@@ -1,7 +1,0 @@
-{
-    "title": "Receiving Emails",
-    "pages": [
-        "on-receive",
-        "webhooks"
-    ]
-}

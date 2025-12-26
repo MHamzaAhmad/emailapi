@@ -1,0 +1,71 @@
+---
+title: API Reference
+description: Complete reference for the MsgMorph REST API
+---
+
+# API Reference
+
+The MsgMorph API is organized around REST. Our API has predictable resource-oriented URLs, accepts JSON-encoded request bodies, returns JSON-encoded responses, and uses standard HTTP response codes, authentication, and verbs.
+
+## Base URL
+
+```
+https://api.msgmorph.com/v1
+```
+
+## Authentication
+
+The MsgMorph API uses bearer tokens for authentication. Include your API key in the `Authorization` header:
+
+```bash
+Authorization: Bearer em_live_xxxxx
+```
+
+<Warning>
+  Keep your API keys secure. Do not share them in publicly accessible areas such as GitHub, client-side code, etc.
+</Warning>
+
+## Rate Limits
+
+API requests are rate limited to ensure fair usage:
+
+| Plan | Requests/min | Emails/day |
+|------|--------------|------------|
+| Free | 60 | 100 |
+| Pro | 600 | 10,000 |
+| Enterprise | Custom | Custom |
+
+Rate limit headers are included in every response:
+
+```http
+X-RateLimit-Limit: 600
+X-RateLimit-Remaining: 599
+X-RateLimit-Reset: 1640995200
+```
+
+## Errors
+
+The API uses conventional HTTP response codes to indicate success or failure:
+
+| Code | Description |
+|------|-------------|
+| `200` | Success |
+| `201` | Created |
+| `400` | Bad Request - Invalid parameters |
+| `401` | Unauthorized - Invalid or missing API key |
+| `404` | Not Found - Resource doesn't exist |
+| `429` | Too Many Requests - Rate limit exceeded |
+| `500` | Internal Server Error |
+
+Error responses include a JSON body with details:
+
+```json
+{
+  "error": "invalid_request",
+  "message": "The 'to' field must contain at least one recipient",
+  "details": {
+    "field": "to",
+    "code": "required"
+  }
+}
+```

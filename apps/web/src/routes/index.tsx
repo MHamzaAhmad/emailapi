@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { SignedIn, SignedOut, SignInButton, Waitlist, UserButton } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -62,8 +62,7 @@ function LandingContent() {
           </div>
           <div className="hidden md:flex items-center gap-4">
             <ModeToggle />
-            {/* @ts-expect-error docs route */}
-            <Link to="/docs" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Documentation</Link>
+            <a href="https://docs.msgmorph.com" target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Documentation</a>
             <SignedOut>
               <SignInButton mode="modal">
                 <Button size="sm" className="h-8 px-4 text-xs font-medium">
@@ -102,11 +101,10 @@ function LandingContent() {
                 </DialogContent>
               </Dialog>
               <Button asChild variant="outline" className="h-9 px-6 text-sm bg-background hover:bg-muted/50 rounded-md">
-                {/* @ts-expect-error docs route */}
-                <Link to="/docs">
+                <a href="https://docs.msgmorph.com" target="_blank" rel="noopener noreferrer">
                   <HugeiconsIcon icon={Book02Icon} size={14} className="mr-2 text-muted-foreground" />
                   Documentation
-                </Link>
+                </a>
               </Button>
             </div>
 
@@ -213,8 +211,7 @@ client.onReceive({
               <h4 className="text-sm font-semibold tracking-wider uppercase text-foreground">Product</h4>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 <li>
-                  {/* @ts-expect-error docs route */}
-                  <Link to="/docs" className="hover:text-foreground transition-colors">Documentation</Link>
+                  <a href="https://docs.msgmorph.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Documentation</a>
                 </li>
               </ul>
             </div>
