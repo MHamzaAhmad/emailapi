@@ -7,7 +7,7 @@ sudo apt-get update && sudo apt-get upgrade -y
 
 # Install essential tools
 echo "Installing essential tools..."
-sudo apt-get install -y git make build-essential curl
+sudo apt-get install -y git make build-essential curl vim
 
 # Install Redis
 echo "Installing Redis..."
