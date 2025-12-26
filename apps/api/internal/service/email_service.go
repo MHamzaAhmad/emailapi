@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -64,6 +65,9 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 		return nil, fmt.Errorf("user_id not found in context")
 	}
 
+	// Check for dry-run mode (set by handler from X-Dry-Run header)
+	dryRun, _ := ctx.Value("dry_run").(bool)
+
 	// Validate all email addresses and body content in parallel
 	if s.validator != nil {
 		if err := s.validator.ValidateSendEmail(ctx, userID, req.From, req.To, req.Cc, req.Bcc, req.Body, req.Html); err != nil {
@@ -81,20 +85,35 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 
 	// Handle scheduled emails - queue with delay
 	if req.ScheduledAt != nil {
-		return s.queueScheduled(ctx, emailID, userID, req)
+		return s.queueScheduled(ctx, emailID, userID, req, dryRun)
 	}
 
 	// Handle attachments - always async
 	if len(req.Attachments) > 0 {
-		return s.queueWithAttachments(ctx, emailID, userID, req)
+		return s.queueWithAttachments(ctx, emailID, userID, req, dryRun)
 	}
 
 	// Handle async flag
 	if req.Async {
-		return s.queueForSend(ctx, emailID, userID, req)
+		return s.queueForSend(ctx, emailID, userID, req, dryRun)
 	}
 
-	// Sync path: Send immediately with timeout
+	// Sync path: Handle dry-run or send immediately
+	if dryRun {
+		// Simulate SES latency (50-150ms)
+		delay := 50*time.Millisecond + time.Duration(rand.Intn(100))*time.Millisecond
+		time.Sleep(delay)
+
+		fakeMessageID := fmt.Sprintf("dry-run-%s@simpleemailapi.dev", emailID[:8])
+		return &emailapi.SendEmailResponse{
+			Id:            emailID,
+			MessageId:     fakeMessageID,
+			Status:        emailapi.EmailStatus_EMAIL_STATUS_SENT,
+			StatusMessage: "[DRY-RUN] Email simulated successfully",
+		}, nil
+	}
+
+	// Send immediately with timeout
 	sendCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -130,7 +149,7 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 }
 
 // queueWithAttachments queues an email with attachments for processing.
-func (s *EmailService) queueWithAttachments(ctx context.Context, emailID, userID string, req *emailapi.SendEmailRequest) (*emailapi.SendEmailResponse, error) {
+func (s *EmailService) queueWithAttachments(ctx context.Context, emailID, userID string, req *emailapi.SendEmailRequest, dryRun bool) (*emailapi.SendEmailResponse, error) {
 	var attachments []worker.AttachmentSource
 	for _, att := range req.Attachments {
 		source := worker.AttachmentSource{
@@ -160,6 +179,7 @@ func (s *EmailService) queueWithAttachments(ctx context.Context, emailID, userID
 		References:  req.References,
 		Metadata:    req.Metadata,
 		Attachments: attachments,
+		DryRun:      dryRun,
 	}
 
 	// Add scheduled time if present
@@ -182,7 +202,7 @@ func (s *EmailService) queueWithAttachments(ctx context.Context, emailID, userID
 }
 
 // queueForSend queues an email for async sending.
-func (s *EmailService) queueForSend(ctx context.Context, emailID, userID string, req *emailapi.SendEmailRequest) (*emailapi.SendEmailResponse, error) {
+func (s *EmailService) queueForSend(ctx context.Context, emailID, userID string, req *emailapi.SendEmailRequest, dryRun bool) (*emailapi.SendEmailResponse, error) {
 	args := worker.SendEmailArgs{
 		EmailID:    emailID,
 		UserID:     userID,
@@ -196,6 +216,7 @@ func (s *EmailService) queueForSend(ctx context.Context, emailID, userID string,
 		InReplyTo:  req.InReplyTo,
 		References: req.References,
 		Metadata:   req.Metadata,
+		DryRun:     dryRun,
 	}
 
 	_, err := s.riverClient.Insert(ctx, args, nil)
@@ -212,7 +233,7 @@ func (s *EmailService) queueForSend(ctx context.Context, emailID, userID string,
 }
 
 // queueScheduled queues an email for scheduled delivery.
-func (s *EmailService) queueScheduled(ctx context.Context, emailID, userID string, req *emailapi.SendEmailRequest) (*emailapi.SendEmailResponse, error) {
+func (s *EmailService) queueScheduled(ctx context.Context, emailID, userID string, req *emailapi.SendEmailRequest, dryRun bool) (*emailapi.SendEmailResponse, error) {
 	// Convert protobuf timestamp to Go time
 	scheduledTime := req.ScheduledAt.AsTime()
 
@@ -234,6 +255,7 @@ func (s *EmailService) queueScheduled(ctx context.Context, emailID, userID strin
 		InReplyTo:  req.InReplyTo,
 		References: req.References,
 		Metadata:   req.Metadata,
+		DryRun:     dryRun,
 	}
 
 	// Queue with scheduled time

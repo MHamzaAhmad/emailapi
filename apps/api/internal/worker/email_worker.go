@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math/rand"
 	"strings"
 	"sync"
 	"time"
@@ -40,6 +41,8 @@ type SendEmailArgs struct {
 	AttachmentKeys []AttachmentInfo `json:"attachment_keys,omitempty"`
 	// Optional scheduled time for email delivery
 	ScheduledAt *time.Time `json:"scheduled_at,omitempty"`
+	// DryRun mode skips SES and returns fake message ID (for performance testing)
+	DryRun bool `json:"dry_run,omitempty"`
 }
 
 // AttachmentInfo contains info about an attachment stored in S3.
@@ -77,6 +80,17 @@ func NewEmailWorker(
 
 func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) error {
 	args := job.Args
+
+	// Handle dry-run mode: skip SES, simulate delay, return fake message ID
+	if args.DryRun {
+		// Simulate realistic SES latency (50-150ms)
+		delay := 50*time.Millisecond + time.Duration(rand.Intn(100))*time.Millisecond
+		time.Sleep(delay)
+
+		fakeMessageID := fmt.Sprintf("dry-run-%s@simpleemailapi.dev", args.EmailID[:8])
+		fmt.Printf("[DRY-RUN] Simulated sending email %s to %v (MsgID: %s)\n", args.EmailID, args.To, fakeMessageID)
+		return nil
+	}
 
 	// Download attachments from S3 in parallel
 	attachmentData := make([]attachmentContent, len(args.AttachmentKeys))
