@@ -84,17 +84,17 @@ func (r *rateLimitInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFu
 			return next(ctx, req)
 		}
 
-		// Set rate limit headers on response
-		resp, respErr := next(ctx, req)
-
-		// Add rate limit headers regardless of success/failure
-		if resp != nil {
-			setRateLimitHeaders(resp.Header(), r.cfg.RequestsPerMinute, result)
-		}
-
-		// If rate limited, return 429
+		// If rate limited, return 429 BEFORE calling the handler
 		if !result.Allowed {
 			return nil, rateLimitError(result, r.cfg.RequestsPerMinute)
+		}
+
+		// Rate limit passed, call the handler
+		resp, respErr := next(ctx, req)
+
+		// Add rate limit headers to successful responses only
+		if resp != nil && respErr == nil {
+			setRateLimitHeaders(resp.Header(), r.cfg.RequestsPerMinute, result)
 		}
 
 		return resp, respErr
