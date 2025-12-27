@@ -93,15 +93,20 @@ install_k6() {
         return
     fi
     
-    # Add k6 GPG key and repository
+    # Initialize GPG (required for adding keys)
+    sudo gpg -k
+    
+    # Add k6 GPG key
     sudo gpg --no-default-keyring \
         --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
         --keyserver hkp://keyserver.ubuntu.com:80 \
-        --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69 2>/dev/null || true
+        --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
     
+    # Add k6 repository
     echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | \
         sudo tee /etc/apt/sources.list.d/k6.list > /dev/null
     
+    # Install k6
     sudo apt-get update
     sudo apt-get install -y k6
     
@@ -119,36 +124,13 @@ install_ghz() {
         return
     fi
     
-    # Get latest release version
-    local GHZ_VERSION
-    GHZ_VERSION=$(curl -sSL https://api.github.com/repos/bojand/ghz/releases/latest | jq -r '.tag_name' | sed 's/v//')
+    echo "Installing ghz using Go..."
+    go install github.com/bojand/ghz/cmd/ghz@latest
     
-    if [[ -z "$GHZ_VERSION" || "$GHZ_VERSION" == "null" ]]; then
-        # Fallback version
-        GHZ_VERSION="0.120.0"
-        print_warning "Could not fetch latest version, using fallback: $GHZ_VERSION"
+    # Move from GOPATH/bin to /usr/local/bin for system-wide access
+    if [[ -f "$HOME/go/bin/ghz" ]]; then
+        sudo mv "$HOME/go/bin/ghz" /usr/local/bin/ghz
     fi
-    
-    local ARCH
-    ARCH=$(uname -m)
-    case "$ARCH" in
-        x86_64)  ARCH="x86_64" ;;
-        aarch64) ARCH="arm64" ;;
-        arm64)   ARCH="arm64" ;;
-        *)
-            print_error "Unsupported architecture: $ARCH"
-            exit 1
-            ;;
-    esac
-    
-    local DOWNLOAD_URL="https://github.com/bojand/ghz/releases/download/v${GHZ_VERSION}/ghz-linux-${ARCH}.tar.gz"
-    
-    echo "Downloading ghz v${GHZ_VERSION} for ${ARCH}..."
-    curl -sSL "$DOWNLOAD_URL" -o /tmp/ghz.tar.gz
-    
-    sudo tar -xzf /tmp/ghz.tar.gz -C /usr/local/bin ghz
-    sudo chmod +x /usr/local/bin/ghz
-    rm /tmp/ghz.tar.gz
     
     print_success "ghz installed: $(ghz --version)"
 }
@@ -164,7 +146,7 @@ install_go() {
         return
     fi
     
-    local GO_VERSION="1.23.4"
+    local GO_VERSION="1.23.5"
     
     local ARCH
     ARCH=$(uname -m)
@@ -194,27 +176,7 @@ install_go() {
     print_success "Go installed: $(go version)"
 }
 
-# =============================================================================
-# Clone Repository
-# =============================================================================
-clone_repo() {
-    print_step "Setting Up Repository"
-    
-    local REPO_DIR="$HOME/emailapi"
-    
-    if [[ -d "$REPO_DIR" ]]; then
-        print_warning "Repository already exists at $REPO_DIR"
-        echo "Pulling latest changes..."
-        cd "$REPO_DIR"
-        git pull origin main || true
-    else
-        echo "Cloning repository..."
-        git clone https://github.com/MHamzaAhmad/emailapi.git "$REPO_DIR"
-        cd "$REPO_DIR"
-    fi
-    
-    print_success "Repository ready at $REPO_DIR"
-}
+
 
 # =============================================================================
 # Setup Environment
@@ -222,20 +184,20 @@ clone_repo() {
 setup_env() {
     print_step "Setting Up Environment"
     
-    local PERF_DIR="$HOME/emailapi/tools/perf"
+    local SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     
-    if [[ ! -f "$PERF_DIR/.env" ]]; then
-        if [[ -f "$PERF_DIR/config.env" ]]; then
-            cp "$PERF_DIR/config.env" "$PERF_DIR/.env"
+    if [[ ! -f "$SCRIPT_DIR/.env" ]]; then
+        if [[ -f "$SCRIPT_DIR/config.env" ]]; then
+            cp "$SCRIPT_DIR/config.env" "$SCRIPT_DIR/.env"
             print_warning "Created .env from template. Please edit with your credentials:"
-            echo -e "  ${BOLD}cd $PERF_DIR && nano .env${NC}"
+            echo -e "  ${BOLD}nano $SCRIPT_DIR/.env${NC}"
         fi
     else
         print_success ".env already exists"
     fi
     
     # Make scripts executable
-    chmod +x "$PERF_DIR"/*.sh 2>/dev/null || true
+    chmod +x "$SCRIPT_DIR"/*.sh 2>/dev/null || true
     
     print_success "Scripts are executable"
 }
@@ -300,7 +262,6 @@ print_next_steps() {
     echo -e "${BOLD}Next Steps:${NC}"
     echo ""
     echo "1. Configure your environment:"
-    echo -e "   ${BLUE}cd ~/emailapi/tools/perf${NC}"
     echo -e "   ${BLUE}nano .env${NC}"
     echo ""
     echo "   Required variables:"
@@ -337,7 +298,6 @@ main() {
     install_k6
     install_ghz
     install_go
-    clone_repo
     setup_env
     verify_installation
     print_next_steps
