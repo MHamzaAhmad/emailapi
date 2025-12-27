@@ -93,14 +93,8 @@ install_k6() {
         return
     fi
     
-    # Initialize GPG (required for adding keys)
-    sudo gpg -k
-    
-    # Add k6 GPG key
-    sudo gpg --no-default-keyring \
-        --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
-        --keyserver hkp://keyserver.ubuntu.com:80 \
-        --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+    # Download and add k6 GPG key
+    curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
     
     # Add k6 repository
     echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | \
