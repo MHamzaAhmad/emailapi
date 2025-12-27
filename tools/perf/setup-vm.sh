@@ -290,8 +290,8 @@ main() {
     check_os
     install_system_deps
     install_k6
-    install_ghz
     install_go
+    install_ghz
     setup_env
     verify_installation
     print_next_steps
