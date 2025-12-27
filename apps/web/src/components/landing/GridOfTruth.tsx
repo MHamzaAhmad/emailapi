@@ -3,62 +3,62 @@ export function GridOfTruth() {
         <section className="py-24 px-6 md:px-8 bg-background border-t border-dashed border-border/40">
             <div className="mx-auto max-w-6xl">
                 <div className="grid grid-cols-1 md:grid-cols-2">
-                    {/* Performance */}
+                    {/* Inbound / Reply-Ready */}
                     <div className="p-10 border-b border-dashed md:border-b-0 md:border-r border-border/40 flex flex-col justify-between min-h-[300px]">
                         <div>
                             <span className="inline-block px-2 py-0.5 mb-6 text-[9px] font-bold uppercase tracking-[0.25em] text-muted-foreground/60 border border-dashed border-border/60 rounded-sm bg-secondary/30">
-                                Performance
+                                Inbound
                             </span>
                             <h3 className="text-3xl font-bold tracking-tighter mb-4 text-foreground leading-[1.1]">
-                                Sub-10ms <br /> Overhead.
+                                Every email <br /> is reply-ready.
                             </h3>
                             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm font-medium">
-                                Built on HTTP/2 with a custom high-concurrency engine. We've optimized every byte of the delivery pipeline to ensure your emails reach their destination without delay.
+                                Why overengineer inbound? With us, every email you send has a working Reply-To. You just add standard MX records and listen for the webhook. No complex parsing logic. It just works.
                             </p>
                         </div>
                     </div>
 
-                    {/* Affordability */}
+                    {/* Simplicity / Anti-Bloat */}
                     <div className="p-10 flex flex-col justify-between min-h-[300px]">
                         <div>
                             <span className="inline-block px-2 py-0.5 mb-6 text-[9px] font-bold uppercase tracking-[0.25em] text-muted-foreground/60 border border-dashed border-border/60 rounded-sm bg-secondary/30">
-                                Pricing
+                                Philosophy
                             </span>
                             <h3 className="text-3xl font-bold tracking-tighter mb-4 text-foreground leading-[1.1]">
-                                $0.25 <br /> per 1k emails.
+                                Just the API. <br /> No marketing fluff.
                             </h3>
                             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm font-medium">
-                                Transparent pricing. No monthly minimums. No hidden fees. Pay only for the infrastructure you consume, with the scale of a global enterprise.
+                                We are not a marketing platform. We don't have audience segmentation or drag-and-drop builders. We just do one thing perfectly: deliver your transactional emails instantly.
                             </p>
                         </div>
                     </div>
 
-                    {/* Privacy */}
+                    {/* Pricing */}
                     <div className="p-10 border-t border-dashed border-border/40 md:border-r flex flex-col justify-between min-h-[300px]">
                         <div>
                             <span className="inline-block px-2 py-0.5 mb-6 text-[9px] font-bold uppercase tracking-[0.25em] text-muted-foreground/60 border border-dashed border-border/60 rounded-sm bg-secondary/30">
-                                Integrity
+                                Value
                             </span>
                             <h3 className="text-3xl font-bold tracking-tighter mb-4 text-foreground leading-[1.1]">
-                                Private <br /> by Default.
+                                Pay for usage. <br /> Not for domains.
                             </h3>
                             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm font-medium">
-                                We do not store or read your email content. All data is processed in-memory and discarded upon delivery. GDPR and HIPAA compliant architecture.
+                                Why pay $80/mo solely to add a second domain? We charge for volume: <span className="text-foreground">$0.25/1k emails</span>. Unlimited domains, unlimited seats, zero bloat.
                             </p>
                         </div>
                     </div>
 
-                    {/* Developer Experience */}
+                    {/* Performance / Latency */}
                     <div className="p-10 border-t border-dashed border-border/40 flex flex-col justify-between min-h-[300px]">
                         <div>
                             <span className="inline-block px-2 py-0.5 mb-6 text-[9px] font-bold uppercase tracking-[0.25em] text-muted-foreground/60 border border-dashed border-border/60 rounded-sm bg-secondary/30">
-                                Engineering
+                                Control
                             </span>
                             <h3 className="text-3xl font-bold tracking-tighter mb-4 text-foreground leading-[1.1]">
-                                Native <br /> SDKs.
+                                Throughput <br /> or Threading.
                             </h3>
                             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm font-medium">
-                                Ship faster with first-class support for TypeScript, Go, and Rust. Or use our simple REST API. Designed by engineers, for engineers.
+                                Two modes, zero compromise. Use Async (34ms) for fire-and-forget blasts. Use Sync when you need the Message-ID instantly to thread replies. You choose per request.
                             </p>
                         </div>
                     </div>

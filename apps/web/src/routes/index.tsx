@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { CodeWindow } from '@/components/ui/code-window'
 import { ModeToggle } from '@/components/mode-toggle'
 import { GridOfTruth } from '@/components/landing/GridOfTruth'
+import { PerformanceChart } from '@/components/landing/PerformanceChart'
 import {
   Dialog,
   DialogContent,
@@ -249,6 +250,24 @@ func main() {
 
         {/* Symmetric Grid of Truth */}
         <GridOfTruth />
+
+        {/* Performance Chart Section */}
+        <section className="py-24 px-6 bg-background border-t border-dashed border-border/40">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex flex-col items-center mb-16 text-center">
+              <span className="inline-block px-2 py-0.5 mb-6 text-[9px] font-bold uppercase tracking-[0.25em] text-muted-foreground/60 border border-dashed border-border/60 rounded-sm bg-secondary/30">
+                Benchmarks
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter mb-4 text-foreground">
+                Serious Performance.
+              </h2>
+              <p className="text-muted-foreground text-sm font-medium max-w-xl">
+                We don't just guess. We benchmark every deploy. See how we stack up against industry standards in real-time latency tests.
+              </p>
+            </div>
+            <PerformanceChart />
+          </div>
+        </section>
 
         {/* Simple CTA */}
         <section className="py-24 px-6 border-t border-dashed border-border/40 bg-secondary/20">
