@@ -1,0 +1,27 @@
+[Unit]
+Description=Envoy Proxy
+Documentation=https://www.envoyproxy.io/
+After=network.target
+
+[Service]
+Type=simple
+User=envoy
+Group=envoy
+ExecStart=/usr/bin/envoy -c /etc/envoy/envoy.yaml --log-level info
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/log/envoy
+
+# Resource limits
+LimitNOFILE=65535
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target
