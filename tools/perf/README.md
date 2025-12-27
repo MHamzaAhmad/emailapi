@@ -28,6 +28,24 @@ go install github.com/bojand/ghz/cmd/ghz@latest
 # Or download binary from: https://github.com/bojand/ghz/releases
 ```
 
+### Automated VM Setup (Recommended)
+
+For setting up a fresh Linux VM with all required tools:
+
+```bash
+# Option 1: Clone repo first, then run setup
+git clone https://github.com/MHamzaAhmad/emailapi.git
+cd emailapi/tools/perf
+./setup-vm.sh
+
+# Option 2: One-liner (downloads and runs setup script)
+curl -sSL https://raw.githubusercontent.com/MHamzaAhmad/emailapi/main/tools/perf/setup-vm.sh | bash
+```
+
+This installs: k6, ghz, Go, jq, and sets up the repository.
+
+---
+
 ### k6 (HTTP Load Testing)
 ```bash
 # macOS
