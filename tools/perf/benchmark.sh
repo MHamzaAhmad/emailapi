@@ -328,20 +328,26 @@ run_grpc_test() {
     rm -f "$error_file"
     
     if [[ -f "$output_file" ]]; then
-        local p50=$(jq -r '.latencyDistribution[] | select(.percentage == 50) | .latency' "$output_file" 2>/dev/null | sed 's/ms//' || echo "0")
-        local p95=$(jq -r '.latencyDistribution[] | select(.percentage == 95) | .latency' "$output_file" 2>/dev/null | sed 's/ms//' || echo "0")
-        local p99=$(jq -r '.latencyDistribution[] | select(.percentage == 99) | .latency' "$output_file" 2>/dev/null | sed 's/ms//' || echo "0")
+        # ghz outputs latency in nanoseconds, convert to milliseconds
+        local p50_ns=$(jq -r '.latencyDistribution[] | select(.percentage == 50) | .latency' "$output_file" 2>/dev/null | sed 's/ms//' || echo "0")
+        local p95_ns=$(jq -r '.latencyDistribution[] | select(.percentage == 95) | .latency' "$output_file" 2>/dev/null | sed 's/ms//' || echo "0")
+        local p99_ns=$(jq -r '.latencyDistribution[] | select(.percentage == 99) | .latency' "$output_file" 2>/dev/null | sed 's/ms//' || echo "0")
         local total=$(jq -r '.count' "$output_file" 2>/dev/null || echo "0")
         local errors=$(jq -r '.errorCount // 0' "$output_file" 2>/dev/null || echo "0")
+        
+        # Convert nanoseconds to milliseconds
+        local p50=$(echo "scale=0; $p50_ns / 1000000" | bc)
+        local p95=$(echo "scale=0; $p95_ns / 1000000" | bc)
+        local p99=$(echo "scale=0; $p99_ns / 1000000" | bc)
         
         local success=0
         if [[ "$total" -gt 0 ]]; then
             success=$(echo "scale=0; (($total - $errors) * 100) / $total" | bc)
         fi
         
-        save_result "grpc_${mode}_${rps}_p50" "${p50%.*}"
-        save_result "grpc_${mode}_${rps}_p95" "${p95%.*}"
-        save_result "grpc_${mode}_${rps}_p99" "${p99%.*}"
+        save_result "grpc_${mode}_${rps}_p50" "$p50"
+        save_result "grpc_${mode}_${rps}_p95" "$p95"
+        save_result "grpc_${mode}_${rps}_p99" "$p99"
         save_result "grpc_${mode}_${rps}_success" "$success"
         
         echo -e "  P50: ${p50}ms | P95: ${p95}ms | P99: ${p99}ms | Success: ${success}%"
