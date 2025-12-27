@@ -34,6 +34,8 @@ type ProcessAttachmentsArgs struct {
 	Attachments []AttachmentSource `json:"attachments"`
 	// Optional scheduled time for email delivery
 	ScheduledAt *time.Time `json:"scheduled_at,omitempty"`
+	// DryRun mode skips S3 upload and returns fake keys (for performance testing)
+	DryRun bool `json:"dry_run,omitempty"`
 }
 
 // AttachmentSource represents an attachment to process (from request).
@@ -69,6 +71,50 @@ func NewAttachmentWorker(s3Factory *s3.Factory, riverClient RiverClient) *Attach
 // Work processes attachments: downloads from URL or decodes base64, uploads to S3, then enqueues send job.
 func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttachmentsArgs]) error {
 	args := job.Args
+
+	// Handle dry-run mode: skip S3 uploads, generate fake keys
+	if args.DryRun {
+		// Create fake attachment keys for dry-run
+		fakeKeys := make([]AttachmentInfo, len(args.Attachments))
+		for i, att := range args.Attachments {
+			fakeKeys[i] = AttachmentInfo{
+				S3Key:       fmt.Sprintf("dry-run/%s/%s", args.EmailID, att.Filename),
+				Filename:    att.Filename,
+				ContentType: att.ContentType,
+			}
+		}
+
+		// Enqueue the send email job with dry-run flag
+		sendArgs := SendEmailArgs{
+			EmailID:        args.EmailID,
+			UserID:         args.UserID,
+			From:           args.From,
+			To:             args.To,
+			Cc:             args.Cc,
+			Bcc:            args.Bcc,
+			Subject:        args.Subject,
+			Body:           args.Body,
+			HTML:           args.HTML,
+			InReplyTo:      args.InReplyTo,
+			References:     args.References,
+			Metadata:       args.Metadata,
+			AttachmentKeys: fakeKeys,
+			ScheduledAt:    args.ScheduledAt,
+			DryRun:         true, // Propagate dry-run flag
+		}
+
+		insertOpts := &river.InsertOpts{}
+		if args.ScheduledAt != nil {
+			insertOpts.ScheduledAt = *args.ScheduledAt
+		}
+
+		if _, err := w.riverClient.Insert(ctx, sendArgs, insertOpts); err != nil {
+			return fmt.Errorf("failed to enqueue send job: %w", err)
+		}
+
+		fmt.Printf("[DRY-RUN] Simulated processing %d attachments for email %s\n", len(args.Attachments), args.EmailID)
+		return nil
+	}
 
 	// Process each attachment in parallel and upload to S3
 	attachmentKeys := make([]AttachmentInfo, len(args.Attachments))
@@ -133,6 +179,7 @@ func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttac
 		Metadata:       args.Metadata,
 		AttachmentKeys: attachmentKeys,
 		ScheduledAt:    args.ScheduledAt,
+		DryRun:         false, // Normal mode
 	}
 
 	// Prepare insert options

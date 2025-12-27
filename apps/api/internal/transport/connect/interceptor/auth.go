@@ -224,8 +224,8 @@ func (a *authInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc
 
 // authenticateToken validates a token (API key or Clerk JWT) and returns an authenticated context.
 func authenticateToken(ctx context.Context, cfg AuthConfig, procedure, token string) (context.Context, error) {
-	// Determine if token looks like an API key (starts with ep_)
-	isAPIKey := strings.HasPrefix(token, "ep_")
+	// Determine if token looks like an API key (starts with sea_live_, sea_test_)
+	isAPIKey := strings.HasPrefix(token, "sea_live_") || strings.HasPrefix(token, "sea_test_")
 
 	if isAPIKey {
 		// Check if this endpoint allows API key auth

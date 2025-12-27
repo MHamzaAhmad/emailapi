@@ -30,6 +30,16 @@ type Config struct {
 	// Redis configuration
 	RedisURL string `envconfig:"REDIS_URL" required:"true"`
 
+	// Database pool configuration
+	DBPoolMaxConns        int32 `envconfig:"DB_POOL_MAX_CONNS" default:"50"`
+	DBPoolMinConns        int32 `envconfig:"DB_POOL_MIN_CONNS" default:"10"`
+	DBPoolMaxConnLifetime int   `envconfig:"DB_POOL_MAX_CONN_LIFETIME_MIN" default:"30"` // minutes
+	DBPoolMaxConnIdleTime int   `envconfig:"DB_POOL_MAX_CONN_IDLE_MIN" default:"5"`      // minutes
+
+	// Redis pool configuration
+	RedisPoolSize     int `envconfig:"REDIS_POOL_SIZE" default:"50"`
+	RedisMinIdleConns int `envconfig:"REDIS_MIN_IDLE_CONNS" default:"10"`
+
 	// Rate limiting
 	RateLimitPerMinute   int  `envconfig:"RATE_LIMIT_PER_MINUTE" default:"100"`
 	RateLimitEnabled     bool `envconfig:"RATE_LIMIT_ENABLED" default:"true"`

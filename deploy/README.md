@@ -1,6 +1,6 @@
 # Deploy Email API to a Fresh VM
 
-This guide walks you through deploying the Email API to a fresh Ubuntu VM with SSL.
+This guide walks you through deploying the Email API to a fresh Ubuntu VM with SSL using Envoy Proxy.
 
 ## Prerequisites
 
@@ -20,9 +20,9 @@ git clone https://github.com/your-repo/emailapi.git ~/emailapi
 cd ~/emailapi/deploy
 
 # Make scripts executable
-chmod +x setup_vm.sh deploy.sh
+chmod +x setup_vm.sh deploy.sh certbot-renew-hook.sh
 
-# Run the setup script (installs Go, Redis, Nginx, Certbot)
+# Run the setup script (installs Go, Redis, Envoy, Certbot)
 ./setup_vm.sh
 ```
 
@@ -47,7 +47,62 @@ Fill in your credentials:
 
 ---
 
-## Step 3: Setup Systemd Service
+## Step 3: Obtain SSL Certificate
+
+Before starting Envoy, obtain the SSL certificate using Certbot's standalone mode:
+
+```bash
+# Stop any service on port 80 if running
+sudo systemctl stop envoy 2>/dev/null || true
+
+# Obtain SSL certificate
+sudo certbot certonly --standalone -d api.simpleemailapi.dev
+
+# Fix permissions for envoy to read certs
+sudo chmod 755 /etc/letsencrypt/live/
+sudo chmod 755 /etc/letsencrypt/archive/
+sudo chmod 755 /etc/letsencrypt/live/api.simpleemailapi.dev/
+sudo chmod 755 /etc/letsencrypt/archive/api.simpleemailapi.dev/
+sudo chgrp envoy /etc/letsencrypt/archive/api.simpleemailapi.dev/privkey*.pem
+sudo chmod 640 /etc/letsencrypt/archive/api.simpleemailapi.dev/privkey*.pem
+
+# Install the renewal hook
+sudo cp certbot-renew-hook.sh /etc/letsencrypt/renewal-hooks/deploy/envoy-reload.sh
+sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/envoy-reload.sh
+```
+
+Certbot will:
+1. Verify domain ownership via HTTP-01 challenge
+2. Obtain the certificate
+3. Store certificates at `/etc/letsencrypt/live/api.simpleemailapi.dev/`
+4. Set up auto-renewal with our reload hook
+
+---
+
+## Step 4: Setup Envoy Proxy
+
+```bash
+# Copy Envoy config
+sudo cp ~/emailapi/deploy/envoy.yaml /etc/envoy/envoy.yaml
+
+# Copy and enable Envoy service
+sudo cp ~/emailapi/deploy/envoy.service /etc/systemd/system/envoy.service
+sudo systemctl daemon-reload
+sudo systemctl enable envoy
+
+# Validate Envoy configuration
+envoy --mode validate -c /etc/envoy/envoy.yaml
+
+# Start Envoy
+sudo systemctl start envoy
+
+# Check status
+sudo systemctl status envoy
+```
+
+---
+
+## Step 5: Setup Systemd Service for API
 
 ```bash
 # Copy service file
@@ -63,7 +118,7 @@ sudo systemctl enable emailapi
 
 ---
 
-## Step 4: Build and Start the API
+## Step 6: Build and Start the API
 
 ```bash
 # Navigate to the API directory
@@ -82,49 +137,14 @@ sudo systemctl status emailapi
 
 ---
 
-## Step 5: Configure Nginx
-
-```bash
-# Copy nginx config
-sudo cp ~/emailapi/deploy/nginx.conf /etc/nginx/sites-available/emailapi
-
-# Create symlink
-sudo ln -s /etc/nginx/sites-available/emailapi /etc/nginx/sites-enabled/
-
-# Remove default site (optional)
-sudo rm /etc/nginx/sites-enabled/default
-
-# Test nginx config
-sudo nginx -t
-```
-
----
-
-## Step 6: Add SSL with Certbot
-
-```bash
-# Obtain SSL certificate
-sudo certbot --nginx -d api.simpleemailapi.dev
-```
-
-Certbot will:
-1. Verify domain ownership
-2. Obtain the certificate
-3. Auto-configure Nginx SSL settings
-4. Set up auto-renewal
-
-```bash
-# Restart nginx to apply changes
-sudo systemctl restart nginx
-```
-
----
-
 ## Step 7: Verify Deployment
 
 ```bash
-# Check if the API is running
+# Check if the API is running (HTTP)
 curl https://api.simpleemailapi.dev/health
+
+# Test with grpcurl (native gRPC)
+grpcurl api.simpleemailapi.dev:443 list
 
 # Check service logs
 sudo journalctl -u emailapi -f
@@ -152,7 +172,12 @@ This will pull latest changes, rebuild, and restart the service.
 | `sudo systemctl restart emailapi` | Restart the API |
 | `sudo systemctl status emailapi` | Check API status |
 | `sudo journalctl -u emailapi -f` | View API logs (live) |
-| `sudo systemctl restart nginx` | Restart Nginx |
+| `sudo systemctl restart envoy` | Restart Envoy |
+| `sudo systemctl reload envoy` | Reload Envoy config (SIGHUP) |
+| `sudo systemctl status envoy` | Check Envoy status |
+| `envoy --mode validate -c /etc/envoy/envoy.yaml` | Validate Envoy config |
+| `curl localhost:9901/stats` | View Envoy statistics |
+| `curl localhost:9901/clusters` | View upstream cluster health |
 | `sudo certbot renew --dry-run` | Test SSL renewal |
 
 ---
@@ -168,20 +193,111 @@ sudo journalctl -u emailapi -n 50
 cat /path/to/.env
 ```
 
-### Nginx errors
+### Envoy errors
 ```bash
-# Test config
-sudo nginx -t
+# Validate config first
+envoy --mode validate -c /etc/envoy/envoy.yaml
 
-# Check nginx logs
-sudo tail -f /var/log/nginx/error.log
+# Check Envoy logs
+sudo journalctl -u envoy -n 50
+
+# Check admin interface
+curl localhost:9901/server_info
+```
+
+### gRPC/Connect not working
+```bash
+# Test native gRPC
+grpcurl api.simpleemailapi.dev:443 list
+
+# Test Connect RPC (JSON)
+curl -X POST https://api.simpleemailapi.dev/v1.UserService/GetCurrentUser \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{}'
+
+# Check Envoy cluster health
+curl localhost:9901/clusters | grep emailapi_backend
 ```
 
 ### SSL certificate issues
 ```bash
-# Renew certificate manually
-sudo certbot renew
-
 # Check certificate status
 sudo certbot certificates
+
+# Renew certificate manually
+sudo systemctl stop envoy
+sudo certbot renew
+sudo systemctl start envoy
+
+# Verify renewal hook
+cat /etc/letsencrypt/renewal-hooks/deploy/envoy-reload.sh
 ```
+
+### Streaming connections dropping
+The Envoy configuration disables stream timeouts (`stream_idle_timeout: 0s`) to support long-lived streaming connections. Your API sends heartbeats every 25 seconds to keep connections alive.
+
+If connections still drop:
+```bash
+# Check Envoy stats for timeouts
+curl localhost:9901/stats | grep timeout
+
+# Verify heartbeats are being sent
+sudo journalctl -u emailapi | grep heartbeat
+```
+
+---
+
+## Performance Tuning
+
+The setup script automatically applies kernel optimizations for high-performance API workloads:
+
+| Setting | Value | Purpose |
+|---------|-------|---------|
+| TCP Congestion | BBRv3 | Lower latency, fewer retransmits |
+| Queue Discipline | fq | Fair queuing for BBR |
+| Max Connections | 65535 | High concurrent connection handling |
+| TCP Fast Open | Enabled | Faster connection establishment |
+| Swappiness | 10 | Prefer RAM over swap |
+
+### Verify Performance Settings
+
+```bash
+# Check BBR is active
+sysctl net.ipv4.tcp_congestion_control
+
+# View all custom settings
+sysctl -a | grep -f /etc/sysctl.d/99-emailapi-performance.conf
+
+# Check current connection limits
+sysctl net.core.somaxconn
+```
+
+> **Note:** BBRv3 requires kernel 6.1+. Debian Bookworm (6.1 LTS) and Ubuntu 22.04+ with HWE kernel support BBRv3.
+
+---
+
+## Architecture
+
+```
+                    ┌─────────────────────────────────────┐
+                    │            Internet                  │
+                    └───────────────┬─────────────────────┘
+                                    │
+                    ┌───────────────▼─────────────────────┐
+                    │     Envoy Proxy (Port 443/80)       │
+                    │  - TLS Termination                  │
+                    │  - HTTP/2 + gRPC + Connect RPC      │
+                    │  - CORS handling                    │
+                    │  - Health checks                    │
+                    └───────────────┬─────────────────────┘
+                                    │ HTTP/2 (h2c)
+                    ┌───────────────▼─────────────────────┐
+                    │     Go API (Port 8080)              │
+                    │  - Connect RPC handlers             │
+                    │  - Native gRPC support              │
+                    │  - gRPC-Web support                 │
+                    │  - Streaming with heartbeats        │
+                    └─────────────────────────────────────┘
+```
+

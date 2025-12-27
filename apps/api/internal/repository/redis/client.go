@@ -12,12 +12,22 @@ type Client struct {
 	rdb *redis.Client
 }
 
-// NewClient creates a new Redis client from the connection URL.
-func NewClient(redisURL string) (*Client, error) {
-	opts, err := redis.ParseURL(redisURL)
+// ClientConfig holds configuration for the Redis client.
+type ClientConfig struct {
+	URL          string
+	PoolSize     int
+	MinIdleConns int
+}
+
+// NewClient creates a new Redis client with explicit pool configuration.
+func NewClient(cfg ClientConfig) (*Client, error) {
+	opts, err := redis.ParseURL(cfg.URL)
 	if err != nil {
 		return nil, err
 	}
+
+	opts.PoolSize = cfg.PoolSize
+	opts.MinIdleConns = cfg.MinIdleConns
 
 	rdb := redis.NewClient(opts)
 

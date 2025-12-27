@@ -61,7 +61,13 @@ func main() {
 		Msg("Configuration loaded")
 
 	// Initialize repository layer
-	store, err := postgres.NewStore(cfg.DatabaseURL)
+	store, err := postgres.NewStore(postgres.StoreConfig{
+		DatabaseURL:     cfg.DatabaseURL,
+		MaxConns:        cfg.DBPoolMaxConns,
+		MinConns:        cfg.DBPoolMinConns,
+		MaxConnLifetime: time.Duration(cfg.DBPoolMaxConnLifetime) * time.Minute,
+		MaxConnIdleTime: time.Duration(cfg.DBPoolMaxConnIdleTime) * time.Minute,
+	})
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to connect to database")
 	}
@@ -95,7 +101,11 @@ func main() {
 	logger.Info().Msg("✓ Initialized Tinybird repositories")
 
 	// Initialize Redis client
-	redisClient, err := redisrepo.NewClient(cfg.RedisURL)
+	redisClient, err := redisrepo.NewClient(redisrepo.ClientConfig{
+		URL:          cfg.RedisURL,
+		PoolSize:     cfg.RedisPoolSize,
+		MinIdleConns: cfg.RedisMinIdleConns,
+	})
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to connect to Redis")
 	}
@@ -131,7 +141,16 @@ func main() {
 	// Initialize River with direct (non-pooled) connection
 	// River work coordinator requires direct connection for LISTEN/NOTIFY
 	// See: https://riverqueue.com/docs/pgbouncer
-	riverPool, err := pgxpool.New(context.Background(), cfg.DatabaseURLDirect)
+	riverPoolConfig, err := pgxpool.ParseConfig(cfg.DatabaseURLDirect)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to parse River database URL")
+	}
+	riverPoolConfig.MaxConns = cfg.DBPoolMaxConns
+	riverPoolConfig.MinConns = cfg.DBPoolMinConns
+	riverPoolConfig.MaxConnLifetime = time.Duration(cfg.DBPoolMaxConnLifetime) * time.Minute
+	riverPoolConfig.MaxConnIdleTime = time.Duration(cfg.DBPoolMaxConnIdleTime) * time.Minute
+
+	riverPool, err := pgxpool.NewWithConfig(context.Background(), riverPoolConfig)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create River connection pool")
 	}

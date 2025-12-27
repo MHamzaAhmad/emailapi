@@ -1,0 +1,31 @@
+[Unit]
+Description=Envoy Proxy
+Documentation=https://www.envoyproxy.io/
+After=network.target
+
+[Service]
+Type=simple
+User=envoy
+Group=envoy
+ExecStart=/usr/local/bin/envoy -c /etc/envoy/envoy.yaml --log-level info
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+
+# Allow binding to privileged ports (80, 443) without running as root
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/log/envoy
+ReadOnlyPaths=/etc/letsencrypt
+
+# Resource limits
+LimitNOFILE=65535
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target
