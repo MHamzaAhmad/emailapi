@@ -58,6 +58,14 @@ sudo systemctl stop envoy 2>/dev/null || true
 # Obtain SSL certificate
 sudo certbot certonly --standalone -d api.simpleemailapi.dev
 
+# Fix permissions for envoy to read certs
+sudo chmod 755 /etc/letsencrypt/live/
+sudo chmod 755 /etc/letsencrypt/archive/
+sudo chmod 755 /etc/letsencrypt/live/api.simpleemailapi.dev/
+sudo chmod 755 /etc/letsencrypt/archive/api.simpleemailapi.dev/
+sudo chgrp envoy /etc/letsencrypt/archive/api.simpleemailapi.dev/privkey*.pem
+sudo chmod 640 /etc/letsencrypt/archive/api.simpleemailapi.dev/privkey*.pem
+
 # Install the renewal hook
 sudo cp certbot-renew-hook.sh /etc/letsencrypt/renewal-hooks/deploy/envoy-reload.sh
 sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/envoy-reload.sh

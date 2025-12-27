@@ -7,7 +7,14 @@
 
 set -e
 
-echo "Certificate renewed, reloading Envoy..."
+echo "Certificate renewed, fixing permissions..."
+
+# Fix permissions for new private key files
+DOMAIN="api.simpleemailapi.dev"
+chgrp envoy /etc/letsencrypt/archive/${DOMAIN}/privkey*.pem
+chmod 640 /etc/letsencrypt/archive/${DOMAIN}/privkey*.pem
+
+echo "Reloading Envoy..."
 
 # Reload Envoy to pick up new certificates
 # SIGHUP triggers a hot restart which reloads config and certs
