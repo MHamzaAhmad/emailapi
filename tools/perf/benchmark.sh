@@ -261,7 +261,15 @@ run_grpc_test() {
     local mode_cap=$(echo "$mode" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
     echo -e "${CYAN}► gRPC ${mode_cap} Mode @ ${rps} RPS (${duration})${NC}"
     
+    # Check if proto file exists
+    if [[ ! -f "$PROTO_DIR/public/v1/email.proto" ]]; then
+        echo -e "  ${RED}ERROR: Proto file not found at $PROTO_DIR/public/v1/email.proto${NC}"
+        echo -e "  ${YELLOW}Skipping gRPC test - run from repository root or clone repo first${NC}"
+        return
+    fi
+    
     local output_file="$RESULTS_DIR/grpc-${mode}-${rps}rps-$TIMESTAMP.json"
+    local error_file="$RESULTS_DIR/grpc-${mode}-${rps}rps-$TIMESTAMP.err"
     
     local metadata
     if [[ -n "$DRY_RUN" ]]; then
@@ -273,9 +281,27 @@ run_grpc_test() {
     local async_flag="false"
     [[ "$mode" == "async" ]] && async_flag="true"
     
-    ghz --insecure="${GRPC_INSECURE:-false}" \
+    # Build ghz command - only use --insecure if explicitly set, otherwise ghz uses TLS by default
+    local insecure_flag=""
+    if [[ "${GRPC_INSECURE:-false}" == "true" ]]; then
+        insecure_flag="--insecure"
+    fi
+    
+    # Try to find buf's cache for google protobuf imports
+    local buf_cache=""
+    if [[ -d "$HOME/.cache/buf" ]]; then
+        # Find google protobuf in buf cache
+        local google_pb_path=$(find "$HOME/.cache/buf" -type d -name "google" -path "*/protocolbuffers/*" 2>/dev/null | head -1)
+        if [[ -n "$google_pb_path" ]]; then
+            buf_cache="--import-paths=$(dirname "$google_pb_path")"
+        fi
+    fi
+    
+    # Use reflection mode if available (more reliable), otherwise use proto files
+    ghz $insecure_flag \
         --proto="$PROTO_DIR/public/v1/email.proto" \
         --import-paths="$PROTO_DIR/public" \
+        $buf_cache \
         --call=v1.EmailService/SendEmail \
         --rps="$rps" \
         --duration="$duration" \
@@ -285,7 +311,21 @@ run_grpc_test() {
         --data="{\"from\": \"$PERF_FROM_EMAIL\", \"to\": [\"$PERF_TO_EMAIL\"], \"subject\": \"gRPC Benchmark $(date +%s)\", \"body\": \"Performance test\", \"async\": $async_flag}" \
         --format=json \
         --output="$output_file" \
-        "$PERF_API_HOST:$PERF_GRPC_PORT" 2>/dev/null
+        "$PERF_API_HOST:$PERF_GRPC_PORT" 2>"$error_file"
+    
+    local exit_code=$?
+    
+    # Check for errors
+    if [[ $exit_code -ne 0 ]] || [[ ! -s "$output_file" ]]; then
+        echo -e "  ${RED}ERROR: ghz failed (exit code: $exit_code)${NC}"
+        if [[ -s "$error_file" ]]; then
+            echo -e "  ${YELLOW}Error details:${NC}"
+            head -5 "$error_file" | sed 's/^/    /'
+        fi
+        rm -f "$error_file"
+        return
+    fi
+    rm -f "$error_file"
     
     if [[ -f "$output_file" ]]; then
         local p50=$(jq -r '.latencyDistribution[] | select(.percentage == 50) | .latency' "$output_file" 2>/dev/null | sed 's/ms//' || echo "0")

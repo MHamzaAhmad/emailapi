@@ -140,7 +140,7 @@ install_go() {
         return
     fi
     
-    local GO_VERSION="1.23.5"
+    local GO_VERSION="1.25"
     
     local ARCH
     ARCH=$(uname -m)
