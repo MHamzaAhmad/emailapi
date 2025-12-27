@@ -210,7 +210,7 @@ client.onReceive({
                     value: "curl",
                     language: "bash",
                     content: `curl -X POST https://api.simpleemailapi.dev/v1/send \\
-  -H "Authorization: Bearer em_live_..." \\
+  -H "Authorization: Bearer sea_live_..." \\
   -d '{
     "from": "updates@app.com",
     "to": ["user@example.com"],
@@ -227,7 +227,7 @@ client.onReceive({
 import "github.com/simpleemailapi/go-sdk"
 
 func main() {
-  client := simpleemailapi.NewClient("em_live_...")
+  client := simpleemailapi.NewClient("sea_live_...")
 
   // Send Email
   client.Send(&simpleemailapi.Message{

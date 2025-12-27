@@ -34,7 +34,7 @@ option (gnostic.openapi.v3.document) = {
             security_scheme: {
               type: "http";
               scheme: "bearer";
-              description: "API key authentication. Get your API key from the SimpleEmailAPI dashboard and include it in the Authorization header as: Bearer em_live_xxxxx";
+              description: "API key authentication. Get your API key from the SimpleEmailAPI dashboard and include it in the Authorization header as: Bearer sea_live_xxxxx";
             }
           }
         }

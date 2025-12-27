@@ -19,7 +19,7 @@ npm install @msgmorph/sdk
 import { createClient } from '@msgmorph/sdk';
 
 const client = createClient({
-  apiKey: 'em_test_...'
+  apiKey: 'sea_test_...'
 });
 
 const result = await client.send({
@@ -40,7 +40,7 @@ You can call the API directly using any HTTP client.
 
 ```bash
 curl -X POST https://api.simpleemailapi.dev/v1/send \
-  -H "Authorization: Bearer em_test_..." \
+  -H "Authorization: Bearer sea_test_..." \
   -H "Content-Type: application/json" \
   -d '{
     "from": "notifications@yourdomain.com",

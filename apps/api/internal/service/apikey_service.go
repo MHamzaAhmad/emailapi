@@ -352,7 +352,7 @@ func (s *APIKeyService) ValidateAndGetUser(ctx context.Context, rawKey string) (
 }
 
 // generateRawKey generates a raw API key with checksum.
-// Format: em_live_<32 chars>_<4 char checksum>
+// Format: sea_live_<32 chars>_<4 char checksum>
 func (s *APIKeyService) generateRawKey() (string, error) {
 	// Generate secret part
 	secret, err := s.generateSecret(apiKeySecretLength)
@@ -363,8 +363,8 @@ func (s *APIKeyService) generateRawKey() (string, error) {
 	// Generate checksum
 	checksum := s.generateChecksum(secret)
 
-	// Format: em_live_<secret>_<checksum>
-	return fmt.Sprintf("em_live_%s_%s", secret, checksum), nil
+	// Format: sea_live_<secret>_<checksum>
+	return fmt.Sprintf("sea_live_%s_%s", secret, checksum), nil
 }
 
 // generateSecret generates a cryptographically random secret string.
@@ -397,13 +397,13 @@ func (s *APIKeyService) generateChecksum(secret string) string {
 
 // validateChecksum validates that the key's checksum matches its secret.
 func (s *APIKeyService) validateChecksum(key string) bool {
-	// Parse key format: em_live_<secret>_<checksum>
+	// Parse key format: sea_live_<secret>_<checksum>
 	parts := strings.Split(key, "_")
 	if len(parts) != 4 {
 		return false // Invalid format
 	}
 
-	if parts[0] != "em" || (parts[1] != "live" && parts[1] != "test") {
+	if parts[0] != "sea" || (parts[1] != "live" && parts[1] != "test") {
 		return false // Invalid prefix
 	}
 

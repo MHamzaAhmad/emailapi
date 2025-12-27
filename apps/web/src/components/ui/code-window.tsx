@@ -118,7 +118,7 @@ function RichCodeRenderer({ content, language }: { content: string; language: st
             <span className="text-foreground/80">
                 <Keyword>curl</Keyword> <Operator>-</Operator><Keyword>X</Keyword> POST https://api.simpleemailapi.dev/v1.EmailService/Send <Operator>{"\\"}</Operator>
                 {"\n"}
-                {"  "}<Operator>-</Operator><Keyword>H</Keyword> <String>"Authorization: Bearer em_live_..."</String> <Operator>{"\\"}</Operator>
+                {"  "}<Operator>-</Operator><Keyword>H</Keyword> <String>"Authorization: Bearer sea_live_..."</String> <Operator>{"\\"}</Operator>
                 {"\n"}
                 {"  "}<Operator>-</Operator><Keyword>d</Keyword> <String>'{`{`}'</String>
                 {"\n"}
@@ -144,7 +144,7 @@ function RichCodeRenderer({ content, language }: { content: string; language: st
                 {"\n\n"}
                 <Keyword>func</Keyword> <Method>main</Method><Punctuation>()</Punctuation> <Punctuation>{"{"}</Punctuation>
                 {"\n"}
-                {"  "}client <Operator>:=</Operator> simpleemailapi<Punctuation>.</Punctuation><Method>NewClient</Method><Punctuation>(</Punctuation><String>"em_live_..."</String><Punctuation>)</Punctuation>
+                {"  "}client <Operator>:=</Operator> simpleemailapi<Punctuation>.</Punctuation><Method>NewClient</Method><Punctuation>(</Punctuation><String>"sea_live_..."</String><Punctuation>)</Punctuation>
                 {"\n\n"}
                 {"  "}<Comment>// Send Email</Comment>
                 {"\n"}
