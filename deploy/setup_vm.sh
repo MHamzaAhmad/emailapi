@@ -59,9 +59,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 sudo cp "${SCRIPT_DIR}/sysctl-performance.conf" /etc/sysctl.d/99-emailapi-performance.conf
 sudo sysctl -p /etc/sysctl.d/99-emailapi-performance.conf
 
-# Verify BBR is enabled
+# Verify BBR is enabled (use full path for minimal installs where /usr/sbin isn't in PATH)
 echo "Verifying BBR congestion control..."
-if sysctl net.ipv4.tcp_congestion_control | grep -q bbr; then
+if /usr/sbin/sysctl net.ipv4.tcp_congestion_control | grep -q bbr; then
     echo "✓ BBR congestion control is active"
 else
     echo "⚠ BBR may not be available on this kernel"
