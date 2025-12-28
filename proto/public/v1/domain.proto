@@ -12,23 +12,19 @@ import "google/protobuf/timestamp.proto";
 // 2. Configure the DNS records we give you
 // 3. Verify the layout (VerifyDomain)
 service DomainService {
-  // Register a new domain for sending.
-  // Returns the DNS records you need to add to your DNS provider (e.g. Cloudflare, GoDaddy).
+  // Register a new domain.
   rpc AddDomain(AddDomainRequest) returns (AddDomainResponse) {}
 
-  // Get details for a specific domain, including current DNS status.
-  // We automatically refresh the status if it's stale (>5 minutes old).
+  // Get domain details and DNS status.
   rpc GetDomain(GetDomainRequest) returns (GetDomainResponse) {}
 
-  // List all your domains.
+  // List all domains.
   rpc ListDomains(ListDomainsRequest) returns (ListDomainsResponse) {}
 
-  // Remove a domain. You won't be able to send from it anymore.
+  // Remove a domain.
   rpc DeleteDomain(DeleteDomainRequest) returns (DeleteDomainResponse) {}
 
-  // Trigger an immediate check of DNS records.
-  // Useful if you just updated your DNS and don't want to wait for the auto-refresh.
-  // Rate limited to once every 30 seconds.
+  // Trigger DNS verification.
   rpc VerifyDomain(VerifyDomainRequest) returns (VerifyDomainResponse) {}
 }
 

@@ -1,10 +1,10 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "MsgMorph API",
-    "description": "The MsgMorph API is a type-safe email API for sending transactional emails with real-time event streaming. Built on Connect RPC for maximum type safety and developer experience.",
+    "title": "SimpleEmailAPI",
+    "description": "The SimpleEmailAPI is a type-safe email API for sending transactional emails with real-time event streaming. Built on Connect RPC for maximum type safety and developer experience.",
     "contact": {
-      "name": "MsgMorph Support",
+      "name": "SimpleEmailAPI Support",
       "url": "https://simpleemailapi.dev",
       "email": "support@simpleemailapi.dev"
     },
@@ -22,8 +22,8 @@
         "tags": [
           "v1.DomainService"
         ],
-        "summary": "Register a new domain for sending.  Returns the DNS records you need to add to your DNS provider (e.g. Cloudflare, GoDaddy).",
-        "description": "Register a new domain for sending.\n Returns the DNS records you need to add to your DNS provider (e.g. Cloudflare, GoDaddy).",
+        "summary": "Register a new domain.",
+        "description": "Register a new domain.",
         "operationId": "v1.DomainService.AddDomain",
         "parameters": [
           {
@@ -81,8 +81,8 @@
         "tags": [
           "v1.DomainService"
         ],
-        "summary": "Remove a domain. You won't be able to send from it anymore.",
-        "description": "Remove a domain. You won't be able to send from it anymore.",
+        "summary": "Remove a domain.",
+        "description": "Remove a domain.",
         "operationId": "v1.DomainService.DeleteDomain",
         "parameters": [
           {
@@ -140,8 +140,8 @@
         "tags": [
           "v1.DomainService"
         ],
-        "summary": "Get details for a specific domain, including current DNS status.  We automatically refresh the status if it's stale (\u003e5 minutes old).",
-        "description": "Get details for a specific domain, including current DNS status.\n We automatically refresh the status if it's stale (\u003e5 minutes old).",
+        "summary": "Get domain details and DNS status.",
+        "description": "Get domain details and DNS status.",
         "operationId": "v1.DomainService.GetDomain",
         "parameters": [
           {
@@ -199,8 +199,8 @@
         "tags": [
           "v1.DomainService"
         ],
-        "summary": "List all your domains.",
-        "description": "List all your domains.",
+        "summary": "List all domains.",
+        "description": "List all domains.",
         "operationId": "v1.DomainService.ListDomains",
         "parameters": [
           {
@@ -258,8 +258,8 @@
         "tags": [
           "v1.DomainService"
         ],
-        "summary": "Trigger an immediate check of DNS records.  Useful if you just updated your DNS and don't want to wait for the auto-refresh.  Rate limited to once every 30 seconds.",
-        "description": "Trigger an immediate check of DNS records.\n Useful if you just updated your DNS and don't want to wait for the auto-refresh.\n Rate limited to once every 30 seconds.",
+        "summary": "Trigger DNS verification.",
+        "description": "Trigger DNS verification.",
         "operationId": "v1.DomainService.VerifyDomain",
         "parameters": [
           {
@@ -317,8 +317,8 @@
         "tags": [
           "v1.EmailService"
         ],
-        "summary": "Send an email to one or more recipients.",
-        "description": "By default, this method sends the email synchronously and returns a result only\n after the upstream provider has accepted it.\n\n For better performance with large attachments or batch sending, set `async: true`\n to queue the email for background processing.",
+        "summary": "Send an email.",
+        "description": "Send an email.",
         "operationId": "v1.EmailService.SendEmail",
         "parameters": [
           {
@@ -1529,7 +1529,7 @@
     "securitySchemes": {
       "BearerAuth": {
         "type": "http",
-        "description": "API key authentication. Sign up on the [dashboard](https://simpleemailapi.dev/dashboard), create a workspace, and grab your API key (starts with `sea_`). Include it in the Authorization header as: Bearer sea_live_xxxxx",
+        "description": "API key authentication. Get your API key from the SimpleEmailAPI dashboard and include it in the Authorization header as: Bearer sea_live_xxxxx",
         "scheme": "bearer"
       }
     }

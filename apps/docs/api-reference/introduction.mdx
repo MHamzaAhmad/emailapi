@@ -25,46 +25,45 @@ Authorization: Bearer sea_live_xxxxx
 </Warning>
 
 ## Rate Limits
-
 API requests are rate limited to ensure fair usage:
 
-| Plan | Requests/min | Emails/day |
-|------|--------------|------------|
-| Free | 60 | 100 |
-| Pro | 600 | 10,000 |
-| Enterprise | Custom | Custom |
+| Limit Type | Limit |
+|------------|-------|
+| Requests | 100 per minute |
+| Concurrent Streams | 5 |
 
-Rate limit headers are included in every response:
+Standard rate limit headers are included in every response:
 
 ```http
-X-RateLimit-Limit: 600
-X-RateLimit-Remaining: 599
-X-RateLimit-Reset: 1640995200
+RateLimit-Limit: 100
+RateLimit-Remaining: 99
+RateLimit-Reset: 1640995200
 ```
 
 ## Errors
+The API uses [Connect RPC](https://connectrpc.com) error codes which map to standard HTTP status codes:
 
-The API uses conventional HTTP response codes to indicate success or failure:
+| Code | HTTP | Description |
+|------|------|-------------|
+| `invalid_argument` | `400` | Client specified an invalid argument. |
+| `unauthenticated` | `401` | Request not authenticated (missing/invalid token). |
+| `permission_denied` | `403` | Client does not have sufficient permission. |
+| `not_found` | `404` | A specified resource was not found. |
+| `already_exists` | `409` | The resource that a client tried to create already exists. |
+| `resource_exhausted` | `429` | Rate limit exceeded or resource quota reached. |
+| `internal` | `500` | Internal server error. |
 
-| Code | Description |
-|------|-------------|
-| `200` | Success |
-| `201` | Created |
-| `400` | Bad Request - Invalid parameters |
-| `401` | Unauthorized - Invalid or missing API key |
-| `404` | Not Found - Resource doesn't exist |
-| `429` | Too Many Requests - Rate limit exceeded |
-| `500` | Internal Server Error |
-
-Error responses include a JSON body with details:
+Error responses follow the Connect RPC JSON format:
 
 ```json
 {
-  "error": "invalid_request",
+  "code": "invalid_argument",
   "message": "The 'to' field must contain at least one recipient",
-  "details": {
-    "field": "to",
-    "code": "required"
-  }
+  "details": [
+    {
+      "type": "google.rpc.BadRequest",
+      "value": "base64-encoded-proto-message"
+    }
+  ]
 }
 ```
