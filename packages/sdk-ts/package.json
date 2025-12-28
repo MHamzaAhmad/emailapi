@@ -29,7 +29,6 @@
         "build": "tsup",
         "dev": "tsup --watch",
         "typecheck": "tsc --noEmit",
-        "generate": "buf generate buf.build/emailapi/public --template buf.gen.yaml",
         "docs": "typedoc"
     },
     "files": [
@@ -51,5 +50,8 @@
     },
     "peerDependencies": {
         "typescript": ">=5.0.0"
+    },
+    "publishConfig": {
+        "access": "public"
     }
 }
