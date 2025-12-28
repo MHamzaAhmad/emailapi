@@ -4,15 +4,15 @@
     "name": "Simple Email API",
     "description": "Developer-first email API for high-performance sending and receiving.",
     "logo": {
-        "dark": "/logo/dark.svg",
-        "light": "/logo/light.svg",
+        "dark": "/logo/light.svg",
+        "light": "/logo/dark.svg",
         "href": "https://simpleemailapi.dev"
     },
     "favicon": "/favicon.svg",
     "colors": {
-        "primary": "#6366f1",
-        "light": "#818cf8",
-        "dark": "#4f46e5"
+        "primary": "#5266eb",
+        "light": "#7e8cf5",
+        "dark": "#3a4bd6"
     },
     "navbar": {
         "links": [
