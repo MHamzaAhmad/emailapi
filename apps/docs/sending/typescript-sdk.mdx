@@ -1,0 +1,134 @@
+---
+title: TypeScript SDK
+description: Send emails using the official type-safe SDK.
+---
+
+# TypeScript SDK
+
+The `simpleemailapi` package provides a fully typed, backend-first SDK for Node.js workflows.
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install simpleemailapi
+```
+```bash pnpm
+pnpm add simpleemailapi
+```
+```bash yarn
+yarn add simpleemailapi
+```
+</CodeGroup>
+
+## Usage
+
+Initialize the client with your API key and use the `client.send` method.
+
+```typescript
+import { createClient } from 'simpleemailapi';
+
+const client = createClient({ apiKey: 'sea_live_...' });
+
+const result = await client.send({
+  from: 'hello@yourdomain.com', // Must be verified
+  to: ['recipient@example.com'],
+  subject: 'Welcome aboard!',
+  text: 'Thanks for signing up.', // inferred from 'body' in proto but 'text' is common alias, let's stick to proto 'body' for accuracy
+  body: 'Thanks for signing up.',
+  html: '<p>Thanks for signing up.</p>'
+});
+
+console.log('Email ID:', result.id);
+```
+
+<Note>
+  The `from` address must belong to a domain you have [verified](/domains/introduction).
+</Note>
+
+## Client Configuration
+
+The `createClient` function accepts the following options:
+
+<ResponseField name="apiKey" type="string" required>
+  Your API Key, starting with `sea_live_`.
+</ResponseField>
+
+<ResponseField name="baseUrl" type="string">
+  API endpoint URL. Defaults to `https://api.simpleemailapi.dev`.
+</ResponseField>
+
+## arguments
+
+The `client.send` method accepts an object with the following properties:
+
+<ParamField body="from" type="string" required>
+  Sender email address. Must be from a verified domain.
+</ParamField>
+
+<ParamField body="to" type="string[]" required>
+  List of primary recipient email addresses.
+</ParamField>
+
+<ParamField body="subject" type="string" required>
+  Email subject line.
+</ParamField>
+
+<ParamField body="body" type="string">
+  Plain text content of the email.
+</ParamField>
+
+<ParamField body="html" type="string">
+  HTML content of the email.
+</ParamField>
+
+<ParamField body="cc" type="string[]">
+  List of CC recipient email addresses.
+</ParamField>
+
+<ParamField body="bcc" type="string[]">
+  List of BCC recipient email addresses.
+</ParamField>
+
+<ParamField body="attachments" type="Attachment[]">
+  List of files to attach.
+  <Expandable title="Attachment properties">
+    <ParamField body="filename" type="string" required>
+      Name of the file.
+    </ParamField>
+    <ParamField body="contentType" type="string" required>
+      MIME type (e.g., `application/pdf`).
+    </ParamField>
+     <ParamField body="content" type="Buffer | string" required>
+      File content as a Buffer or Base64 string.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="replyTo" type="string">
+  Email address to use for the Reply-To header. // Actually proto has inReplyTo for threading, but standard email APIs usually have replyTo. Proto has `inReplyTo`. Let's stick to exact types from `SendEmailRequest`.
+</ParamField>
+
+<ParamField body="inReplyTo" type="string">
+  Message-ID of the email being replied to (for threading).
+</ParamField>
+
+<ParamField body="references" type="string[]">
+  List of message IDs for threading context.
+</ParamField>
+
+<ParamField body="headers" type="Record<string, string>">
+  Custom headers. // Proto has `metadata`, effectively custom headers/metadata.
+</ParamField>
+
+<ParamField body="metadata" type="Record<string, string>">
+  Custom key-value metadata.
+</ParamField>
+
+<ParamField body="scheduledAt" type="Date">
+  Schedule the email for future delivery.
+</ParamField>
+
+<ParamField body="async" type="boolean">
+  If true, queue for async processing (we handle retries). If false, send synchronously. Emails with attachments are always async.
+</ParamField>

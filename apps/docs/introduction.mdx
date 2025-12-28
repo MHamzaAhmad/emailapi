@@ -1,58 +1,62 @@
 ---
 title: Introduction
-description: Welcome to MsgMorph - the simplest email API for developers.
+description: The developer-first API for high-performance inbound and outbound email.
 ---
 
-# Welcome to MsgMorph
 
-MsgMorph is a developer-first platform for sending and receiving emails. We provide a simple REST API, a type-safe SDK, and high-performance gRPC endpoints.
+**Simple Email API** is the developer-first solution for all your email needs, perfectly fitted for high-performance scenarios. Whether you need to send transactional emails at scale or handle complex inbound workflows, we provide the tools you need with the developer experience you deserve.
 
-## Getting Started
+## Core Features
 
-<CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Send your first email in 2 minutes.
-  </Card>
-  <Card title="Sending Emails" icon="paper-plane" href="/sending/email">
-    Learn how to send emails using API, SDK, or Curl.
-  </Card>
-  <Card title="On Receive" icon="inbox" href="/receiving/on-receive">
-    Listen for real-time events and handle inbound replies.
-  </Card>
-  <Card title="Webhooks" icon="webhook" href="/receiving/webhooks">
-    Push events to your endpoint.
-  </Card>
-</CardGroup>
+- **High Performance**: Built for speed and reliability, capable of handling high throughput for both sending and receiving.
+- **Inbound & Outbound**: A unified API for sending emails and processing incoming replies.
+- **Type-Safe SDKs**: Fully typed SDKs generated with [Buf](https://buf.build/) and [Connect RPC](https://connectrpc.com/) for a superior development experience.
+- **Privacy First**: We don't store your emails. We only keep activity logs, so your user data remains in your control.
 
-## Features
+## Sending Modes: Sync vs. Async
 
-<CardGroup cols={2}>
-  <Card title="Developer Experience" icon="code">
-    Built for developers, by developers. Clean APIs with comprehensive documentation.
-  </Card>
-  <Card title="Type Safety" icon="shield-check">
-    End-to-end type safety with our TypeScript SDK.
-  </Card>
-  <Card title="Performance" icon="bolt">
-    High-throughput sending via gRPC and optimized infrastructure.
-  </Card>
-  <Card title="Observability" icon="chart-line">
-    Real-time event streaming for every email status change.
-  </Card>
-</CardGroup>
+We understand that different use cases require different guarantees. That's why we offer two distinct modes for sending emails:
 
-## SDK Installation
+- **Sync Mode (Synchronous)**
+  
+  Use **Sync Mode** when you need immediate confirmation and the Message ID is critical for your application logic, such as for reply threading or tracking specific conversations. In this mode, the API waits until the email is successfully accepted by our system before returning a response.
 
-<CodeGroup>
-```bash npm
-npm install @msgmorph/sdk
-```
+- **Async Mode (Asynchronous)**
+  
+  Use **Async Mode** when you want to "fire and forget." If you don't need the immediate Message ID and just want to offload the delivery to us, this is the way to go. We handle all the heavy lifting, including retries and delivery optimization, so you can focus on your application's flow.
 
-```bash pnpm
-pnpm add @msgmorph/sdk
-```
+## Reply Handling & Inbound
 
-```bash yarn
-yarn add @msgmorph/sdk
-```
-</CodeGroup>
+Every email you send via Simple Email API is replyable. We give you full control over how you handle those replies, depending on your product's design and requirements.
+
+- **Webhooks (via Svix)**
+  
+  You can listen to our highly reliable webhooks, powered by [Svix](https://www.svix.com/), to receive real-time notifications for incoming emails and other events. This is ideal for server-side processing and decoupling your email logic from your user interface.
+
+- **SDK Callbacks (`onReceive`)**
+  
+  For a more integrated experience, you can use our SDK's `onReceive` callback. This allows you to handle incoming emails directly within your application code, providing a seamless experience for developers who prefer staying within their language integration.
+
+## SDKs & Type Safety
+
+We believe in providing the best possible tools for developers. Currently, we offer a **TypeScript SDK**, with support for more languages coming soon.
+
+Our SDKs are built using **Buf** and **Connect RPC**, ensuring they are:
+- **Fully Type-Safe**: Catch errors at compile time, not runtime.
+- **Consistent**: Generated from a single source of truth, ensuring parity across all supported languages.
+- **Efficient**: Leveraging modern RPC standards for performance.
+
+> **Note**: While our SDKs handle much of the heavy lifting, users utilizing the streaming RPC features will need to manage the stream consumption within their applications.
+
+## Privacy & Storage
+
+**We do not store your emails.**
+
+Why pay for storage when you already have a database? We believe your data belongs to you. We only store the necessary **activity logs** to help you track delivery and performance. If you need to retain the content of sent or received emails, we recommend saving them to your own database. This approach ensures:
+- **Better Privacy**: Your sensitive email content stays within your controlled infrastructure.
+- **Lower Costs**: You aren't charged for redundant storage.
+- **Full Control**: You decide how and where your data is managed.
+
+---
+
+Ready to get started? Check out our [Quickstart](/quickstart) guide or explore the [Sending](/sending/email) documentation.

@@ -1,0 +1,114 @@
+{
+    "$schema": "https://mintlify.com/docs.json",
+    "theme": "maple",
+    "name": "Simple Email API",
+    "description": "Developer-first email API for high-performance sending and receiving.",
+    "logo": {
+        "dark": "/logo/dark.svg",
+        "light": "/logo/light.svg",
+        "href": "https://simpleemailapi.dev"
+    },
+    "favicon": "/favicon.svg",
+    "colors": {
+        "primary": "#6366f1",
+        "light": "#818cf8",
+        "dark": "#4f46e5"
+    },
+    "navbar": {
+        "links": [
+            {
+                "label": "Dashboard",
+                "href": "https://simpleemailapi.dev/dashboard"
+            }
+        ],
+        "primary": {
+            "type": "button",
+            "label": "Get Started",
+            "href": "https://simpleemailapi.dev"
+        }
+    },
+    "navigation": {
+        "tabs": [
+            {
+                "tab": "Documentation",
+                "icon": "book",
+                "groups": [
+                    {
+                        "group": "Get Started",
+                        "icon": "rocket",
+                        "pages": [
+                            "introduction",
+                            "quickstart"
+                        ]
+                    },
+                    {
+                        "group": "Domains",
+                        "icon": "globe",
+                        "pages": [
+                            "domains/introduction",
+                            "domains/add-domain",
+                            "domains/verify-domain"
+                        ]
+                    },
+                    {
+                        "group": "Sending",
+                        "icon": "paper-plane",
+                        "pages": [
+                            "sending/typescript-sdk",
+                            "sending/connect-rpc",
+                            "sending/curl",
+                            "sending/grpc"
+                        ]
+                    },
+                    {
+                        "group": "Receiving",
+                        "icon": "inbox",
+                        "pages": [
+                            "receiving/on-receive",
+                            "receiving/webhooks"
+                        ]
+                    }
+                ]
+            },
+            {
+                "tab": "API Reference",
+                "icon": "terminal",
+                "groups": [
+                    {
+                        "group": "Overview",
+                        "pages": [
+                            "api-reference/introduction"
+                        ]
+                    },
+                    {
+                        "group": "Endpoints",
+                        "openapi": {
+                            "source": "/api-reference/openapi.json"
+                        }
+                    }
+                ]
+            },
+            {
+                "tab": "Buf Studio",
+                "icon": "layers",
+                "href": "https://buf.build/studio/simpleemailapi/public/main/v1.EmailService/SendEmail?selectedProtocol=connect&target=https%3A%2F%2Fsimpleemailapi.dev"
+            }
+        ]
+    },
+    "api": {
+        "playground": {
+            "display": "interactive"
+        },
+        "examples": {
+            "languages": [
+                "javascript",
+                "curl",
+                "python",
+                "go"
+            ]
+        }
+    },
+    "footer": {
+        "socials": {}
+    }
+}

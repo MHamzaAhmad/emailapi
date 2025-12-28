@@ -1,11 +1,11 @@
 ---
 title: Quickstart
-description: Get started with SimpleEmailAPI in under 2 minutes.
+description: Get started with Simple Email API in under 2 minutes.
 ---
 
 # Quickstart
 
-This guide will get you sending emails in minutes using our TypeScript SDK.
+This guide will get you sending emails in minutes using our TypeScript SDK or your preferred method.
 
 <Steps>
   <Step title="Install the SDK">
@@ -13,40 +13,178 @@ This guide will get you sending emails in minutes using our TypeScript SDK.
 
     <CodeGroup>
     ```bash npm
-    npm install emailapi-sdk
+    npm install simpleemailapi
     ```
 
     ```bash pnpm
-    pnpm add emailapi-sdk
+    pnpm add simpleemailapi
     ```
 
     ```bash yarn
-    yarn add emailapi-sdk
+    yarn add simpleemailapi
     ```
     </CodeGroup>
   </Step>
   
   <Step title="Get your API Key">
-    Sign up on the [dashboard](https://simpleemailapi.dev/dashboard), create a workspace, and grab your API key (starts with `em_`).
+    Sign up on the [dashboard](https://simpleemailapi.dev/dashboard), create a workspace, and grab your API key (starts with `sea_live_`).
   </Step>
   
   <Step title="Send your first email">
-    Create a client and send!
+    Use one of the methods below to send your first email.
 
-    ```typescript
-    import { createClient } from 'emailapi-sdk';
+    <CodeGroup>
+    ```typescript TypeScript
+    import { createClient } from 'simpleemailapi';
 
     const client = createClient({
-      apiKey: 'em_prod_123...'
+      apiKey: 'sea_live_...'
     });
 
     await client.send({
       from: 'onboarding@yourdomain.com',
       to: ['you@example.com'],
-      subject: 'Hello from SimpleEmailAPI',
+      subject: 'Hello from Simple Email API',
       body: 'It works!'
     });
     ```
+
+    ```typescript Connect
+    import { createClient } from "@connectrpc/connect";
+    import { createConnectTransport } from "@connectrpc/connect-node";
+    import { EmailService } from "@buf/simpleemailapi_public.connectrpc_es/v1/email_connect";
+
+    const transport = createConnectTransport({
+      baseUrl: "https://api.simpleemailapi.dev",
+      httpVersion: "2",
+      interceptors: [
+        (next) => async (req) => {
+          req.header.set("Authorization", "Bearer sea_live_...");
+          return next(req);
+        },
+      ],
+    });
+
+    const client = createClient(EmailService, transport);
+
+    // Access the raw Connect RPC client
+    await client.sendEmail({
+      from: "onboarding@yourdomain.com",
+      to: ["you@example.com"],
+      subject: "Hello from Connect RPC",
+      body: "Using the typed RPC client directly!",
+    });
+    ```
+
+    ```bash cURL
+    curl -X POST https://api.simpleemailapi.dev/v1/v1.EmailService/SendEmail \
+      -H "Authorization: Bearer sea_live_..." \
+      -H "Content-Type: application/json" \
+      -d '{
+        "from": "onboarding@yourdomain.com",
+        "to": ["you@example.com"],
+        "subject": "Hello from cURL",
+        "body": "It works!"
+      }'
+    ```
+
+    ```bash buf curl
+    buf curl \
+      --schema buf.build/simpleemailapi/public \
+      --header "Authorization: Bearer sea_live_..." \
+      --data '{
+        "from": "onboarding@yourdomain.com",
+        "to": ["you@example.com"],
+        "subject": "Hello from buf curl",
+        "body": "It works!"
+      }' \
+      https://api.simpleemailapi.dev/v1.EmailService/SendEmail
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Receive Emails">
+    Handle incoming emails and events using your preferred method.
+
+    <CodeGroup>
+    ```typescript SDK (onReceive)
+    import { createClient } from 'simpleemailapi';
+
+    const client = createClient({ apiKey: 'sea_live_...' });
+
+    // Listen for events in real-time
+    client.onReceive({
+      onDelivered: (event) => console.log('Delivered:', event),
+      onReplied: (event) => console.log('Reply:', event.body),
+      onBounced: (event) => console.log('Bounced:', event),
+      onError: (err) => console.error(err)
+    });
+    ```
+
+    ```typescript Connect (Stream)
+    import { createClient } from "@connectrpc/connect";
+    import { createConnectTransport } from "@connectrpc/connect-node";
+    import { EmailService } from "@buf/simpleemailapi_public.connectrpc_es/v1/email_connect";
+
+    const transport = createConnectTransport({
+      baseUrl: "https://api.simpleemailapi.dev",
+      httpVersion: "2",
+      interceptors: [
+        (next) => async (req) => {
+          req.header.set("Authorization", "Bearer sea_live_...");
+          return next(req);
+        },
+      ],
+    });
+
+    const client = createClient(EmailService, transport);
+
+    const stream = client.streamEvents({
+      cursor: "0",
+    });
+
+    for await (const event of stream) {
+      console.log("New Event:", event);
+    }
+    ```
+
+    ```bash cURL (Stream)
+    # Use -N to disable buffering for streaming responses
+    curl -N -X POST https://api.simpleemailapi.dev/v1/v1.EmailService/StreamEvents \
+      -H "Authorization: Bearer sea_live_..." \
+      -H "Content-Type: application/json" \
+      -d '{ "cursor": "0" }'
+    ```
+
+    ```bash buf curl (Stream)
+    buf curl \
+      --schema buf.build/simpleemailapi/public \
+      --header "Authorization: Bearer sea_live_..." \
+      --data '{ "cursor": "0" }' \
+      https://api.simpleemailapi.dev/v1.EmailService/StreamEvents
+    ```
+
+    ```typescript Webhook
+    import express from 'express';
+    import { Webhook } from 'svix';
+
+    const app = express();
+
+    app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+      const secret = process.env.WEBHOOK_SECRET;
+      const headers = req.headers;
+      const payload = req.body;
+
+      const wh = new Webhook(secret);
+      const event = wh.verify(payload, headers);
+
+      console.log('Webhook received:', event);
+      res.json({ received: true });
+    });
+
+    app.listen(3000);
+    ```
+    </CodeGroup>
   </Step>
 </Steps>
 

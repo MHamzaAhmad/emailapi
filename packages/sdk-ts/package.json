@@ -1,5 +1,5 @@
 {
-    "name": "emailapi-sdk",
+    "name": "simpleemailapi",
     "version": "0.1.0",
     "description": "Email API SDK - Backend-first HTTP/2 gRPC client for Node.js and Bun",
     "main": "./dist/index.js",

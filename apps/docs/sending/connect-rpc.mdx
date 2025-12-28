@@ -1,0 +1,83 @@
+---
+title: Connect RPC
+description: Use the auto-generated client from the Buf Schema Registry.
+---
+
+# Connect RPC
+
+To ship your generated code for the repository `buf.build/simpleemailapi/public`, you don't need to manually publish anything to NPM. You use the **Buf Schema Registry (BSR)** to generate and serve these packages for you.
+
+## Setup
+
+### 1. Configure your environment
+
+Tell NPM to look at the Buf Registry for any package starting with `@buf`. Run this command once:
+
+```bash
+npm config set @buf:registry https://buf.build/gen/npm/v1
+```
+
+### 2. Install generated SDKs
+
+Install the Protobuf messages and Connect service definitions:
+
+<CodeGroup>
+```bash npm
+npm install @buf/simpleemailapi_public.bufbuild_es @buf/simpleemailapi_public.connectrpc_es
+```
+```bash pnpm
+pnpm add @buf/simpleemailapi_public.bufbuild_es @buf/simpleemailapi_public.connectrpc_es
+```
+</CodeGroup>
+
+You also need the runtime libraries:
+
+```bash
+npm install @connectrpc/connect @connectrpc/connect-web @bufbuild/protobuf
+```
+
+### 3. Usage
+
+Since the file is located at `v1/email.proto`, the BSR generates the service definition in a file named `email_connect`.
+
+```typescript
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-node"; // or connect-web
+// Import from the BSR package
+import { EmailService } from "@buf/simpleemailapi_public.connectrpc_es/v1/email_connect";
+
+const transport = createConnectTransport({
+  baseUrl: "https://api.simpleemailapi.dev",
+  httpVersion: "2",
+  interceptors: [
+    (next) => async (req) => {
+      req.header.set("Authorization", "Bearer sea_live_...");
+      return next(req);
+    },
+  ],
+});
+
+const client = createClient(EmailService, transport);
+
+const res = await client.sendEmail({
+  from: "hello@yourdomain.com",
+  to: ["user@example.com"],
+  subject: "Hello!",
+  body: "This is a test email.",
+  async: true,
+});
+
+console.log(res.messageId);
+```
+
+## Key Mapping
+
+| Source | Package Name | Import Path |
+| --- | --- | --- |
+| **Messages** | `@buf/simpleemailapi_public.bufbuild_es` | `.../v1/email_pb` |
+| **Services** | `@buf/simpleemailapi_public.connectrpc_es` | `.../v1/email_connect` |
+
+<Note>
+**File Extensions**: If you are using **ES Modules** (modern Node.js or Vite), you may need to add the `.js` extension to your imports even in TypeScript:
+`import { EmailService } from "@buf/.../v1/email_connect.js";`
+</Note>

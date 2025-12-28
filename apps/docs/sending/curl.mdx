@@ -1,0 +1,62 @@
+---
+title: cURL
+description: Send emails using standard HTTP requests.
+---
+
+# cURL
+
+You can send emails using any HTTP client by making a POST request to the API.
+
+## Endpoint
+
+<ResponseField name="POST" type="">
+  `https://api.simpleemailapi.dev/v1/v1.EmailService/SendEmail`
+</ResponseField>
+
+## Headers
+
+<ResponseField name="Authorization" type="string" required>
+  `Bearer sea_live_...`
+</ResponseField>
+
+<ResponseField name="Content-Type" type="string" required>
+  `application/json`
+</ResponseField>
+
+## Request Body
+
+```json
+{
+  "from": "hello@yourdomain.com",
+  "to": ["recipient@example.com"],
+  "subject": "Hello via cURL",
+  "body": "This is the plain text body.",
+  "html": "<p>This is the <b>HTML</b> body.</p>",
+  "async": true
+}
+```
+
+## Example
+
+```bash
+curl -X POST https://api.simpleemailapi.dev/v1/v1.EmailService/SendEmail \
+  -H "Authorization: Bearer sea_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "hello@yourdomain.com",
+    "to": ["user@example.com"],
+    "subject": "Hello!",
+    "body": "Sent from cURL",
+    "async": true
+  }'
+```
+
+## Response
+
+```json
+{
+  "id": "em_kb83...",
+  "status": "QUEUED",
+  "messageId": "0100018..."
+}
+```

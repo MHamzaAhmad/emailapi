@@ -1,0 +1,69 @@
+---
+title: Add Domain
+description: Register a new sending domain.
+---
+
+# Add a Domain
+
+Start by registering the domain you want to send emails from.
+
+<CodeGroup>
+```typescript TypeScript
+import { createClient } from 'simpleemailapi';
+
+const client = createClient({ apiKey: 'sea_live_...' });
+
+const { domain } = await client.domains.addDomain({
+  domain: 'example.com'
+});
+
+console.log('Domain added:', domain.id);
+console.log('DNS Records:', domain.records);
+```
+
+```typescript Connect
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-node";
+import { DomainService } from "@buf/simpleemailapi_public.connectrpc_es/v1/domain_connect";
+
+const transport = createConnectTransport({
+  baseUrl: "https://api.simpleemailapi.dev",
+  httpVersion: "2",
+  interceptors: [
+    (next) => async (req) => {
+      req.header.set("Authorization", "Bearer sea_live_...");
+      return next(req);
+    },
+  ],
+});
+
+const client = createClient(DomainService, transport);
+
+const { domain } = await client.addDomain({
+  domain: "example.com",
+});
+
+console.log("Domain added:", domain?.id);
+```
+
+```bash cURL
+curl -X POST https://api.simpleemailapi.dev/v1/v1.DomainService/AddDomain \
+  -H "Authorization: Bearer sea_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "domain": "example.com"
+  }'
+```
+
+```bash buf curl
+buf curl \
+  --schema buf.build/simpleemailapi/public \
+  --header "Authorization: Bearer sea_live_..." \
+  --data '{
+    "domain": "example.com"
+  }' \
+  https://api.simpleemailapi.dev/v1.DomainService/AddDomain
+```
+</CodeGroup>
+
+After adding the domain, you will receive a list of DNS records (DKIM, SPF, DMARC) that you must add to your DNS provider.

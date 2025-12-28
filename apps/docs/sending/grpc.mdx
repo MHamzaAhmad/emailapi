@@ -1,0 +1,60 @@
+---
+title: gRPC
+description: High-performance email sending with gRPC.
+---
+
+# gRPC
+
+For high-performance applications, you can connect directly to our HTTP/2 gRPC API.
+
+## Connection Details
+
+<ResponseField name="Address" type="string">
+  `api.simpleemailapi.dev:443`
+</ResponseField>
+
+<ResponseField name="Service" type="string">
+  `v1.EmailService`
+</ResponseField>
+
+<ResponseField name="Method" type="string">
+  `SendEmail`
+</ResponseField>
+
+## Authentication
+
+Pass your api key in the `Authorization` metadata header.
+
+```bash
+Authorization: Bearer sea_live_...
+```
+
+## Example (buf curl)
+
+Use `buf curl` to invoke RPCs using the remote schema registry—no manual proto downloads required.
+
+```bash
+buf curl \
+  --schema buf.build/simpleemailapi/public \
+  --header "Authorization: Bearer sea_live_..." \
+  --data '{
+    "from": "hello@yourdomain.com",
+    "to": ["user@example.com"],
+    "subject": "Hello gRPC",
+    "body": "Sent via direct buf curl!",
+    "async": true
+  }' \
+  https://api.simpleemailapi.dev/v1.EmailService/SendEmail
+```
+
+## Protobuf Definitions
+
+You can generate clients for any language (Go, Java, Python, C++, etc.) using our Protobuf definitions available on the [Buf Registry (BSR)](https://buf.build/simpleemailapi/public).
+
+```bash
+# Example: Inspecting the service with reflection
+grpcurl \
+  -H "Authorization: Bearer sea_live_..." \
+  api.simpleemailapi.dev:443 \
+  describe v1.EmailService
+```

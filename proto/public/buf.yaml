@@ -1,5 +1,5 @@
 version: v2
-name: buf.build/emailapi/public
+name: buf.build/simpleemailapi/public
 deps:
   - buf.build/gnostic/gnostic
 lint:

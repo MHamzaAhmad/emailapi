@@ -1,0 +1,74 @@
+---
+title: Verify Domain
+description: Check your DNS configuration and verify your domain.
+---
+
+# Verify Domain
+
+Once you have added the required DNS records to your provider, you can request a verification check.
+
+<CodeGroup>
+```typescript TypeScript
+import { createClient } from 'simpleemailapi';
+
+const client = createClient({ apiKey: 'sea_live_...' });
+
+const { domain } = await client.domains.verifyDomain({
+  id: 'dom_...'
+});
+
+if (domain.status === 3 /* READY */) {
+  console.log('Domain verified! Ready to send.');
+} else {
+  console.log('Verification status:', domain.status);
+}
+```
+
+```typescript Connect
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-node";
+import { DomainService } from "@buf/simpleemailapi_public.connectrpc_es/v1/domain_connect";
+
+const transport = createConnectTransport({
+  baseUrl: "https://api.simpleemailapi.dev",
+  httpVersion: "2",
+  interceptors: [
+    (next) => async (req) => {
+      req.header.set("Authorization", "Bearer sea_live_...");
+      return next(req);
+    },
+  ],
+});
+
+const client = createClient(DomainService, transport);
+
+const { domain } = await client.verifyDomain({
+  id: "dom_...",
+});
+
+console.log("Domain status:", domain?.status);
+```
+
+```bash cURL
+curl -X POST https://api.simpleemailapi.dev/v1/v1.DomainService/VerifyDomain \
+  -H "Authorization: Bearer sea_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "dom_..."
+  }'
+```
+
+```bash buf curl
+buf curl \
+  --schema buf.build/simpleemailapi/public \
+  --header "Authorization: Bearer sea_live_..." \
+  --data '{
+    "id": "dom_..."
+  }' \
+  https://api.simpleemailapi.dev/v1.DomainService/VerifyDomain
+```
+</CodeGroup>
+
+<Note>
+  DNS propagation can take a few minutes. We automatically re-check every few minutes, but you can force a check using this endpoint.
+</Note>

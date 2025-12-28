@@ -70,7 +70,7 @@ export interface ClientOptions {
 
     /**
      * Base URL of the Email API server.
-     * @default "https://api.emailapi.dev"
+     * @default "https://api.simpleemailapi.dev"
      */
     baseUrl?: string
 
@@ -253,7 +253,7 @@ export interface EmailApiClient {
  * ```
  */
 export function createClient(options: ClientOptions): EmailApiClient {
-    const baseUrl = options.baseUrl ?? 'https://api.emailapi.dev'
+    const baseUrl = options.baseUrl ?? 'https://api.simpleemailapi.dev'
 
     const authInterceptor: Interceptor = (next) => async (req) => {
         req.header.set('Authorization', `Bearer ${options.apiKey}`)
