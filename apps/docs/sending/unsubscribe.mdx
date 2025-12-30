@@ -1,0 +1,122 @@
+---
+title: 'Unsubscribe Handling'
+description: 'How Simple Email API handles unsubscribe requests for proper compliance'
+---
+
+<Note>
+  This feature automatically manages unsubscribe requests to help you stay compliant with email regulations like CAN-SPAM and GDPR.
+</Note>
+
+## Overview
+
+Simple Email API provides a complete unsubscribe system with:
+
+- **Automatic unsubscribe links** via `{{unsubscribe_link}}` placeholder
+- **RFC 8058 one-click unsubscribe** headers for email clients
+- **Per-recipient tracking** with secure, signed tokens
+- **Automatic filtering** of unsubscribed recipients before sending
+
+## Adding Unsubscribe Links
+
+### Using the Placeholder
+
+Add `{{unsubscribe_link}}` anywhere in your email body or HTML:
+
+```html
+<p>
+  Don't want these emails anymore? 
+  <a href="{{unsubscribe_link}}">Unsubscribe</a>
+</p>
+```
+
+### Placeholder Behavior
+
+<Accordion title="Synchronous Single-Recipient Emails">
+  For sync requests (`async: false`) with exactly one recipient, the 
+  placeholder is replaced with a unique unsubscribe link before sending.
+</Accordion>
+
+<Accordion title="Asynchronous Multi-Recipient Emails">
+  For async requests with multiple recipients, the email is **automatically 
+  split into individual sends**. Each recipient receives their own unique 
+  unsubscribe link for proper tracking.
+  
+  <Warning>
+    **Billing Impact**: Each split email counts as a separate send. Sending 
+    to 5 recipients with `{{unsubscribe_link}}` = 5 individual email sends.
+  </Warning>
+</Accordion>
+
+<Accordion title="Synchronous Multi-Recipient Emails">
+  For sync requests with multiple recipients, the placeholder is **not replaced**.
+  Use `async: true` to enable automatic splitting with per-recipient links.
+</Accordion>
+
+## List-Unsubscribe Headers
+
+All emails sent through the async path include RFC-compliant headers:
+
+```
+List-Unsubscribe: <https://api.simpleemailapi.dev/unsubscribe?token=...>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+```
+
+Modern email clients like Gmail and Outlook display a native "Unsubscribe" 
+button from these headers, making it easy for recipients to opt out.
+
+## Filtering Unsubscribed Recipients
+
+Before sending any email, the API automatically checks the unsubscribe list:
+
+1. All recipients (To, Cc, Bcc) are checked against the unsubscribe list
+2. Unsubscribed recipients are silently removed
+3. If all recipients are unsubscribed, the API returns success with a message
+
+**No action required** — filtering happens automatically.
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use async for bulk sends" icon="rocket">
+    Set `async: true` when sending to multiple recipients with unsubscribe 
+    links to ensure proper per-recipient tracking.
+  </Card>
+  <Card title="Always include unsubscribe" icon="link">
+    CAN-SPAM and GDPR require clear unsubscribe options in marketing emails.
+  </Card>
+  <Card title="Check response messages" icon="message">
+    The API returns informative messages when recipients are filtered out.
+  </Card>
+  <Card title="Test before production" icon="flask">
+    Use dry-run mode to verify unsubscribe link handling without sending.
+  </Card>
+</CardGroup>
+
+## Example Request
+
+```typescript
+await client.sendEmail({
+  from: "newsletter@yourdomain.com",
+  to: ["user1@example.com", "user2@example.com"],
+  subject: "Your Weekly Newsletter",
+  html: `
+    <h1>Weekly Updates</h1>
+    <p>Here's what happened this week...</p>
+    <hr>
+    <p style="font-size: 12px; color: #666;">
+      <a href="{{unsubscribe_link}}">Unsubscribe</a> from these emails
+    </p>
+  `,
+  async: true  // Enables automatic splitting for multi-recipient
+});
+```
+
+## Technical Details
+
+| Feature | Single Recipient | Multiple Recipients (sync) | Multiple Recipients (async) |
+|---------|------------------|---------------------------|---------------------------|
+| Placeholder replaced | ✅ Yes | ❌ Skipped | ✅ Yes (split) |
+| List-Unsubscribe header | ✅ Yes | ✅ Yes | ✅ Yes |
+| Recipient filtering | ✅ Yes | ✅ Yes | ✅ Yes |
+| Individual tracking | ✅ Yes | ❌ No | ✅ Yes |
+| Email count | 1 | 1 | N (one per recipient) |

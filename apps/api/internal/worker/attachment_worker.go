@@ -36,6 +36,9 @@ type ProcessAttachmentsArgs struct {
 	ScheduledAt *time.Time `json:"scheduled_at,omitempty"`
 	// DryRun mode skips S3 upload and returns fake keys (for performance testing)
 	DryRun bool `json:"dry_run,omitempty"`
+	// Unsubscribe config for worker splitting (passthrough to SendEmailArgs)
+	UnsubscribeBaseURL     string `json:"unsubscribe_base_url,omitempty"`
+	UnsubscribeTokenSecret string `json:"unsubscribe_token_secret,omitempty"`
 }
 
 // AttachmentSource represents an attachment to process (from request).
@@ -86,21 +89,23 @@ func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttac
 
 		// Enqueue the send email job with dry-run flag
 		sendArgs := SendEmailArgs{
-			EmailID:        args.EmailID,
-			UserID:         args.UserID,
-			From:           args.From,
-			To:             args.To,
-			Cc:             args.Cc,
-			Bcc:            args.Bcc,
-			Subject:        args.Subject,
-			Body:           args.Body,
-			HTML:           args.HTML,
-			InReplyTo:      args.InReplyTo,
-			References:     args.References,
-			Metadata:       args.Metadata,
-			AttachmentKeys: fakeKeys,
-			ScheduledAt:    args.ScheduledAt,
-			DryRun:         true, // Propagate dry-run flag
+			EmailID:                args.EmailID,
+			UserID:                 args.UserID,
+			From:                   args.From,
+			To:                     args.To,
+			Cc:                     args.Cc,
+			Bcc:                    args.Bcc,
+			Subject:                args.Subject,
+			Body:                   args.Body,
+			HTML:                   args.HTML,
+			InReplyTo:              args.InReplyTo,
+			References:             args.References,
+			Metadata:               args.Metadata,
+			AttachmentKeys:         fakeKeys,
+			ScheduledAt:            args.ScheduledAt,
+			DryRun:                 true, // Propagate dry-run flag
+			UnsubscribeBaseURL:     args.UnsubscribeBaseURL,
+			UnsubscribeTokenSecret: args.UnsubscribeTokenSecret,
 		}
 
 		insertOpts := &river.InsertOpts{}
@@ -165,21 +170,23 @@ func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttac
 
 	// Enqueue the send email job with attachment info
 	sendArgs := SendEmailArgs{
-		EmailID:        args.EmailID,
-		UserID:         args.UserID,
-		From:           args.From,
-		To:             args.To,
-		Cc:             args.Cc,
-		Bcc:            args.Bcc,
-		Subject:        args.Subject,
-		Body:           args.Body,
-		HTML:           args.HTML,
-		InReplyTo:      args.InReplyTo,
-		References:     args.References,
-		Metadata:       args.Metadata,
-		AttachmentKeys: attachmentKeys,
-		ScheduledAt:    args.ScheduledAt,
-		DryRun:         false, // Normal mode
+		EmailID:                args.EmailID,
+		UserID:                 args.UserID,
+		From:                   args.From,
+		To:                     args.To,
+		Cc:                     args.Cc,
+		Bcc:                    args.Bcc,
+		Subject:                args.Subject,
+		Body:                   args.Body,
+		HTML:                   args.HTML,
+		InReplyTo:              args.InReplyTo,
+		References:             args.References,
+		Metadata:               args.Metadata,
+		AttachmentKeys:         attachmentKeys,
+		ScheduledAt:            args.ScheduledAt,
+		DryRun:                 false, // Normal mode
+		UnsubscribeBaseURL:     args.UnsubscribeBaseURL,
+		UnsubscribeTokenSecret: args.UnsubscribeTokenSecret,
 	}
 
 	// Prepare insert options

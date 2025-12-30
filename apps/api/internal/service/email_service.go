@@ -34,6 +34,7 @@ type EmailService struct {
 	webhookSender     webhook.Sender
 	eventConsumer     eventstream.Consumer
 	reputationChecker validation.ReputationChecker
+	unsubscribeSvc    *UnsubscribeService
 }
 
 // NewEmailService creates a new EmailService.
@@ -45,6 +46,7 @@ func NewEmailService(
 	webhookSender webhook.Sender,
 	eventConsumer eventstream.Consumer,
 	reputationChecker validation.ReputationChecker,
+	unsubscribeSvc *UnsubscribeService,
 ) *EmailService {
 	return &EmailService{
 		riverClient:       riverClient,
@@ -54,6 +56,7 @@ func NewEmailService(
 		webhookSender:     webhookSender,
 		eventConsumer:     eventConsumer,
 		reputationChecker: reputationChecker,
+		unsubscribeSvc:    unsubscribeSvc,
 	}
 }
 
@@ -79,6 +82,56 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 	}
 
 	emailID := uuid.New().String()
+
+	// Check unsubscribe list and filter out unsubscribed recipients
+	if s.unsubscribeSvc != nil {
+		allRecipients := append(append([]string{}, req.To...), req.Cc...)
+		allRecipients = append(allRecipients, req.Bcc...)
+
+		unsubscribed, err := s.unsubscribeSvc.CheckBatch(ctx, userID, allRecipients)
+		if err != nil {
+			// Log but don't fail - unsubscribe check is not critical path
+			fmt.Printf("Warning: failed to check unsubscribes: %v\n", err)
+		} else if len(unsubscribed) > 0 {
+			// Filter out unsubscribed recipients
+			unsubSet := make(map[string]bool, len(unsubscribed))
+			for _, email := range unsubscribed {
+				unsubSet[strings.ToLower(strings.TrimSpace(email))] = true
+			}
+
+			req.To = filterEmails(req.To, unsubSet)
+			req.Cc = filterEmails(req.Cc, unsubSet)
+			req.Bcc = filterEmails(req.Bcc, unsubSet)
+
+			// If no recipients left, return early
+			if len(req.To) == 0 && len(req.Cc) == 0 && len(req.Bcc) == 0 {
+				return &emailapi.SendEmailResponse{
+					Id:            emailID,
+					Status:        emailapi.EmailStatus_EMAIL_STATUS_SENT,
+					StatusMessage: "All recipients have unsubscribed",
+				}, nil
+			}
+		}
+
+		// Replace {{unsubscribe_link}} placeholder for SYNC single-recipient emails only
+		// Async emails are handled by the worker which splits multi-recipient into individual sends
+		hasPlaceholder := strings.Contains(req.Body, "{{unsubscribe_link}}") || strings.Contains(req.Html, "{{unsubscribe_link}}")
+		totalRecipients := len(req.To) + len(req.Cc) + len(req.Bcc)
+		isAsync := req.Async || len(req.Attachments) > 0 || req.ScheduledAt != nil
+
+		if hasPlaceholder && !isAsync && totalRecipients == 1 && len(req.To) == 1 {
+			// Sync + single recipient - generate unique link for them
+			unsubLink, err := s.unsubscribeSvc.GenerateLink(userID, req.To[0], emailID)
+			if err == nil {
+				req.Body = strings.ReplaceAll(req.Body, "{{unsubscribe_link}}", unsubLink)
+				req.Html = strings.ReplaceAll(req.Html, "{{unsubscribe_link}}", unsubLink)
+			}
+		} else if hasPlaceholder && !isAsync && totalRecipients > 1 {
+			// Sync + multi-recipient = skip placeholder, warn user to use async
+			fmt.Printf("Warning: {{unsubscribe_link}} with %d recipients in sync mode - use async for automatic splitting\n", totalRecipients)
+		}
+		// For async/scheduled/attachments with placeholders: worker handles splitting
+	}
 
 	// Convert metadata
 	metadata := make(map[string]string)
@@ -185,6 +238,12 @@ func (s *EmailService) queueWithAttachments(ctx context.Context, emailID, userID
 		DryRun:      dryRun,
 	}
 
+	// Pass unsubscribe config if placeholder is present (for worker to split multi-recipient emails)
+	if s.unsubscribeSvc != nil && (strings.Contains(req.Body, "{{unsubscribe_link}}") || strings.Contains(req.Html, "{{unsubscribe_link}}")) {
+		args.UnsubscribeBaseURL = s.unsubscribeSvc.BaseURL()
+		args.UnsubscribeTokenSecret = s.unsubscribeSvc.TokenSecret()
+	}
+
 	// Add scheduled time if present
 	if req.ScheduledAt != nil {
 		scheduledTime := req.ScheduledAt.AsTime()
@@ -220,6 +279,12 @@ func (s *EmailService) queueForSend(ctx context.Context, emailID, userID string,
 		References: req.References,
 		Metadata:   req.Metadata,
 		DryRun:     dryRun,
+	}
+
+	// Pass unsubscribe config if placeholder is present (for worker to split multi-recipient emails)
+	if s.unsubscribeSvc != nil && (strings.Contains(req.Body, "{{unsubscribe_link}}") || strings.Contains(req.Html, "{{unsubscribe_link}}")) {
+		args.UnsubscribeBaseURL = s.unsubscribeSvc.BaseURL()
+		args.UnsubscribeTokenSecret = s.unsubscribeSvc.TokenSecret()
 	}
 
 	_, err := s.riverClient.Insert(ctx, args, nil)
@@ -259,6 +324,12 @@ func (s *EmailService) queueScheduled(ctx context.Context, emailID, userID strin
 		References: req.References,
 		Metadata:   req.Metadata,
 		DryRun:     dryRun,
+	}
+
+	// Pass unsubscribe config if placeholder is present (for worker to split multi-recipient emails)
+	if s.unsubscribeSvc != nil && (strings.Contains(req.Body, "{{unsubscribe_link}}") || strings.Contains(req.Html, "{{unsubscribe_link}}")) {
+		args.UnsubscribeBaseURL = s.unsubscribeSvc.BaseURL()
+		args.UnsubscribeTokenSecret = s.unsubscribeSvc.TokenSecret()
 	}
 
 	// Queue with scheduled time
@@ -392,4 +463,18 @@ func (s *EmailService) StreamEvents(ctx context.Context, userID, cursor string, 
 		return nil, fmt.Errorf("event streaming not configured")
 	}
 	return s.eventConsumer.Subscribe(ctx, userID, cursor, eventTypes, batchSize)
+}
+
+// filterEmails removes emails that are in the exclusion set.
+func filterEmails(emails []string, exclude map[string]bool) []string {
+	if len(emails) == 0 || len(exclude) == 0 {
+		return emails
+	}
+	result := make([]string, 0, len(emails))
+	for _, email := range emails {
+		if !exclude[strings.ToLower(strings.TrimSpace(email))] {
+			result = append(result, email)
+		}
+	}
+	return result
 }

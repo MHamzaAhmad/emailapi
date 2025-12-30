@@ -128,5 +128,29 @@ type ReputationRepository interface {
 	ListIncidents(ctx context.Context, userID string, limit, offset int) ([]*domain.ReputationIncident, error)
 }
 
+// UnsubscribeRepository defines the interface for unsubscribe list data access.
+type UnsubscribeRepository interface {
+	// Add adds an email to the unsubscribe list for a user.
+	Add(ctx context.Context, entry *domain.UnsubscribeEntry) error
+
+	// GetByUserAndHash retrieves an unsubscribe entry by user and email hash.
+	GetByUserAndHash(ctx context.Context, userID, emailHash string) (*domain.UnsubscribeEntry, error)
+
+	// CheckBatch checks multiple email hashes for a user, returns unsubscribed hashes.
+	CheckBatch(ctx context.Context, userID string, hashes []string) ([]string, error)
+
+	// Delete removes an email from the unsubscribe list.
+	Delete(ctx context.Context, userID, emailHash string) error
+
+	// ListByUserID retrieves unsubscribes for a user with pagination.
+	ListByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.UnsubscribeEntry, error)
+
+	// CountByUserID returns total unsubscribes for a user.
+	CountByUserID(ctx context.Context, userID string) (int64, error)
+
+	// ListAll returns all unsubscribes (for cache sync).
+	ListAll(ctx context.Context) ([]struct{ UserID, EmailHash string }, error)
+}
+
 // TODO: WebhookRepository (to be reimplemented later)
 // TODO: LogRepository (to be reimplemented later)

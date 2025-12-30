@@ -31,6 +31,7 @@ type Service struct {
 	InboundEmail    *InboundEmailService
 	SNSNotification *SNSNotificationService
 	Reputation      *ReputationService
+	Unsubscribe     *UnsubscribeService
 }
 
 // New creates a new Service with the given Store.
@@ -70,6 +71,10 @@ type ServiceDeps struct {
 	// Web Risk client for URL safety validation
 	WebRiskClient webrisk.Client
 	RedisClient   *rediscache.Client
+	// Unsubscribe configuration
+	UnsubscribeCache       *rediscache.UnsubscribeCache
+	UnsubscribeBaseURL     string
+	UnsubscribeTokenSecret string
 }
 
 // NewWithDeps creates a new Service with all dependencies.
@@ -93,7 +98,20 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	// Create email validator with domain checker, suppression checker, body validator, MX cache, and reputation checker
 	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo, bodyValidator, deps.MXCache, svc.Reputation)
 
-	svc.Email = NewEmailService(deps.RiverClient, deps.TBEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer, svc.Reputation)
+	// Initialize Unsubscribe service
+	var unsubscribeSvc *UnsubscribeService
+	if deps.UnsubscribeTokenSecret != "" {
+		tokenSvc := NewUnsubscribeTokenService(deps.UnsubscribeTokenSecret)
+		unsubscribeSvc = NewUnsubscribeService(
+			deps.Store.Unsubscribe(),
+			deps.UnsubscribeCache,
+			tokenSvc,
+			deps.UnsubscribeBaseURL,
+		)
+		svc.Unsubscribe = unsubscribeSvc
+	}
+
+	svc.Email = NewEmailService(deps.RiverClient, deps.TBEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer, svc.Reputation, unsubscribeSvc)
 	svc.Internal = NewInternalService(InternalServiceConfig{
 		UserService:        svc.User,
 		ClerkWebhookSecret: deps.ClerkWebhookSecret,

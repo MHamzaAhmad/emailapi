@@ -17,10 +17,11 @@ type Store struct {
 	pool    *pgxpool.Pool
 	queries *db.Queries
 
-	user       *UserRepository
-	apiKey     *APIKeyRepository
-	domain     *DomainRepository
-	reputation *ReputationRepository
+	user        *UserRepository
+	apiKey      *APIKeyRepository
+	domain      *DomainRepository
+	reputation  *ReputationRepository
+	unsubscribe *UnsubscribeRepository
 }
 
 // StoreConfig holds configuration for the PostgreSQL store.
@@ -62,6 +63,7 @@ func NewStore(cfg StoreConfig) (*Store, error) {
 	store.apiKey = NewAPIKeyRepository(pool)
 	store.domain = NewDomainRepository(store.queries)
 	store.reputation = NewReputationRepository(pool)
+	store.unsubscribe = NewUnsubscribeRepository(pool)
 
 	return store, nil
 }
@@ -99,4 +101,9 @@ func (s *Store) Pool() *pgxpool.Pool {
 // Queries returns the sqlc generated queries.
 func (s *Store) Queries() *db.Queries {
 	return s.queries
+}
+
+// Unsubscribe returns the unsubscribe repository.
+func (s *Store) Unsubscribe() repository.UnsubscribeRepository {
+	return s.unsubscribe
 }

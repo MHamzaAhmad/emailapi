@@ -73,6 +73,10 @@ type Config struct {
 	// Web Risk Configuration (for URL safety validation)
 	WebRiskAPIKey    string `envconfig:"WEB_RISK_API_KEY"`
 	WebRiskProjectID string `envconfig:"WEB_RISK_PROJECT_ID"`
+
+	// Unsubscribe Configuration
+	UnsubscribeBaseURL     string `envconfig:"UNSUBSCRIBE_BASE_URL" default:"https://api.simpleemailapi.dev"`
+	UnsubscribeTokenSecret string `envconfig:"UNSUBSCRIBE_TOKEN_SECRET" default:"dev-unsubscribe-secret-change-in-production"`
 }
 
 // Load reads configuration from environment variables.

@@ -11,12 +11,15 @@ import (
 )
 
 type Querier interface {
+	// Check multiple email hashes for a user in a single query
+	CheckUnsubscribeBatch(ctx context.Context, arg CheckUnsubscribeBatchParams) ([]string, error)
 	CountActiveApiKeysByUserID(ctx context.Context, userID string) (int64, error)
 	CountApiKeysByUserID(ctx context.Context, userID string) (int64, error)
 	CountDomainsByUserID(ctx context.Context, userID string) (int64, error)
 	CountFlaggedUsers(ctx context.Context) (int32, error)
 	CountIncidentsByUser(ctx context.Context, userID string) (CountIncidentsByUserRow, error)
 	CountSuppressionsByUser(ctx context.Context, userID pgtype.Text) (int64, error)
+	CountUnsubscribesByUser(ctx context.Context, userID string) (int64, error)
 	CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error)
 	CreateDomain(ctx context.Context, arg CreateDomainParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -24,6 +27,7 @@ type Querier interface {
 	DeleteDomain(ctx context.Context, id string) error
 	DeleteExpiredSuppressions(ctx context.Context) (int64, error)
 	DeleteSuppressionByHash(ctx context.Context, emailHash string) error
+	DeleteUnsubscribe(ctx context.Context, arg DeleteUnsubscribeParams) error
 	DeleteUser(ctx context.Context, id string) error
 	EnsureUserReputation(ctx context.Context, userID string) error
 	GetApiKeyByHash(ctx context.Context, keyHash string) (ApiKey, error)
@@ -36,18 +40,23 @@ type Querier interface {
 	// Get domains that need verification refresh (never verified or older than threshold)
 	GetStaleDomains(ctx context.Context, limit int32) ([]Domain, error)
 	GetSuppressionByHash(ctx context.Context, emailHash string) (SuppressionList, error)
+	GetUnsubscribeByUserAndHash(ctx context.Context, arg GetUnsubscribeByUserAndHashParams) (UnsubscribeList, error)
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
 	GetUserByExternalID(ctx context.Context, externalID pgtype.Text) (GetUserByExternalIDRow, error)
 	GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error)
 	GetUserReputation(ctx context.Context, userID string) (UserReputation, error)
 	InsertReputationIncident(ctx context.Context, arg InsertReputationIncidentParams) error
 	InsertSuppression(ctx context.Context, arg InsertSuppressionParams) error
+	InsertUnsubscribe(ctx context.Context, arg InsertUnsubscribeParams) error
 	ListActiveSuppressions(ctx context.Context) ([]ListActiveSuppressionsRow, error)
+	// For cache sync on startup
+	ListAllUnsubscribes(ctx context.Context) ([]ListAllUnsubscribesRow, error)
 	ListApiKeysByUserID(ctx context.Context, userID string) ([]ListApiKeysByUserIDRow, error)
 	ListApiKeysByUserIDPaginated(ctx context.Context, arg ListApiKeysByUserIDPaginatedParams) ([]ListApiKeysByUserIDPaginatedRow, error)
 	ListFlaggedUserReputations(ctx context.Context, arg ListFlaggedUserReputationsParams) ([]ListFlaggedUserReputationsRow, error)
 	ListReputationIncidents(ctx context.Context, arg ListReputationIncidentsParams) ([]ReputationIncident, error)
 	ListSuppressionsByUser(ctx context.Context, arg ListSuppressionsByUserParams) ([]ListSuppressionsByUserRow, error)
+	ListUnsubscribesByUser(ctx context.Context, arg ListUnsubscribesByUserParams) ([]ListUnsubscribesByUserRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error)
 	RevokeApiKey(ctx context.Context, id string) (ApiKey, error)
 	SuspendUserReputation(ctx context.Context, arg SuspendUserReputationParams) error

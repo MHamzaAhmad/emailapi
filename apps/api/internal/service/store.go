@@ -19,6 +19,9 @@ type Store interface {
 	// Reputation returns the reputation repository.
 	Reputation() repository.ReputationRepository
 
+	// Unsubscribe returns the unsubscribe repository.
+	Unsubscribe() repository.UnsubscribeRepository
+
 	// Close closes any underlying connections.
 	Close()
 }

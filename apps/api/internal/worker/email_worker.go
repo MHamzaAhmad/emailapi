@@ -3,6 +3,10 @@ package worker
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -43,6 +47,11 @@ type SendEmailArgs struct {
 	ScheduledAt *time.Time `json:"scheduled_at,omitempty"`
 	// DryRun mode skips SES and returns fake message ID (for performance testing)
 	DryRun bool `json:"dry_run,omitempty"`
+	// UnsubscribeURL for List-Unsubscribe header (RFC 2369 + RFC 8058)
+	UnsubscribeURL string `json:"unsubscribe_url,omitempty"`
+	// Unsubscribe config for generating per-recipient links (set when placeholder present)
+	UnsubscribeBaseURL     string `json:"unsubscribe_base_url,omitempty"`
+	UnsubscribeTokenSecret string `json:"unsubscribe_token_secret,omitempty"`
 }
 
 // AttachmentInfo contains info about an attachment stored in S3.
@@ -90,6 +99,15 @@ func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) e
 		fakeMessageID := fmt.Sprintf("dry-run-%s@simpleemailapi.dev", args.EmailID[:8])
 		fmt.Printf("[DRY-RUN] Simulated sending email %s to %v (MsgID: %s)\n", args.EmailID, args.To, fakeMessageID)
 		return nil
+	}
+
+	// Check if we need to split for unsubscribe placeholders
+	hasPlaceholder := strings.Contains(args.Body, "{{unsubscribe_link}}") || strings.Contains(args.HTML, "{{unsubscribe_link}}")
+	totalRecipients := len(args.To) + len(args.Cc) + len(args.Bcc)
+
+	if hasPlaceholder && totalRecipients > 1 && args.UnsubscribeTokenSecret != "" {
+		// Split into individual sends for proper unsubscribe tracking
+		return w.sendSplitEmails(ctx, &args)
 	}
 
 	// Download attachments from S3 in parallel
@@ -233,6 +251,14 @@ func buildMIMEMessage(args *SendEmailArgs, attachments []attachmentContent) ([]b
 		e.Headers.Add("References", strings.Join(args.References, " "))
 	}
 
+	// Add List-Unsubscribe headers (RFC 2369 + RFC 8058)
+	if args.UnsubscribeURL != "" {
+		// RFC 2369 - List-Unsubscribe header with URL
+		e.Headers.Add("List-Unsubscribe", fmt.Sprintf("<%s>", args.UnsubscribeURL))
+		// RFC 8058 - One-click unsubscribe support
+		e.Headers.Add("List-Unsubscribe-Post", "List-Unsubscribe=One-Click")
+	}
+
 	for _, att := range attachments {
 		_, err := e.Attach(bytes.NewReader(att.Data), att.Filename, att.ContentType)
 		if err != nil {
@@ -262,4 +288,122 @@ func (w *EmailWorker) sendWebhook(ctx context.Context, args SendEmailArgs, messa
 	}
 
 	w.webhookSender.SendEmailSent(ctx, args.UserID, event)
+}
+
+// sendSplitEmails splits a multi-recipient email into individual sends.
+// Each recipient gets their own unique unsubscribe link.
+// NOTE: Each individual email counts as a separate send.
+func (w *EmailWorker) sendSplitEmails(ctx context.Context, args *SendEmailArgs) error {
+	// Collect all recipients
+	var allRecipients []string
+	allRecipients = append(allRecipients, args.To...)
+	allRecipients = append(allRecipients, args.Cc...)
+	allRecipients = append(allRecipients, args.Bcc...)
+
+	fmt.Printf("Splitting email %s into %d individual sends for unsubscribe tracking\n", args.EmailID, len(allRecipients))
+
+	// Download attachments once (shared across all sends)
+	attachmentData := make([]attachmentContent, len(args.AttachmentKeys))
+	for i, att := range args.AttachmentKeys {
+		data, err := w.s3Factory.Bucket(s3.BucketAttachments).Download(ctx, att.S3Key)
+		if err != nil {
+			return fmt.Errorf("failed to download attachment %s: %w", att.Filename, err)
+		}
+		attachmentData[i] = attachmentContent{
+			Filename:    att.Filename,
+			ContentType: att.ContentType,
+			Data:        data,
+		}
+	}
+
+	// Send to each recipient individually
+	var lastErr error
+	successCount := 0
+
+	for i, recipient := range allRecipients {
+		// Generate unique unsubscribe link for this recipient
+		unsubLink := w.generateUnsubscribeLink(args, recipient)
+
+		// Clone args for this recipient
+		individualArgs := *args
+		individualArgs.To = []string{recipient}
+		individualArgs.Cc = nil
+		individualArgs.Bcc = nil
+		individualArgs.UnsubscribeURL = unsubLink
+
+		// Replace placeholder with this recipient's link
+		if unsubLink != "" {
+			individualArgs.Body = strings.ReplaceAll(args.Body, "{{unsubscribe_link}}", unsubLink)
+			individualArgs.HTML = strings.ReplaceAll(args.HTML, "{{unsubscribe_link}}", unsubLink)
+		}
+
+		// Send this individual email
+		messageID, err := w.sendEmail(ctx, &individualArgs, attachmentData)
+		if err != nil {
+			lastErr = err
+			w.logActivity(ctx, individualArgs, "failed", err.Error())
+			fmt.Printf("  [%d/%d] Failed to send to %s: %v\n", i+1, len(allRecipients), recipient, err)
+			continue
+		}
+
+		successCount++
+
+		// Log and webhook for each individual send
+		w.logActivity(ctx, individualArgs, "sent", fmt.Sprintf("Message ID: %s (split %d/%d)", messageID, i+1, len(allRecipients)))
+		w.sendWebhook(ctx, individualArgs, messageID)
+
+		// Insert routing entry
+		if w.tbRepo != nil {
+			w.tbRepo.InsertRouting(ctx, messageID, args.EmailID, args.UserID)
+		}
+
+		fmt.Printf("  [%d/%d] Sent to %s (MsgID: %s)\n", i+1, len(allRecipients), recipient, messageID)
+	}
+
+	// Clean up attachments after all sends
+	for _, att := range args.AttachmentKeys {
+		go func(key string) {
+			w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(context.Background(), key)
+		}(att.S3Key)
+	}
+
+	if successCount == 0 && lastErr != nil {
+		return fmt.Errorf("all %d sends failed, last error: %w", len(allRecipients), lastErr)
+	}
+
+	fmt.Printf("Split email %s: %d/%d successful\n", args.EmailID, successCount, len(allRecipients))
+	return nil
+}
+
+// generateUnsubscribeLink creates an unsubscribe link for a specific recipient.
+func (w *EmailWorker) generateUnsubscribeLink(args *SendEmailArgs, recipient string) string {
+	if args.UnsubscribeTokenSecret == "" || args.UnsubscribeBaseURL == "" {
+		return ""
+	}
+
+	// Create token data
+	tokenData := map[string]interface{}{
+		"u": args.UserID,
+		"e": recipient,
+		"i": args.EmailID,
+		"x": time.Now().Add(30 * 24 * time.Hour).Unix(),
+	}
+
+	payload, err := json.Marshal(tokenData)
+	if err != nil {
+		return ""
+	}
+
+	// Encode payload
+	encodedPayload := base64.RawURLEncoding.EncodeToString(payload)
+
+	// Compute HMAC signature
+	h := hmac.New(sha256.New, []byte(args.UnsubscribeTokenSecret))
+	h.Write(payload)
+	signature := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+
+	// Combine token
+	token := encodedPayload + "." + signature
+
+	return fmt.Sprintf("%s/unsubscribe?token=%s", strings.TrimSuffix(args.UnsubscribeBaseURL, "/"), token)
 }

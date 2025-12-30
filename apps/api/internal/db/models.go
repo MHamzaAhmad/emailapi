@@ -61,6 +61,15 @@ type SuppressionList struct {
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 }
 
+type UnsubscribeList struct {
+	ID            string             `json:"id"`
+	UserID        string             `json:"user_id"`
+	EmailHash     string             `json:"email_hash"`
+	SourceEmailID pgtype.Text        `json:"source_email_id"`
+	Source        string             `json:"source"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
 type User struct {
 	ID         string             `json:"id"`
 	Email      string             `json:"email"`

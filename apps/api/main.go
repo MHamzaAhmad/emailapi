@@ -29,6 +29,7 @@ import (
 	"github.com/emailapi/api/internal/service"
 	connecttransport "github.com/emailapi/api/internal/transport/connect"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
+	httphandler "github.com/emailapi/api/internal/transport/http"
 	"github.com/emailapi/api/internal/webhook"
 	worker "github.com/emailapi/api/internal/worker"
 
@@ -125,6 +126,7 @@ func main() {
 	userCache := redisrepo.NewUserCache(redisClient, cacheTTL)
 	mxCache := redisrepo.NewMXCache(redisClient)
 	reputationCache := redisrepo.NewReputationCache(redisClient)
+	unsubscribeCache := redisrepo.NewUnsubscribeCache(redisClient)
 	logger.Info().Msg("✓ Initialized cache repositories")
 
 	// Initialize rate limiter
@@ -219,28 +221,41 @@ func main() {
 
 	// Initialize service layer
 	svc := service.NewWithDeps(service.ServiceDeps{
-		Store:               store,
-		SESClient:           sesClient,
-		S3Factory:           s3Factory,
-		Region:              cfg.AWSRegion,
-		SESConfigurationSet: cfg.SESConfigurationSet,
-		RiverClient:         riverClient,
-		TBEmailRepo:         tbEmailRepo,
-		TBActivityRepo:      tbActivityRepo,
-		SvixClient:          svixClient,
-		WebhookSender:       webhookSender,
-		SuppressionRepo:     suppressionRepo,
-		DomainCache:         domainCache,
-		APIKeyCache:         apiKeyCache,
-		UserCache:           userCache,
-		MXCache:             mxCache,
-		ReputationCache:     reputationCache,
-		EventConsumer:       eventConsumer,
-		ClerkWebhookSecret:  cfg.ClerkWebhookSecret,
-		APIKeyHMACSecret:    cfg.APIKeyHMACSecret,
-		RedisClient:         redisClient,
-		WebRiskClient:       webRiskClient,
+		Store:                  store,
+		SESClient:              sesClient,
+		S3Factory:              s3Factory,
+		Region:                 cfg.AWSRegion,
+		SESConfigurationSet:    cfg.SESConfigurationSet,
+		RiverClient:            riverClient,
+		TBEmailRepo:            tbEmailRepo,
+		TBActivityRepo:         tbActivityRepo,
+		SvixClient:             svixClient,
+		WebhookSender:          webhookSender,
+		SuppressionRepo:        suppressionRepo,
+		DomainCache:            domainCache,
+		APIKeyCache:            apiKeyCache,
+		UserCache:              userCache,
+		MXCache:                mxCache,
+		ReputationCache:        reputationCache,
+		EventConsumer:          eventConsumer,
+		ClerkWebhookSecret:     cfg.ClerkWebhookSecret,
+		APIKeyHMACSecret:       cfg.APIKeyHMACSecret,
+		RedisClient:            redisClient,
+		WebRiskClient:          webRiskClient,
+		UnsubscribeCache:       unsubscribeCache,
+		UnsubscribeBaseURL:     cfg.UnsubscribeBaseURL,
+		UnsubscribeTokenSecret: cfg.UnsubscribeTokenSecret,
 	})
+
+	// Sync unsubscribe list from PostgreSQL to Redis on startup
+	if svc.Unsubscribe != nil {
+		go func() {
+			if err := svc.Unsubscribe.SyncCache(context.Background()); err != nil {
+				logger.Warn().Err(err).Msg("Failed to sync unsubscribe list from PostgreSQL")
+			}
+		}()
+		logger.Info().Msg("✓ Initialized unsubscribe service")
+	}
 
 	// Initialize Clerk SDK with secret key
 	clerk.SetKey(cfg.ClerkSecretKey)
@@ -317,6 +332,17 @@ func main() {
 		interceptors,
 	)
 	mux.Handle(path, handler)
+
+	// Register unsubscribe HTTP handlers (non-Connect, for web page serving)
+	if svc.Unsubscribe != nil {
+		unsubHandler, err := httphandler.NewUnsubscribeHandler(svc.Unsubscribe)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to create unsubscribe handler")
+		}
+		mux.HandleFunc("/unsubscribe", unsubHandler.Handle)
+		mux.HandleFunc("/unsubscribe/one-click", unsubHandler.HandleOneClick)
+		logger.Info().Msg("✓ Registered unsubscribe HTTP handlers")
+	}
 
 	// Apply raw body capture middleware (for webhook signature verification)
 	rawBodyHandler := interceptor.RawBodyHTTPMiddleware(mux)
