@@ -16,6 +16,9 @@ type Store interface {
 	// Domains returns the domain repository.
 	Domains() repository.DomainRepository
 
+	// Reputation returns the reputation repository.
+	Reputation() repository.ReputationRepository
+
 	// Close closes any underlying connections.
 	Close()
 }

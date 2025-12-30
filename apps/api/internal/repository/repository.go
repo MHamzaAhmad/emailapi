@@ -98,5 +98,35 @@ type EmailRepository interface {
 	AddEmail(ctx context.Context, email *domain.Email, eventType string) error
 }
 
+// ReputationRepository defines the interface for reputation data access.
+type ReputationRepository interface {
+	// EnsureExists creates a reputation record if it doesn't exist.
+	EnsureExists(ctx context.Context, userID string) error
+
+	// Get retrieves reputation stats for a user.
+	Get(ctx context.Context, userID string) (*domain.UserReputation, error)
+
+	// InsertIncident records a new reputation incident.
+	InsertIncident(ctx context.Context, incident *domain.ReputationIncident) error
+
+	// CountIncidents returns aggregated incident counts for a user.
+	CountIncidents(ctx context.Context, userID string) (*domain.IncidentStats, error)
+
+	// UpdateStats updates the reputation statistics.
+	UpdateStats(ctx context.Context, userID string, stats *domain.UserReputation) error
+
+	// Suspend marks a user as suspended.
+	Suspend(ctx context.Context, userID, suspendedBy, reason string) error
+
+	// Unsuspend removes suspension from a user.
+	Unsuspend(ctx context.Context, userID string) error
+
+	// ListFlagged lists flagged users with pagination.
+	ListFlagged(ctx context.Context, limit, offset int) ([]*domain.UserReputation, int, error)
+
+	// ListIncidents lists incidents for a user with pagination.
+	ListIncidents(ctx context.Context, userID string, limit, offset int) ([]*domain.ReputationIncident, error)
+}
+
 // TODO: WebhookRepository (to be reimplemented later)
 // TODO: LogRepository (to be reimplemented later)

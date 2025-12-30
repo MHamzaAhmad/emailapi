@@ -38,6 +38,19 @@ type Domain struct {
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
+type ReputationIncident struct {
+	ID                    string             `json:"id"`
+	UserID                string             `json:"user_id"`
+	IncidentType          string             `json:"incident_type"`
+	MessageID             string             `json:"message_id"`
+	RecipientEmailHash    string             `json:"recipient_email_hash"`
+	BounceType            pgtype.Text        `json:"bounce_type"`
+	BounceSubtype         pgtype.Text        `json:"bounce_subtype"`
+	ComplaintFeedbackType pgtype.Text        `json:"complaint_feedback_type"`
+	DiagnosticCode        pgtype.Text        `json:"diagnostic_code"`
+	CreatedAt             pgtype.Timestamptz `json:"created_at"`
+}
+
 type SuppressionList struct {
 	EmailHash       string             `json:"email_hash"`
 	UserID          pgtype.Text        `json:"user_id"`
@@ -57,4 +70,25 @@ type User struct {
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 	ExternalID pgtype.Text        `json:"external_id"`
+}
+
+type UserReputation struct {
+	ID               string             `json:"id"`
+	UserID           string             `json:"user_id"`
+	TotalBounces     int32              `json:"total_bounces"`
+	HardBounces      int32              `json:"hard_bounces"`
+	SoftBounces      int32              `json:"soft_bounces"`
+	Complaints       int32              `json:"complaints"`
+	Bounces30d       int32              `json:"bounces_30d"`
+	Complaints30d    int32              `json:"complaints_30d"`
+	SuspensionScore  pgtype.Numeric     `json:"suspension_score"`
+	IsFlagged        bool               `json:"is_flagged"`
+	FlaggedAt        pgtype.Timestamptz `json:"flagged_at"`
+	FlaggedReason    pgtype.Text        `json:"flagged_reason"`
+	IsSuspended      bool               `json:"is_suspended"`
+	SuspendedAt      pgtype.Timestamptz `json:"suspended_at"`
+	SuspendedBy      pgtype.Text        `json:"suspended_by"`
+	SuspensionReason pgtype.Text        `json:"suspension_reason"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }

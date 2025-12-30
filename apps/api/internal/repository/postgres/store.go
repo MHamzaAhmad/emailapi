@@ -17,9 +17,10 @@ type Store struct {
 	pool    *pgxpool.Pool
 	queries *db.Queries
 
-	user   *UserRepository
-	apiKey *APIKeyRepository
-	domain *DomainRepository
+	user       *UserRepository
+	apiKey     *APIKeyRepository
+	domain     *DomainRepository
+	reputation *ReputationRepository
 }
 
 // StoreConfig holds configuration for the PostgreSQL store.
@@ -60,6 +61,7 @@ func NewStore(cfg StoreConfig) (*Store, error) {
 	store.user = NewUserRepository(pool)
 	store.apiKey = NewAPIKeyRepository(pool)
 	store.domain = NewDomainRepository(store.queries)
+	store.reputation = NewReputationRepository(pool)
 
 	return store, nil
 }
@@ -82,6 +84,11 @@ func (s *Store) APIKeys() repository.APIKeyRepository {
 // Domains returns the domain repository.
 func (s *Store) Domains() repository.DomainRepository {
 	return s.domain
+}
+
+// Reputation returns the reputation repository.
+func (s *Store) Reputation() repository.ReputationRepository {
+	return s.reputation
 }
 
 // Pool returns the underlying connection pool for use by other repositories.

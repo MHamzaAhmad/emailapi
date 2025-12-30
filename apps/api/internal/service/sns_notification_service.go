@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	v1 "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/repository/suppression"
 	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/webhook"
@@ -20,6 +21,7 @@ type SNSNotificationService struct {
 	activityRepo  *tbrepo.ActivityRepository
 	webhookSender webhook.Sender
 	suppressRepo  *suppression.Repository
+	reputationSvc *ReputationService
 }
 
 // NewSNSNotificationService creates a new SNSNotificationService.
@@ -28,12 +30,14 @@ func NewSNSNotificationService(
 	activityRepo *tbrepo.ActivityRepository,
 	webhookSender webhook.Sender,
 	suppressRepo *suppression.Repository,
+	reputationSvc *ReputationService,
 ) *SNSNotificationService {
 	return &SNSNotificationService{
 		tbRepo:        tbRepo,
 		activityRepo:  activityRepo,
 		webhookSender: webhookSender,
 		suppressRepo:  suppressRepo,
+		reputationSvc: reputationSvc,
 	}
 }
 
@@ -279,6 +283,28 @@ func (s *SNSNotificationService) handleBounce(ctx context.Context, notification 
 		}
 		s.webhookSender.SendEmailBounced(ctx, routing.UserID, event)
 	}
+
+	// Record bounce incident via reputation service (fire-and-forget)
+	if s.reputationSvc != nil {
+		go func() {
+			recipients := make([]domain.BounceRecipient, len(notification.Bounce.BouncedRecipients))
+			for i, r := range notification.Bounce.BouncedRecipients {
+				recipients[i] = domain.BounceRecipient{
+					EmailAddress:   r.EmailAddress,
+					DiagnosticCode: r.DiagnosticCode,
+				}
+			}
+			_ = s.reputationSvc.RecordBounceIncident(
+				context.Background(),
+				routing.UserID,
+				notification.Mail.MessageID,
+				notification.Bounce.BounceType,
+				notification.Bounce.BounceSubType,
+				recipients,
+			)
+		}()
+	}
+
 	return nil
 }
 
@@ -334,6 +360,20 @@ func (s *SNSNotificationService) handleComplaint(ctx context.Context, notificati
 		}
 		s.webhookSender.SendEmailComplained(ctx, routing.UserID, event)
 	}
+
+	// Record complaint incident via reputation service (fire-and-forget)
+	if s.reputationSvc != nil {
+		go func() {
+			_ = s.reputationSvc.RecordComplaintIncident(
+				context.Background(),
+				routing.UserID,
+				notification.Mail.MessageID,
+				notification.Complaint.ComplaintFeedbackType,
+				complainedRecipients,
+			)
+		}()
+	}
+
 	return nil
 }
 

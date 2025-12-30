@@ -14,6 +14,8 @@ type Querier interface {
 	CountActiveApiKeysByUserID(ctx context.Context, userID string) (int64, error)
 	CountApiKeysByUserID(ctx context.Context, userID string) (int64, error)
 	CountDomainsByUserID(ctx context.Context, userID string) (int64, error)
+	CountFlaggedUsers(ctx context.Context) (int32, error)
+	CountIncidentsByUser(ctx context.Context, userID string) (CountIncidentsByUserRow, error)
 	CountSuppressionsByUser(ctx context.Context, userID pgtype.Text) (int64, error)
 	CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error)
 	CreateDomain(ctx context.Context, arg CreateDomainParams) error
@@ -23,6 +25,7 @@ type Querier interface {
 	DeleteExpiredSuppressions(ctx context.Context) (int64, error)
 	DeleteSuppressionByHash(ctx context.Context, emailHash string) error
 	DeleteUser(ctx context.Context, id string) error
+	EnsureUserReputation(ctx context.Context, userID string) error
 	GetApiKeyByHash(ctx context.Context, keyHash string) (ApiKey, error)
 	GetApiKeyByID(ctx context.Context, id string) (ApiKey, error)
 	GetApiKeyByPrefix(ctx context.Context, keyPrefix string) (ApiKey, error)
@@ -36,17 +39,24 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
 	GetUserByExternalID(ctx context.Context, externalID pgtype.Text) (GetUserByExternalIDRow, error)
 	GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error)
+	GetUserReputation(ctx context.Context, userID string) (UserReputation, error)
+	InsertReputationIncident(ctx context.Context, arg InsertReputationIncidentParams) error
 	InsertSuppression(ctx context.Context, arg InsertSuppressionParams) error
 	ListActiveSuppressions(ctx context.Context) ([]ListActiveSuppressionsRow, error)
 	ListApiKeysByUserID(ctx context.Context, userID string) ([]ListApiKeysByUserIDRow, error)
 	ListApiKeysByUserIDPaginated(ctx context.Context, arg ListApiKeysByUserIDPaginatedParams) ([]ListApiKeysByUserIDPaginatedRow, error)
+	ListFlaggedUserReputations(ctx context.Context, arg ListFlaggedUserReputationsParams) ([]ListFlaggedUserReputationsRow, error)
+	ListReputationIncidents(ctx context.Context, arg ListReputationIncidentsParams) ([]ReputationIncident, error)
 	ListSuppressionsByUser(ctx context.Context, arg ListSuppressionsByUserParams) ([]ListSuppressionsByUserRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error)
 	RevokeApiKey(ctx context.Context, id string) (ApiKey, error)
+	SuspendUserReputation(ctx context.Context, arg SuspendUserReputationParams) error
+	UnsuspendUserReputation(ctx context.Context, userID string) error
 	UpdateApiKey(ctx context.Context, arg UpdateApiKeyParams) (ApiKey, error)
 	UpdateApiKeyLastUsed(ctx context.Context, id string) error
 	UpdateDomain(ctx context.Context, arg UpdateDomainParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	UpdateUserReputationStats(ctx context.Context, arg UpdateUserReputationStatsParams) error
 }
 
 var _ Querier = (*Queries)(nil)

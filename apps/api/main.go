@@ -205,6 +205,10 @@ func main() {
 	attachmentWorker := worker.NewAttachmentWorker(s3Factory, riverClient)
 	river.AddWorker(workers, attachmentWorker)
 
+	// Register reputation worker for async evaluation
+	reputationWorker := worker.NewReputationWorker(store.Reputation(), tbActivityRepo)
+	river.AddWorker(workers, reputationWorker)
+
 	// Start River client
 	if err := riverClient.Start(context.Background()); err != nil {
 		logger.Fatal().Err(err).Msg("Failed to start River client")

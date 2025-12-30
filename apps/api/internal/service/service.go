@@ -30,6 +30,7 @@ type Service struct {
 	Activity        *ActivityService
 	InboundEmail    *InboundEmailService
 	SNSNotification *SNSNotificationService
+	Reputation      *ReputationService
 }
 
 // New creates a new Service with the given Store.
@@ -92,12 +93,16 @@ func NewWithDeps(deps ServiceDeps) *Service {
 		ClerkWebhookSecret: deps.ClerkWebhookSecret,
 	})
 
+	// Initialize Reputation service
+	svc.Reputation = NewReputationService(deps.Store, deps.RiverClient, deps.TBActivityRepo)
+
 	// Initialize SNS notification service
 	svc.SNSNotification = NewSNSNotificationService(
 		deps.TBEmailRepo,
 		deps.TBActivityRepo,
 		deps.WebhookSender,
 		deps.SuppressionRepo,
+		svc.Reputation,
 	)
 
 	// Initialize Activity service
