@@ -19,6 +19,9 @@ service UserService {
 
   // ListUsers lists all users.
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {}
+
+  // GetSuspensionStatus returns the current user's suspension status for FE banner.
+  rpc GetSuspensionStatus(GetSuspensionStatusRequest) returns (SuspensionStatus) {}
 }
 
 enum UserRole {
@@ -71,3 +74,16 @@ message ListUsersResponse {
   int32 total_count = 2;
   string next_page_token = 3;
 }
+
+// GetSuspensionStatusRequest is empty - uses authenticated user from context.
+message GetSuspensionStatusRequest {}
+
+// SuspensionStatus contains the user's suspension and flag status for FE banner.
+message SuspensionStatus {
+  bool is_suspended = 1;
+  optional string suspension_reason = 2;
+  optional google.protobuf.Timestamp suspended_at = 3;
+  bool is_flagged = 4;
+  optional string flagged_reason = 5;
+}
+

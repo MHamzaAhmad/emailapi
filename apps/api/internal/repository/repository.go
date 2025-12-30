@@ -30,6 +30,15 @@ type UserRepository interface {
 
 	// List retrieves all users with pagination.
 	List(ctx context.Context, limit, offset int) ([]*domain.User, error)
+
+	// Count returns total number of users.
+	Count(ctx context.Context) (int, error)
+
+	// ListWithReputation retrieves users with their suspension/flag status.
+	ListWithReputation(ctx context.Context, limit, offset int) ([]*domain.AdminUser, error)
+
+	// GetWithReputation retrieves a user with full reputation data.
+	GetWithReputation(ctx context.Context, userID string) (*domain.UserWithReputation, error)
 }
 
 // APIKeyRepository defines the interface for API key data access.

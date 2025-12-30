@@ -308,13 +308,7 @@ export const EmailStatusSchema: GenEnum<EmailStatus> = /*@__PURE__*/
  */
 export const EmailService: GenService<{
   /**
-   * Send an email to one or more recipients.
-   *
-   * By default, this method sends the email synchronously and returns a result only
-   * after the upstream provider has accepted it.
-   *
-   * For better performance with large attachments or batch sending, set `async: true`
-   * to queue the email for background processing.
+   * Send an email.
    *
    * @generated from rpc v1.EmailService.SendEmail
    */
@@ -324,11 +318,7 @@ export const EmailService: GenService<{
     output: typeof SendEmailResponseSchema;
   },
   /**
-   * Stream real-time email events (delivery, bounces, clicks, replies).
-   *
-   * This is a robust alternative to webhooks. It provides a persistent stream of events
-   * that you can consume at your own pace. Use the `cursor` to resume reading
-   * from a specific point in time, ensuring no events are ever lost.
+   * Stream real-time email events.
    *
    * @generated from rpc v1.EmailService.StreamEvents
    */

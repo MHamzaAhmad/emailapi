@@ -118,6 +118,106 @@ func (r *UserRepository) List(ctx context.Context, limit, offset int) ([]*domain
 	return users, nil
 }
 
+// Count returns total number of users.
+func (r *UserRepository) Count(ctx context.Context) (int, error) {
+	count, err := r.queries.CountUsers(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count users: %w", err)
+	}
+	return int(count), nil
+}
+
+// ListWithReputation retrieves users with their suspension/flag status.
+func (r *UserRepository) ListWithReputation(ctx context.Context, limit, offset int) ([]*domain.AdminUser, error) {
+	rows, err := r.queries.ListUsersWithReputation(ctx, db.ListUsersWithReputationParams{
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list users with reputation: %w", err)
+	}
+
+	users := make([]*domain.AdminUser, len(rows))
+	for i, row := range rows {
+		users[i] = &domain.AdminUser{
+			User: &domain.User{
+				ID:         row.ID,
+				Email:      row.Email,
+				Name:       row.Name,
+				Role:       domain.UserRole(row.Role),
+				IsActive:   row.IsActive,
+				ExternalID: pgTextToStringPtr(row.ExternalID),
+				CreatedAt:  row.CreatedAt.Time,
+				UpdatedAt:  row.UpdatedAt.Time,
+			},
+			IsSuspended: row.IsSuspended,
+			IsFlagged:   row.IsFlagged,
+		}
+	}
+	return users, nil
+}
+
+// GetWithReputation retrieves a user with full reputation data.
+func (r *UserRepository) GetWithReputation(ctx context.Context, userID string) (*domain.UserWithReputation, error) {
+	row, err := r.queries.GetUserWithReputation(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user with reputation: %w", err)
+	}
+
+	result := &domain.UserWithReputation{
+		ID:              row.ID,
+		Email:           row.Email,
+		Name:            row.Name,
+		Role:            domain.UserRole(row.Role),
+		IsActive:        row.IsActive,
+		ExternalID:      pgTextToStringPtr(row.ExternalID),
+		CreatedAt:       row.CreatedAt.Time,
+		UpdatedAt:       row.UpdatedAt.Time,
+		TotalBounces:    int(row.TotalBounces),
+		HardBounces:     int(row.HardBounces),
+		SoftBounces:     int(row.SoftBounces),
+		Complaints:      int(row.Complaints),
+		Bounces30d:      int(row.Bounces30d),
+		Complaints30d:   int(row.Complaints30d),
+		SuspensionScore: numericToFloat64(row.SuspensionScore),
+		IsFlagged:       row.IsFlagged,
+		IsSuspended:     row.IsSuspended,
+	}
+
+	if row.FlaggedAt.Valid {
+		result.FlaggedAt = &row.FlaggedAt.Time
+	}
+	if row.FlaggedReason.Valid {
+		result.FlaggedReason = &row.FlaggedReason.String
+	}
+	if row.SuspendedAt.Valid {
+		result.SuspendedAt = &row.SuspendedAt.Time
+	}
+	if row.SuspendedBy.Valid {
+		result.SuspendedBy = &row.SuspendedBy.String
+	}
+	if row.SuspensionReason.Valid {
+		result.SuspensionReason = &row.SuspensionReason.String
+	}
+
+	return result, nil
+}
+
+// numericToFloat64 converts pgtype.Numeric to float64.
+func numericToFloat64(n interface{}) float64 {
+	// Handle different possible types from sqlc
+	switch v := n.(type) {
+	case float64:
+		return v
+	case int64:
+		return float64(v)
+	case int32:
+		return float64(v)
+	default:
+		return 0
+	}
+}
+
 // Conversion helpers for different SQLC row types
 
 func dbUserByIDToDomain(row db.GetUserByIDRow) *domain.User {

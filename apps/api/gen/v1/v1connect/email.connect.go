@@ -42,19 +42,9 @@ const (
 
 // EmailServiceClient is a client for the v1.EmailService service.
 type EmailServiceClient interface {
-	// Send an email to one or more recipients.
-	//
-	// By default, this method sends the email synchronously and returns a result only
-	// after the upstream provider has accepted it.
-	//
-	// For better performance with large attachments or batch sending, set `async: true`
-	// to queue the email for background processing.
+	// Send an email.
 	SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error)
-	// Stream real-time email events (delivery, bounces, clicks, replies).
-	//
-	// This is a robust alternative to webhooks. It provides a persistent stream of events
-	// that you can consume at your own pace. Use the `cursor` to resume reading
-	// from a specific point in time, ensuring no events are ever lost.
+	// Stream real-time email events.
 	StreamEvents(context.Context, *connect.Request[v1.StreamEventsRequest]) (*connect.ServerStreamForClient[v1.Event], error)
 }
 
@@ -102,19 +92,9 @@ func (c *emailServiceClient) StreamEvents(ctx context.Context, req *connect.Requ
 
 // EmailServiceHandler is an implementation of the v1.EmailService service.
 type EmailServiceHandler interface {
-	// Send an email to one or more recipients.
-	//
-	// By default, this method sends the email synchronously and returns a result only
-	// after the upstream provider has accepted it.
-	//
-	// For better performance with large attachments or batch sending, set `async: true`
-	// to queue the email for background processing.
+	// Send an email.
 	SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error)
-	// Stream real-time email events (delivery, bounces, clicks, replies).
-	//
-	// This is a robust alternative to webhooks. It provides a persistent stream of events
-	// that you can consume at your own pace. Use the `cursor` to resume reading
-	// from a specific point in time, ensuring no events are ever lost.
+	// Stream real-time email events.
 	StreamEvents(context.Context, *connect.Request[v1.StreamEventsRequest], *connect.ServerStream[v1.Event]) error
 }
 

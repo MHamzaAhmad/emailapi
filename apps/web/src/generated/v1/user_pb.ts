@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/user.proto.
  */
 export const file_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("Cg12MS91c2VyLnByb3RvEgJ2MSJ2ChFDcmVhdGVVc2VyUmVxdWVzdBINCgVlbWFpbBgBIAEoCRIMCgRuYW1lGAIgASgJEhoKBHJvbGUYAyABKA4yDC52MS5Vc2VyUm9sZRIYCgtleHRlcm5hbF9pZBgEIAEoCUgAiAEBQg4KDF9leHRlcm5hbF9pZCI9ChJDcmVhdGVVc2VyUmVzcG9uc2USFgoEdXNlchgBIAEoCzIILnYxLlVzZXISDwoHbWVzc2FnZRgCIAEoCSIXChVHZXRDdXJyZW50VXNlclJlcXVlc3Qi6AEKBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEbmFtZRgDIAEoCRIaCgRyb2xlGAQgASgOMgwudjEuVXNlclJvbGUSEQoJaXNfYWN0aXZlGAUgASgIEi4KCmNyZWF0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhgKC2V4dGVybmFsX2lkGAggASgJSACIAQFCDgoMX2V4dGVybmFsX2lkIqkBChFVcGRhdGVVc2VyUmVxdWVzdBIKCgJpZBgBIAEoCRISCgVlbWFpbBgCIAEoCUgAiAEBEhEKBG5hbWUYAyABKAlIAYgBARIfCgRyb2xlGAQgASgOMgwudjEuVXNlclJvbGVIAogBARIWCglpc19hY3RpdmUYBSABKAhIA4gBAUIICgZfZW1haWxCBwoFX25hbWVCBwoFX3JvbGVCDAoKX2lzX2FjdGl2ZSJJChBMaXN0VXNlcnNSZXF1ZXN0EhEKCXBhZ2Vfc2l6ZRgBIAEoBRISCgpwYWdlX3Rva2VuGAIgASgJEg4KBm9mZnNldBgDIAEoBSJaChFMaXN0VXNlcnNSZXNwb25zZRIXCgV1c2VycxgBIAMoCzIILnYxLlVzZXISEwoLdG90YWxfY291bnQYAiABKAUSFwoPbmV4dF9wYWdlX3Rva2VuGAMgASgJKlAKCFVzZXJSb2xlEhkKFVVTRVJfUk9MRV9VTlNQRUNJRklFRBAAEhMKD1VTRVJfUk9MRV9BRE1JThABEhQKEFVTRVJfUk9MRV9NRU1CRVIQAjLyAQoLVXNlclNlcnZpY2USPQoKQ3JlYXRlVXNlchIVLnYxLkNyZWF0ZVVzZXJSZXF1ZXN0GhYudjEuQ3JlYXRlVXNlclJlc3BvbnNlIgASNwoOR2V0Q3VycmVudFVzZXISGS52MS5HZXRDdXJyZW50VXNlclJlcXVlc3QaCC52MS5Vc2VyIgASLwoKVXBkYXRlVXNlchIVLnYxLlVwZGF0ZVVzZXJSZXF1ZXN0GggudjEuVXNlciIAEjoKCUxpc3RVc2VycxIULnYxLkxpc3RVc2Vyc1JlcXVlc3QaFS52MS5MaXN0VXNlcnNSZXNwb25zZSIAQlsKBmNvbS52MUIJVXNlclByb3RvUAFaHmdpdGh1Yi5jb20vZW1haWxhcGkvYXBpL2dlbi92MaICA1ZYWKoCAlYxygICVjHiAg5WMVxHUEJNZXRhZGF0YeoCAlYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
+  fileDesc("Cg12MS91c2VyLnByb3RvEgJ2MSJ2ChFDcmVhdGVVc2VyUmVxdWVzdBINCgVlbWFpbBgBIAEoCRIMCgRuYW1lGAIgASgJEhoKBHJvbGUYAyABKA4yDC52MS5Vc2VyUm9sZRIYCgtleHRlcm5hbF9pZBgEIAEoCUgAiAEBQg4KDF9leHRlcm5hbF9pZCI9ChJDcmVhdGVVc2VyUmVzcG9uc2USFgoEdXNlchgBIAEoCzIILnYxLlVzZXISDwoHbWVzc2FnZRgCIAEoCSIXChVHZXRDdXJyZW50VXNlclJlcXVlc3Qi6AEKBFVzZXISCgoCaWQYASABKAkSDQoFZW1haWwYAiABKAkSDAoEbmFtZRgDIAEoCRIaCgRyb2xlGAQgASgOMgwudjEuVXNlclJvbGUSEQoJaXNfYWN0aXZlGAUgASgIEi4KCmNyZWF0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhgKC2V4dGVybmFsX2lkGAggASgJSACIAQFCDgoMX2V4dGVybmFsX2lkIqkBChFVcGRhdGVVc2VyUmVxdWVzdBIKCgJpZBgBIAEoCRISCgVlbWFpbBgCIAEoCUgAiAEBEhEKBG5hbWUYAyABKAlIAYgBARIfCgRyb2xlGAQgASgOMgwudjEuVXNlclJvbGVIAogBARIWCglpc19hY3RpdmUYBSABKAhIA4gBAUIICgZfZW1haWxCBwoFX25hbWVCBwoFX3JvbGVCDAoKX2lzX2FjdGl2ZSJJChBMaXN0VXNlcnNSZXF1ZXN0EhEKCXBhZ2Vfc2l6ZRgBIAEoBRISCgpwYWdlX3Rva2VuGAIgASgJEg4KBm9mZnNldBgDIAEoBSJaChFMaXN0VXNlcnNSZXNwb25zZRIXCgV1c2VycxgBIAMoCzIILnYxLlVzZXISEwoLdG90YWxfY291bnQYAiABKAUSFwoPbmV4dF9wYWdlX3Rva2VuGAMgASgJIhwKGkdldFN1c3BlbnNpb25TdGF0dXNSZXF1ZXN0IuoBChBTdXNwZW5zaW9uU3RhdHVzEhQKDGlzX3N1c3BlbmRlZBgBIAEoCBIeChFzdXNwZW5zaW9uX3JlYXNvbhgCIAEoCUgAiAEBEjUKDHN1c3BlbmRlZF9hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAYgBARISCgppc19mbGFnZ2VkGAQgASgIEhsKDmZsYWdnZWRfcmVhc29uGAUgASgJSAKIAQFCFAoSX3N1c3BlbnNpb25fcmVhc29uQg8KDV9zdXNwZW5kZWRfYXRCEQoPX2ZsYWdnZWRfcmVhc29uKlAKCFVzZXJSb2xlEhkKFVVTRVJfUk9MRV9VTlNQRUNJRklFRBAAEhMKD1VTRVJfUk9MRV9BRE1JThABEhQKEFVTRVJfUk9MRV9NRU1CRVIQAjLBAgoLVXNlclNlcnZpY2USPQoKQ3JlYXRlVXNlchIVLnYxLkNyZWF0ZVVzZXJSZXF1ZXN0GhYudjEuQ3JlYXRlVXNlclJlc3BvbnNlIgASNwoOR2V0Q3VycmVudFVzZXISGS52MS5HZXRDdXJyZW50VXNlclJlcXVlc3QaCC52MS5Vc2VyIgASLwoKVXBkYXRlVXNlchIVLnYxLlVwZGF0ZVVzZXJSZXF1ZXN0GggudjEuVXNlciIAEjoKCUxpc3RVc2VycxIULnYxLkxpc3RVc2Vyc1JlcXVlc3QaFS52MS5MaXN0VXNlcnNSZXNwb25zZSIAEk0KE0dldFN1c3BlbnNpb25TdGF0dXMSHi52MS5HZXRTdXNwZW5zaW9uU3RhdHVzUmVxdWVzdBoULnYxLlN1c3BlbnNpb25TdGF0dXMiAEJbCgZjb20udjFCCVVzZXJQcm90b1ABWh5naXRodWIuY29tL2VtYWlsYXBpL2FwaS9nZW4vdjGiAgNWWFiqAgJWMcoCAlYx4gIOVjFcR1BCTWV0YWRhdGHqAgJWMWIGcHJvdG8z", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message v1.CreateUserRequest
@@ -231,6 +231,60 @@ export const ListUsersResponseSchema: GenMessage<ListUsersResponse> = /*@__PURE_
   messageDesc(file_v1_user, 6);
 
 /**
+ * GetSuspensionStatusRequest is empty - uses authenticated user from context.
+ *
+ * @generated from message v1.GetSuspensionStatusRequest
+ */
+export type GetSuspensionStatusRequest = Message<"v1.GetSuspensionStatusRequest"> & {
+};
+
+/**
+ * Describes the message v1.GetSuspensionStatusRequest.
+ * Use `create(GetSuspensionStatusRequestSchema)` to create a new message.
+ */
+export const GetSuspensionStatusRequestSchema: GenMessage<GetSuspensionStatusRequest> = /*@__PURE__*/
+  messageDesc(file_v1_user, 7);
+
+/**
+ * SuspensionStatus contains the user's suspension and flag status for FE banner.
+ *
+ * @generated from message v1.SuspensionStatus
+ */
+export type SuspensionStatus = Message<"v1.SuspensionStatus"> & {
+  /**
+   * @generated from field: bool is_suspended = 1;
+   */
+  isSuspended: boolean;
+
+  /**
+   * @generated from field: optional string suspension_reason = 2;
+   */
+  suspensionReason?: string;
+
+  /**
+   * @generated from field: optional google.protobuf.Timestamp suspended_at = 3;
+   */
+  suspendedAt?: Timestamp;
+
+  /**
+   * @generated from field: bool is_flagged = 4;
+   */
+  isFlagged: boolean;
+
+  /**
+   * @generated from field: optional string flagged_reason = 5;
+   */
+  flaggedReason?: string;
+};
+
+/**
+ * Describes the message v1.SuspensionStatus.
+ * Use `create(SuspensionStatusSchema)` to create a new message.
+ */
+export const SuspensionStatusSchema: GenMessage<SuspensionStatus> = /*@__PURE__*/
+  messageDesc(file_v1_user, 8);
+
+/**
  * @generated from enum v1.UserRole
  */
 export enum UserRole {
@@ -301,6 +355,16 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof ListUsersRequestSchema;
     output: typeof ListUsersResponseSchema;
+  },
+  /**
+   * GetSuspensionStatus returns the current user's suspension status for FE banner.
+   *
+   * @generated from rpc v1.UserService.GetSuspensionStatus
+   */
+  getSuspensionStatus: {
+    methodKind: "unary";
+    input: typeof GetSuspensionStatusRequestSchema;
+    output: typeof SuspensionStatusSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_v1_user, 0);

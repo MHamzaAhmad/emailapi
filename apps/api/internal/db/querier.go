@@ -20,6 +20,7 @@ type Querier interface {
 	CountIncidentsByUser(ctx context.Context, userID string) (CountIncidentsByUserRow, error)
 	CountSuppressionsByUser(ctx context.Context, userID pgtype.Text) (int64, error)
 	CountUnsubscribesByUser(ctx context.Context, userID string) (int64, error)
+	CountUsers(ctx context.Context) (int32, error)
 	CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error)
 	CreateDomain(ctx context.Context, arg CreateDomainParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -45,6 +46,7 @@ type Querier interface {
 	GetUserByExternalID(ctx context.Context, externalID pgtype.Text) (GetUserByExternalIDRow, error)
 	GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error)
 	GetUserReputation(ctx context.Context, userID string) (UserReputation, error)
+	GetUserWithReputation(ctx context.Context, id string) (GetUserWithReputationRow, error)
 	InsertReputationIncident(ctx context.Context, arg InsertReputationIncidentParams) error
 	InsertSuppression(ctx context.Context, arg InsertSuppressionParams) error
 	InsertUnsubscribe(ctx context.Context, arg InsertUnsubscribeParams) error
@@ -58,6 +60,7 @@ type Querier interface {
 	ListSuppressionsByUser(ctx context.Context, arg ListSuppressionsByUserParams) ([]ListSuppressionsByUserRow, error)
 	ListUnsubscribesByUser(ctx context.Context, arg ListUnsubscribesByUserParams) ([]ListUnsubscribesByUserRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error)
+	ListUsersWithReputation(ctx context.Context, arg ListUsersWithReputationParams) ([]ListUsersWithReputationRow, error)
 	RevokeApiKey(ctx context.Context, id string) (ApiKey, error)
 	SuspendUserReputation(ctx context.Context, arg SuspendUserReputationParams) error
 	UnsuspendUserReputation(ctx context.Context, userID string) error

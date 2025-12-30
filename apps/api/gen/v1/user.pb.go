@@ -523,6 +523,120 @@ func (x *ListUsersResponse) GetNextPageToken() string {
 	return ""
 }
 
+// GetSuspensionStatusRequest is empty - uses authenticated user from context.
+type GetSuspensionStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSuspensionStatusRequest) Reset() {
+	*x = GetSuspensionStatusRequest{}
+	mi := &file_v1_user_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSuspensionStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSuspensionStatusRequest) ProtoMessage() {}
+
+func (x *GetSuspensionStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_user_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSuspensionStatusRequest.ProtoReflect.Descriptor instead.
+func (*GetSuspensionStatusRequest) Descriptor() ([]byte, []int) {
+	return file_v1_user_proto_rawDescGZIP(), []int{7}
+}
+
+// SuspensionStatus contains the user's suspension and flag status for FE banner.
+type SuspensionStatus struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	IsSuspended      bool                   `protobuf:"varint,1,opt,name=is_suspended,json=isSuspended,proto3" json:"is_suspended,omitempty"`
+	SuspensionReason *string                `protobuf:"bytes,2,opt,name=suspension_reason,json=suspensionReason,proto3,oneof" json:"suspension_reason,omitempty"`
+	SuspendedAt      *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=suspended_at,json=suspendedAt,proto3,oneof" json:"suspended_at,omitempty"`
+	IsFlagged        bool                   `protobuf:"varint,4,opt,name=is_flagged,json=isFlagged,proto3" json:"is_flagged,omitempty"`
+	FlaggedReason    *string                `protobuf:"bytes,5,opt,name=flagged_reason,json=flaggedReason,proto3,oneof" json:"flagged_reason,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *SuspensionStatus) Reset() {
+	*x = SuspensionStatus{}
+	mi := &file_v1_user_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuspensionStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuspensionStatus) ProtoMessage() {}
+
+func (x *SuspensionStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_user_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuspensionStatus.ProtoReflect.Descriptor instead.
+func (*SuspensionStatus) Descriptor() ([]byte, []int) {
+	return file_v1_user_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SuspensionStatus) GetIsSuspended() bool {
+	if x != nil {
+		return x.IsSuspended
+	}
+	return false
+}
+
+func (x *SuspensionStatus) GetSuspensionReason() string {
+	if x != nil && x.SuspensionReason != nil {
+		return *x.SuspensionReason
+	}
+	return ""
+}
+
+func (x *SuspensionStatus) GetSuspendedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.SuspendedAt
+	}
+	return nil
+}
+
+func (x *SuspensionStatus) GetIsFlagged() bool {
+	if x != nil {
+		return x.IsFlagged
+	}
+	return false
+}
+
+func (x *SuspensionStatus) GetFlaggedReason() string {
+	if x != nil && x.FlaggedReason != nil {
+		return *x.FlaggedReason
+	}
+	return ""
+}
+
 var File_v1_user_proto protoreflect.FileDescriptor
 
 const file_v1_user_proto_rawDesc = "" +
@@ -572,18 +686,30 @@ const file_v1_user_proto_rawDesc = "" +
 	"\x05users\x18\x01 \x03(\v2\b.v1.UserR\x05users\x12\x1f\n" +
 	"\vtotal_count\x18\x02 \x01(\x05R\n" +
 	"totalCount\x12&\n" +
-	"\x0fnext_page_token\x18\x03 \x01(\tR\rnextPageToken*P\n" +
+	"\x0fnext_page_token\x18\x03 \x01(\tR\rnextPageToken\"\x1c\n" +
+	"\x1aGetSuspensionStatusRequest\"\xb0\x02\n" +
+	"\x10SuspensionStatus\x12!\n" +
+	"\fis_suspended\x18\x01 \x01(\bR\visSuspended\x120\n" +
+	"\x11suspension_reason\x18\x02 \x01(\tH\x00R\x10suspensionReason\x88\x01\x01\x12B\n" +
+	"\fsuspended_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampH\x01R\vsuspendedAt\x88\x01\x01\x12\x1d\n" +
+	"\n" +
+	"is_flagged\x18\x04 \x01(\bR\tisFlagged\x12*\n" +
+	"\x0eflagged_reason\x18\x05 \x01(\tH\x02R\rflaggedReason\x88\x01\x01B\x14\n" +
+	"\x12_suspension_reasonB\x0f\n" +
+	"\r_suspended_atB\x11\n" +
+	"\x0f_flagged_reason*P\n" +
 	"\bUserRole\x12\x19\n" +
 	"\x15USER_ROLE_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fUSER_ROLE_ADMIN\x10\x01\x12\x14\n" +
-	"\x10USER_ROLE_MEMBER\x10\x022\xf2\x01\n" +
+	"\x10USER_ROLE_MEMBER\x10\x022\xc1\x02\n" +
 	"\vUserService\x12=\n" +
 	"\n" +
 	"CreateUser\x12\x15.v1.CreateUserRequest\x1a\x16.v1.CreateUserResponse\"\x00\x127\n" +
 	"\x0eGetCurrentUser\x12\x19.v1.GetCurrentUserRequest\x1a\b.v1.User\"\x00\x12/\n" +
 	"\n" +
 	"UpdateUser\x12\x15.v1.UpdateUserRequest\x1a\b.v1.User\"\x00\x12:\n" +
-	"\tListUsers\x12\x14.v1.ListUsersRequest\x1a\x15.v1.ListUsersResponse\"\x00B[\n" +
+	"\tListUsers\x12\x14.v1.ListUsersRequest\x1a\x15.v1.ListUsersResponse\"\x00\x12M\n" +
+	"\x13GetSuspensionStatus\x12\x1e.v1.GetSuspensionStatusRequest\x1a\x14.v1.SuspensionStatus\"\x00B[\n" +
 	"\x06com.v1B\tUserProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (
@@ -599,39 +725,44 @@ func file_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_v1_user_proto_goTypes = []any{
-	(UserRole)(0),                 // 0: v1.UserRole
-	(*CreateUserRequest)(nil),     // 1: v1.CreateUserRequest
-	(*CreateUserResponse)(nil),    // 2: v1.CreateUserResponse
-	(*GetCurrentUserRequest)(nil), // 3: v1.GetCurrentUserRequest
-	(*User)(nil),                  // 4: v1.User
-	(*UpdateUserRequest)(nil),     // 5: v1.UpdateUserRequest
-	(*ListUsersRequest)(nil),      // 6: v1.ListUsersRequest
-	(*ListUsersResponse)(nil),     // 7: v1.ListUsersResponse
-	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
+	(UserRole)(0),                      // 0: v1.UserRole
+	(*CreateUserRequest)(nil),          // 1: v1.CreateUserRequest
+	(*CreateUserResponse)(nil),         // 2: v1.CreateUserResponse
+	(*GetCurrentUserRequest)(nil),      // 3: v1.GetCurrentUserRequest
+	(*User)(nil),                       // 4: v1.User
+	(*UpdateUserRequest)(nil),          // 5: v1.UpdateUserRequest
+	(*ListUsersRequest)(nil),           // 6: v1.ListUsersRequest
+	(*ListUsersResponse)(nil),          // 7: v1.ListUsersResponse
+	(*GetSuspensionStatusRequest)(nil), // 8: v1.GetSuspensionStatusRequest
+	(*SuspensionStatus)(nil),           // 9: v1.SuspensionStatus
+	(*timestamppb.Timestamp)(nil),      // 10: google.protobuf.Timestamp
 }
 var file_v1_user_proto_depIdxs = []int32{
 	0,  // 0: v1.CreateUserRequest.role:type_name -> v1.UserRole
 	4,  // 1: v1.CreateUserResponse.user:type_name -> v1.User
 	0,  // 2: v1.User.role:type_name -> v1.UserRole
-	8,  // 3: v1.User.created_at:type_name -> google.protobuf.Timestamp
-	8,  // 4: v1.User.updated_at:type_name -> google.protobuf.Timestamp
+	10, // 3: v1.User.created_at:type_name -> google.protobuf.Timestamp
+	10, // 4: v1.User.updated_at:type_name -> google.protobuf.Timestamp
 	0,  // 5: v1.UpdateUserRequest.role:type_name -> v1.UserRole
 	4,  // 6: v1.ListUsersResponse.users:type_name -> v1.User
-	1,  // 7: v1.UserService.CreateUser:input_type -> v1.CreateUserRequest
-	3,  // 8: v1.UserService.GetCurrentUser:input_type -> v1.GetCurrentUserRequest
-	5,  // 9: v1.UserService.UpdateUser:input_type -> v1.UpdateUserRequest
-	6,  // 10: v1.UserService.ListUsers:input_type -> v1.ListUsersRequest
-	2,  // 11: v1.UserService.CreateUser:output_type -> v1.CreateUserResponse
-	4,  // 12: v1.UserService.GetCurrentUser:output_type -> v1.User
-	4,  // 13: v1.UserService.UpdateUser:output_type -> v1.User
-	7,  // 14: v1.UserService.ListUsers:output_type -> v1.ListUsersResponse
-	11, // [11:15] is the sub-list for method output_type
-	7,  // [7:11] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	10, // 7: v1.SuspensionStatus.suspended_at:type_name -> google.protobuf.Timestamp
+	1,  // 8: v1.UserService.CreateUser:input_type -> v1.CreateUserRequest
+	3,  // 9: v1.UserService.GetCurrentUser:input_type -> v1.GetCurrentUserRequest
+	5,  // 10: v1.UserService.UpdateUser:input_type -> v1.UpdateUserRequest
+	6,  // 11: v1.UserService.ListUsers:input_type -> v1.ListUsersRequest
+	8,  // 12: v1.UserService.GetSuspensionStatus:input_type -> v1.GetSuspensionStatusRequest
+	2,  // 13: v1.UserService.CreateUser:output_type -> v1.CreateUserResponse
+	4,  // 14: v1.UserService.GetCurrentUser:output_type -> v1.User
+	4,  // 15: v1.UserService.UpdateUser:output_type -> v1.User
+	7,  // 16: v1.UserService.ListUsers:output_type -> v1.ListUsersResponse
+	9,  // 17: v1.UserService.GetSuspensionStatus:output_type -> v1.SuspensionStatus
+	13, // [13:18] is the sub-list for method output_type
+	8,  // [8:13] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_v1_user_proto_init() }
@@ -642,13 +773,14 @@ func file_v1_user_proto_init() {
 	file_v1_user_proto_msgTypes[0].OneofWrappers = []any{}
 	file_v1_user_proto_msgTypes[3].OneofWrappers = []any{}
 	file_v1_user_proto_msgTypes[4].OneofWrappers = []any{}
+	file_v1_user_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_user_proto_rawDesc), len(file_v1_user_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

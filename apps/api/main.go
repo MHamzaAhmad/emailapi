@@ -261,7 +261,7 @@ func main() {
 	clerk.SetKey(cfg.ClerkSecretKey)
 
 	// Create Connect interceptors
-	// Order matters: logging -> SNS/webhook preprocessing -> auth -> rate limit
+	// Order matters: logging -> SNS/webhook preprocessing -> auth -> admin -> rate limit
 	interceptors := connect.WithInterceptors(
 		interceptor.NewLoggingInterceptor(logger),
 		interceptor.NewSNSInterceptor(),
@@ -272,6 +272,9 @@ func main() {
 			APIKeyService:  svc.APIKey,
 			UserLookup:     svc.User,
 			ClerkSecretKey: cfg.ClerkSecretKey,
+		}),
+		interceptor.NewAdminInterceptor(interceptor.AdminConfig{
+			UserLookup: svc.User,
 		}),
 		interceptor.NewRateLimitInterceptor(interceptor.RateLimitConfig{
 			RateLimiter:          rateLimiter,
@@ -286,7 +289,7 @@ func main() {
 
 	// Register all service handlers
 	path, handler := v1connect.NewUserServiceHandler(
-		connecttransport.NewUserHandler(svc.User),
+		connecttransport.NewUserHandler(svc.User, svc.Reputation),
 		interceptors,
 	)
 	mux.Handle(path, handler)
@@ -329,6 +332,12 @@ func main() {
 
 	path, handler = v1connect.NewActivityServiceHandler(
 		connecttransport.NewActivityHandler(svc.Activity),
+		interceptors,
+	)
+	mux.Handle(path, handler)
+
+	path, handler = v1connect.NewAdminServiceHandler(
+		connecttransport.NewAdminHandler(svc.Admin),
 		interceptors,
 	)
 	mux.Handle(path, handler)

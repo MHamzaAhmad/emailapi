@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countUsers = `-- name: CountUsers :one
+SELECT COUNT(*)::INTEGER as total FROM users
+`
+
+func (q *Queries) CountUsers(ctx context.Context) (int32, error) {
+	row := q.db.QueryRow(ctx, countUsers)
+	var total int32
+	err := row.Scan(&total)
+	return total, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (id, email, name, role, is_active, external_id, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -158,6 +169,83 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, e
 	return i, err
 }
 
+const getUserWithReputation = `-- name: GetUserWithReputation :one
+SELECT 
+    u.id, u.email, u.name, u.role, u.is_active, u.external_id, u.created_at, u.updated_at,
+    COALESCE(r.total_bounces, 0) as total_bounces,
+    COALESCE(r.hard_bounces, 0) as hard_bounces,
+    COALESCE(r.soft_bounces, 0) as soft_bounces,
+    COALESCE(r.complaints, 0) as complaints,
+    COALESCE(r.bounces_30d, 0) as bounces_30d,
+    COALESCE(r.complaints_30d, 0) as complaints_30d,
+    COALESCE(r.suspension_score, 0) as suspension_score,
+    COALESCE(r.is_flagged, FALSE) as is_flagged,
+    r.flagged_at,
+    r.flagged_reason,
+    COALESCE(r.is_suspended, FALSE) as is_suspended,
+    r.suspended_at,
+    r.suspended_by,
+    r.suspension_reason
+FROM users u
+LEFT JOIN user_reputation r ON u.id = r.user_id
+WHERE u.id = $1
+`
+
+type GetUserWithReputationRow struct {
+	ID               string             `json:"id"`
+	Email            string             `json:"email"`
+	Name             string             `json:"name"`
+	Role             string             `json:"role"`
+	IsActive         bool               `json:"is_active"`
+	ExternalID       pgtype.Text        `json:"external_id"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	TotalBounces     int32              `json:"total_bounces"`
+	HardBounces      int32              `json:"hard_bounces"`
+	SoftBounces      int32              `json:"soft_bounces"`
+	Complaints       int32              `json:"complaints"`
+	Bounces30d       int32              `json:"bounces_30d"`
+	Complaints30d    int32              `json:"complaints_30d"`
+	SuspensionScore  pgtype.Numeric     `json:"suspension_score"`
+	IsFlagged        bool               `json:"is_flagged"`
+	FlaggedAt        pgtype.Timestamptz `json:"flagged_at"`
+	FlaggedReason    pgtype.Text        `json:"flagged_reason"`
+	IsSuspended      bool               `json:"is_suspended"`
+	SuspendedAt      pgtype.Timestamptz `json:"suspended_at"`
+	SuspendedBy      pgtype.Text        `json:"suspended_by"`
+	SuspensionReason pgtype.Text        `json:"suspension_reason"`
+}
+
+func (q *Queries) GetUserWithReputation(ctx context.Context, id string) (GetUserWithReputationRow, error) {
+	row := q.db.QueryRow(ctx, getUserWithReputation, id)
+	var i GetUserWithReputationRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Name,
+		&i.Role,
+		&i.IsActive,
+		&i.ExternalID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.TotalBounces,
+		&i.HardBounces,
+		&i.SoftBounces,
+		&i.Complaints,
+		&i.Bounces30d,
+		&i.Complaints30d,
+		&i.SuspensionScore,
+		&i.IsFlagged,
+		&i.FlaggedAt,
+		&i.FlaggedReason,
+		&i.IsSuspended,
+		&i.SuspendedAt,
+		&i.SuspendedBy,
+		&i.SuspensionReason,
+	)
+	return i, err
+}
+
 const listUsers = `-- name: ListUsers :many
 SELECT id, email, name, role, is_active, external_id, created_at, updated_at
 FROM users
@@ -199,6 +287,66 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUse
 			&i.ExternalID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersWithReputation = `-- name: ListUsersWithReputation :many
+SELECT 
+    u.id, u.email, u.name, u.role, u.is_active, u.external_id, u.created_at, u.updated_at,
+    COALESCE(r.is_suspended, FALSE) as is_suspended,
+    COALESCE(r.is_flagged, FALSE) as is_flagged
+FROM users u
+LEFT JOIN user_reputation r ON u.id = r.user_id
+ORDER BY u.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListUsersWithReputationParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListUsersWithReputationRow struct {
+	ID          string             `json:"id"`
+	Email       string             `json:"email"`
+	Name        string             `json:"name"`
+	Role        string             `json:"role"`
+	IsActive    bool               `json:"is_active"`
+	ExternalID  pgtype.Text        `json:"external_id"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	IsSuspended bool               `json:"is_suspended"`
+	IsFlagged   bool               `json:"is_flagged"`
+}
+
+func (q *Queries) ListUsersWithReputation(ctx context.Context, arg ListUsersWithReputationParams) ([]ListUsersWithReputationRow, error) {
+	rows, err := q.db.Query(ctx, listUsersWithReputation, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUsersWithReputationRow
+	for rows.Next() {
+		var i ListUsersWithReputationRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.Name,
+			&i.Role,
+			&i.IsActive,
+			&i.ExternalID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.IsSuspended,
+			&i.IsFlagged,
 		); err != nil {
 			return nil, err
 		}

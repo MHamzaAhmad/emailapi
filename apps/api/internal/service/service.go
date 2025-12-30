@@ -32,6 +32,7 @@ type Service struct {
 	SNSNotification *SNSNotificationService
 	Reputation      *ReputationService
 	Unsubscribe     *UnsubscribeService
+	Admin           *AdminService
 }
 
 // New creates a new Service with the given Store.
@@ -140,6 +141,9 @@ func NewWithDeps(deps ServiceDeps) *Service {
 			deps.WebhookSender,
 		)
 	}
+
+	// Initialize Admin service for admin operations
+	svc.Admin = NewAdminService(deps.Store, svc.User, svc.Reputation)
 
 	return svc
 }

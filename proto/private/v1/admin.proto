@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "github.com/emailapi/api/gen/v1";
+
+import "google/protobuf/timestamp.proto";
+
+// AdminService provides admin-only user management operations.
+// All RPCs require the caller to have the admin role.
+service AdminService {
+  // ListUsers returns a paginated list of all users.
+  rpc ListUsers(ListAdminUsersRequest) returns (ListAdminUsersResponse) {}
+
+  // ListFlaggedUsers returns users flagged for review due to reputation issues.
+  rpc ListFlaggedUsers(ListFlaggedUsersRequest) returns (ListFlaggedUsersResponse) {}
+
+  // GetUserDetails returns full user details including reputation stats.
+  rpc GetUserDetails(GetUserDetailsRequest) returns (UserDetails) {}
+
+  // SuspendUser suspends a user account.
+  rpc SuspendUser(SuspendUserRequest) returns (SuspendUserResponse) {}
+
+  // UnsuspendUser reinstates a suspended user account.
+  rpc UnsuspendUser(UnsuspendUserRequest) returns (UnsuspendUserResponse) {}
+}
+
+// ListAdminUsersRequest contains pagination parameters for listing users.
+message ListAdminUsersRequest {
+  int32 page_size = 1;
+  int32 offset = 2;
+}
+
+// ListAdminUsersResponse contains the paginated list of users.
+message ListAdminUsersResponse {
+  repeated AdminUser users = 1;
+  int32 total_count = 2;
+}
+
+// AdminUser represents a user in admin context with additional metadata.
+message AdminUser {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  string role = 4;
+  bool is_active = 5;
+  bool is_suspended = 6;
+  bool is_flagged = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+// ListFlaggedUsersRequest contains pagination for flagged users.
+message ListFlaggedUsersRequest {
+  int32 page_size = 1;
+  int32 offset = 2;
+}
+
+// ListFlaggedUsersResponse contains users flagged for review.
+message ListFlaggedUsersResponse {
+  repeated FlaggedUser users = 1;
+  int32 total_count = 2;
+}
+
+// FlaggedUser represents a user with reputation issues.
+message FlaggedUser {
+  string user_id = 1;
+  string email = 2;
+  string name = 3;
+  
+  // Reputation stats
+  int32 total_bounces = 4;
+  int32 hard_bounces = 5;
+  int32 soft_bounces = 6;
+  int32 complaints = 7;
+  int32 bounces_30d = 8;
+  int32 complaints_30d = 9;
+  double suspension_score = 10;
+  
+  // Flag info
+  google.protobuf.Timestamp flagged_at = 11;
+  string flagged_reason = 12;
+}
+
+// GetUserDetailsRequest specifies which user to retrieve.
+message GetUserDetailsRequest {
+  string user_id = 1;
+}
+
+// UserDetails contains full user information including reputation.
+message UserDetails {
+  // User info
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  string role = 4;
+  bool is_active = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  
+  // Reputation info
+  int32 total_bounces = 8;
+  int32 hard_bounces = 9;
+  int32 soft_bounces = 10;
+  int32 complaints = 11;
+  int32 bounces_30d = 12;
+  int32 complaints_30d = 13;
+  double suspension_score = 14;
+  
+  // Status
+  bool is_flagged = 15;
+  optional google.protobuf.Timestamp flagged_at = 16;
+  optional string flagged_reason = 17;
+  bool is_suspended = 18;
+  optional google.protobuf.Timestamp suspended_at = 19;
+  optional string suspended_by = 20;
+  optional string suspension_reason = 21;
+}
+
+// SuspendUserRequest contains the user to suspend and reason.
+message SuspendUserRequest {
+  string user_id = 1;
+  string reason = 2;
+}
+
+// SuspendUserResponse confirms the suspension.
+message SuspendUserResponse {
+  string message = 1;
+}
+
+// UnsuspendUserRequest specifies which user to reinstate.
+message UnsuspendUserRequest {
+  string user_id = 1;
+}
+
+// UnsuspendUserResponse confirms the reinstatement.
+message UnsuspendUserResponse {
+  string message = 1;
+}

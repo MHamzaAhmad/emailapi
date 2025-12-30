@@ -17,12 +17,13 @@ import (
 // UserHandler implements the Connect UserServiceHandler.
 type UserHandler struct {
 	v1connect.UnimplementedUserServiceHandler
-	svc *service.UserService
+	svc    *service.UserService
+	repSvc *service.ReputationService
 }
 
 // NewUserHandler creates a new UserHandler.
-func NewUserHandler(svc *service.UserService) *UserHandler {
-	return &UserHandler{svc: svc}
+func NewUserHandler(svc *service.UserService, repSvc *service.ReputationService) *UserHandler {
+	return &UserHandler{svc: svc, repSvc: repSvc}
 }
 
 // CreateUser handles the CreateUser RPC.
@@ -133,6 +134,44 @@ func (h *UserHandler) ListUsers(
 		Users:      protoUsers,
 		TotalCount: int32(len(protoUsers)),
 	}), nil
+}
+
+// GetSuspensionStatus returns the current user's suspension status for FE banner.
+func (h *UserHandler) GetSuspensionStatus(
+	ctx context.Context,
+	req *connect.Request[v1.GetSuspensionStatusRequest],
+) (*connect.Response[v1.SuspensionStatus], error) {
+	userID := interceptor.GetUserID(ctx)
+	if userID == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+	}
+
+	// Get reputation status
+	rep, err := h.repSvc.GetUserReputation(ctx, userID)
+	if err != nil {
+		// No reputation record = not suspended/flagged
+		return connect.NewResponse(&v1.SuspensionStatus{
+			IsSuspended: false,
+			IsFlagged:   false,
+		}), nil
+	}
+
+	status := &v1.SuspensionStatus{
+		IsSuspended: rep.IsSuspended,
+		IsFlagged:   rep.IsFlagged,
+	}
+
+	if rep.SuspensionReason != "" {
+		status.SuspensionReason = &rep.SuspensionReason
+	}
+	if rep.SuspendedAt != nil {
+		status.SuspendedAt = timestamppb.New(*rep.SuspendedAt)
+	}
+	if rep.FlaggedReason != "" {
+		status.FlaggedReason = &rep.FlaggedReason
+	}
+
+	return connect.NewResponse(status), nil
 }
 
 // ============================================================================

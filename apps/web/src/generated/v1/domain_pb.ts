@@ -635,8 +635,7 @@ export const RecordTypeSchema: GenEnum<RecordType> = /*@__PURE__*/
  */
 export const DomainService: GenService<{
   /**
-   * Register a new domain for sending.
-   * Returns the DNS records you need to add to your DNS provider (e.g. Cloudflare, GoDaddy).
+   * Register a new domain.
    *
    * @generated from rpc v1.DomainService.AddDomain
    */
@@ -646,8 +645,7 @@ export const DomainService: GenService<{
     output: typeof AddDomainResponseSchema;
   },
   /**
-   * Get details for a specific domain, including current DNS status.
-   * We automatically refresh the status if it's stale (>5 minutes old).
+   * Get domain details and DNS status.
    *
    * @generated from rpc v1.DomainService.GetDomain
    */
@@ -657,7 +655,7 @@ export const DomainService: GenService<{
     output: typeof GetDomainResponseSchema;
   },
   /**
-   * List all your domains.
+   * List all domains.
    *
    * @generated from rpc v1.DomainService.ListDomains
    */
@@ -667,7 +665,7 @@ export const DomainService: GenService<{
     output: typeof ListDomainsResponseSchema;
   },
   /**
-   * Remove a domain. You won't be able to send from it anymore.
+   * Remove a domain.
    *
    * @generated from rpc v1.DomainService.DeleteDomain
    */
@@ -677,9 +675,7 @@ export const DomainService: GenService<{
     output: typeof DeleteDomainResponseSchema;
   },
   /**
-   * Trigger an immediate check of DNS records.
-   * Useful if you just updated your DNS and don't want to wait for the auto-refresh.
-   * Rate limited to once every 30 seconds.
+   * Trigger DNS verification.
    *
    * @generated from rpc v1.DomainService.VerifyDomain
    */
