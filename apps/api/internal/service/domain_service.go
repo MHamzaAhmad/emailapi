@@ -15,6 +15,7 @@ import (
 	"github.com/emailapi/api/internal/external/ses"
 	rediscache "github.com/emailapi/api/internal/repository/redis"
 	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
+	"github.com/emailapi/api/internal/validation"
 )
 
 const (
@@ -30,28 +31,30 @@ const (
 
 // DomainService handles domain business logic.
 type DomainService struct {
-	store            Store
-	ses              ses.Client
-	dns              *internaldns.Validator
-	cache            rediscache.DomainCacheInterface
-	activity         tbrepo.ActivityRepositoryInterface
-	region           string
-	configurationSet string // SES configuration set for notifications
+	store             Store
+	ses               ses.Client
+	dns               *internaldns.Validator
+	cache             rediscache.DomainCacheInterface
+	activity          tbrepo.ActivityRepositoryInterface
+	reputationChecker validation.ReputationChecker
+	region            string
+	configurationSet  string // SES configuration set for notifications
 }
 
 // NewDomainService creates a new DomainService.
-func NewDomainService(store Store, sesClient ses.Client, cache rediscache.DomainCacheInterface, activity tbrepo.ActivityRepositoryInterface, region, configurationSet string) *DomainService {
+func NewDomainService(store Store, sesClient ses.Client, cache rediscache.DomainCacheInterface, activity tbrepo.ActivityRepositoryInterface, reputationChecker validation.ReputationChecker, region, configurationSet string) *DomainService {
 	if region == "" {
 		region = defaultRegion
 	}
 	return &DomainService{
-		store:            store,
-		ses:              sesClient,
-		dns:              internaldns.NewValidator(),
-		cache:            cache,
-		activity:         activity,
-		region:           region,
-		configurationSet: configurationSet,
+		store:             store,
+		ses:               sesClient,
+		dns:               internaldns.NewValidator(),
+		cache:             cache,
+		activity:          activity,
+		reputationChecker: reputationChecker,
+		region:            region,
+		configurationSet:  configurationSet,
 	}
 }
 
@@ -78,6 +81,13 @@ func (s *DomainService) isStale(d *domain.SendingDomain) bool {
 // Add registers a new sending domain with AWS SES.
 // MAIL FROM is auto-configured as mail.{domain}.
 func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*domain.DomainWithDetails, error) {
+	// Check reputation first - suspended users cannot add domains
+	if s.reputationChecker != nil {
+		if err := s.reputationChecker.CheckSendPermission(ctx, userID); err != nil {
+			return nil, err
+		}
+	}
+
 	// Validate domain name
 	domainName = strings.TrimSpace(strings.ToLower(domainName))
 	if domainName == "" {

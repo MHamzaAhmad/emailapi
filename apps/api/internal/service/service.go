@@ -56,10 +56,11 @@ type ServiceDeps struct {
 	WebhookSender       webhook.Sender
 	SuppressionRepo     *suppression.Repository
 	// Cache repositories
-	DomainCache *rediscache.DomainCache
-	APIKeyCache *rediscache.APIKeyCache
-	UserCache   *rediscache.UserCache
-	MXCache     *rediscache.MXCache
+	DomainCache     *rediscache.DomainCache
+	APIKeyCache     *rediscache.APIKeyCache
+	UserCache       *rediscache.UserCache
+	MXCache         *rediscache.MXCache
+	ReputationCache *rediscache.ReputationCache
 	// Event streaming
 	EventConsumer eventstream.Consumer
 	// Clerk configuration
@@ -74,7 +75,12 @@ type ServiceDeps struct {
 // NewWithDeps creates a new Service with all dependencies.
 func NewWithDeps(deps ServiceDeps) *Service {
 	svc := New(deps.Store)
-	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.DomainCache, deps.TBActivityRepo, deps.Region, deps.SESConfigurationSet)
+
+	// Initialize Reputation service first (needed by DomainService and EmailValidator)
+	svc.Reputation = NewReputationService(deps.Store, deps.RiverClient, deps.TBActivityRepo, deps.ReputationCache)
+
+	// Initialize Domain service with reputation checker
+	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.DomainCache, deps.TBActivityRepo, svc.Reputation, deps.Region, deps.SESConfigurationSet)
 	svc.APIKey = NewAPIKeyService(deps.Store, deps.APIKeyCache, deps.TBActivityRepo, deps.APIKeyHMACSecret)
 	svc.User = NewUserService(deps.Store, svc.APIKey, deps.UserCache)
 
@@ -84,17 +90,14 @@ func NewWithDeps(deps ServiceDeps) *Service {
 		bodyValidator = validation.NewBodyValidator(deps.RedisClient, deps.WebRiskClient)
 	}
 
-	// Create email validator with domain checker, suppression checker, body validator, and MX cache
-	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo, bodyValidator, deps.MXCache)
+	// Create email validator with domain checker, suppression checker, body validator, MX cache, and reputation checker
+	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo, bodyValidator, deps.MXCache, svc.Reputation)
 
-	svc.Email = NewEmailService(deps.RiverClient, deps.TBEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer)
+	svc.Email = NewEmailService(deps.RiverClient, deps.TBEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer, svc.Reputation)
 	svc.Internal = NewInternalService(InternalServiceConfig{
 		UserService:        svc.User,
 		ClerkWebhookSecret: deps.ClerkWebhookSecret,
 	})
-
-	// Initialize Reputation service
-	svc.Reputation = NewReputationService(deps.Store, deps.RiverClient, deps.TBActivityRepo)
 
 	// Initialize SNS notification service
 	svc.SNSNotification = NewSNSNotificationService(

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,16 +11,22 @@ import (
 	"github.com/riverqueue/river"
 
 	"github.com/emailapi/api/internal/domain"
+	redisrepo "github.com/emailapi/api/internal/repository/redis"
 	"github.com/emailapi/api/internal/repository/suppression"
 	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/worker"
 )
 
+// ErrAccountSuspended is returned when a suspended user tries to send email.
+var ErrAccountSuspended = errors.New("account suspended: please contact support")
+
 // ReputationService handles user reputation business logic.
+// Implements ReputationChecker interface for use in email validation.
 type ReputationService struct {
 	store        Store
 	riverClient  *river.Client[pgx.Tx]
 	activityRepo *tbrepo.ActivityRepository
+	cache        *redisrepo.ReputationCache
 }
 
 // NewReputationService creates a new ReputationService.
@@ -27,12 +34,86 @@ func NewReputationService(
 	store Store,
 	riverClient *river.Client[pgx.Tx],
 	activityRepo *tbrepo.ActivityRepository,
+	cache *redisrepo.ReputationCache,
 ) *ReputationService {
 	return &ReputationService{
 		store:        store,
 		riverClient:  riverClient,
 		activityRepo: activityRepo,
+		cache:        cache,
 	}
+}
+
+// CheckSendPermission checks if a user is allowed to send emails.
+// Uses Redis cache for O(1) lookups in the hot path.
+// Returns ErrAccountSuspended if user is suspended.
+func (s *ReputationService) CheckSendPermission(ctx context.Context, userID string) error {
+	// 1. Try Redis cache first (fast path)
+	if s.cache != nil {
+		status, err := s.cache.Get(ctx, userID)
+		if err == nil && status != nil {
+			if status.IsSuspended {
+				return ErrAccountSuspended
+			}
+			return nil // Flagged users can send (with reduced limits)
+		}
+	}
+
+	// 2. Cache miss: check database
+	rep, err := s.store.Reputation().Get(ctx, userID)
+	if err != nil {
+		// No reputation record = not suspended, user is clean
+		return nil
+	}
+
+	// 3. Update cache for future lookups
+	if s.cache != nil {
+		s.cache.Set(ctx, userID, &redisrepo.UserReputationStatus{
+			IsFlagged:   rep.IsFlagged,
+			IsSuspended: rep.IsSuspended,
+			Score:       rep.SuspensionScore,
+		})
+	}
+
+	if rep.IsSuspended {
+		return ErrAccountSuspended
+	}
+	return nil
+}
+
+// GetEffectiveRateLimit returns the effective rate limit for a user.
+// Flagged users get reduced limits (10% of normal).
+func (s *ReputationService) GetEffectiveRateLimit(ctx context.Context, userID string, baseLimit int) int {
+	// Check cache first
+	if s.cache != nil {
+		status, err := s.cache.Get(ctx, userID)
+		if err == nil && status != nil {
+			if status.IsFlagged {
+				return baseLimit / 10 // 10% of normal limit
+			}
+			return baseLimit
+		}
+	}
+
+	// Cache miss: check database
+	rep, err := s.store.Reputation().Get(ctx, userID)
+	if err != nil {
+		return baseLimit // No record = full limit
+	}
+
+	if rep.IsFlagged {
+		return baseLimit / 10 // 10% of normal limit
+	}
+	return baseLimit
+}
+
+// InvalidateCache removes the cached reputation status for a user.
+// Should be called after suspend/unsuspend/flag changes.
+func (s *ReputationService) InvalidateCache(ctx context.Context, userID string) error {
+	if s.cache != nil {
+		return s.cache.Delete(ctx, userID)
+	}
+	return nil
 }
 
 // RecordBounceIncident records a bounce incident and queues evaluation.
@@ -66,6 +147,17 @@ func (s *ReputationService) RecordBounceIncident(
 		}
 	}
 
+	// Log activity for bounce incident
+	if s.activityRepo != nil {
+		s.activityRepo.Log(ctx, userID, "reputation", messageID, "bounce_incident", "info",
+			fmt.Sprintf("%s bounce: %d recipients", bounceType, len(recipients)),
+			map[string]interface{}{
+				"bounce_type":     bounceType,
+				"bounce_subtype":  bounceSubType,
+				"recipient_count": len(recipients),
+			})
+	}
+
 	return s.queueEvaluation(ctx, userID)
 }
 
@@ -90,6 +182,16 @@ func (s *ReputationService) RecordComplaintIncident(
 		if err := s.store.Reputation().InsertIncident(ctx, incident); err != nil {
 			fmt.Printf("Warning: failed to record complaint incident: %v\n", err)
 		}
+	}
+
+	// Log activity for complaint incident
+	if s.activityRepo != nil {
+		s.activityRepo.Log(ctx, userID, "reputation", messageID, "complaint_incident", "warning",
+			fmt.Sprintf("Complaint: %s - %d recipients", feedbackType, len(recipientEmails)),
+			map[string]interface{}{
+				"feedback_type":   feedbackType,
+				"recipient_count": len(recipientEmails),
+			})
 	}
 
 	return s.queueEvaluation(ctx, userID)
@@ -140,6 +242,9 @@ func (s *ReputationService) SuspendUser(ctx context.Context, userID, suspendedBy
 		return fmt.Errorf("failed to suspend user: %w", err)
 	}
 
+	// Invalidate cache to immediately block sends
+	s.InvalidateCache(ctx, userID)
+
 	// Log activity
 	if s.activityRepo != nil {
 		s.activityRepo.Log(ctx, userID, "reputation", userID, "suspended", "success",
@@ -153,6 +258,9 @@ func (s *ReputationService) UnsuspendUser(ctx context.Context, userID, unsuspend
 	if err := s.store.Reputation().Unsuspend(ctx, userID); err != nil {
 		return fmt.Errorf("failed to unsuspend user: %w", err)
 	}
+
+	// Invalidate cache to allow sends
+	s.InvalidateCache(ctx, userID)
 
 	if s.activityRepo != nil {
 		s.activityRepo.Log(ctx, userID, "reputation", userID, "unsuspended", "success",

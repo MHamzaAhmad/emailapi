@@ -124,6 +124,7 @@ func main() {
 	apiKeyCache := redisrepo.NewAPIKeyCache(redisClient, cacheTTL)
 	userCache := redisrepo.NewUserCache(redisClient, cacheTTL)
 	mxCache := redisrepo.NewMXCache(redisClient)
+	reputationCache := redisrepo.NewReputationCache(redisClient)
 	logger.Info().Msg("✓ Initialized cache repositories")
 
 	// Initialize rate limiter
@@ -206,7 +207,7 @@ func main() {
 	river.AddWorker(workers, attachmentWorker)
 
 	// Register reputation worker for async evaluation
-	reputationWorker := worker.NewReputationWorker(store.Reputation(), tbActivityRepo)
+	reputationWorker := worker.NewReputationWorker(store.Reputation(), tbActivityRepo, reputationCache)
 	river.AddWorker(workers, reputationWorker)
 
 	// Start River client
@@ -233,6 +234,7 @@ func main() {
 		APIKeyCache:         apiKeyCache,
 		UserCache:           userCache,
 		MXCache:             mxCache,
+		ReputationCache:     reputationCache,
 		EventConsumer:       eventConsumer,
 		ClerkWebhookSecret:  cfg.ClerkWebhookSecret,
 		APIKeyHMACSecret:    cfg.APIKeyHMACSecret,

@@ -27,12 +27,13 @@ import (
 // EmailService handles email sending operations.
 // This is a stateless, compliance-first service - no email content is stored permanently.
 type EmailService struct {
-	riverClient   *river.Client[pgx.Tx]
-	tbRepo        *tbrepo.EmailRepository
-	validator     *validation.EmailValidator
-	ses           ses.Client
-	webhookSender webhook.Sender
-	eventConsumer eventstream.Consumer
+	riverClient       *river.Client[pgx.Tx]
+	tbRepo            *tbrepo.EmailRepository
+	validator         *validation.EmailValidator
+	ses               ses.Client
+	webhookSender     webhook.Sender
+	eventConsumer     eventstream.Consumer
+	reputationChecker validation.ReputationChecker
 }
 
 // NewEmailService creates a new EmailService.
@@ -43,14 +44,16 @@ func NewEmailService(
 	sesClient ses.Client,
 	webhookSender webhook.Sender,
 	eventConsumer eventstream.Consumer,
+	reputationChecker validation.ReputationChecker,
 ) *EmailService {
 	return &EmailService{
-		riverClient:   riverClient,
-		tbRepo:        tbRepo,
-		validator:     validator,
-		ses:           sesClient,
-		webhookSender: webhookSender,
-		eventConsumer: eventConsumer,
+		riverClient:       riverClient,
+		tbRepo:            tbRepo,
+		validator:         validator,
+		ses:               sesClient,
+		webhookSender:     webhookSender,
+		eventConsumer:     eventConsumer,
+		reputationChecker: reputationChecker,
 	}
 }
 
@@ -378,6 +381,13 @@ func (s *EmailService) sendWebhook(ctx context.Context, userID, emailID, message
 
 // StreamEvents returns a channel of events for the user starting from cursor.
 func (s *EmailService) StreamEvents(ctx context.Context, userID, cursor string, eventTypes []emailapi.EventType, batchSize int32) (<-chan *emailapi.Event, error) {
+	// Check reputation - suspended users cannot access streaming API
+	if s.reputationChecker != nil {
+		if err := s.reputationChecker.CheckSendPermission(ctx, userID); err != nil {
+			return nil, err
+		}
+	}
+
 	if s.eventConsumer == nil {
 		return nil, fmt.Errorf("event streaming not configured")
 	}
