@@ -14,6 +14,7 @@ import { ApiKeyService } from '@/generated/v1/apikey_pb';
 import { UserService } from '@/generated/v1/user_pb';
 import { ActivityService } from '@/generated/v1/activity_pb';
 import { WebhookService } from '@/generated/v1/webhook_pb';
+import { AdminService } from '@/generated/v1/admin_pb';
 
 // API base URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -88,6 +89,9 @@ export const activityClient = (): Client<typeof ActivityService> =>
 export const webhookClient = (): Client<typeof WebhookService> =>
     createClient(WebhookService, getTransport());
 
+export const adminClient = (): Client<typeof AdminService> =>
+    createClient(AdminService, getTransport());
+
 // Re-export types for convenience
 export type {
     Domain,
@@ -137,6 +141,8 @@ export type {
     UpdateUserRequest,
     ListUsersRequest,
     ListUsersResponse,
+    SuspensionStatus,
+    GetSuspensionStatusRequest,
 } from '@/generated/v1/user_pb';
 
 export type {
@@ -149,3 +155,18 @@ export type {
     GetAppPortalAccessRequest,
     GetAppPortalAccessResponse,
 } from '@/generated/v1/webhook_pb';
+
+export type {
+    AdminUser,
+    FlaggedUser,
+    UserDetails,
+    ListAdminUsersRequest,
+    ListAdminUsersResponse,
+    ListFlaggedUsersRequest,
+    ListFlaggedUsersResponse,
+    GetUserDetailsRequest,
+    SuspendUserRequest,
+    SuspendUserResponse,
+    UnsuspendUserRequest,
+    UnsuspendUserResponse,
+} from '@/generated/v1/admin_pb';

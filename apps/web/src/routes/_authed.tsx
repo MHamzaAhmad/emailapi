@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { useAuth, RedirectToSignIn } from '@clerk/clerk-react'
 import { Shell } from '@/components/shell'
+import { SuspensionBanner } from '@/components/suspension-banner'
 
 export const Route = createFileRoute('/_authed')({
     component: AuthedLayout,
@@ -23,8 +24,11 @@ function AuthedLayout() {
     }
 
     return (
-        <Shell>
-            <Outlet />
-        </Shell>
+        <>
+            <SuspensionBanner />
+            <Shell>
+                <Outlet />
+            </Shell>
+        </>
     )
 }
