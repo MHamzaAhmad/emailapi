@@ -11,6 +11,7 @@ import { CodeWindow } from '@/components/ui/code-window'
 import { ModeToggle } from '@/components/mode-toggle'
 import { GridOfTruth } from '@/components/landing/GridOfTruth'
 import { PerformanceChart } from '@/components/landing/PerformanceChart'
+import { ComparisonSection } from '@/components/landing/ComparisonSection'
 import {
   Dialog,
   DialogContent,
@@ -268,6 +269,9 @@ func main() {
             <PerformanceChart />
           </div>
         </section>
+
+        {/* Comparison Section */}
+        <ComparisonSection />
 
         {/* Simple CTA */}
         <section className="py-24 px-6 border-t border-dashed border-border/40 bg-secondary/20">
