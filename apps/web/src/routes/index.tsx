@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { SignedIn, SignedOut, SignInButton, Waitlist, UserButton } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -314,6 +314,10 @@ func main() {
 
           <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Documentation</a>
+            <span className="text-border/40">|</span>
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <span className="text-border/40">|</span>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
             <span className="text-border/40">|</span>
             <p>&copy; {new Date().getFullYear()} SimpleEmailAPI</p>
           </div>
