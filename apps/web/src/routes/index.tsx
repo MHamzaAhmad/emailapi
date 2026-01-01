@@ -252,6 +252,9 @@ func main() {
         {/* Symmetric Grid of Truth */}
         <GridOfTruth />
 
+        {/* Comparison Section */}
+        <ComparisonSection />
+
         {/* Performance Chart Section */}
         <section className="py-24 px-6 bg-background border-t border-dashed border-border/40">
           <div className="mx-auto max-w-6xl">
@@ -269,9 +272,6 @@ func main() {
             <PerformanceChart />
           </div>
         </section>
-
-        {/* Comparison Section */}
-        <ComparisonSection />
 
         {/* Simple CTA */}
         <section className="py-24 px-6 border-t border-dashed border-border/40 bg-secondary/20">

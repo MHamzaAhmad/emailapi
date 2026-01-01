@@ -8,6 +8,8 @@ import { getQueryClient } from '@/lib/queryClient'
 
 import appCss from '../styles.css?url'
 import { ThemeProvider, useTheme } from '@/providers/themeProvider'
+import { NotFound } from '@/components/NotFound'
+import { ErrorComponent } from '@/components/ErrorComponent'
 
 // Get Clerk publishable key from env
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
@@ -37,6 +39,8 @@ export const Route = createRootRoute({
   }),
   component: RootComponent,
   shellComponent: RootDocument,
+  notFoundComponent: NotFound,
+  errorComponent: ErrorComponent,
 })
 
 function RootComponent() {
