@@ -10,13 +10,13 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/emailapi/api/internal/domain"
-	"github.com/emailapi/api/internal/repository"
+	"github.com/emailapi/api/internal/repository/postgres"
 	rediscache "github.com/emailapi/api/internal/repository/redis"
 )
 
 // UnsubscribeService handles unsubscribe operations with cache-first strategy.
 type UnsubscribeService struct {
-	repo     repository.UnsubscribeRepository
+	repo     postgres.UnsubscribeRepository
 	cache    *rediscache.UnsubscribeCache
 	tokenSvc *UnsubscribeTokenService
 	baseURL  string
@@ -24,7 +24,7 @@ type UnsubscribeService struct {
 
 // NewUnsubscribeService creates a new UnsubscribeService.
 func NewUnsubscribeService(
-	repo repository.UnsubscribeRepository,
+	repo postgres.UnsubscribeRepository,
 	cache *rediscache.UnsubscribeCache,
 	tokenSvc *UnsubscribeTokenService,
 	baseURL string,

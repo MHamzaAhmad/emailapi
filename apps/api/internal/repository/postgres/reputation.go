@@ -13,26 +13,26 @@ import (
 )
 
 // ReputationRepository implements repository.ReputationRepository using sqlc-generated queries.
-type ReputationRepository struct {
+type ReputationRepositoryImpl struct {
 	pool    *pgxpool.Pool
 	queries *db.Queries
 }
 
 // NewReputationRepository creates a new ReputationRepository.
-func NewReputationRepository(pool *pgxpool.Pool) *ReputationRepository {
-	return &ReputationRepository{
+func NewReputationRepository(pool *pgxpool.Pool) *ReputationRepositoryImpl {
+	return &ReputationRepositoryImpl{
 		pool:    pool,
 		queries: db.New(pool),
 	}
 }
 
 // EnsureExists creates a reputation record if it doesn't exist.
-func (r *ReputationRepository) EnsureExists(ctx context.Context, userID string) error {
+func (r *ReputationRepositoryImpl) EnsureExists(ctx context.Context, userID string) error {
 	return r.queries.EnsureUserReputation(ctx, userID)
 }
 
 // Get retrieves reputation stats for a user.
-func (r *ReputationRepository) Get(ctx context.Context, userID string) (*domain.UserReputation, error) {
+func (r *ReputationRepositoryImpl) Get(ctx context.Context, userID string) (*domain.UserReputation, error) {
 	row, err := r.queries.GetUserReputation(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user reputation: %w", err)
@@ -41,7 +41,7 @@ func (r *ReputationRepository) Get(ctx context.Context, userID string) (*domain.
 }
 
 // InsertIncident records a new reputation incident.
-func (r *ReputationRepository) InsertIncident(ctx context.Context, incident *domain.ReputationIncident) error {
+func (r *ReputationRepositoryImpl) InsertIncident(ctx context.Context, incident *domain.ReputationIncident) error {
 	params := db.InsertReputationIncidentParams{
 		ID:                 incident.ID,
 		UserID:             incident.UserID,
@@ -67,7 +67,7 @@ func (r *ReputationRepository) InsertIncident(ctx context.Context, incident *dom
 }
 
 // CountIncidents returns aggregated incident counts for a user.
-func (r *ReputationRepository) CountIncidents(ctx context.Context, userID string) (*domain.IncidentStats, error) {
+func (r *ReputationRepositoryImpl) CountIncidents(ctx context.Context, userID string) (*domain.IncidentStats, error) {
 	row, err := r.queries.CountIncidentsByUser(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to count incidents: %w", err)
@@ -82,7 +82,7 @@ func (r *ReputationRepository) CountIncidents(ctx context.Context, userID string
 }
 
 // UpdateStats updates the reputation statistics.
-func (r *ReputationRepository) UpdateStats(ctx context.Context, userID string, stats *domain.UserReputation) error {
+func (r *ReputationRepositoryImpl) UpdateStats(ctx context.Context, userID string, stats *domain.UserReputation) error {
 	params := db.UpdateUserReputationStatsParams{
 		UserID:          userID,
 		TotalBounces:    int32(stats.TotalBounces),
@@ -103,7 +103,7 @@ func (r *ReputationRepository) UpdateStats(ctx context.Context, userID string, s
 }
 
 // Suspend marks a user as suspended.
-func (r *ReputationRepository) Suspend(ctx context.Context, userID, suspendedBy, reason string) error {
+func (r *ReputationRepositoryImpl) Suspend(ctx context.Context, userID, suspendedBy, reason string) error {
 	return r.queries.SuspendUserReputation(ctx, db.SuspendUserReputationParams{
 		UserID:           userID,
 		SuspendedBy:      pgtype.Text{String: suspendedBy, Valid: true},
@@ -112,12 +112,12 @@ func (r *ReputationRepository) Suspend(ctx context.Context, userID, suspendedBy,
 }
 
 // Unsuspend removes suspension from a user.
-func (r *ReputationRepository) Unsuspend(ctx context.Context, userID string) error {
+func (r *ReputationRepositoryImpl) Unsuspend(ctx context.Context, userID string) error {
 	return r.queries.UnsuspendUserReputation(ctx, userID)
 }
 
 // ListFlagged lists flagged users with pagination.
-func (r *ReputationRepository) ListFlagged(ctx context.Context, limit, offset int) ([]*domain.UserReputation, int, error) {
+func (r *ReputationRepositoryImpl) ListFlagged(ctx context.Context, limit, offset int) ([]*domain.UserReputation, int, error) {
 	rows, err := r.queries.ListFlaggedUserReputations(ctx, db.ListFlaggedUserReputationsParams{
 		Limit:  int32(limit),
 		Offset: int32(offset),
@@ -140,7 +140,7 @@ func (r *ReputationRepository) ListFlagged(ctx context.Context, limit, offset in
 }
 
 // ListIncidents lists incidents for a user with pagination.
-func (r *ReputationRepository) ListIncidents(ctx context.Context, userID string, limit, offset int) ([]*domain.ReputationIncident, error) {
+func (r *ReputationRepositoryImpl) ListIncidents(ctx context.Context, userID string, limit, offset int) ([]*domain.ReputationIncident, error) {
 	rows, err := r.queries.ListReputationIncidents(ctx, db.ListReputationIncidentsParams{
 		UserID: userID,
 		Limit:  int32(limit),

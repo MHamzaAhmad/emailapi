@@ -12,19 +12,19 @@ import (
 )
 
 // UnsubscribeRepository implements repository.UnsubscribeRepository using PostgreSQL.
-type UnsubscribeRepository struct {
+type UnsubscribeRepositoryImpl struct {
 	queries *db.Queries
 }
 
 // NewUnsubscribeRepository creates a new UnsubscribeRepository.
-func NewUnsubscribeRepository(pool *pgxpool.Pool) *UnsubscribeRepository {
-	return &UnsubscribeRepository{
+func NewUnsubscribeRepository(pool *pgxpool.Pool) *UnsubscribeRepositoryImpl {
+	return &UnsubscribeRepositoryImpl{
 		queries: db.New(pool),
 	}
 }
 
 // Add adds an email to the unsubscribe list for a user.
-func (r *UnsubscribeRepository) Add(ctx context.Context, entry *domain.UnsubscribeEntry) error {
+func (r *UnsubscribeRepositoryImpl) Add(ctx context.Context, entry *domain.UnsubscribeEntry) error {
 	params := db.InsertUnsubscribeParams{
 		ID:        entry.ID,
 		UserID:    entry.UserID,
@@ -44,7 +44,7 @@ func (r *UnsubscribeRepository) Add(ctx context.Context, entry *domain.Unsubscri
 }
 
 // GetByUserAndHash retrieves an unsubscribe entry by user and email hash.
-func (r *UnsubscribeRepository) GetByUserAndHash(ctx context.Context, userID, emailHash string) (*domain.UnsubscribeEntry, error) {
+func (r *UnsubscribeRepositoryImpl) GetByUserAndHash(ctx context.Context, userID, emailHash string) (*domain.UnsubscribeEntry, error) {
 	row, err := r.queries.GetUnsubscribeByUserAndHash(ctx, db.GetUnsubscribeByUserAndHashParams{
 		UserID:    userID,
 		EmailHash: emailHash,
@@ -64,7 +64,7 @@ func (r *UnsubscribeRepository) GetByUserAndHash(ctx context.Context, userID, em
 }
 
 // CheckBatch checks multiple email hashes for a user, returns unsubscribed hashes.
-func (r *UnsubscribeRepository) CheckBatch(ctx context.Context, userID string, hashes []string) ([]string, error) {
+func (r *UnsubscribeRepositoryImpl) CheckBatch(ctx context.Context, userID string, hashes []string) ([]string, error) {
 	if len(hashes) == 0 {
 		return nil, nil
 	}
@@ -76,7 +76,7 @@ func (r *UnsubscribeRepository) CheckBatch(ctx context.Context, userID string, h
 }
 
 // Delete removes an email from the unsubscribe list.
-func (r *UnsubscribeRepository) Delete(ctx context.Context, userID, emailHash string) error {
+func (r *UnsubscribeRepositoryImpl) Delete(ctx context.Context, userID, emailHash string) error {
 	return r.queries.DeleteUnsubscribe(ctx, db.DeleteUnsubscribeParams{
 		UserID:    userID,
 		EmailHash: emailHash,
@@ -84,7 +84,7 @@ func (r *UnsubscribeRepository) Delete(ctx context.Context, userID, emailHash st
 }
 
 // ListByUserID retrieves unsubscribes for a user with pagination.
-func (r *UnsubscribeRepository) ListByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.UnsubscribeEntry, error) {
+func (r *UnsubscribeRepositoryImpl) ListByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.UnsubscribeEntry, error) {
 	rows, err := r.queries.ListUnsubscribesByUser(ctx, db.ListUnsubscribesByUserParams{
 		UserID: userID,
 		Limit:  int32(limit),
@@ -109,20 +109,20 @@ func (r *UnsubscribeRepository) ListByUserID(ctx context.Context, userID string,
 }
 
 // CountByUserID returns total unsubscribes for a user.
-func (r *UnsubscribeRepository) CountByUserID(ctx context.Context, userID string) (int64, error) {
+func (r *UnsubscribeRepositoryImpl) CountByUserID(ctx context.Context, userID string) (int64, error) {
 	return r.queries.CountUnsubscribesByUser(ctx, userID)
 }
 
 // ListAll returns all unsubscribes (for cache sync).
-func (r *UnsubscribeRepository) ListAll(ctx context.Context) ([]struct{ UserID, EmailHash string }, error) {
+func (r *UnsubscribeRepositoryImpl) ListAll(ctx context.Context) ([]UnsubscribeItem, error) {
 	rows, err := r.queries.ListAllUnsubscribes(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list all unsubscribes: %w", err)
 	}
 
-	result := make([]struct{ UserID, EmailHash string }, len(rows))
+	result := make([]UnsubscribeItem, len(rows))
 	for i, row := range rows {
-		result[i] = struct{ UserID, EmailHash string }{
+		result[i] = UnsubscribeItem{
 			UserID:    row.UserID,
 			EmailHash: row.EmailHash,
 		}

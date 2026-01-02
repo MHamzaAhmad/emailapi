@@ -12,17 +12,17 @@ import (
 )
 
 // DomainRepository implements repository.DomainRepository using PostgreSQL and sqlc.
-type DomainRepository struct {
+type DomainRepositoryImpl struct {
 	queries *db.Queries
 }
 
 // NewDomainRepository creates a new DomainRepository.
-func NewDomainRepository(queries *db.Queries) *DomainRepository {
-	return &DomainRepository{queries: queries}
+func NewDomainRepository(queries *db.Queries) *DomainRepositoryImpl {
+	return &DomainRepositoryImpl{queries: queries}
 }
 
 // Create stores a new sending domain.
-func (r *DomainRepository) Create(ctx context.Context, d *domain.SendingDomain) error {
+func (r *DomainRepositoryImpl) Create(ctx context.Context, d *domain.SendingDomain) error {
 	err := r.queries.CreateDomain(ctx, db.CreateDomainParams{
 		ID:                 d.ID,
 		UserID:             d.UserID,
@@ -45,7 +45,7 @@ func (r *DomainRepository) Create(ctx context.Context, d *domain.SendingDomain) 
 }
 
 // GetByID retrieves a domain by its ID.
-func (r *DomainRepository) GetByID(ctx context.Context, id string) (*domain.SendingDomain, error) {
+func (r *DomainRepositoryImpl) GetByID(ctx context.Context, id string) (*domain.SendingDomain, error) {
 	row, err := r.queries.GetDomainByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get domain: %w", err)
@@ -54,7 +54,7 @@ func (r *DomainRepository) GetByID(ctx context.Context, id string) (*domain.Send
 }
 
 // GetByDomainName retrieves a domain by its name for a specific user.
-func (r *DomainRepository) GetByDomainName(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error) {
+func (r *DomainRepositoryImpl) GetByDomainName(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error) {
 	row, err := r.queries.GetDomainByName(ctx, db.GetDomainByNameParams{
 		UserID:     userID,
 		DomainName: domainName,
@@ -66,7 +66,7 @@ func (r *DomainRepository) GetByDomainName(ctx context.Context, userID, domainNa
 }
 
 // GetByUserID retrieves all domains for a user with pagination.
-func (r *DomainRepository) GetByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.SendingDomain, error) {
+func (r *DomainRepositoryImpl) GetByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.SendingDomain, error) {
 	rows, err := r.queries.GetDomainsByUserIDPaginated(ctx, db.GetDomainsByUserIDPaginatedParams{
 		UserID: userID,
 		Limit:  int32(limit),
@@ -84,7 +84,7 @@ func (r *DomainRepository) GetByUserID(ctx context.Context, userID string, limit
 }
 
 // CountByUserID returns the total number of domains for a user.
-func (r *DomainRepository) CountByUserID(ctx context.Context, userID string) (int, error) {
+func (r *DomainRepositoryImpl) CountByUserID(ctx context.Context, userID string) (int, error) {
 	count, err := r.queries.CountDomainsByUserID(ctx, userID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to count domains: %w", err)
@@ -93,7 +93,7 @@ func (r *DomainRepository) CountByUserID(ctx context.Context, userID string) (in
 }
 
 // Update updates an existing domain.
-func (r *DomainRepository) Update(ctx context.Context, d *domain.SendingDomain) error {
+func (r *DomainRepositoryImpl) Update(ctx context.Context, d *domain.SendingDomain) error {
 	err := r.queries.UpdateDomain(ctx, db.UpdateDomainParams{
 		ID:                 d.ID,
 		Status:             string(d.Status),
@@ -111,7 +111,7 @@ func (r *DomainRepository) Update(ctx context.Context, d *domain.SendingDomain) 
 }
 
 // Delete removes a domain.
-func (r *DomainRepository) Delete(ctx context.Context, id string) error {
+func (r *DomainRepositoryImpl) Delete(ctx context.Context, id string) error {
 	err := r.queries.DeleteDomain(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete domain: %w", err)

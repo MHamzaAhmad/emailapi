@@ -1,6 +1,6 @@
-package repository
+package postgres
 
-//go:generate mockgen -destination=mocks/mock_repository.go -package=mocks github.com/emailapi/api/internal/repository UserRepository,APIKeyRepository,DomainRepository,EmailRepository
+//go:generate mockgen -destination=mocks/mock_postgres.go -package=mocks github.com/emailapi/api/internal/repository/postgres UserRepository,APIKeyRepository,DomainRepository,EmailRepository,ReputationRepository,UnsubscribeRepository
 
 import (
 	"context"
@@ -158,8 +158,18 @@ type UnsubscribeRepository interface {
 	CountByUserID(ctx context.Context, userID string) (int64, error)
 
 	// ListAll returns all unsubscribes (for cache sync).
-	ListAll(ctx context.Context) ([]struct{ UserID, EmailHash string }, error)
+	ListAll(ctx context.Context) ([]UnsubscribeItem, error)
 }
 
-// TODO: WebhookRepository (to be reimplemented later)
-// TODO: LogRepository (to be reimplemented later)
+// UnsubscribeItem represents an item returned from ListAll.
+type UnsubscribeItem struct {
+	UserID    string
+	EmailHash string
+}
+
+// Ensure concrete types implement interfaces
+var _ UserRepository = (*UserRepositoryImpl)(nil)
+var _ APIKeyRepository = (*APIKeyRepositoryImpl)(nil)
+var _ DomainRepository = (*DomainRepositoryImpl)(nil)
+var _ ReputationRepository = (*ReputationRepositoryImpl)(nil)
+var _ UnsubscribeRepository = (*UnsubscribeRepositoryImpl)(nil)

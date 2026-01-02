@@ -7,7 +7,7 @@ import (
 	"github.com/riverqueue/river"
 
 	"github.com/emailapi/api/internal/domain"
-	"github.com/emailapi/api/internal/repository"
+	"github.com/emailapi/api/internal/repository/postgres"
 	redisrepo "github.com/emailapi/api/internal/repository/redis"
 	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 )
@@ -23,14 +23,14 @@ func (EvaluateReputationArgs) Kind() string { return "evaluate_reputation" }
 // ReputationWorker processes reputation evaluation jobs.
 type ReputationWorker struct {
 	river.WorkerDefaults[EvaluateReputationArgs]
-	reputationRepo repository.ReputationRepository
+	reputationRepo postgres.ReputationRepository
 	activityRepo   *tbrepo.ActivityRepository
 	cache          *redisrepo.ReputationCache
 }
 
 // NewReputationWorker creates a new ReputationWorker.
 func NewReputationWorker(
-	reputationRepo repository.ReputationRepository,
+	reputationRepo postgres.ReputationRepository,
 	activityRepo *tbrepo.ActivityRepository,
 	cache *redisrepo.ReputationCache,
 ) *ReputationWorker {
