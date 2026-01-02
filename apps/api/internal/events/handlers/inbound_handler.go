@@ -13,11 +13,6 @@ type InboundEmailHandler struct {
 	processor InboundEmailProcessor
 }
 
-// InboundEmailProcessor processes raw inbound emails from S3.
-type InboundEmailProcessor interface {
-	ProcessRawEmail(ctx context.Context, bucket, key string) error
-}
-
 // NewInboundEmailHandler creates a new inbound email handler.
 func NewInboundEmailHandler(s3Factory s3.FactoryInterface, processor InboundEmailProcessor) *InboundEmailHandler {
 	return &InboundEmailHandler{
