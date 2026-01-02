@@ -59,6 +59,12 @@ type ExpectedRecord struct {
 	Priority int    // For MX records
 }
 
+// Key returns a unique identifier for the record (Type:Name).
+// This is used for robust result mapping that doesn't depend on array ordering.
+func (r ExpectedRecord) Key() string {
+	return r.Type + ":" + r.Name
+}
+
 // RecordResult contains the result of checking a single DNS record.
 type RecordResult struct {
 	ExpectedRecord
@@ -69,7 +75,7 @@ type RecordResult struct {
 
 // ValidationResult contains results of DNS validation for a domain.
 type ValidationResult struct {
-	Records   []RecordResult
+	Records   map[string]RecordResult // Keyed by ExpectedRecord.Key()
 	CheckedAt time.Time
 }
 
@@ -121,19 +127,25 @@ func NewValidatorWithConfig(config ValidatorConfig) *Validator {
 }
 
 // ValidateRecords checks multiple DNS records in parallel.
+// Results are keyed by ExpectedRecord.Key() for order-independent mapping.
 func (v *Validator) ValidateRecords(ctx context.Context, expected []ExpectedRecord) *ValidationResult {
 	result := &ValidationResult{
-		Records:   make([]RecordResult, len(expected)),
+		Records:   make(map[string]RecordResult, len(expected)),
 		CheckedAt: time.Now(),
 	}
 
 	var wg sync.WaitGroup
-	for i, rec := range expected {
+	var mu sync.Mutex
+
+	for _, rec := range expected {
 		wg.Add(1)
-		go func(idx int, exp ExpectedRecord) {
+		go func(exp ExpectedRecord) {
 			defer wg.Done()
-			result.Records[idx] = v.checkRecordWithConsensus(ctx, exp)
-		}(i, rec)
+			res := v.checkRecordWithConsensus(ctx, exp)
+			mu.Lock()
+			result.Records[exp.Key()] = res
+			mu.Unlock()
+		}(rec)
 	}
 	wg.Wait()
 

@@ -385,6 +385,11 @@ func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*d
 		return nil, fmt.Errorf("failed to update domain: %w", err)
 	}
 
+	// Invalidate cache to ensure fresh data on next read
+	if s.cache != nil {
+		_ = s.cache.Domain().InvalidateAll(ctx, domainID, userID)
+	}
+
 	// Log verification activity
 	if s.analytics != nil {
 		status := "success"
@@ -426,6 +431,7 @@ func (s *DomainService) refreshFromSES(ctx context.Context, d *domain.SendingDom
 }
 
 // validateDNS performs live DNS lookups and updates record statuses.
+// Uses key-based lookup (Type:Name) for robust, order-independent mapping.
 func (s *DomainService) validateDNS(ctx context.Context, details *domain.DomainWithDetails) {
 	if details.Records == nil {
 		return
@@ -434,31 +440,11 @@ func (s *DomainService) validateDNS(ctx context.Context, details *domain.DomainW
 	// Build expected records list
 	var expected []internaldns.ExpectedRecord
 
-	for _, rec := range details.Records.DkimRecords {
-		expected = append(expected, internaldns.ExpectedRecord{
-			Type:  rec.Type,
-			Name:  rec.Name,
-			Value: rec.Value,
-		})
-	}
-
-	if details.Records.SpfRecord != nil {
-		expected = append(expected, internaldns.ExpectedRecord{
-			Type:  details.Records.SpfRecord.Type,
-			Name:  details.Records.SpfRecord.Name,
-			Value: details.Records.SpfRecord.Value,
-		})
-	}
-
-	if details.Records.DmarcRecord != nil {
-		expected = append(expected, internaldns.ExpectedRecord{
-			Type:  details.Records.DmarcRecord.Type,
-			Name:  details.Records.DmarcRecord.Name,
-			Value: details.Records.DmarcRecord.Value,
-		})
-	}
-
-	for _, rec := range details.Records.MxRecords {
+	// Helper to add records to expected list
+	addRecord := func(rec *domain.DnsRecord) {
+		if rec == nil {
+			return
+		}
 		expected = append(expected, internaldns.ExpectedRecord{
 			Type:     rec.Type,
 			Name:     rec.Name,
@@ -467,54 +453,43 @@ func (s *DomainService) validateDNS(ctx context.Context, details *domain.DomainW
 		})
 	}
 
-	for _, rec := range details.Records.MailFromRecords {
-		expected = append(expected, internaldns.ExpectedRecord{
-			Type:     rec.Type,
-			Name:     rec.Name,
-			Value:    rec.Value,
-			Priority: rec.Priority,
-		})
+	for i := range details.Records.DkimRecords {
+		addRecord(&details.Records.DkimRecords[i])
+	}
+	addRecord(details.Records.SpfRecord)
+	addRecord(details.Records.DmarcRecord)
+	for i := range details.Records.MxRecords {
+		addRecord(&details.Records.MxRecords[i])
+	}
+	for i := range details.Records.MailFromRecords {
+		addRecord(&details.Records.MailFromRecords[i])
 	}
 
 	// Perform DNS validation
 	result := s.dns.ValidateRecords(ctx, expected)
 
-	// Update record statuses
-	resultIdx := 0
+	// Apply results using key-based lookup (robust, order-independent)
+	updateFromResult := func(rec *domain.DnsRecord) {
+		if rec == nil {
+			return
+		}
+		key := rec.Type + ":" + rec.Name
+		if res, ok := result.Records[key]; ok {
+			rec.Status = toRecordStatus(res.Status)
+			rec.DiscoveredValue = res.DiscoveredValue
+		}
+	}
+
 	for i := range details.Records.DkimRecords {
-		if resultIdx < len(result.Records) {
-			details.Records.DkimRecords[i].Status = toRecordStatus(result.Records[resultIdx].Status)
-			details.Records.DkimRecords[i].DiscoveredValue = result.Records[resultIdx].DiscoveredValue
-			resultIdx++
-		}
+		updateFromResult(&details.Records.DkimRecords[i])
 	}
-
-	if details.Records.SpfRecord != nil && resultIdx < len(result.Records) {
-		details.Records.SpfRecord.Status = toRecordStatus(result.Records[resultIdx].Status)
-		details.Records.SpfRecord.DiscoveredValue = result.Records[resultIdx].DiscoveredValue
-		resultIdx++
-	}
-
-	if details.Records.DmarcRecord != nil && resultIdx < len(result.Records) {
-		details.Records.DmarcRecord.Status = toRecordStatus(result.Records[resultIdx].Status)
-		details.Records.DmarcRecord.DiscoveredValue = result.Records[resultIdx].DiscoveredValue
-		resultIdx++
-	}
-
+	updateFromResult(details.Records.SpfRecord)
+	updateFromResult(details.Records.DmarcRecord)
 	for i := range details.Records.MxRecords {
-		if resultIdx < len(result.Records) {
-			details.Records.MxRecords[i].Status = toRecordStatus(result.Records[resultIdx].Status)
-			details.Records.MxRecords[i].DiscoveredValue = result.Records[resultIdx].DiscoveredValue
-			resultIdx++
-		}
+		updateFromResult(&details.Records.MxRecords[i])
 	}
-
 	for i := range details.Records.MailFromRecords {
-		if resultIdx < len(result.Records) {
-			details.Records.MailFromRecords[i].Status = toRecordStatus(result.Records[resultIdx].Status)
-			details.Records.MailFromRecords[i].DiscoveredValue = result.Records[resultIdx].DiscoveredValue
-			resultIdx++
-		}
+		updateFromResult(&details.Records.MailFromRecords[i])
 	}
 }
 
