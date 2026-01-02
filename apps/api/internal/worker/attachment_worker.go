@@ -14,6 +14,23 @@ import (
 	"github.com/emailapi/api/internal/external/s3"
 )
 
+// GuardDuty scan status constants
+const (
+	// GuardDutyTagKey is the S3 object tag key used by GuardDuty Malware Protection
+	GuardDutyTagKey = "GuardDutyMalwareScanStatus"
+
+	// GuardDuty scan result values
+	ScanStatusClean        = "NO_THREATS_FOUND"
+	ScanStatusThreat       = "THREATS_FOUND"
+	ScanStatusUnsupported  = "UNSUPPORTED"
+	ScanStatusAccessDenied = "ACCESS_DENIED"
+	ScanStatusFailed       = "FAILED"
+
+	// Scan wait configuration
+	MaxScanAttempts = 10               // 10 attempts × 30s = 5 min max wait
+	ScanSnoozeTime  = 30 * time.Second // Time between scan status checks
+)
+
 // ProcessAttachmentsArgs contains email data + attachments to process.
 // After processing, this job enqueues a SendEmailArgs job.
 type ProcessAttachmentsArgs struct {
@@ -39,6 +56,11 @@ type ProcessAttachmentsArgs struct {
 	// Unsubscribe config for worker splitting (passthrough to SendEmailArgs)
 	UnsubscribeBaseURL     string `json:"unsubscribe_base_url,omitempty"`
 	UnsubscribeTokenSecret string `json:"unsubscribe_token_secret,omitempty"`
+	// UploadedKeys stores S3 keys of uploaded attachments (populated after first attempt)
+	// This field persists across job snooze cycles for GuardDuty scan polling
+	UploadedKeys []AttachmentInfo `json:"uploaded_keys,omitempty"`
+	// ScanAttemptCount tracks how many times we've checked for scan results
+	ScanAttemptCount int `json:"scan_attempt_count,omitempty"`
 }
 
 // AttachmentSource represents an attachment to process (from request).
@@ -73,57 +95,110 @@ func NewAttachmentWorker(s3Factory s3.FactoryInterface, riverClient RiverClient)
 	}
 }
 
-// Work processes attachments: downloads from URL or decodes base64, uploads to S3, then enqueues send job.
+// Work processes attachments: downloads from URL or decodes base64, uploads to S3,
+// waits for GuardDuty malware scan to complete, then enqueues send job if clean.
 func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttachmentsArgs]) error {
 	args := job.Args
 
-	// Handle dry-run mode: skip S3 uploads, generate fake keys
+	// Handle dry-run mode: skip S3 uploads and scanning, generate fake keys
 	if args.DryRun {
-		// Create fake attachment keys for dry-run
-		fakeKeys := make([]AttachmentInfo, len(args.Attachments))
-		for i, att := range args.Attachments {
-			fakeKeys[i] = AttachmentInfo{
-				S3Key:       fmt.Sprintf("dry-run/%s/%s", args.EmailID, att.Filename),
-				Filename:    att.Filename,
-				ContentType: att.ContentType,
-			}
-		}
-
-		// Enqueue the send email job with dry-run flag
-		sendArgs := SendEmailArgs{
-			EmailID:                args.EmailID,
-			UserID:                 args.UserID,
-			From:                   args.From,
-			To:                     args.To,
-			Cc:                     args.Cc,
-			Bcc:                    args.Bcc,
-			Subject:                args.Subject,
-			Body:                   args.Body,
-			HTML:                   args.HTML,
-			InReplyTo:              args.InReplyTo,
-			References:             args.References,
-			Metadata:               args.Metadata,
-			AttachmentKeys:         fakeKeys,
-			ScheduledAt:            args.ScheduledAt,
-			DryRun:                 true, // Propagate dry-run flag
-			UnsubscribeBaseURL:     args.UnsubscribeBaseURL,
-			UnsubscribeTokenSecret: args.UnsubscribeTokenSecret,
-		}
-
-		insertOpts := &river.InsertOpts{}
-		if args.ScheduledAt != nil {
-			insertOpts.ScheduledAt = *args.ScheduledAt
-		}
-
-		if _, err := w.riverClient.Insert(ctx, sendArgs, insertOpts); err != nil {
-			return fmt.Errorf("failed to enqueue send job: %w", err)
-		}
-
-		fmt.Printf("[DRY-RUN] Simulated processing %d attachments for email %s\n", len(args.Attachments), args.EmailID)
-		return nil
+		return w.handleDryRun(ctx, &args)
 	}
 
-	// Process each attachment in parallel and upload to S3
+	// First attempt: upload attachments to S3
+	if len(args.UploadedKeys) == 0 {
+		attachmentKeys, err := w.uploadAttachments(ctx, &args)
+		if err != nil {
+			return err
+		}
+		// Store keys in job args for subsequent attempts (River preserves args across snooze)
+		args.UploadedKeys = attachmentKeys
+
+		// Snooze to wait for GuardDuty scan
+		fmt.Printf("Uploaded %d attachments for email %s, waiting for GuardDuty scan...\n", len(attachmentKeys), args.EmailID)
+		return river.JobSnooze(ScanSnoozeTime)
+	}
+
+	// Subsequent attempts: check scan status
+	allClean, hasThreat, pendingCount, err := w.checkScanStatus(ctx, args.UploadedKeys)
+	if err != nil {
+		return err
+	}
+
+	// Threat detected - abort and cleanup
+	if hasThreat {
+		fmt.Printf("Malware detected in attachment for email %s - rejecting\n", args.EmailID)
+		w.cleanupAttachments(ctx, args.UploadedKeys)
+		return fmt.Errorf("attachment contains malware - email rejected")
+	}
+
+	// All attachments scanned clean - proceed to send
+	if allClean {
+		fmt.Printf("All %d attachments clean for email %s, enqueuing send job\n", len(args.UploadedKeys), args.EmailID)
+		return w.enqueueSendJob(ctx, &args)
+	}
+
+	// Still pending - check timeout
+	args.ScanAttemptCount++
+	if args.ScanAttemptCount >= MaxScanAttempts {
+		fmt.Printf("Scan timeout for email %s: %d attachments not scanned within %v\n", args.EmailID, pendingCount, time.Duration(MaxScanAttempts)*ScanSnoozeTime)
+		w.cleanupAttachments(ctx, args.UploadedKeys)
+		return fmt.Errorf("scan timeout: %d attachments not scanned within %v", pendingCount, time.Duration(MaxScanAttempts)*ScanSnoozeTime)
+	}
+
+	// Keep waiting
+	fmt.Printf("Waiting for GuardDuty scan (attempt %d/%d) for email %s, %d pending\n", args.ScanAttemptCount, MaxScanAttempts, args.EmailID, pendingCount)
+	return river.JobSnooze(ScanSnoozeTime)
+}
+
+// handleDryRun processes attachments in dry-run mode without S3 uploads or scanning
+func (w *AttachmentWorker) handleDryRun(ctx context.Context, args *ProcessAttachmentsArgs) error {
+	// Create fake attachment keys for dry-run
+	fakeKeys := make([]AttachmentInfo, len(args.Attachments))
+	for i, att := range args.Attachments {
+		fakeKeys[i] = AttachmentInfo{
+			S3Key:       fmt.Sprintf("dry-run/%s/%s", args.EmailID, att.Filename),
+			Filename:    att.Filename,
+			ContentType: att.ContentType,
+		}
+	}
+
+	// Enqueue the send email job with dry-run flag
+	sendArgs := SendEmailArgs{
+		EmailID:                args.EmailID,
+		UserID:                 args.UserID,
+		From:                   args.From,
+		To:                     args.To,
+		Cc:                     args.Cc,
+		Bcc:                    args.Bcc,
+		Subject:                args.Subject,
+		Body:                   args.Body,
+		HTML:                   args.HTML,
+		InReplyTo:              args.InReplyTo,
+		References:             args.References,
+		Metadata:               args.Metadata,
+		AttachmentKeys:         fakeKeys,
+		ScheduledAt:            args.ScheduledAt,
+		DryRun:                 true,
+		UnsubscribeBaseURL:     args.UnsubscribeBaseURL,
+		UnsubscribeTokenSecret: args.UnsubscribeTokenSecret,
+	}
+
+	insertOpts := &river.InsertOpts{}
+	if args.ScheduledAt != nil {
+		insertOpts.ScheduledAt = *args.ScheduledAt
+	}
+
+	if _, err := w.riverClient.Insert(ctx, sendArgs, insertOpts); err != nil {
+		return fmt.Errorf("failed to enqueue send job: %w", err)
+	}
+
+	fmt.Printf("[DRY-RUN] Simulated processing %d attachments for email %s\n", len(args.Attachments), args.EmailID)
+	return nil
+}
+
+// uploadAttachments downloads/decodes and uploads all attachments to S3 in parallel
+func (w *AttachmentWorker) uploadAttachments(ctx context.Context, args *ProcessAttachmentsArgs) ([]AttachmentInfo, error) {
 	attachmentKeys := make([]AttachmentInfo, len(args.Attachments))
 	errs := make([]error, len(args.Attachments))
 
@@ -166,11 +241,54 @@ func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttac
 					w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(ctx, att.S3Key)
 				}
 			}
-			return err
+			return nil, err
 		}
 	}
 
-	// Enqueue the send email job with attachment info
+	return attachmentKeys, nil
+}
+
+// checkScanStatus polls S3 tags for all attachments to check GuardDuty scan results
+func (w *AttachmentWorker) checkScanStatus(ctx context.Context, keys []AttachmentInfo) (allClean, hasThreat bool, pendingCount int, err error) {
+	allClean = true
+
+	for _, att := range keys {
+		tags, err := w.s3Factory.Bucket(s3.BucketAttachments).GetObjectTags(ctx, att.S3Key)
+		if err != nil {
+			return false, false, 0, fmt.Errorf("failed to get tags for %s: %w", att.Filename, err)
+		}
+
+		status := tags[GuardDutyTagKey]
+		switch status {
+		case ScanStatusClean:
+			continue // Good
+		case ScanStatusThreat:
+			return false, true, 0, nil // Early exit on threat
+		case ScanStatusUnsupported, ScanStatusFailed, ScanStatusAccessDenied:
+			// Policy: allow unsupported files (e.g., encrypted ZIPs) to proceed
+			// These can't be scanned but are not necessarily malicious
+			continue
+		default:
+			// No tag yet = still scanning
+			allClean = false
+			pendingCount++
+		}
+	}
+
+	return allClean, false, pendingCount, nil
+}
+
+// cleanupAttachments removes all uploaded attachments from S3
+func (w *AttachmentWorker) cleanupAttachments(ctx context.Context, keys []AttachmentInfo) {
+	for _, att := range keys {
+		if att.S3Key != "" {
+			_ = w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(ctx, att.S3Key)
+		}
+	}
+}
+
+// enqueueSendJob creates and enqueues the SendEmailArgs job
+func (w *AttachmentWorker) enqueueSendJob(ctx context.Context, args *ProcessAttachmentsArgs) error {
 	sendArgs := SendEmailArgs{
 		EmailID:                args.EmailID,
 		UserID:                 args.UserID,
@@ -184,14 +302,13 @@ func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttac
 		InReplyTo:              args.InReplyTo,
 		References:             args.References,
 		Metadata:               args.Metadata,
-		AttachmentKeys:         attachmentKeys,
+		AttachmentKeys:         args.UploadedKeys,
 		ScheduledAt:            args.ScheduledAt,
-		DryRun:                 false, // Normal mode
+		DryRun:                 false,
 		UnsubscribeBaseURL:     args.UnsubscribeBaseURL,
 		UnsubscribeTokenSecret: args.UnsubscribeTokenSecret,
 	}
 
-	// Prepare insert options
 	insertOpts := &river.InsertOpts{}
 	if args.ScheduledAt != nil {
 		insertOpts.ScheduledAt = *args.ScheduledAt
@@ -199,13 +316,10 @@ func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttac
 
 	if _, err := w.riverClient.Insert(ctx, sendArgs, insertOpts); err != nil {
 		// Clean up uploaded attachments on failure
-		for _, att := range attachmentKeys {
-			w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(ctx, att.S3Key)
-		}
+		w.cleanupAttachments(ctx, args.UploadedKeys)
 		return fmt.Errorf("failed to enqueue send job: %w", err)
 	}
 
-	fmt.Printf("Processed %d attachments for email %s, enqueued for sending\n", len(attachmentKeys), args.EmailID)
 	return nil
 }
 
