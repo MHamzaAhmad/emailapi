@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 
+	"github.com/emailapi/api/internal/domain"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -32,7 +33,7 @@ type CreateUserParams struct {
 	ID         string             `json:"id"`
 	Email      string             `json:"email"`
 	Name       string             `json:"name"`
-	Role       string             `json:"role"`
+	Role       domain.UserRole    `json:"role"`
 	IsActive   bool               `json:"is_active"`
 	ExternalID pgtype.Text        `json:"external_id"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
@@ -82,7 +83,7 @@ type GetUserByEmailRow struct {
 	ID         string             `json:"id"`
 	Email      string             `json:"email"`
 	Name       string             `json:"name"`
-	Role       string             `json:"role"`
+	Role       domain.UserRole    `json:"role"`
 	IsActive   bool               `json:"is_active"`
 	ExternalID pgtype.Text        `json:"external_id"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
@@ -114,7 +115,7 @@ type GetUserByExternalIDRow struct {
 	ID         string             `json:"id"`
 	Email      string             `json:"email"`
 	Name       string             `json:"name"`
-	Role       string             `json:"role"`
+	Role       domain.UserRole    `json:"role"`
 	IsActive   bool               `json:"is_active"`
 	ExternalID pgtype.Text        `json:"external_id"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
@@ -146,7 +147,7 @@ type GetUserByIDRow struct {
 	ID         string             `json:"id"`
 	Email      string             `json:"email"`
 	Name       string             `json:"name"`
-	Role       string             `json:"role"`
+	Role       domain.UserRole    `json:"role"`
 	IsActive   bool               `json:"is_active"`
 	ExternalID pgtype.Text        `json:"external_id"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
@@ -262,7 +263,7 @@ type ListUsersRow struct {
 	ID         string             `json:"id"`
 	Email      string             `json:"email"`
 	Name       string             `json:"name"`
-	Role       string             `json:"role"`
+	Role       domain.UserRole    `json:"role"`
 	IsActive   bool               `json:"is_active"`
 	ExternalID pgtype.Text        `json:"external_id"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
@@ -374,7 +375,7 @@ type UpdateUserParams struct {
 	ID         string             `json:"id"`
 	Email      string             `json:"email"`
 	Name       string             `json:"name"`
-	Role       string             `json:"role"`
+	Role       domain.UserRole    `json:"role"`
 	IsActive   bool               `json:"is_active"`
 	ExternalID pgtype.Text        `json:"external_id"`
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`

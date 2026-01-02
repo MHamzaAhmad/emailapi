@@ -21,7 +21,7 @@ gen-sqlc:
 # Database migrations (Goose)
 # Postgres
 migrate-pg-up:
-	goose -dir db/postgres/migrations postgres "$(DATABASE_URL)" up
+	goose -dir db/postgres/migrations postgres "$(DATABASE_URL)" up -allow-missing
 
 migrate-pg-down:
 	goose -dir db/postgres/migrations postgres "$(DATABASE_URL)" down
