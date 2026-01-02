@@ -97,8 +97,10 @@ func main() {
 		logger.Fatal().Err(err).Msg("Failed to ping Tinybird")
 	}
 	logger.Info().Msg("✓ Connected to Tinybird")
-	tbEmailRepo := tbrepo.NewEmailRepository(tbClient)
-	tbActivityRepo := tbrepo.NewActivityRepository(tbClient)
+	analyticsAggregator := tbrepo.NewAnalyticsAggregator(
+		tbrepo.NewEmailRepository(tbClient),
+		tbrepo.NewActivityRepository(tbClient),
+	)
 	logger.Info().Msg("✓ Initialized Tinybird repositories")
 
 	// Initialize Redis client
@@ -120,13 +122,7 @@ func main() {
 	suppressionRepo := suppression.NewRepository(redisClient, store.Queries())
 
 	// Initialize cache repositories
-	const cacheTTL = 5 * time.Minute
-	domainCache := redisrepo.NewDomainCache(redisClient, cacheTTL)
-	apiKeyCache := redisrepo.NewAPIKeyCache(redisClient, cacheTTL)
-	userCache := redisrepo.NewUserCache(redisClient, cacheTTL)
-	mxCache := redisrepo.NewMXCache(redisClient)
-	reputationCache := redisrepo.NewReputationCache(redisClient)
-	unsubscribeCache := redisrepo.NewUnsubscribeCache(redisClient)
+	cacheAggregator := redisrepo.NewCacheAggregator(redisClient)
 	logger.Info().Msg("✓ Initialized cache repositories")
 
 	// Initialize rate limiter
@@ -189,7 +185,7 @@ func main() {
 
 	// Create and register workers
 	workers := river.NewWorkers()
-	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, tbEmailRepo, webhookSender)
+	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, analyticsAggregator.Email(), webhookSender)
 	river.AddWorker(workers, emailWorker)
 	logger.Info().Msg("✓ Registered River workers")
 
@@ -209,7 +205,7 @@ func main() {
 	river.AddWorker(workers, attachmentWorker)
 
 	// Register reputation worker for async evaluation
-	reputationWorker := worker.NewReputationWorker(store.Reputation(), tbActivityRepo, reputationCache)
+	reputationWorker := worker.NewReputationWorker(store.Reputation(), analyticsAggregator.Activity(), cacheAggregator.Reputation())
 	river.AddWorker(workers, reputationWorker)
 
 	// Start River client
@@ -222,27 +218,21 @@ func main() {
 	// Initialize service layer
 	svc := service.NewWithDeps(service.ServiceDeps{
 		Store:                  store,
+		Cache:                  cacheAggregator,
+		Analytics:              analyticsAggregator,
 		SESClient:              sesClient,
 		S3Factory:              s3Factory,
 		Region:                 cfg.AWSRegion,
 		SESConfigurationSet:    cfg.SESConfigurationSet,
 		RiverClient:            riverClient,
-		TBEmailRepo:            tbEmailRepo,
-		TBActivityRepo:         tbActivityRepo,
 		SvixClient:             svixClient,
 		WebhookSender:          webhookSender,
 		SuppressionRepo:        suppressionRepo,
-		DomainCache:            domainCache,
-		APIKeyCache:            apiKeyCache,
-		UserCache:              userCache,
-		MXCache:                mxCache,
-		ReputationCache:        reputationCache,
 		EventConsumer:          eventConsumer,
 		ClerkWebhookSecret:     cfg.ClerkWebhookSecret,
 		APIKeyHMACSecret:       cfg.APIKeyHMACSecret,
 		RedisClient:            redisClient,
 		WebRiskClient:          webRiskClient,
-		UnsubscribeCache:       unsubscribeCache,
 		UnsubscribeBaseURL:     cfg.UnsubscribeBaseURL,
 		UnsubscribeTokenSecret: cfg.UnsubscribeTokenSecret,
 	})

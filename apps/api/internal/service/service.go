@@ -8,7 +8,6 @@ import (
 	"github.com/emailapi/api/internal/external/webrisk"
 	rediscache "github.com/emailapi/api/internal/repository/redis"
 	"github.com/emailapi/api/internal/repository/suppression"
-	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/validation"
 	"github.com/emailapi/api/internal/webhook"
 
@@ -39,7 +38,7 @@ type Service struct {
 // Note: DomainService requires SES client and must be set separately using SetDomainService.
 func New(store Store) *Service {
 	svc := &Service{store: store}
-	svc.APIKey = NewAPIKeyService(store, nil, nil, "") // Cache, Activity, and HMAC secret set via NewWithDeps
+	svc.APIKey = NewAPIKeyService(store, nil, nil, "") // Cache, Analytics, and HMAC secret set via NewWithDeps
 	svc.User = NewUserService(store, svc.APIKey, nil)  // Cache set via NewWithDeps
 	return svc
 }
@@ -47,22 +46,16 @@ func New(store Store) *Service {
 // ServiceDeps holds dependencies for service initialization.
 type ServiceDeps struct {
 	Store               Store
+	Cache               Cache     // Aggregated cache access
+	Analytics           Analytics // Aggregated Tinybird access
 	SESClient           ses.Client
 	S3Factory           *s3.Factory
 	Region              string
 	SESConfigurationSet string
 	RiverClient         *river.Client[pgx.Tx]
-	TBEmailRepo         *tbrepo.EmailRepository
-	TBActivityRepo      *tbrepo.ActivityRepository
 	SvixClient          svix.Client // Used for WebhookService (portal access)
 	WebhookSender       webhook.Sender
 	SuppressionRepo     *suppression.Repository
-	// Cache repositories
-	DomainCache     *rediscache.DomainCache
-	APIKeyCache     *rediscache.APIKeyCache
-	UserCache       *rediscache.UserCache
-	MXCache         *rediscache.MXCache
-	ReputationCache *rediscache.ReputationCache
 	// Event streaming
 	EventConsumer eventstream.Consumer
 	// Clerk configuration
@@ -73,7 +66,6 @@ type ServiceDeps struct {
 	WebRiskClient webrisk.Client
 	RedisClient   *rediscache.Client
 	// Unsubscribe configuration
-	UnsubscribeCache       *rediscache.UnsubscribeCache
 	UnsubscribeBaseURL     string
 	UnsubscribeTokenSecret string
 }
@@ -83,12 +75,12 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	svc := New(deps.Store)
 
 	// Initialize Reputation service first (needed by DomainService and EmailValidator)
-	svc.Reputation = NewReputationService(deps.Store, deps.RiverClient, deps.TBActivityRepo, deps.ReputationCache)
+	svc.Reputation = NewReputationService(deps.Store, deps.RiverClient, deps.Cache, deps.Analytics)
 
 	// Initialize Domain service with reputation checker
-	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.DomainCache, deps.TBActivityRepo, svc.Reputation, deps.Region, deps.SESConfigurationSet)
-	svc.APIKey = NewAPIKeyService(deps.Store, deps.APIKeyCache, deps.TBActivityRepo, deps.APIKeyHMACSecret)
-	svc.User = NewUserService(deps.Store, svc.APIKey, deps.UserCache)
+	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.Cache, deps.Analytics, svc.Reputation, deps.Region, deps.SESConfigurationSet)
+	svc.APIKey = NewAPIKeyService(deps.Store, deps.Cache, deps.Analytics, deps.APIKeyHMACSecret)
+	svc.User = NewUserService(deps.Store, svc.APIKey, deps.Cache)
 
 	// Create body validator for URL safety checking (optional if Web Risk not configured)
 	var bodyValidator *validation.BodyValidator
@@ -97,7 +89,11 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	}
 
 	// Create email validator with domain checker, suppression checker, body validator, MX cache, and reputation checker
-	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo, bodyValidator, deps.MXCache, svc.Reputation)
+	var mxCache rediscache.MXCacheInterface
+	if deps.Cache != nil {
+		mxCache = deps.Cache.MX()
+	}
+	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo, bodyValidator, mxCache, svc.Reputation)
 
 	// Initialize Unsubscribe service
 	var unsubscribeSvc *UnsubscribeService
@@ -105,14 +101,14 @@ func NewWithDeps(deps ServiceDeps) *Service {
 		tokenSvc := NewUnsubscribeTokenService(deps.UnsubscribeTokenSecret)
 		unsubscribeSvc = NewUnsubscribeService(
 			deps.Store.Unsubscribe(),
-			deps.UnsubscribeCache,
+			deps.Cache,
 			tokenSvc,
 			deps.UnsubscribeBaseURL,
 		)
 		svc.Unsubscribe = unsubscribeSvc
 	}
 
-	svc.Email = NewEmailService(deps.RiverClient, deps.TBEmailRepo, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer, svc.Reputation, unsubscribeSvc)
+	svc.Email = NewEmailService(deps.RiverClient, deps.Analytics, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer, svc.Reputation, unsubscribeSvc)
 	svc.Internal = NewInternalService(InternalServiceConfig{
 		UserService:        svc.User,
 		ClerkWebhookSecret: deps.ClerkWebhookSecret,
@@ -120,15 +116,14 @@ func NewWithDeps(deps ServiceDeps) *Service {
 
 	// Initialize SNS notification service
 	svc.SNSNotification = NewSNSNotificationService(
-		deps.TBEmailRepo,
-		deps.TBActivityRepo,
+		deps.Analytics,
 		deps.WebhookSender,
 		deps.SuppressionRepo,
 		svc.Reputation,
 	)
 
 	// Initialize Activity service
-	svc.Activity = NewActivityService(deps.TBActivityRepo)
+	svc.Activity = NewActivityService(deps.Analytics)
 
 	// Initialize Svix-dependent services if client is available
 	if deps.SvixClient != nil {
@@ -137,7 +132,7 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	if deps.WebhookSender != nil {
 		svc.InboundEmail = NewInboundEmailService(
 			deps.S3Factory,
-			deps.TBEmailRepo,
+			deps.Analytics,
 			deps.WebhookSender,
 		)
 	}

@@ -11,13 +11,12 @@ import (
 
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/repository/postgres"
-	rediscache "github.com/emailapi/api/internal/repository/redis"
 )
 
 // UnsubscribeService handles unsubscribe operations with cache-first strategy.
 type UnsubscribeService struct {
 	repo     postgres.UnsubscribeRepository
-	cache    *rediscache.UnsubscribeCache
+	cache    Cache
 	tokenSvc *UnsubscribeTokenService
 	baseURL  string
 }
@@ -25,7 +24,7 @@ type UnsubscribeService struct {
 // NewUnsubscribeService creates a new UnsubscribeService.
 func NewUnsubscribeService(
 	repo postgres.UnsubscribeRepository,
-	cache *rediscache.UnsubscribeCache,
+	cache Cache,
 	tokenSvc *UnsubscribeTokenService,
 	baseURL string,
 ) *UnsubscribeService {
@@ -75,7 +74,7 @@ func (s *UnsubscribeService) ProcessUnsubscribe(ctx context.Context, tokenStr st
 
 	// Update cache (best-effort, don't fail if cache fails)
 	if s.cache != nil {
-		if err := s.cache.Set(ctx, tokenData.UserID, emailHash); err != nil {
+		if err := s.cache.Unsubscribe().Set(ctx, tokenData.UserID, emailHash); err != nil {
 			// Log but don't fail
 			fmt.Printf("Warning: failed to update unsubscribe cache: %v\n", err)
 		}
@@ -105,7 +104,7 @@ func (s *UnsubscribeService) CheckBatch(ctx context.Context, userID string, emai
 
 	// Step 1: Check cache first
 	if s.cache != nil {
-		cachedHashes, err := s.cache.CheckBatch(ctx, userID, hashes)
+		cachedHashes, err := s.cache.Unsubscribe().CheckBatch(ctx, userID, hashes)
 		if err != nil {
 			// Log but fallback to DB
 			fmt.Printf("Warning: cache check failed, falling back to DB: %v\n", err)
@@ -142,7 +141,7 @@ func (s *UnsubscribeService) CheckBatch(ctx context.Context, userID string, emai
 
 		// Populate cache for DB hits
 		if s.cache != nil && len(dbHashes) > 0 {
-			if err := s.cache.SetBatch(ctx, userID, dbHashes); err != nil {
+			if err := s.cache.Unsubscribe().SetBatch(ctx, userID, dbHashes); err != nil {
 				fmt.Printf("Warning: failed to populate unsubscribe cache: %v\n", err)
 			}
 		}
@@ -164,7 +163,7 @@ func (s *UnsubscribeService) Resubscribe(ctx context.Context, userID, email stri
 
 	// Remove from cache
 	if s.cache != nil {
-		if err := s.cache.Delete(ctx, userID, emailHash); err != nil {
+		if err := s.cache.Unsubscribe().Delete(ctx, userID, emailHash); err != nil {
 			fmt.Printf("Warning: failed to delete from unsubscribe cache: %v\n", err)
 		}
 	}
@@ -192,7 +191,7 @@ func (s *UnsubscribeService) SyncCache(ctx context.Context) error {
 
 	synced := 0
 	for userID, hashes := range byUser {
-		if err := s.cache.SetBatch(ctx, userID, hashes); err != nil {
+		if err := s.cache.Unsubscribe().SetBatch(ctx, userID, hashes); err != nil {
 			fmt.Printf("Warning: failed to sync unsubscribes for user %s: %v\n", userID, err)
 			continue
 		}

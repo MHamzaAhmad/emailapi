@@ -11,9 +11,8 @@ import (
 	"github.com/riverqueue/river"
 
 	"github.com/emailapi/api/internal/domain"
-	redisrepo "github.com/emailapi/api/internal/repository/redis"
+	rediscache "github.com/emailapi/api/internal/repository/redis"
 	"github.com/emailapi/api/internal/repository/suppression"
-	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/worker"
 )
 
@@ -23,24 +22,24 @@ var ErrAccountSuspended = errors.New("account suspended: please contact support"
 // ReputationService handles user reputation business logic.
 // Implements ReputationChecker interface for use in email validation.
 type ReputationService struct {
-	store        Store
-	riverClient  *river.Client[pgx.Tx]
-	activityRepo *tbrepo.ActivityRepository
-	cache        *redisrepo.ReputationCache
+	store       Store
+	riverClient *river.Client[pgx.Tx]
+	cache       Cache
+	analytics   Analytics
 }
 
 // NewReputationService creates a new ReputationService.
 func NewReputationService(
 	store Store,
 	riverClient *river.Client[pgx.Tx],
-	activityRepo *tbrepo.ActivityRepository,
-	cache *redisrepo.ReputationCache,
+	cache Cache,
+	analytics Analytics,
 ) *ReputationService {
 	return &ReputationService{
-		store:        store,
-		riverClient:  riverClient,
-		activityRepo: activityRepo,
-		cache:        cache,
+		store:       store,
+		riverClient: riverClient,
+		cache:       cache,
+		analytics:   analytics,
 	}
 }
 
@@ -50,7 +49,7 @@ func NewReputationService(
 func (s *ReputationService) CheckSendPermission(ctx context.Context, userID string) error {
 	// 1. Try Redis cache first (fast path)
 	if s.cache != nil {
-		status, err := s.cache.Get(ctx, userID)
+		status, err := s.cache.Reputation().Get(ctx, userID)
 		if err == nil && status != nil {
 			if status.IsSuspended {
 				return ErrAccountSuspended
@@ -68,7 +67,7 @@ func (s *ReputationService) CheckSendPermission(ctx context.Context, userID stri
 
 	// 3. Update cache for future lookups
 	if s.cache != nil {
-		s.cache.Set(ctx, userID, &redisrepo.UserReputationStatus{
+		s.cache.Reputation().Set(ctx, userID, &rediscache.UserReputationStatus{
 			IsFlagged:   rep.IsFlagged,
 			IsSuspended: rep.IsSuspended,
 			Score:       rep.SuspensionScore,
@@ -86,7 +85,7 @@ func (s *ReputationService) CheckSendPermission(ctx context.Context, userID stri
 func (s *ReputationService) GetEffectiveRateLimit(ctx context.Context, userID string, baseLimit int) int {
 	// Check cache first
 	if s.cache != nil {
-		status, err := s.cache.Get(ctx, userID)
+		status, err := s.cache.Reputation().Get(ctx, userID)
 		if err == nil && status != nil {
 			if status.IsFlagged {
 				return baseLimit / 10 // 10% of normal limit
@@ -111,7 +110,7 @@ func (s *ReputationService) GetEffectiveRateLimit(ctx context.Context, userID st
 // Should be called after suspend/unsuspend/flag changes.
 func (s *ReputationService) InvalidateCache(ctx context.Context, userID string) error {
 	if s.cache != nil {
-		return s.cache.Delete(ctx, userID)
+		return s.cache.Reputation().Delete(ctx, userID)
 	}
 	return nil
 }
@@ -148,8 +147,8 @@ func (s *ReputationService) RecordBounceIncident(
 	}
 
 	// Log activity for bounce incident
-	if s.activityRepo != nil {
-		s.activityRepo.Log(ctx, userID, "reputation", messageID, "bounce_incident", "info",
+	if s.analytics != nil {
+		s.analytics.Activity().Log(ctx, userID, "reputation", messageID, "bounce_incident", "info",
 			fmt.Sprintf("%s bounce: %d recipients", bounceType, len(recipients)),
 			map[string]interface{}{
 				"bounce_type":     bounceType,
@@ -185,8 +184,8 @@ func (s *ReputationService) RecordComplaintIncident(
 	}
 
 	// Log activity for complaint incident
-	if s.activityRepo != nil {
-		s.activityRepo.Log(ctx, userID, "reputation", messageID, "complaint_incident", "warning",
+	if s.analytics != nil {
+		s.analytics.Activity().Log(ctx, userID, "reputation", messageID, "complaint_incident", "warning",
 			fmt.Sprintf("Complaint: %s - %d recipients", feedbackType, len(recipientEmails)),
 			map[string]interface{}{
 				"feedback_type":   feedbackType,
@@ -246,8 +245,8 @@ func (s *ReputationService) SuspendUser(ctx context.Context, userID, suspendedBy
 	s.InvalidateCache(ctx, userID)
 
 	// Log activity
-	if s.activityRepo != nil {
-		s.activityRepo.Log(ctx, userID, "reputation", userID, "suspended", "success",
+	if s.analytics != nil {
+		s.analytics.Activity().Log(ctx, userID, "reputation", userID, "suspended", "success",
 			fmt.Sprintf("Account suspended by %s: %s", suspendedBy, reason), nil)
 	}
 	return nil
@@ -262,8 +261,8 @@ func (s *ReputationService) UnsuspendUser(ctx context.Context, userID, unsuspend
 	// Invalidate cache to allow sends
 	s.InvalidateCache(ctx, userID)
 
-	if s.activityRepo != nil {
-		s.activityRepo.Log(ctx, userID, "reputation", userID, "unsuspended", "success",
+	if s.analytics != nil {
+		s.analytics.Activity().Log(ctx, userID, "reputation", userID, "unsuspended", "success",
 			fmt.Sprintf("Account unsuspended by %s", unsuspendedBy), nil)
 	}
 	return nil

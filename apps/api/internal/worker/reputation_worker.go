@@ -24,15 +24,15 @@ func (EvaluateReputationArgs) Kind() string { return "evaluate_reputation" }
 type ReputationWorker struct {
 	river.WorkerDefaults[EvaluateReputationArgs]
 	reputationRepo postgres.ReputationRepository
-	activityRepo   *tbrepo.ActivityRepository
-	cache          *redisrepo.ReputationCache
+	activityRepo   tbrepo.ActivityRepositoryInterface
+	cache          redisrepo.ReputationCacheInterface
 }
 
 // NewReputationWorker creates a new ReputationWorker.
 func NewReputationWorker(
 	reputationRepo postgres.ReputationRepository,
-	activityRepo *tbrepo.ActivityRepository,
-	cache *redisrepo.ReputationCache,
+	activityRepo tbrepo.ActivityRepositoryInterface,
+	cache redisrepo.ReputationCacheInterface,
 ) *ReputationWorker {
 	return &ReputationWorker{
 		reputationRepo: reputationRepo,

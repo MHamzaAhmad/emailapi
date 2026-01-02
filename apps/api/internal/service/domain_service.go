@@ -13,8 +13,6 @@ import (
 	internaldns "github.com/emailapi/api/internal/dns"
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/external/ses"
-	rediscache "github.com/emailapi/api/internal/repository/redis"
-	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/validation"
 )
 
@@ -34,15 +32,15 @@ type DomainService struct {
 	store             Store
 	ses               ses.Client
 	dns               *internaldns.Validator
-	cache             rediscache.DomainCacheInterface
-	activity          tbrepo.ActivityRepositoryInterface
+	cache             Cache
+	analytics         Analytics
 	reputationChecker validation.ReputationChecker
 	region            string
 	configurationSet  string // SES configuration set for notifications
 }
 
 // NewDomainService creates a new DomainService.
-func NewDomainService(store Store, sesClient ses.Client, cache rediscache.DomainCacheInterface, activity tbrepo.ActivityRepositoryInterface, reputationChecker validation.ReputationChecker, region, configurationSet string) *DomainService {
+func NewDomainService(store Store, sesClient ses.Client, cache Cache, analytics Analytics, reputationChecker validation.ReputationChecker, region, configurationSet string) *DomainService {
 	if region == "" {
 		region = defaultRegion
 	}
@@ -51,7 +49,7 @@ func NewDomainService(store Store, sesClient ses.Client, cache rediscache.Domain
 		ses:               sesClient,
 		dns:               internaldns.NewValidator(),
 		cache:             cache,
-		activity:          activity,
+		analytics:         analytics,
 		reputationChecker: reputationChecker,
 		region:            region,
 		configurationSet:  configurationSet,
@@ -148,12 +146,12 @@ func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*do
 
 	// Invalidate user's domain list cache
 	if s.cache != nil {
-		_ = s.cache.InvalidateByUserID(ctx, userID)
+		_ = s.cache.Domain().InvalidateByUserID(ctx, userID)
 	}
 
 	// Log activity
-	if s.activity != nil {
-		_ = s.activity.LogDomain(ctx, userID, d.ID, "create", "success", fmt.Sprintf("Domain %s created", domainName))
+	if s.analytics != nil {
+		_ = s.analytics.Activity().LogDomain(ctx, userID, d.ID, "create", "success", fmt.Sprintf("Domain %s created", domainName))
 	}
 
 	return s.buildDomainWithDetails(d), nil
@@ -164,7 +162,7 @@ func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*do
 func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*domain.DomainWithDetails, error) {
 	// Try cache first
 	if s.cache != nil {
-		if cached, _ := s.cache.GetByID(ctx, domainID); cached != nil {
+		if cached, _ := s.cache.Domain().GetByID(ctx, domainID); cached != nil {
 			if cached.UserID == userID {
 				return s.buildDomainWithDetails(cached), nil
 			}
@@ -192,7 +190,7 @@ func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*doma
 
 	// Cache the result
 	if s.cache != nil {
-		_ = s.cache.SetByID(ctx, d)
+		_ = s.cache.Domain().SetByID(ctx, d)
 	}
 
 	return s.buildDomainWithDetails(d), nil
@@ -214,7 +212,7 @@ func (s *DomainService) List(ctx context.Context, userID string, page, pageSize 
 	useCache := page == 1 && pageSize >= 25
 
 	if useCache && s.cache != nil {
-		if cached, _ := s.cache.GetByUserID(ctx, userID); cached != nil {
+		if cached, _ := s.cache.Domain().GetByUserID(ctx, userID); cached != nil {
 			// Return cached results (limited to pageSize for consistency)
 			limit := len(cached)
 			if pageSize < limit {
@@ -250,7 +248,7 @@ func (s *DomainService) List(ctx context.Context, userID string, page, pageSize 
 
 	// Cache for first page requests
 	if useCache && s.cache != nil && page == 1 {
-		_ = s.cache.SetByUserID(ctx, userID, domains)
+		_ = s.cache.Domain().SetByUserID(ctx, userID, domains)
 	}
 
 	result := make([]*domain.DomainWithDetails, len(domains))
@@ -272,7 +270,7 @@ func (s *DomainService) List(ctx context.Context, userID string, page, pageSize 
 func (s *DomainService) GetVerifiedDomainForSending(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error) {
 	// Fast-path: check Redis cache first (sub-ms latency)
 	if s.cache != nil {
-		if cached, _ := s.cache.GetSendingStatus(ctx, userID, domainName); cached != nil {
+		if cached, _ := s.cache.Domain().GetSendingStatus(ctx, userID, domainName); cached != nil {
 			return cached, nil
 		}
 	}
@@ -285,7 +283,7 @@ func (s *DomainService) GetVerifiedDomainForSending(ctx context.Context, userID,
 
 	// Populate cache for next lookup
 	if s.cache != nil {
-		_ = s.cache.SetSendingStatus(ctx, d)
+		_ = s.cache.Domain().SetSendingStatus(ctx, d)
 	}
 
 	return d, nil
@@ -314,13 +312,13 @@ func (s *DomainService) Delete(ctx context.Context, userID, domainID string) err
 
 	// Invalidate cache (including fast-path sending cache)
 	if s.cache != nil {
-		_ = s.cache.InvalidateAll(ctx, domainID, userID)
-		_ = s.cache.InvalidateSendingStatus(ctx, userID, d.Domain)
+		_ = s.cache.Domain().InvalidateAll(ctx, domainID, userID)
+		_ = s.cache.Domain().InvalidateSendingStatus(ctx, userID, d.Domain)
 	}
 
 	// Log activity
-	if s.activity != nil {
-		_ = s.activity.LogDomain(ctx, userID, domainID, "delete", "success", fmt.Sprintf("Domain %s deleted", d.Domain))
+	if s.analytics != nil {
+		_ = s.analytics.Activity().LogDomain(ctx, userID, domainID, "delete", "success", fmt.Sprintf("Domain %s deleted", d.Domain))
 	}
 
 	return nil
@@ -376,12 +374,12 @@ func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*d
 	}
 
 	// Log verification activity
-	if s.activity != nil {
+	if s.analytics != nil {
 		status := "success"
 		if d.Status == domain.DomainStatusFailed {
 			status = "failed"
 		}
-		_ = s.activity.LogDomain(ctx, userID, domainID, "verify", status, fmt.Sprintf("Domain verification: %s", d.Status))
+		_ = s.analytics.Activity().LogDomain(ctx, userID, domainID, "verify", status, fmt.Sprintf("Domain verification: %s", d.Status))
 	}
 
 	return &domain.VerifyResult{

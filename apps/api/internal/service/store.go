@@ -1,5 +1,7 @@
 package service
 
+//go:generate mockgen -destination=mocks/mock_store.go -package=mocks github.com/emailapi/api/internal/service Store
+
 import (
 	"github.com/emailapi/api/internal/repository/postgres"
 )

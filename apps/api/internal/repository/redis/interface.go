@@ -1,6 +1,6 @@
 package redis
 
-//go:generate mockgen -destination=mocks/mock_cache.go -package=mocks github.com/emailapi/api/internal/repository/redis DomainCacheInterface,APIKeyCacheInterface,UserCacheInterface
+//go:generate mockgen -destination=mocks/mock_cache.go -package=mocks github.com/emailapi/api/internal/repository/redis DomainCacheInterface,APIKeyCacheInterface,UserCacheInterface,MXCacheInterface,ReputationCacheInterface,UnsubscribeCacheInterface
 
 import (
 	"context"
@@ -59,7 +59,26 @@ type UserCacheInterface interface {
 	InvalidateByExternalID(ctx context.Context, externalID string) error
 }
 
+// ReputationCacheInterface defines the interface for reputation caching.
+type ReputationCacheInterface interface {
+	Get(ctx context.Context, userID string) (*UserReputationStatus, error)
+	Set(ctx context.Context, userID string, status *UserReputationStatus) error
+	SetSuspended(ctx context.Context, userID string) error
+	Delete(ctx context.Context, userID string) error
+}
+
+// UnsubscribeCacheInterface defines the interface for unsubscribe caching.
+type UnsubscribeCacheInterface interface {
+	Set(ctx context.Context, userID, emailHash string) error
+	Check(ctx context.Context, userID, emailHash string) (bool, error)
+	CheckBatch(ctx context.Context, userID string, hashes []string) ([]string, error)
+	SetBatch(ctx context.Context, userID string, hashes []string) error
+	Delete(ctx context.Context, userID, emailHash string) error
+}
+
 // Ensure concrete types implement interfaces
 var _ DomainCacheInterface = (*DomainCache)(nil)
 var _ APIKeyCacheInterface = (*APIKeyCache)(nil)
 var _ UserCacheInterface = (*UserCache)(nil)
+var _ ReputationCacheInterface = (*ReputationCache)(nil)
+var _ UnsubscribeCacheInterface = (*UnsubscribeCache)(nil)

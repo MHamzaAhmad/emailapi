@@ -12,8 +12,6 @@ import (
 	"strings"
 
 	"github.com/emailapi/api/internal/domain"
-	rediscache "github.com/emailapi/api/internal/repository/redis"
-	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 )
 
 const (
@@ -24,17 +22,17 @@ const (
 // APIKeyService handles API key business logic.
 type APIKeyService struct {
 	store      Store
-	cache      rediscache.APIKeyCacheInterface
-	activity   tbrepo.ActivityRepositoryInterface
+	cache      Cache
+	analytics  Analytics
 	hmacSecret []byte
 }
 
 // NewAPIKeyService creates a new APIKeyService.
-func NewAPIKeyService(store Store, cache rediscache.APIKeyCacheInterface, activity tbrepo.ActivityRepositoryInterface, hmacSecret string) *APIKeyService {
+func NewAPIKeyService(store Store, cache Cache, analytics Analytics, hmacSecret string) *APIKeyService {
 	return &APIKeyService{
 		store:      store,
 		cache:      cache,
-		activity:   activity,
+		analytics:  analytics,
 		hmacSecret: []byte(hmacSecret),
 	}
 }
@@ -94,12 +92,12 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 
 	// Invalidate user's API keys list cache
 	if s.cache != nil {
-		_ = s.cache.InvalidateByUserID(ctx, userID)
+		_ = s.cache.APIKey().InvalidateByUserID(ctx, userID)
 	}
 
 	// Log activity
-	if s.activity != nil {
-		_ = s.activity.LogAPIKey(ctx, userID, apiKey.ID, "create", "success", fmt.Sprintf("API Key %s created", apiKey.Name))
+	if s.analytics != nil {
+		_ = s.analytics.Activity().LogAPIKey(ctx, userID, apiKey.ID, "create", "success", fmt.Sprintf("API Key %s created", apiKey.Name))
 	}
 
 	return apiKey, rawKey, nil
@@ -109,7 +107,7 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 func (s *APIKeyService) GetByID(ctx context.Context, userID, keyID string) (*domain.APIKey, error) {
 	// Try cache first
 	if s.cache != nil {
-		if cached, _ := s.cache.GetByID(ctx, keyID); cached != nil {
+		if cached, _ := s.cache.APIKey().GetByID(ctx, keyID); cached != nil {
 			if cached.UserID == userID {
 				return cached, nil
 			}
@@ -128,7 +126,7 @@ func (s *APIKeyService) GetByID(ctx context.Context, userID, keyID string) (*dom
 
 	// Cache the result
 	if s.cache != nil {
-		_ = s.cache.SetByID(ctx, apiKey)
+		_ = s.cache.APIKey().SetByID(ctx, apiKey)
 	}
 
 	return apiKey, nil
@@ -150,7 +148,7 @@ func (s *APIKeyService) List(ctx context.Context, userID string, page, pageSize 
 	useCache := page == 1 && pageSize >= 100
 
 	if useCache && s.cache != nil {
-		if cached, _ := s.cache.GetByUserID(ctx, userID); cached != nil {
+		if cached, _ := s.cache.APIKey().GetByUserID(ctx, userID); cached != nil {
 			// Return cached results (limited to pageSize for consistency)
 			limit := len(cached)
 			if pageSize < limit {
@@ -180,7 +178,7 @@ func (s *APIKeyService) List(ctx context.Context, userID string, page, pageSize 
 
 	// Cache the result for first page
 	if useCache && s.cache != nil && page == 1 {
-		_ = s.cache.SetByUserID(ctx, userID, keys)
+		_ = s.cache.APIKey().SetByUserID(ctx, userID, keys)
 	}
 
 	return keys, total, nil
@@ -215,7 +213,7 @@ func (s *APIKeyService) Update(ctx context.Context, userID, keyID string, req *d
 
 	// Invalidate cache
 	if s.cache != nil {
-		_ = s.cache.InvalidateAll(ctx, apiKey.ID, apiKey.KeyPrefix, userID)
+		_ = s.cache.APIKey().InvalidateAll(ctx, apiKey.ID, apiKey.KeyPrefix, userID)
 	}
 
 	return apiKey, nil
@@ -235,12 +233,12 @@ func (s *APIKeyService) Delete(ctx context.Context, userID, keyID string) error 
 
 	// Invalidate cache
 	if s.cache != nil {
-		_ = s.cache.InvalidateAll(ctx, apiKey.ID, apiKey.KeyPrefix, userID)
+		_ = s.cache.APIKey().InvalidateAll(ctx, apiKey.ID, apiKey.KeyPrefix, userID)
 	}
 
 	// Log activity
-	if s.activity != nil {
-		_ = s.activity.LogAPIKey(ctx, userID, apiKey.ID, "delete", "success", fmt.Sprintf("API Key %s deleted", apiKey.Name))
+	if s.analytics != nil {
+		_ = s.analytics.Activity().LogAPIKey(ctx, userID, apiKey.ID, "delete", "success", fmt.Sprintf("API Key %s deleted", apiKey.Name))
 	}
 
 	return nil
@@ -261,12 +259,12 @@ func (s *APIKeyService) Revoke(ctx context.Context, userID, keyID string) (*doma
 
 	// Invalidate cache
 	if s.cache != nil {
-		_ = s.cache.InvalidateAll(ctx, apiKey.ID, apiKey.KeyPrefix, userID)
+		_ = s.cache.APIKey().InvalidateAll(ctx, apiKey.ID, apiKey.KeyPrefix, userID)
 	}
 
 	// Log activity
-	if s.activity != nil {
-		_ = s.activity.LogAPIKey(ctx, userID, apiKey.ID, "revoke", "success", fmt.Sprintf("API Key %s revoked", apiKey.Name))
+	if s.analytics != nil {
+		_ = s.analytics.Activity().LogAPIKey(ctx, userID, apiKey.ID, "revoke", "success", fmt.Sprintf("API Key %s revoked", apiKey.Name))
 	}
 	return result, nil
 }
@@ -284,7 +282,7 @@ func (s *APIKeyService) ValidateAndGetUser(ctx context.Context, rawKey string) (
 
 	// Step 3: Try Redis cache first (fast path)
 	if s.cache != nil {
-		if cachedKey, _ := s.cache.GetByKeyHash(ctx, keyHash); cachedKey != nil {
+		if cachedKey, _ := s.cache.APIKey().GetByKeyHash(ctx, keyHash); cachedKey != nil {
 			// Verify key is still active and not expired
 			if !cachedKey.IsActive {
 				return nil, nil, fmt.Errorf("API key is inactive")
@@ -330,7 +328,7 @@ func (s *APIKeyService) ValidateAndGetUser(ctx context.Context, rawKey string) (
 
 	// Cache the validated key for next time
 	if s.cache != nil {
-		_ = s.cache.SetByKeyHash(ctx, keyHash, apiKey)
+		_ = s.cache.APIKey().SetByKeyHash(ctx, keyHash, apiKey)
 	}
 
 	// Async update last used (fire and forget)

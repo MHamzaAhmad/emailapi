@@ -9,7 +9,6 @@ import (
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/repository/suppression"
-	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/webhook"
 )
 
@@ -17,8 +16,7 @@ import (
 // This includes: Delivery, Bounce, Complaint, Send, Reject, DeliveryDelay.
 // Uses routing table to map message_id -> user_id for webhook delivery.
 type SNSNotificationService struct {
-	tbRepo        *tbrepo.EmailRepository
-	activityRepo  *tbrepo.ActivityRepository
+	analytics     Analytics
 	webhookSender webhook.Sender
 	suppressRepo  *suppression.Repository
 	reputationSvc *ReputationService
@@ -26,15 +24,13 @@ type SNSNotificationService struct {
 
 // NewSNSNotificationService creates a new SNSNotificationService.
 func NewSNSNotificationService(
-	tbRepo *tbrepo.EmailRepository,
-	activityRepo *tbrepo.ActivityRepository,
+	analytics Analytics,
 	webhookSender webhook.Sender,
 	suppressRepo *suppression.Repository,
 	reputationSvc *ReputationService,
 ) *SNSNotificationService {
 	return &SNSNotificationService{
-		tbRepo:        tbRepo,
-		activityRepo:  activityRepo,
+		analytics:     analytics,
 		webhookSender: webhookSender,
 		suppressRepo:  suppressRepo,
 		reputationSvc: reputationSvc,
@@ -175,14 +171,14 @@ func (s *SNSNotificationService) handleDelivery(ctx context.Context, notificatio
 	messageID := notification.Mail.MessageID
 
 	// Look up routing to get user_id
-	routing, err := s.tbRepo.LookupRouting(ctx, messageID)
+	routing, err := s.analytics.Email().LookupRouting(ctx, messageID)
 	if err != nil {
 		// Can't find routing - log and skip (might be old email)
 		return nil
 	}
 
 	// Log activity
-	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "delivered", "success",
+	s.analytics.Activity().Log(ctx, routing.UserID, "email", routing.EmailID, "delivered", "success",
 		fmt.Sprintf("Delivered to %v", notification.Delivery.Recipients),
 		map[string]interface{}{
 			"message_id": messageID,
@@ -228,7 +224,7 @@ func (s *SNSNotificationService) handleBounce(ctx context.Context, notification 
 	}
 
 	// Try to get routing for webhook/activity logging
-	routing, err := s.tbRepo.LookupRouting(ctx, messageID)
+	routing, err := s.analytics.Email().LookupRouting(ctx, messageID)
 	if err != nil {
 		// No routing - suppression was added above for hard bounces, skip webhook/activity
 		return nil
@@ -255,7 +251,7 @@ func (s *SNSNotificationService) handleBounce(ctx context.Context, notification 
 		bouncedRecipients[i] = r.EmailAddress
 	}
 
-	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "bounced", "failed",
+	s.analytics.Activity().Log(ctx, routing.UserID, "email", routing.EmailID, "bounced", "failed",
 		fmt.Sprintf("Bounce: %s - %s", notification.Bounce.BounceType, notification.Bounce.BounceSubType),
 		map[string]interface{}{
 			"message_id":     messageID,
@@ -329,7 +325,7 @@ func (s *SNSNotificationService) handleComplaint(ctx context.Context, notificati
 	}
 
 	// Try to get routing for webhook/activity logging
-	routing, err := s.tbRepo.LookupRouting(ctx, messageID)
+	routing, err := s.analytics.Email().LookupRouting(ctx, messageID)
 	if err != nil {
 		// No routing - suppression was added above, skip webhook/activity
 		return nil
@@ -341,7 +337,7 @@ func (s *SNSNotificationService) handleComplaint(ctx context.Context, notificati
 	}
 
 	// Log activity
-	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "complained", "failed",
+	s.analytics.Activity().Log(ctx, routing.UserID, "email", routing.EmailID, "complained", "failed",
 		fmt.Sprintf("Complaint: %s", notification.Complaint.ComplaintFeedbackType),
 		map[string]interface{}{
 			"message_id":    messageID,
@@ -381,13 +377,13 @@ func (s *SNSNotificationService) handleComplaint(ctx context.Context, notificati
 func (s *SNSNotificationService) handleSend(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	routing, err := s.tbRepo.LookupRouting(ctx, messageID)
+	routing, err := s.analytics.Email().LookupRouting(ctx, messageID)
 	if err != nil {
 		return nil
 	}
 
 	// Log activity only
-	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "accepted", "success",
+	s.analytics.Activity().Log(ctx, routing.UserID, "email", routing.EmailID, "accepted", "success",
 		"Email accepted by SES",
 		map[string]interface{}{"message_id": messageID})
 
@@ -398,13 +394,13 @@ func (s *SNSNotificationService) handleSend(ctx context.Context, notification *S
 func (s *SNSNotificationService) handleReject(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	routing, err := s.tbRepo.LookupRouting(ctx, messageID)
+	routing, err := s.analytics.Email().LookupRouting(ctx, messageID)
 	if err != nil {
 		return nil
 	}
 
 	// Log activity
-	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "rejected", "failed",
+	s.analytics.Activity().Log(ctx, routing.UserID, "email", routing.EmailID, "rejected", "failed",
 		fmt.Sprintf("Rejected: %s", notification.Reject.Reason),
 		map[string]interface{}{"message_id": messageID, "reason": notification.Reject.Reason})
 
@@ -425,13 +421,13 @@ func (s *SNSNotificationService) handleReject(ctx context.Context, notification 
 func (s *SNSNotificationService) handleDeliveryDelay(ctx context.Context, notification *SESEventNotification) error {
 	messageID := notification.Mail.MessageID
 
-	routing, err := s.tbRepo.LookupRouting(ctx, messageID)
+	routing, err := s.analytics.Email().LookupRouting(ctx, messageID)
 	if err != nil {
 		return nil
 	}
 
 	// Log activity
-	s.activityRepo.Log(ctx, routing.UserID, "email", routing.EmailID, "delayed", "warning",
+	s.analytics.Activity().Log(ctx, routing.UserID, "email", routing.EmailID, "delayed", "warning",
 		"Email delivery delayed",
 		map[string]interface{}{"message_id": messageID})
 
