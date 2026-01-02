@@ -284,7 +284,6 @@ func main() {
 	// Order matters: logging -> SNS/webhook preprocessing -> auth -> admin -> rate limit
 	interceptors := connect.WithInterceptors(
 		interceptor.NewLoggingInterceptor(logger),
-		interceptor.NewSNSInterceptor(),
 		interceptor.NewWebhookInterceptor(interceptor.WebhookConfig{
 			InternalWebhookSecret: cfg.InternalWebhookSecret,
 		}),
@@ -340,12 +339,6 @@ func main() {
 
 	path, handler = v1connect.NewWebhookServiceHandler(
 		connecttransport.NewWebhookHandler(svc.Webhook),
-		interceptors,
-	)
-	mux.Handle(path, handler)
-
-	path, handler = v1connect.NewSnsServiceHandler(
-		connecttransport.NewSnsHandler(svc.SNSNotification, svc.InboundEmail),
 		interceptors,
 	)
 	mux.Handle(path, handler)

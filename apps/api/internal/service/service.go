@@ -22,19 +22,18 @@ import (
 type Service struct {
 	store Store
 
-	User            *UserService
-	APIKey          *APIKeyService
-	Domain          *DomainService
-	Email           *EmailService
-	Internal        *InternalService
-	Webhook         *WebhookService
-	Activity        *ActivityService
-	InboundEmail    *InboundEmailService
-	SNSNotification *SNSNotificationService // Deprecated: Use SQSEvent instead
-	SQSEvent        *SQSEventService        // New: SQS-based event processing
-	Reputation      *ReputationService
-	Unsubscribe     *UnsubscribeService
-	Admin           *AdminService
+	User         *UserService
+	APIKey       *APIKeyService
+	Domain       *DomainService
+	Email        *EmailService
+	Internal     *InternalService
+	Webhook      *WebhookService
+	Activity     *ActivityService
+	InboundEmail *InboundEmailService
+	SQSEvent     *SQSEventService // New: SQS-based event processing
+	Reputation   *ReputationService
+	Unsubscribe  *UnsubscribeService
+	Admin        *AdminService
 }
 
 // New creates a new Service with the given Store.
@@ -118,14 +117,6 @@ func NewWithDeps(deps ServiceDeps) *Service {
 		ClerkWebhookSecret: deps.ClerkWebhookSecret,
 	})
 
-	// Initialize SNS notification service (deprecated - kept for backward compatibility)
-	svc.SNSNotification = NewSNSNotificationService(
-		deps.Analytics,
-		deps.WebhookSender,
-		deps.SuppressionRepo,
-		svc.Reputation,
-	)
-
 	// Initialize Activity service
 	svc.Activity = NewActivityService(deps.Analytics)
 
@@ -150,7 +141,8 @@ func NewWithDeps(deps ServiceDeps) *Service {
 			SuppressionRepo:  deps.SuppressionRepo,
 			ReputationSvc:    svc.Reputation,
 			S3Factory:        deps.S3Factory,
-			InboundProcessor: nil, // Can be set to svc.InboundEmail if needed
+			InboundProcessor: svc.InboundEmail, // Wire inbound processor
+			InboundBucket:    "inbound-emails", // Should probably be configurable or discovered
 		})
 	}
 
