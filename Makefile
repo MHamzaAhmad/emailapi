@@ -35,10 +35,10 @@ migrate-pg-create:
 
 # Tinybird
 tinybird-push:
-	cd tinybird && tb push
+	cd db/tinybird && tb push
 
 tinybird-test:
-	cd tinybird && tb pipe data list_activity --user_id "test" --limit 10
+	cd db/tinybird && tb pipe data list_activity --user_id "test" --limit 10
 
 # River
 migrate-river:
