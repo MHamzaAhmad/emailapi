@@ -227,12 +227,111 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 	return s.deliverWebhook(ctx, inboundEmail)
 }
 
-// parseEmail parses raw MIME email using jordan-wright/email package.
-func (s *InboundEmailService) parseEmail(rawEmail []byte) (*InboundEmail, error) {
+// ProcessRawEmail processes a raw email from S3 (for SQS-based processing).
+// This is the main entry point for the new S3 → EventBridge → SQS flow.
+func (s *InboundEmailService) ProcessRawEmail(ctx context.Context, bucket, key string) error {
+	// Download email from S3
+	rawEmail, err := s.s3Factory.Bucket(s3.BucketInbound).Download(ctx, key)
+	if err != nil {
+		return fmt.Errorf("failed to download email from S3: %w", err)
+	}
+
+	// Parse email and check for virus/spam
+	inboundEmail, virusVerdict, spamVerdict, err := s.parseEmailWithVerdicts(rawEmail)
+	if err != nil {
+		return fmt.Errorf("failed to parse email: %w", err)
+	}
+
+	// Check virus verdict (SES adds X-SES-Virus-Verdict header)
+	if virusVerdict == "FAIL" {
+		fmt.Printf("Inbound email %s rejected: virus detected\n", key)
+		return nil // Don't process, but don't error
+	}
+
+	// Log spam verdict (process anyway, but log it)
+	if spamVerdict == "FAIL" {
+		fmt.Printf("Inbound email %s flagged as spam, processing anyway\n", key)
+	}
+
+	// Process the email (same as handleNotification)
+	return s.processInboundEmail(ctx, inboundEmail)
+}
+
+// processInboundEmail handles the core logic for inbound emails.
+func (s *InboundEmailService) processInboundEmail(ctx context.Context, inboundEmail *InboundEmail) error {
+	// Look up original email by In-Reply-To header
+	if inboundEmail.InReplyTo == "" {
+		if len(inboundEmail.References) == 0 {
+			return nil // Not a reply
+		}
+		inboundEmail.InReplyTo = inboundEmail.References[len(inboundEmail.References)-1]
+	}
+
+	// Use routing table as single source of truth
+	if s.analytics == nil {
+		return nil
+	}
+	routing, err := s.analytics.Email().LookupRouting(ctx, inboundEmail.InReplyTo)
+	if err != nil {
+		return nil // Reply to email we didn't send
+	}
+
+	inboundEmail.OriginalEmailID = routing.EmailID
+	inboundEmail.UserID = routing.UserID
+
+	// Add inbound email to routing table
+	if err := s.analytics.Email().InsertRouting(ctx, inboundEmail.MessageID, inboundEmail.ID, inboundEmail.UserID); err != nil {
+		fmt.Printf("Warning: failed to insert routing entry for inbound email: %v\n", err)
+	}
+
+	// Check if this is an auto-response
+	if inboundEmail.IsAutoResponse {
+		s.analytics.Email().LogEmailEvent(
+			ctx,
+			routing.UserID,
+			routing.EmailID,
+			"auto_response",
+			"ignored",
+			fmt.Sprintf("Auto-response (%s) from %s: %s", inboundEmail.AutoResponseType, inboundEmail.From, inboundEmail.Subject),
+			map[string]interface{}{
+				"inbound_email_id":     inboundEmail.ID,
+				"auto_response_type":   inboundEmail.AutoResponseType,
+				"auto_response_reason": inboundEmail.AutoResponseInfo,
+			},
+		)
+		return nil
+	}
+
+	// Log activity
+	s.analytics.Activity().Log(
+		ctx,
+		routing.UserID,
+		"email",
+		routing.EmailID,
+		"replied",
+		"success",
+		fmt.Sprintf("Reply received from %s: %s", inboundEmail.From, inboundEmail.Subject),
+		map[string]interface{}{
+			"inbound_email_id": inboundEmail.ID,
+			"message_id":       inboundEmail.MessageID,
+			"from":             inboundEmail.From,
+			"subject":          inboundEmail.Subject,
+		},
+	)
+
+	return s.deliverWebhook(ctx, inboundEmail)
+}
+
+// parseEmailWithVerdicts parses email and extracts SES verdict headers.
+func (s *InboundEmailService) parseEmailWithVerdicts(rawEmail []byte) (*InboundEmail, string, string, error) {
 	parsed, err := email.NewEmailFromReader(bytes.NewReader(rawEmail))
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse email: %w", err)
+		return nil, "", "", fmt.Errorf("failed to parse email: %w", err)
 	}
+
+	// Extract SES verdict headers
+	virusVerdict := parsed.Headers.Get("X-SES-Virus-Verdict")
+	spamVerdict := parsed.Headers.Get("X-SES-Spam-Verdict")
 
 	// Detect auto-responses (OOO, vacation, bounces, etc.)
 	detector := autoresponse.NewDetector()
@@ -267,7 +366,13 @@ func (s *InboundEmailService) parseEmail(rawEmail []byte) (*InboundEmail, error)
 		}
 	}
 
-	return inbound, nil
+	return inbound, virusVerdict, spamVerdict, nil
+}
+
+// parseEmail parses raw MIME email (legacy, kept for backward compatibility).
+func (s *InboundEmailService) parseEmail(rawEmail []byte) (*InboundEmail, error) {
+	inbound, _, _, err := s.parseEmailWithVerdicts(rawEmail)
+	return inbound, err
 }
 
 // deliverWebhook sends the reply notification to the user via webhook.Sender.

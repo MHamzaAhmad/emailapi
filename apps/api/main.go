@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -20,6 +22,7 @@ import (
 	"github.com/emailapi/api/internal/eventstream"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
+	"github.com/emailapi/api/internal/external/sqs"
 	"github.com/emailapi/api/internal/external/svix"
 	"github.com/emailapi/api/internal/external/webrisk"
 	"github.com/emailapi/api/internal/repository/postgres"
@@ -90,6 +93,25 @@ func main() {
 	s3Factory.RegisterBucket(s3.BucketAttachments, cfg.S3Bucket)
 	s3Factory.RegisterBucket(s3.BucketInbound, cfg.S3InboundBucket)
 	logger.Info().Msg("✓ Initialized S3 factory")
+
+	// Initialize SQS client for event processing (optional)
+	var sqsClient sqs.Client
+	if cfg.SQSEventQueueURL != "" {
+		awsCfg, err := awsconfig.LoadDefaultConfig(context.Background(),
+			awsconfig.WithRegion(cfg.AWSRegion),
+			awsconfig.WithCredentialsProvider(aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
+				return aws.Credentials{
+					AccessKeyID:     cfg.AWSAccessKeyID,
+					SecretAccessKey: cfg.AWSSecretAccessKey,
+				}, nil
+			})),
+		)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to load AWS config for SQS")
+		}
+		sqsClient = sqs.New(awsCfg, cfg.SQSEventQueueURL)
+		logger.Info().Str("queue", cfg.SQSEventQueueURL).Msg("✓ Initialized SQS client")
+	}
 
 	// Initialize Tinybird client
 	tbClient := tbrepo.NewClient(cfg.TinybirdToken, cfg.TinybirdBaseURL)
@@ -222,6 +244,7 @@ func main() {
 		Analytics:              analyticsAggregator,
 		SESClient:              sesClient,
 		S3Factory:              s3Factory,
+		SQSClient:              sqsClient, // New: for SQS event processing
 		Region:                 cfg.AWSRegion,
 		SESConfigurationSet:    cfg.SESConfigurationSet,
 		RiverClient:            riverClient,
@@ -236,6 +259,13 @@ func main() {
 		UnsubscribeBaseURL:     cfg.UnsubscribeBaseURL,
 		UnsubscribeTokenSecret: cfg.UnsubscribeTokenSecret,
 	})
+
+	// Register SQS poller worker if SQS is configured
+	if svc.SQSEvent != nil {
+		sqsPoller := worker.NewSQSPollerWorker(svc.SQSEvent.GetClient(), svc.SQSEvent.GetRouter())
+		river.AddWorker(workers, sqsPoller)
+		logger.Info().Msg("✓ Registered SQS poller worker")
+	}
 
 	// Sync unsubscribe list from PostgreSQL to Redis on startup
 	if svc.Unsubscribe != nil {

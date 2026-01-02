@@ -77,6 +77,9 @@ type Config struct {
 	// Unsubscribe Configuration
 	UnsubscribeBaseURL     string `envconfig:"UNSUBSCRIBE_BASE_URL" default:"https://api.simpleemailapi.dev"`
 	UnsubscribeTokenSecret string `envconfig:"UNSUBSCRIBE_TOKEN_SECRET" default:"dev-unsubscribe-secret-change-in-production"`
+
+	// SQS Configuration (for receiving SES events)
+	SQSEventQueueURL string `envconfig:"SQS_EVENT_QUEUE_URL" default:""`
 }
 
 // Load reads configuration from environment variables.

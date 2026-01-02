@@ -5,6 +5,7 @@ import (
 	"github.com/emailapi/api/internal/eventstream"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
+	"github.com/emailapi/api/internal/external/sqs"
 	"github.com/emailapi/api/internal/external/svix"
 	"github.com/emailapi/api/internal/external/webrisk"
 	rediscache "github.com/emailapi/api/internal/repository/redis"
@@ -29,7 +30,8 @@ type Service struct {
 	Webhook         *WebhookService
 	Activity        *ActivityService
 	InboundEmail    *InboundEmailService
-	SNSNotification *SNSNotificationService
+	SNSNotification *SNSNotificationService // Deprecated: Use SQSEvent instead
+	SQSEvent        *SQSEventService        // New: SQS-based event processing
 	Reputation      *ReputationService
 	Unsubscribe     *UnsubscribeService
 	Admin           *AdminService
@@ -51,6 +53,7 @@ type ServiceDeps struct {
 	Analytics           Analytics // Aggregated Tinybird access
 	SESClient           ses.Client
 	S3Factory           *s3.Factory
+	SQSClient           sqs.Client // New: SQS client for event processing
 	Region              string
 	SESConfigurationSet string
 	RiverClient         *river.Client[pgx.Tx]
@@ -115,7 +118,7 @@ func NewWithDeps(deps ServiceDeps) *Service {
 		ClerkWebhookSecret: deps.ClerkWebhookSecret,
 	})
 
-	// Initialize SNS notification service
+	// Initialize SNS notification service (deprecated - kept for backward compatibility)
 	svc.SNSNotification = NewSNSNotificationService(
 		deps.Analytics,
 		deps.WebhookSender,
@@ -136,6 +139,19 @@ func NewWithDeps(deps ServiceDeps) *Service {
 			deps.Analytics,
 			deps.WebhookSender,
 		)
+	}
+
+	// Initialize SQS event service if SQS client is available
+	if deps.SQSClient != nil {
+		svc.SQSEvent = NewSQSEventService(SQSEventServiceDeps{
+			SQSClient:        deps.SQSClient,
+			Analytics:        deps.Analytics,
+			WebhookSender:    deps.WebhookSender,
+			SuppressionRepo:  deps.SuppressionRepo,
+			ReputationSvc:    svc.Reputation,
+			S3Factory:        deps.S3Factory,
+			InboundProcessor: nil, // Can be set to svc.InboundEmail if needed
+		})
 	}
 
 	// Initialize Admin service for admin operations
