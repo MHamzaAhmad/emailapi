@@ -245,16 +245,69 @@ func (s *InboundEmailService) ProcessRawEmail(ctx context.Context, bucket, key s
 	// Check virus verdict (SES adds X-SES-Virus-Verdict header)
 	if virusVerdict == "FAIL" {
 		fmt.Printf("Inbound email %s rejected: virus detected\n", key)
+		// Log activity if we can find routing
+		s.logSecurityEvent(ctx, inboundEmail, "virus_rejected", "Email rejected due to virus detection")
 		return nil // Don't process, but don't error
 	}
 
 	// Log spam verdict (process anyway, but log it)
 	if spamVerdict == "FAIL" {
 		fmt.Printf("Inbound email %s flagged as spam, processing anyway\n", key)
+		s.logSecurityEvent(ctx, inboundEmail, "spam_flagged", "Email flagged as spam but processed")
 	}
 
 	// Process the email (same as handleNotification)
 	return s.processInboundEmail(ctx, inboundEmail)
+}
+
+// logSecurityEvent logs virus/spam events for inbound emails.
+func (s *InboundEmailService) logSecurityEvent(ctx context.Context, email *InboundEmail, action, message string) {
+	if s.analytics == nil {
+		return
+	}
+
+	// Try to find the original email this is replying to
+	replyTo := email.InReplyTo
+	if replyTo == "" && len(email.References) > 0 {
+		replyTo = email.References[len(email.References)-1]
+	}
+
+	if replyTo == "" {
+		// Not a reply - log as system event
+		s.analytics.Activity().Log(ctx, "", "inbound_email", email.ID, action, "blocked",
+			message,
+			map[string]interface{}{
+				"from":       email.From,
+				"subject":    email.Subject,
+				"message_id": email.MessageID,
+			})
+		return
+	}
+
+	routing, err := s.analytics.Email().LookupRouting(ctx, replyTo)
+	if err != nil {
+		// Can't find original email - still log it
+		s.analytics.Activity().Log(ctx, "", "inbound_email", email.ID, action, "blocked",
+			message,
+			map[string]interface{}{
+				"from":        email.From,
+				"subject":     email.Subject,
+				"message_id":  email.MessageID,
+				"in_reply_to": replyTo,
+			})
+		return
+	}
+
+	// Log with user context
+	s.analytics.Activity().Log(ctx, routing.UserID, "email", routing.EmailID, action, "blocked",
+		fmt.Sprintf("%s from %s: %s", message, email.From, email.Subject),
+		map[string]interface{}{
+			"inbound_email_id":  email.ID,
+			"from":              email.From,
+			"subject":           email.Subject,
+			"message_id":        email.MessageID,
+			"original_email_id": routing.EmailID,
+		})
 }
 
 // processInboundEmail handles the core logic for inbound emails.
