@@ -1,8 +1,13 @@
 package s3
 
-//go:generate mockgen -destination=mocks/mock_s3.go -package=mocks github.com/emailapi/api/internal/external/s3 Client
+//go:generate mockgen -destination=mocks/mock_s3.go -package=mocks github.com/emailapi/api/internal/external/s3 Client,FactoryInterface
 
 import "context"
+
+// FactoryInterface defines the interface for obtaining bucket-scoped S3 clients.
+type FactoryInterface interface {
+	Bucket(name BucketName) Client
+}
 
 // Client defines the interface for S3 operations.
 // This interface is meant to be easily mockable for testing.

@@ -98,6 +98,9 @@ type Validator struct {
 	config ValidatorConfig
 }
 
+// Ensure Validator implements ValidatorInterface
+var _ ValidatorInterface = (*Validator)(nil)
+
 // NewValidator creates a new DNS validator with default configuration.
 func NewValidator() *Validator {
 	return NewValidatorWithConfig(DefaultConfig())

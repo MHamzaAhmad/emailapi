@@ -54,17 +54,19 @@ func (ProcessAttachmentsArgs) Kind() string { return "process_attachments" }
 // AttachmentWorker handles attachment processing jobs.
 type AttachmentWorker struct {
 	river.WorkerDefaults[ProcessAttachmentsArgs]
-	s3Factory   *s3.Factory
+	s3Factory   s3.FactoryInterface
 	riverClient RiverClient
 }
 
 // RiverClient interface for enqueueing jobs.
+//
+//go:generate mockgen -destination=mocks/mock_river_client.go -package=mocks . RiverClient
 type RiverClient interface {
 	Insert(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (*rivertype.JobInsertResult, error)
 }
 
 // NewAttachmentWorker creates a new AttachmentWorker.
-func NewAttachmentWorker(s3Factory *s3.Factory, riverClient RiverClient) *AttachmentWorker {
+func NewAttachmentWorker(s3Factory s3.FactoryInterface, riverClient RiverClient) *AttachmentWorker {
 	return &AttachmentWorker{
 		s3Factory:   s3Factory,
 		riverClient: riverClient,

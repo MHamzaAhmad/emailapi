@@ -1,6 +1,7 @@
 package service
 
 import (
+	internaldns "github.com/emailapi/api/internal/dns"
 	"github.com/emailapi/api/internal/eventstream"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
@@ -78,7 +79,7 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	svc.Reputation = NewReputationService(deps.Store, deps.RiverClient, deps.Cache, deps.Analytics)
 
 	// Initialize Domain service with reputation checker
-	svc.Domain = NewDomainService(deps.Store, deps.SESClient, deps.Cache, deps.Analytics, svc.Reputation, deps.Region, deps.SESConfigurationSet)
+	svc.Domain = NewDomainService(deps.Store, deps.SESClient, internaldns.NewValidator(), deps.Cache, deps.Analytics, svc.Reputation, deps.Region, deps.SESConfigurationSet)
 	svc.APIKey = NewAPIKeyService(deps.Store, deps.Cache, deps.Analytics, deps.APIKeyHMACSecret)
 	svc.User = NewUserService(deps.Store, svc.APIKey, deps.Cache)
 

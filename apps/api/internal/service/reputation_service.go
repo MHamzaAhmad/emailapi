@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
 
 	"github.com/emailapi/api/internal/domain"
@@ -21,25 +20,27 @@ var ErrAccountSuspended = errors.New("account suspended: please contact support"
 
 // ReputationService handles user reputation business logic.
 // Implements ReputationChecker interface for use in email validation.
+// ReputationService handles user reputation business logic.
+// Implements ReputationChecker interface for use in email validation.
 type ReputationService struct {
-	store       Store
-	riverClient *river.Client[pgx.Tx]
-	cache       Cache
-	analytics   Analytics
+	store     Store
+	queue     QueueClient
+	cache     Cache
+	analytics Analytics
 }
 
 // NewReputationService creates a new ReputationService.
 func NewReputationService(
 	store Store,
-	riverClient *river.Client[pgx.Tx],
+	queue QueueClient,
 	cache Cache,
 	analytics Analytics,
 ) *ReputationService {
 	return &ReputationService{
-		store:       store,
-		riverClient: riverClient,
-		cache:       cache,
-		analytics:   analytics,
+		store:     store,
+		queue:     queue,
+		cache:     cache,
+		analytics: analytics,
 	}
 }
 
@@ -199,11 +200,11 @@ func (s *ReputationService) RecordComplaintIncident(
 // queueEvaluation queues an async job to evaluate user reputation.
 // Uses River's unique job feature to debounce rapid-fire incidents.
 func (s *ReputationService) queueEvaluation(ctx context.Context, userID string) error {
-	if s.riverClient == nil {
+	if s.queue == nil {
 		return nil
 	}
 
-	_, err := s.riverClient.Insert(ctx, worker.EvaluateReputationArgs{
+	_, err := s.queue.Insert(ctx, worker.EvaluateReputationArgs{
 		UserID: userID,
 	}, &river.InsertOpts{
 		UniqueOpts: river.UniqueOpts{

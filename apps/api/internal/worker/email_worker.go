@@ -67,7 +67,7 @@ func (SendEmailArgs) Kind() string { return "send_email" }
 type EmailWorker struct {
 	river.WorkerDefaults[SendEmailArgs]
 	sesClient     ses.Client
-	s3Factory     *s3.Factory
+	s3Factory     s3.FactoryInterface
 	tbRepo        tbrepo.EmailRepositoryInterface
 	webhookSender webhook.Sender
 }
@@ -75,7 +75,7 @@ type EmailWorker struct {
 // NewEmailWorker creates a new EmailWorker.
 func NewEmailWorker(
 	sesClient ses.Client,
-	s3Factory *s3.Factory,
+	s3Factory s3.FactoryInterface,
 	tbRepo tbrepo.EmailRepositoryInterface,
 	webhookSender webhook.Sender,
 ) *EmailWorker {

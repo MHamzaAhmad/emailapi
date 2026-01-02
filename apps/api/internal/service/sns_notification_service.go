@@ -18,16 +18,16 @@ import (
 type SNSNotificationService struct {
 	analytics     Analytics
 	webhookSender webhook.Sender
-	suppressRepo  *suppression.Repository
-	reputationSvc *ReputationService
+	suppressRepo  SuppressionManager
+	reputationSvc ReputationRecorder
 }
 
 // NewSNSNotificationService creates a new SNSNotificationService.
 func NewSNSNotificationService(
 	analytics Analytics,
 	webhookSender webhook.Sender,
-	suppressRepo *suppression.Repository,
-	reputationSvc *ReputationService,
+	suppressRepo SuppressionManager,
+	reputationSvc ReputationRecorder,
 ) *SNSNotificationService {
 	return &SNSNotificationService{
 		analytics:     analytics,

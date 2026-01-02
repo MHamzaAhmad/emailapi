@@ -11,8 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"github.com/google/uuid"
-
-	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
 
 	emailapi "github.com/emailapi/api/gen/v1"
@@ -26,29 +24,29 @@ import (
 // EmailService handles email sending operations.
 // This is a stateless, compliance-first service - no email content is stored permanently.
 type EmailService struct {
-	riverClient       *river.Client[pgx.Tx]
+	queue             QueueClient
 	analytics         Analytics
-	validator         *validation.EmailValidator
+	validator         SenderValidator
 	ses               ses.Client
 	webhookSender     webhook.Sender
 	eventConsumer     eventstream.Consumer
 	reputationChecker validation.ReputationChecker
-	unsubscribeSvc    *UnsubscribeService
+	unsubscribeSvc    UnsubscribeManager
 }
 
 // NewEmailService creates a new EmailService.
 func NewEmailService(
-	riverClient *river.Client[pgx.Tx],
+	queue QueueClient,
 	analytics Analytics,
-	validator *validation.EmailValidator,
+	validator SenderValidator,
 	sesClient ses.Client,
 	webhookSender webhook.Sender,
 	eventConsumer eventstream.Consumer,
 	reputationChecker validation.ReputationChecker,
-	unsubscribeSvc *UnsubscribeService,
+	unsubscribeSvc UnsubscribeManager,
 ) *EmailService {
 	return &EmailService{
-		riverClient:       riverClient,
+		queue:             queue,
 		analytics:         analytics,
 		validator:         validator,
 		ses:               sesClient,
@@ -249,7 +247,7 @@ func (s *EmailService) queueWithAttachments(ctx context.Context, emailID, userID
 		args.ScheduledAt = &scheduledTime
 	}
 
-	_, err := s.riverClient.Insert(ctx, args, nil)
+	_, err := s.queue.Insert(ctx, args, nil)
 	if err != nil {
 		s.logActivity(ctx, userID, emailID, "failed", fmt.Sprintf("Failed to enqueue: %v", err), req)
 		return nil, fmt.Errorf("failed to enqueue attachment job: %w", err)
@@ -286,7 +284,7 @@ func (s *EmailService) queueForSend(ctx context.Context, emailID, userID string,
 		args.UnsubscribeTokenSecret = s.unsubscribeSvc.TokenSecret()
 	}
 
-	_, err := s.riverClient.Insert(ctx, args, nil)
+	_, err := s.queue.Insert(ctx, args, nil)
 	if err != nil {
 		s.logActivity(ctx, userID, emailID, "failed", fmt.Sprintf("Failed to enqueue: %v", err), req)
 		return nil, fmt.Errorf("failed to enqueue send job: %w", err)
@@ -332,7 +330,7 @@ func (s *EmailService) queueScheduled(ctx context.Context, emailID, userID strin
 	}
 
 	// Queue with scheduled time
-	_, err := s.riverClient.Insert(ctx, args, &river.InsertOpts{
+	_, err := s.queue.Insert(ctx, args, &river.InsertOpts{
 		ScheduledAt: scheduledTime,
 	})
 	if err != nil {

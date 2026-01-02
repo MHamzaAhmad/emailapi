@@ -31,7 +31,7 @@ const (
 type DomainService struct {
 	store             Store
 	ses               ses.Client
-	dns               *internaldns.Validator
+	dns               internaldns.ValidatorInterface
 	cache             Cache
 	analytics         Analytics
 	reputationChecker validation.ReputationChecker
@@ -40,14 +40,26 @@ type DomainService struct {
 }
 
 // NewDomainService creates a new DomainService.
-func NewDomainService(store Store, sesClient ses.Client, cache Cache, analytics Analytics, reputationChecker validation.ReputationChecker, region, configurationSet string) *DomainService {
+func NewDomainService(
+	store Store,
+	sesClient ses.Client,
+	dnsValidator internaldns.ValidatorInterface,
+	cache Cache,
+	analytics Analytics,
+	reputationChecker validation.ReputationChecker,
+	region, configurationSet string,
+) *DomainService {
 	if region == "" {
 		region = defaultRegion
+	}
+	// Fallback if nil (though should be injected)
+	if dnsValidator == nil {
+		dnsValidator = internaldns.NewValidator()
 	}
 	return &DomainService{
 		store:             store,
 		ses:               sesClient,
-		dns:               internaldns.NewValidator(),
+		dns:               dnsValidator,
 		cache:             cache,
 		analytics:         analytics,
 		reputationChecker: reputationChecker,

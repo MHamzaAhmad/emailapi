@@ -2,6 +2,8 @@ package validation
 
 import "context"
 
+//go:generate mockgen -destination=mocks/mock_reputation_checker.go -package=mocks github.com/emailapi/api/internal/validation ReputationChecker
+
 // ReputationChecker checks user reputation for email sending permission.
 type ReputationChecker interface {
 	// CheckSendPermission checks if a user is allowed to send emails.

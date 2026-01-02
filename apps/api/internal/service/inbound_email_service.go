@@ -20,14 +20,14 @@ import (
 
 // InboundEmailService handles inbound email processing (replies) from SNS/SES.
 type InboundEmailService struct {
-	s3Factory     *s3.Factory
+	s3Factory     s3.FactoryInterface
 	analytics     Analytics
 	webhookSender webhook.Sender
 }
 
 // NewInboundEmailService creates a new InboundEmailService.
 func NewInboundEmailService(
-	s3Factory *s3.Factory,
+	s3Factory s3.FactoryInterface,
 	analytics Analytics,
 	webhookSender webhook.Sender,
 ) *InboundEmailService {
