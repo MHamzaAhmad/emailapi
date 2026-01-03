@@ -71,6 +71,8 @@ type ServiceDeps struct {
 	// Unsubscribe configuration
 	UnsubscribeBaseURL     string
 	UnsubscribeTokenSecret string
+	// SQS event processing
+	InboundBucket string
 }
 
 // NewWithDeps creates a new Service with all dependencies.
@@ -147,8 +149,8 @@ func NewWithDeps(deps ServiceDeps) *Service {
 			SuppressionRepo:        deps.SuppressionRepo,
 			ReputationSvc:          svc.Reputation,
 			S3Factory:              deps.S3Factory,
-			InboundProcessor:       svc.InboundEmail, // Wire inbound processor
-			InboundBucket:          "inbound-emails", // Should probably be configurable or discovered
+			InboundProcessor:       svc.InboundEmail,   // Wire inbound processor
+			InboundBucket:          deps.InboundBucket, // Should probably be configurable or discovered
 			PendingAttachmentCache: pendingAttachmentCache,
 			RiverClient:            deps.RiverClient,
 		})

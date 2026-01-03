@@ -20,9 +20,9 @@
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
-            "require": "./dist/index.js",
+            "types": "./dist/index.d.ts",
             "import": "./dist/index.mjs",
-            "types": "./dist/index.d.ts"
+            "require": "./dist/index.js"
         }
     },
     "scripts": {
@@ -40,6 +40,7 @@
         "@connectrpc/connect-node": "^2.0.0"
     },
     "devDependencies": {
+        "@types/node": "^25.0.3",
         "tsup": "^8.0.0",
         "typedoc": "^0.28.15",
         "typedoc-plugin-markdown": "^4.9.0",

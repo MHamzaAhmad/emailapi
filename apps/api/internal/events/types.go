@@ -30,16 +30,6 @@ type EventEnvelope struct {
 	Detail     interface{} `json:"detail"`
 }
 
-// SNSNotification wraps SES events when delivered via SNS->SQS.
-type SNSNotification struct {
-	Type             string `json:"Type"`
-	MessageId        string `json:"MessageId"`
-	TopicArn         string `json:"TopicArn"`
-	Message          string `json:"Message"` // Contains the actual SES event JSON
-	Timestamp        string `json:"Timestamp"`
-	SignatureVersion string `json:"SignatureVersion"`
-}
-
 // SESEvent is the common structure for SES sending events.
 type SESEvent struct {
 	EventType string     `json:"eventType"`
@@ -51,16 +41,16 @@ type SESEvent struct {
 
 // MailInfo contains information about the sent email.
 type MailInfo struct {
-	Timestamp        string            `json:"timestamp"`
-	MessageId        string            `json:"messageId"`
-	Source           string            `json:"source"`
-	SourceArn        string            `json:"sourceArn"`
-	SendingAccountId string            `json:"sendingAccountId"`
-	Destination      []string          `json:"destination"`
-	HeadersTruncated bool              `json:"headersTruncated"`
-	Headers          []Header          `json:"headers"`
-	CommonHeaders    CommonHeaders     `json:"commonHeaders"`
-	Tags             map[string]string `json:"tags"`
+	Timestamp        string              `json:"timestamp"`
+	MessageId        string              `json:"messageId"`
+	Source           string              `json:"source"`
+	SourceArn        string              `json:"sourceArn"`
+	SendingAccountId string              `json:"sendingAccountId"`
+	Destination      []string            `json:"destination"`
+	HeadersTruncated bool                `json:"headersTruncated"`
+	Headers          []Header            `json:"headers"`
+	CommonHeaders    CommonHeaders       `json:"commonHeaders"`
+	Tags             map[string][]string `json:"tags"` // SES sends tags as map of tag name to array of values
 }
 
 // Header represents an email header.
@@ -116,50 +106,6 @@ type Delivery struct {
 	Recipients           []string `json:"recipients"`
 	SmtpResponse         string   `json:"smtpResponse"`
 	ReportingMTA         string   `json:"reportingMTA"`
-}
-
-// InboundEmailNotification is the SES inbound email notification structure.
-type InboundEmailNotification struct {
-	NotificationType string          `json:"notificationType"` // "Received"
-	Mail             InboundMailInfo `json:"mail"`
-	Receipt          InboundReceipt  `json:"receipt"`
-	Content          string          `json:"content,omitempty"` // Raw email if included
-}
-
-// InboundMailInfo contains information about the received email.
-type InboundMailInfo struct {
-	Timestamp        string        `json:"timestamp"`
-	MessageId        string        `json:"messageId"`
-	Source           string        `json:"source"`
-	Destination      []string      `json:"destination"`
-	HeadersTruncated bool          `json:"headersTruncated"`
-	CommonHeaders    CommonHeaders `json:"commonHeaders"`
-}
-
-// InboundReceipt contains receipt processing information.
-type InboundReceipt struct {
-	Timestamp            string        `json:"timestamp"`
-	ProcessingTimeMillis int64         `json:"processingTimeMillis"`
-	Recipients           []string      `json:"recipients"`
-	SpamVerdict          VerdictInfo   `json:"spamVerdict"`
-	VirusVerdict         VerdictInfo   `json:"virusVerdict"`
-	SPFVerdict           VerdictInfo   `json:"spfVerdict"`
-	DKIMVerdict          VerdictInfo   `json:"dkimVerdict"`
-	DMARCVerdict         VerdictInfo   `json:"dmarcVerdict"`
-	Action               ReceiptAction `json:"action"`
-}
-
-// VerdictInfo contains a scan verdict.
-type VerdictInfo struct {
-	Status string `json:"status"` // "PASS", "FAIL", "GRAY", "PROCESSING_FAILED"
-}
-
-// ReceiptAction describes what action was taken on the email.
-type ReceiptAction struct {
-	Type       string `json:"type"` // "S3", "SNS", "Lambda", etc.
-	TopicArn   string `json:"topicArn,omitempty"`
-	BucketName string `json:"bucketName,omitempty"`
-	ObjectKey  string `json:"objectKey,omitempty"`
 }
 
 // S3EventDetail is the EventBridge detail for S3 object events.

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 // Handler processes a specific type of event.
@@ -64,18 +63,7 @@ func (r *Router) Route(ctx context.Context, body string) error {
 		return r.routeEventBridge(ctx, &envelope, body)
 	}
 
-	// Try SNS wrapper (legacy)
-	var snsNotification SNSNotification
-	if err := json.Unmarshal([]byte(body), &snsNotification); err == nil && snsNotification.Type != "" {
-		body = snsNotification.Message
-	}
-
-	// Check for inbound email notification (legacy SNS format)
-	if strings.Contains(body, `"notificationType":"Received"`) || strings.Contains(body, `"receipt":{`) {
-		return r.routeLegacyInbound(ctx, body)
-	}
-
-	// Parse as SES sending event
+	// Parse as SES sending event (direct format)
 	return r.routeSending(ctx, body)
 }
 
@@ -117,25 +105,6 @@ func (r *Router) routeS3Event(ctx context.Context, envelope *EventEnvelope) erro
 
 	fmt.Printf("S3 event from bucket %s not handled (expected %s)\n", detail.Bucket.Name, r.inboundBucket)
 	return nil
-}
-
-// routeLegacyInbound handles legacy inbound email notifications (via SNS).
-func (r *Router) routeLegacyInbound(ctx context.Context, body string) error {
-	var event InboundEmailNotification
-	if err := json.Unmarshal([]byte(body), &event); err != nil {
-		return fmt.Errorf("failed to parse inbound email event: %w", err)
-	}
-
-	if r.inboundHandler == nil {
-		return fmt.Errorf("no handler registered for inbound emails")
-	}
-
-	// Extract bucket and key from receipt action
-	if event.Receipt.Action.Type == "S3" {
-		return r.inboundHandler.HandleS3Event(ctx, event.Receipt.Action.BucketName, event.Receipt.Action.ObjectKey)
-	}
-
-	return fmt.Errorf("unsupported inbound action type: %s", event.Receipt.Action.Type)
 }
 
 // routeSending handles SES sending events (bounce, complaint, delivery, etc).

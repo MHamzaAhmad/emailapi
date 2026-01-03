@@ -151,38 +151,6 @@ func TestRouter_Route_SendingEvents(t *testing.T) {
 	})
 }
 
-func TestRouter_Route_SNSWrapper(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	ctx := context.Background()
-	router := NewRouter()
-	handler := NewMockHandler(ctrl)
-	router.RegisterHandler(EventTypeBounce, handler)
-
-	// Inner SES event
-	sesEvent := SESEvent{
-		EventType: "Bounce",
-		Mail:      MailInfo{MessageId: "msg_1"},
-		Bounce:    &Bounce{BounceType: "Permanent"},
-	}
-	sesBody, _ := json.Marshal(sesEvent)
-
-	// Wrap in SNS notification
-	snsNotification := SNSNotification{
-		Type:      "Notification",
-		MessageId: "sns_msg_1",
-		TopicArn:  "arn:aws:sns:us-east-1:123456789:ses-events",
-		Message:   string(sesBody),
-	}
-	body, _ := json.Marshal(snsNotification)
-
-	err := router.Route(ctx, string(body))
-	require.NoError(t, err)
-	assert.True(t, handler.handleCalled)
-	assert.Equal(t, "Bounce", handler.lastEvent.EventType)
-}
-
 func TestRouter_Route_EventBridge_S3(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -274,88 +242,6 @@ func TestRouter_Route_EventBridge_SES(t *testing.T) {
 	err := router.Route(ctx, string(body))
 	require.NoError(t, err)
 	assert.True(t, handler.handleCalled)
-}
-
-func TestRouter_Route_LegacyInbound(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	ctx := context.Background()
-	router := NewRouter()
-	inboundHandler := NewMockInboundHandler(ctrl)
-	router.RegisterInboundHandler(inboundHandler, "inbound-bucket")
-
-	// Legacy SNS inbound notification
-	inboundNotification := InboundEmailNotification{
-		NotificationType: "Received",
-		Mail: InboundMailInfo{
-			MessageId: "inbound_1",
-			Source:    "sender@example.com",
-		},
-		Receipt: InboundReceipt{
-			Recipients: []string{"to@myapp.com"},
-			Action: ReceiptAction{
-				Type:       "S3",
-				BucketName: "inbound-bucket",
-				ObjectKey:  "emails/inbound_1",
-			},
-		},
-	}
-	body, _ := json.Marshal(inboundNotification)
-
-	err := router.Route(ctx, string(body))
-	require.NoError(t, err)
-	assert.True(t, inboundHandler.handleCalled)
-	assert.Equal(t, "inbound-bucket", inboundHandler.lastBucket)
-	assert.Equal(t, "emails/inbound_1", inboundHandler.lastKey)
-}
-
-func TestRouter_Route_LegacyInbound_NoHandler(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	ctx := context.Background()
-	router := NewRouter()
-	// No inbound handler registered
-
-	inboundNotification := InboundEmailNotification{
-		NotificationType: "Received",
-		Receipt: InboundReceipt{
-			Action: ReceiptAction{
-				Type: "S3",
-			},
-		},
-	}
-	body, _ := json.Marshal(inboundNotification)
-
-	err := router.Route(ctx, string(body))
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "no handler registered")
-}
-
-func TestRouter_Route_LegacyInbound_UnsupportedAction(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	ctx := context.Background()
-	router := NewRouter()
-	inboundHandler := NewMockInboundHandler(ctrl)
-	router.RegisterInboundHandler(inboundHandler, "bucket")
-
-	// Non-S3 action type
-	inboundNotification := InboundEmailNotification{
-		NotificationType: "Received",
-		Receipt: InboundReceipt{
-			Action: ReceiptAction{
-				Type: "Lambda",
-			},
-		},
-	}
-	body, _ := json.Marshal(inboundNotification)
-
-	err := router.Route(ctx, string(body))
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "unsupported inbound action type")
 }
 
 func TestRouter_Route_InvalidJSON(t *testing.T) {

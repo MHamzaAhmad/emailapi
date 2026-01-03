@@ -6,7 +6,7 @@
  * 
  * @example
  * ```ts
- * import { createClient } from '@emailapi/sdk'
+ * import { createClient } from 'simpleemailapi'
  * 
  * const client = createClient({ apiKey: 'em_...' })
  * 
@@ -20,7 +20,7 @@
  * 
  * console.log(result.id, result.status)
  * 
- * // Stream events with typed callbacks
+ * // Stream events - runs in background worker thread
  * const controller = client.onReceive({
  *   onDelivered: (event) => console.log('Delivered to:', event.recipients),
  *   onReplied: (event) => console.log('Reply from:', event.from),
@@ -36,21 +36,23 @@
 
 import { createClient as createConnectClient, type Client } from '@connectrpc/connect'
 import { createGrpcTransport } from '@connectrpc/connect-node'
+import { Worker } from 'worker_threads'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 import type { Interceptor, Transport } from '@connectrpc/connect'
 
 // Generated service definitions (source of truth)
 import { EmailService } from './gen/v1/email_pb'
 import { DomainService } from './gen/v1/domain_pb'
-import {
-    EventType,
-    type EmailSentEvent,
-    type EmailDeliveredEvent,
-    type EmailBouncedEvent,
-    type EmailComplainedEvent,
-    type EmailRejectedEvent,
-    type EmailDelayedEvent,
-    type EmailRepliedEvent,
-    type EmailFailedEvent,
+import type {
+    EmailSentEvent,
+    EmailDeliveredEvent,
+    EmailBouncedEvent,
+    EmailComplainedEvent,
+    EmailRejectedEvent,
+    EmailDelayedEvent,
+    EmailRepliedEvent,
+    EmailFailedEvent,
 } from './gen/v1/events_pb'
 
 // Re-export all proto types for SDK consumers
@@ -89,6 +91,11 @@ export interface ClientOptions {
 /**
  * Options for the `onReceive` event stream.
  * Define only the callbacks you care about - no need to handle every event type.
+ * 
+ * Behind the scenes, onReceive:
+ * - Runs in a worker thread (non-blocking)
+ * - Auto-reconnects on disconnect
+ * - Resumes from last cursor
  */
 export interface EventHandlers {
     /**
@@ -104,73 +111,46 @@ export interface EventHandlers {
      */
     batchSize?: number
 
-    /**
-     * Called when an email is accepted for delivery.
-     */
+    /** Called when an email is accepted for delivery. */
     onSent?: (event: EmailSentEvent) => void
 
-    /**
-     * Called when an email is successfully delivered to the recipient's mailbox.
-     */
+    /** Called when an email is successfully delivered. */
     onDelivered?: (event: EmailDeliveredEvent) => void
 
-    /**
-     * Called when an email bounces (hard or soft bounce).
-     */
+    /** Called when an email bounces. */
     onBounced?: (event: EmailBouncedEvent) => void
 
-    /**
-     * Called when a recipient marks the email as spam.
-     */
+    /** Called when a recipient marks the email as spam. */
     onComplained?: (event: EmailComplainedEvent) => void
 
-    /**
-     * Called when SES rejects the email before sending.
-     */
+    /** Called when SES rejects the email. */
     onRejected?: (event: EmailRejectedEvent) => void
 
-    /**
-     * Called when email delivery is delayed.
-     */
+    /** Called when email delivery is delayed. */
     onDelayed?: (event: EmailDelayedEvent) => void
 
-    /**
-     * Called when a reply to a sent email is received.
-     */
+    /** Called when a reply is received. */
     onReplied?: (event: EmailRepliedEvent) => void
 
-    /**
-     * Called when email sending fails permanently.
-     */
+    /** Called when email sending fails permanently. */
     onFailed?: (event: EmailFailedEvent) => void
 
-    /**
-     * Called when an error occurs in the stream.
-     */
+    /** Called when an error occurs in the stream. */
     onError?: (error: Error) => void
 }
 
 /**
  * Email API client interface.
- * Provides access to all Email API services.
  */
 export interface EmailApiClient {
-    /**
-     * Email service client.
-     * Use for sending emails and streaming events.
-     */
+    /** Email service client. */
     email: Client<typeof EmailService>
 
-    /**
-     * Domain service client.
-     * Use for managing sending domains.
-     */
+    /** Domain service client. */
     domains: Client<typeof DomainService>
 
     /**
      * Send an email.
-     * Shortcut for `client.email.sendEmail()`.
-     * 
      * @example
      * ```ts
      * const result = await client.send({
@@ -185,27 +165,17 @@ export interface EmailApiClient {
 
     /**
      * Stream events in real-time with typed callbacks.
-     * Define only the event handlers you need.
+     * 
+     * Runs in a background worker thread for non-blocking operation.
+     * Auto-reconnects on disconnect with exponential backoff.
      * 
      * @returns AbortController to stop the stream
      * 
      * @example
      * ```ts
      * const controller = client.onReceive({
-     *   cursor: '0',
-     *   onDelivered: (event) => {
-     *     console.log('Delivered to:', event.recipients)
-     *   },
-     *   onReplied: (event) => {
-     *     console.log('Reply from:', event.from)
-     *     console.log('Message:', event.body)
-     *   },
-     *   onBounced: (event) => {
-     *     console.log('Bounced:', event.bounceType, event.recipients)
-     *   },
-     *   onError: (err) => {
-     *     console.error('Stream error:', err)
-     *   }
+     *   onReplied: (event) => console.log('Reply from:', event.from),
+     *   onBounced: (event) => console.log('Bounced:', event.bounceType),
      * })
      * 
      * // Stop listening when done
@@ -217,40 +187,6 @@ export interface EmailApiClient {
 
 /**
  * Create an Email API client.
- * 
- * @param options - Client configuration options
- * @returns A fully typed Email API client
- * 
- * @example
- * ```ts
- * import { createClient } from '@emailapi/sdk'
- * 
- * const client = createClient({ apiKey: 'em_...' })
- * 
- * // Send an email
- * const result = await client.send({
- *   from: 'hello@yourdomain.com',
- *   to: ['user@example.com'],
- *   subject: 'Hello!',
- *   body: 'World'
- * })
- * 
- * // Stream events with typed handlers
- * const controller = client.onReceive({
- *   onReplied: (event) => {
- *     console.log('Got reply from:', event.from)
- *     console.log('Subject:', event.subject)
- *     console.log('Body:', event.body)
- *   },
- *   onBounced: (event) => {
- *     console.log('Email bounced:', event.bounceType)
- *   },
- *   onError: (err) => console.error(err)
- * })
- * 
- * // Later: stop the stream
- * controller.abort()
- * ```
  */
 export function createClient(options: ClientOptions): EmailApiClient {
     const baseUrl = options.baseUrl ?? 'https://api.simpleemailapi.dev'
@@ -268,68 +204,75 @@ export function createClient(options: ClientOptions): EmailApiClient {
     const email = createConnectClient(EmailService, transport)
     const domains = createConnectClient(DomainService, transport)
 
+    /**
+     * onReceive - Worker thread backed event streaming
+     * 
+     * Spawns a worker thread to handle streaming, keeping main thread responsive.
+     */
     function onReceive(handlers: EventHandlers): AbortController {
         const controller = new AbortController()
 
-            // Start streaming in the background
-            ; (async () => {
-                try {
-                    const stream = email.streamEvents(
-                        {
-                            cursor: handlers.cursor ?? '0',
-                            eventTypes: [],
-                            batchSize: handlers.batchSize ?? 10,
-                        },
-                        { signal: controller.signal }
-                    )
+        // Get path to worker runtime
+        const __filename = fileURLToPath(import.meta.url)
+        const __dirname = dirname(__filename)
+        const workerPath = join(__dirname, 'worker-runtime.js')
 
-                    for await (const event of stream) {
-                        // Skip heartbeat events
-                        if (event.type === EventType.HEARTBEAT) {
-                            continue
-                        }
+        // Spawn worker with config
+        const worker = new Worker(workerPath, {
+            workerData: {
+                apiKey: options.apiKey,
+                baseUrl,
+                cursor: handlers.cursor ?? '0',
+                batchSize: handlers.batchSize ?? 10,
+            },
+        })
 
-                        // Dispatch to the appropriate handler based on payload type
-                        const payload = event.payload
-                        if (!payload || payload.case === undefined) {
-                            continue
-                        }
+        // Handle messages from worker
+        worker.on('message', (msg: { type: string; payload?: unknown; cursor?: string }) => {
+            if (msg.type === 'event' && msg.payload) {
+                const { case: eventCase, value } = msg.payload as { case: string; value: unknown }
 
-                        switch (payload.case) {
-                            case 'emailSent':
-                                handlers.onSent?.(payload.value)
-                                break
-                            case 'emailDelivered':
-                                handlers.onDelivered?.(payload.value)
-                                break
-                            case 'emailBounced':
-                                handlers.onBounced?.(payload.value)
-                                break
-                            case 'emailComplained':
-                                handlers.onComplained?.(payload.value)
-                                break
-                            case 'emailRejected':
-                                handlers.onRejected?.(payload.value)
-                                break
-                            case 'emailDelayed':
-                                handlers.onDelayed?.(payload.value)
-                                break
-                            case 'emailReplied':
-                                handlers.onReplied?.(payload.value)
-                                break
-                            case 'emailFailed':
-                                handlers.onFailed?.(payload.value)
-                                break
-                        }
-                    }
-                } catch (err) {
-                    // Don't report abort errors
-                    if (err instanceof Error && err.name === 'AbortError') {
-                        return
-                    }
-                    handlers.onError?.(err instanceof Error ? err : new Error(String(err)))
+                switch (eventCase) {
+                    case 'emailSent':
+                        handlers.onSent?.(value as EmailSentEvent)
+                        break
+                    case 'emailDelivered':
+                        handlers.onDelivered?.(value as EmailDeliveredEvent)
+                        break
+                    case 'emailBounced':
+                        handlers.onBounced?.(value as EmailBouncedEvent)
+                        break
+                    case 'emailComplained':
+                        handlers.onComplained?.(value as EmailComplainedEvent)
+                        break
+                    case 'emailRejected':
+                        handlers.onRejected?.(value as EmailRejectedEvent)
+                        break
+                    case 'emailDelayed':
+                        handlers.onDelayed?.(value as EmailDelayedEvent)
+                        break
+                    case 'emailReplied':
+                        handlers.onReplied?.(value as EmailRepliedEvent)
+                        break
+                    case 'emailFailed':
+                        handlers.onFailed?.(value as EmailFailedEvent)
+                        break
                 }
-            })()
+            } else if (msg.type === 'error') {
+                handlers.onError?.(new Error(String(msg.payload)))
+            }
+        })
+
+        worker.on('error', (err: Error) => {
+            handlers.onError?.(err)
+        })
+
+        // Wire up abort controller
+        controller.signal.addEventListener('abort', () => {
+            worker.postMessage({ type: 'abort' })
+            // Give worker time to clean up, then terminate
+            setTimeout(() => worker.terminate(), 1000)
+        })
 
         return controller
     }
@@ -341,4 +284,3 @@ export function createClient(options: ClientOptions): EmailApiClient {
         onReceive,
     }
 }
-

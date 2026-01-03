@@ -258,13 +258,25 @@ func main() {
 		WebRiskClient:          webRiskClient,
 		UnsubscribeBaseURL:     cfg.UnsubscribeBaseURL,
 		UnsubscribeTokenSecret: cfg.UnsubscribeTokenSecret,
+		InboundBucket:          cfg.S3InboundBucket,
 	})
 
-	// Register SQS poller worker if SQS is configured
+	// Start SQS consumer goroutine if configured
+	// Uses a cancellable context for graceful shutdown
+	sqsCtx, sqsCancel := context.WithCancel(context.Background())
+	defer sqsCancel()
 	if svc.SQSEvent != nil {
-		sqsPoller := worker.NewSQSPollerWorker(svc.SQSEvent.GetClient(), svc.SQSEvent.GetRouter())
-		river.AddWorker(workers, sqsPoller)
-		logger.Info().Msg("✓ Registered SQS poller worker")
+		sqsConsumer := sqs.NewConsumer(
+			svc.SQSEvent.GetClient(),
+			svc.SQSEvent.GetRouter(),
+			sqs.DefaultConsumerConfig(),
+		)
+		go func() {
+			logger.Info().Msg("✓ Starting SQS consumer")
+			if err := sqsConsumer.Start(sqsCtx); err != nil {
+				logger.Error().Err(err).Msg("SQS consumer stopped with error")
+			}
+		}()
 	}
 
 	// Sync unsubscribe list from PostgreSQL to Redis on startup
