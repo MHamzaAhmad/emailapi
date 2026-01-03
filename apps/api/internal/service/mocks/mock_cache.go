@@ -82,6 +82,20 @@ func (mr *MockCacheMockRecorder) MX() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MX", reflect.TypeOf((*MockCache)(nil).MX))
 }
 
+// PendingAttachment mocks base method.
+func (m *MockCache) PendingAttachment() redis.PendingAttachmentCacheInterface {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PendingAttachment")
+	ret0, _ := ret[0].(redis.PendingAttachmentCacheInterface)
+	return ret0
+}
+
+// PendingAttachment indicates an expected call of PendingAttachment.
+func (mr *MockCacheMockRecorder) PendingAttachment() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PendingAttachment", reflect.TypeOf((*MockCache)(nil).PendingAttachment))
+}
+
 // Reputation mocks base method.
 func (m *MockCache) Reputation() redis.ReputationCacheInterface {
 	m.ctrl.T.Helper()
