@@ -222,8 +222,8 @@ func main() {
 		logger.Fatal().Err(err).Msg("Failed to create River client")
 	}
 
-	// Register attachment worker (needs riverClient reference)
-	attachmentWorker := worker.NewAttachmentWorker(s3Factory, riverClient)
+	// Register attachment worker (uses PendingAttachmentCache for event-driven GuardDuty integration)
+	attachmentWorker := worker.NewAttachmentWorker(s3Factory, cacheAggregator.PendingAttachment())
 	river.AddWorker(workers, attachmentWorker)
 
 	// Register reputation worker for async evaluation

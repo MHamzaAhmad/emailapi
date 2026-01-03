@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/riverqueue/river"
-	"github.com/riverqueue/river/rivertype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
 	"github.com/emailapi/api/internal/external/s3"
 	s3Mocks "github.com/emailapi/api/internal/external/s3/mocks"
-	"github.com/emailapi/api/internal/worker/mocks"
+	redisrepo "github.com/emailapi/api/internal/repository/redis"
+	redisMocks "github.com/emailapi/api/internal/repository/redis/mocks"
 )
 
 func TestAttachmentWorker_Work_DryRun(t *testing.T) {
@@ -20,9 +20,9 @@ func TestAttachmentWorker_Work_DryRun(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockS3Factory := s3Mocks.NewMockFactoryInterface(ctrl)
-	mockRiver := mocks.NewMockRiverClient(ctrl)
+	mockPendingCache := redisMocks.NewMockPendingAttachmentCacheInterface(ctrl)
 
-	worker := NewAttachmentWorker(mockS3Factory, mockRiver)
+	worker := NewAttachmentWorker(mockS3Factory, mockPendingCache)
 	ctx := context.Background()
 
 	job := &river.Job[ProcessAttachmentsArgs]{
@@ -35,17 +35,7 @@ func TestAttachmentWorker_Work_DryRun(t *testing.T) {
 		},
 	}
 
-	// Expect River Insert with DryRun=true and fake keys
-	mockRiver.EXPECT().Insert(ctx, gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, args river.JobArgs, _ *river.InsertOpts) (*rivertype.JobInsertResult, error) {
-		sendArgs, ok := args.(SendEmailArgs)
-		require.True(t, ok)
-		assert.True(t, sendArgs.DryRun)
-		assert.Equal(t, "email_dry", sendArgs.EmailID)
-		assert.Len(t, sendArgs.AttachmentKeys, 1)
-		assert.Contains(t, sendArgs.AttachmentKeys[0].S3Key, "dry-run")
-		return &rivertype.JobInsertResult{}, nil
-	})
-
+	// Dry run should just log and return nil, no S3 or cache calls
 	err := worker.Work(ctx, job)
 	require.NoError(t, err)
 }
@@ -56,131 +46,103 @@ func TestAttachmentWorker_Work_Success(t *testing.T) {
 
 	mockS3Factory := s3Mocks.NewMockFactoryInterface(ctrl)
 	mockS3Client := s3Mocks.NewMockClient(ctrl)
-	mockRiver := mocks.NewMockRiverClient(ctrl)
+	mockPendingCache := redisMocks.NewMockPendingAttachmentCacheInterface(ctrl)
 
-	worker := NewAttachmentWorker(mockS3Factory, mockRiver)
+	worker := NewAttachmentWorker(mockS3Factory, mockPendingCache)
 	ctx := context.Background()
 
-	t.Run("first attempt uploads and snoozes", func(t *testing.T) {
-		job := &river.Job[ProcessAttachmentsArgs]{
-			Args: ProcessAttachmentsArgs{
-				EmailID: "email_real",
-				UserID:  "user_1",
-				Attachments: []AttachmentSource{
-					{Filename: "test.txt", ContentType: "text/plain", Base64Content: "SGVsbG8="},
-				},
-				// No UploadedKeys = first attempt
+	job := &river.Job[ProcessAttachmentsArgs]{
+		Args: ProcessAttachmentsArgs{
+			EmailID: "email_real",
+			UserID:  "user_1",
+			From:    "sender@example.com",
+			To:      []string{"recipient@example.com"},
+			Subject: "Test",
+			Attachments: []AttachmentSource{
+				{Filename: "test.txt", ContentType: "text/plain", Base64Content: "SGVsbG8="},
 			},
-		}
+		},
+	}
 
-		// Expect S3 bucket retrieval and upload
-		mockS3Factory.EXPECT().Bucket(s3.BucketAttachments).Return(mockS3Client).AnyTimes()
-		mockS3Client.EXPECT().UploadAttachment(ctx, gomock.Any(), []byte("Hello"), "text/plain").Return(nil)
+	// Expect S3 upload
+	mockS3Factory.EXPECT().Bucket(s3.BucketAttachments).Return(mockS3Client).AnyTimes()
+	mockS3Client.EXPECT().UploadAttachment(ctx, gomock.Any(), []byte("Hello"), "text/plain").Return(nil)
 
-		err := worker.Work(ctx, job)
-		// Should return JobSnooze error
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "JobSnoozeError")
+	// Expect pending cache store
+	mockPendingCache.EXPECT().Store(ctx, gomock.Any()).DoAndReturn(func(_ context.Context, data *redisrepo.PendingAttachmentData) error {
+		assert.Equal(t, "email_real", data.EmailID)
+		assert.Equal(t, "user_1", data.UserID)
+		assert.Len(t, data.AttachmentKeys, 1)
+		assert.Equal(t, 1, data.PendingCount)
+		return nil
 	})
 
-	t.Run("subsequent attempt with clean scan enqueues send", func(t *testing.T) {
-		job := &river.Job[ProcessAttachmentsArgs]{
-			Args: ProcessAttachmentsArgs{
-				EmailID: "email_real",
-				UserID:  "user_1",
-				Attachments: []AttachmentSource{
-					{Filename: "test.txt", ContentType: "text/plain", Base64Content: "SGVsbG8="},
-				},
-				// UploadedKeys present = subsequent attempt
-				UploadedKeys: []AttachmentInfo{
-					{S3Key: "attachments/email_real/uuid/test.txt", Filename: "test.txt", ContentType: "text/plain"},
-				},
-			},
-		}
-
-		// Expect S3 GetObjectTags to return clean status
-		mockS3Factory.EXPECT().Bucket(s3.BucketAttachments).Return(mockS3Client).AnyTimes()
-		mockS3Client.EXPECT().GetObjectTags(ctx, "attachments/email_real/uuid/test.txt").Return(map[string]string{
-			GuardDutyTagKey: ScanStatusClean,
-		}, nil)
-
-		// Expect River Insert with real keys
-		mockRiver.EXPECT().Insert(ctx, gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, args river.JobArgs, _ *river.InsertOpts) (*rivertype.JobInsertResult, error) {
-			sendArgs, ok := args.(SendEmailArgs)
-			require.True(t, ok)
-			assert.False(t, sendArgs.DryRun)
-			assert.Equal(t, "email_real", sendArgs.EmailID)
-			assert.Len(t, sendArgs.AttachmentKeys, 1)
-			return &rivertype.JobInsertResult{}, nil
-		})
-
-		err := worker.Work(ctx, job)
-		require.NoError(t, err)
-	})
+	err := worker.Work(ctx, job)
+	require.NoError(t, err)
 }
 
-func TestAttachmentWorker_Work_ThreatDetected(t *testing.T) {
+func TestAttachmentWorker_Work_UploadError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockS3Factory := s3Mocks.NewMockFactoryInterface(ctrl)
 	mockS3Client := s3Mocks.NewMockClient(ctrl)
-	mockRiver := mocks.NewMockRiverClient(ctrl)
+	mockPendingCache := redisMocks.NewMockPendingAttachmentCacheInterface(ctrl)
 
-	worker := NewAttachmentWorker(mockS3Factory, mockRiver)
+	worker := NewAttachmentWorker(mockS3Factory, mockPendingCache)
 	ctx := context.Background()
 
 	job := &river.Job[ProcessAttachmentsArgs]{
 		Args: ProcessAttachmentsArgs{
-			EmailID: "email_threat",
+			EmailID: "email_fail",
 			UserID:  "user_1",
-			UploadedKeys: []AttachmentInfo{
-				{S3Key: "attachments/email_threat/uuid/malware.exe", Filename: "malware.exe", ContentType: "application/octet-stream"},
+			Attachments: []AttachmentSource{
+				{Filename: "test.txt", ContentType: "text/plain", Base64Content: "SGVsbG8="},
 			},
 		},
 	}
 
-	// Expect S3 GetObjectTags to return threat status
+	// Expect S3 upload failure
 	mockS3Factory.EXPECT().Bucket(s3.BucketAttachments).Return(mockS3Client).AnyTimes()
-	mockS3Client.EXPECT().GetObjectTags(ctx, "attachments/email_threat/uuid/malware.exe").Return(map[string]string{
-		GuardDutyTagKey: ScanStatusThreat,
-	}, nil)
-
-	// Expect cleanup
-	mockS3Client.EXPECT().DeleteObject(ctx, "attachments/email_threat/uuid/malware.exe").Return(nil)
+	mockS3Client.EXPECT().UploadAttachment(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(assert.AnError)
 
 	err := worker.Work(ctx, job)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "malware")
+	assert.Contains(t, err.Error(), "failed to upload")
 }
 
-func TestAttachmentWorker_Work_ScanPending(t *testing.T) {
+func TestAttachmentWorker_Work_CacheError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockS3Factory := s3Mocks.NewMockFactoryInterface(ctrl)
 	mockS3Client := s3Mocks.NewMockClient(ctrl)
-	mockRiver := mocks.NewMockRiverClient(ctrl)
+	mockPendingCache := redisMocks.NewMockPendingAttachmentCacheInterface(ctrl)
 
-	worker := NewAttachmentWorker(mockS3Factory, mockRiver)
+	worker := NewAttachmentWorker(mockS3Factory, mockPendingCache)
 	ctx := context.Background()
 
 	job := &river.Job[ProcessAttachmentsArgs]{
 		Args: ProcessAttachmentsArgs{
-			EmailID: "email_pending",
+			EmailID: "email_cache_fail",
 			UserID:  "user_1",
-			UploadedKeys: []AttachmentInfo{
-				{S3Key: "attachments/email_pending/uuid/file.pdf", Filename: "file.pdf", ContentType: "application/pdf"},
+			Attachments: []AttachmentSource{
+				{Filename: "test.txt", ContentType: "text/plain", Base64Content: "SGVsbG8="},
 			},
 		},
 	}
 
-	// Expect S3 GetObjectTags to return no tag (still scanning)
+	// Expect S3 upload success
 	mockS3Factory.EXPECT().Bucket(s3.BucketAttachments).Return(mockS3Client).AnyTimes()
-	mockS3Client.EXPECT().GetObjectTags(ctx, "attachments/email_pending/uuid/file.pdf").Return(map[string]string{}, nil)
+	mockS3Client.EXPECT().UploadAttachment(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+
+	// Expect cache storage failure
+	mockPendingCache.EXPECT().Store(ctx, gomock.Any()).Return(assert.AnError)
+
+	// Expect cleanup of uploaded attachment
+	mockS3Client.EXPECT().DeleteObject(ctx, gomock.Any()).Return(nil)
 
 	err := worker.Work(ctx, job)
-	// Should return JobSnooze error (still waiting)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "JobSnoozeError")
+	assert.Contains(t, err.Error(), "failed to store pending data")
 }

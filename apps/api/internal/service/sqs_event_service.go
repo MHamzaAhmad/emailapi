@@ -7,6 +7,7 @@ import (
 	"github.com/emailapi/api/internal/events/handlers"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/sqs"
+	redisrepo "github.com/emailapi/api/internal/repository/redis"
 	"github.com/emailapi/api/internal/webhook"
 )
 
@@ -27,6 +28,9 @@ type SQSEventServiceDeps struct {
 	S3Factory        s3.FactoryInterface
 	InboundProcessor InboundEmailProcessor
 	InboundBucket    string // S3 bucket name for inbound emails
+	// GuardDuty integration
+	PendingAttachmentCache redisrepo.PendingAttachmentCacheInterface
+	RiverClient            handlers.RiverClient
 }
 
 // InboundEmailProcessor processes raw inbound emails.
@@ -68,6 +72,16 @@ func NewSQSEventService(deps SQSEventServiceDeps) *SQSEventService {
 	if deps.InboundProcessor != nil && deps.InboundBucket != "" {
 		inboundHandler := handlers.NewInboundEmailHandler(deps.S3Factory, deps.InboundProcessor)
 		router.RegisterInboundHandler(inboundHandler, deps.InboundBucket)
+	}
+
+	// Register GuardDuty handler if dependencies are available
+	if deps.PendingAttachmentCache != nil && deps.RiverClient != nil {
+		guarddutyHandler := handlers.NewGuardDutyHandler(
+			deps.PendingAttachmentCache,
+			deps.RiverClient,
+			deps.S3Factory,
+		)
+		router.RegisterGuardDutyHandler(guarddutyHandler)
 	}
 
 	return &SQSEventService{

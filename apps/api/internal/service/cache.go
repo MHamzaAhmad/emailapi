@@ -15,4 +15,5 @@ type Cache interface {
 	MX() rediscache.MXCacheInterface
 	Reputation() rediscache.ReputationCacheInterface
 	Unsubscribe() rediscache.UnsubscribeCacheInterface
+	PendingAttachment() rediscache.PendingAttachmentCacheInterface
 }

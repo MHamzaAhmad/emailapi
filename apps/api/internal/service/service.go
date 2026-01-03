@@ -134,15 +134,23 @@ func NewWithDeps(deps ServiceDeps) *Service {
 
 	// Initialize SQS event service if SQS client is available
 	if deps.SQSClient != nil {
+		// Get pending attachment cache for GuardDuty handler
+		var pendingAttachmentCache rediscache.PendingAttachmentCacheInterface
+		if deps.Cache != nil {
+			pendingAttachmentCache = deps.Cache.PendingAttachment()
+		}
+
 		svc.SQSEvent = NewSQSEventService(SQSEventServiceDeps{
-			SQSClient:        deps.SQSClient,
-			Analytics:        deps.Analytics,
-			WebhookSender:    deps.WebhookSender,
-			SuppressionRepo:  deps.SuppressionRepo,
-			ReputationSvc:    svc.Reputation,
-			S3Factory:        deps.S3Factory,
-			InboundProcessor: svc.InboundEmail, // Wire inbound processor
-			InboundBucket:    "inbound-emails", // Should probably be configurable or discovered
+			SQSClient:              deps.SQSClient,
+			Analytics:              deps.Analytics,
+			WebhookSender:          deps.WebhookSender,
+			SuppressionRepo:        deps.SuppressionRepo,
+			ReputationSvc:          svc.Reputation,
+			S3Factory:              deps.S3Factory,
+			InboundProcessor:       svc.InboundEmail, // Wire inbound processor
+			InboundBucket:          "inbound-emails", // Should probably be configurable or discovered
+			PendingAttachmentCache: pendingAttachmentCache,
+			RiverClient:            deps.RiverClient,
 		})
 	}
 

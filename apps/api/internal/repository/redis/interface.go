@@ -1,6 +1,6 @@
 package redis
 
-//go:generate mockgen -destination=mocks/mock_cache.go -package=mocks github.com/emailapi/api/internal/repository/redis DomainCacheInterface,APIKeyCacheInterface,UserCacheInterface,MXCacheInterface,ReputationCacheInterface,UnsubscribeCacheInterface
+//go:generate mockgen -destination=mocks/mock_cache.go -package=mocks github.com/emailapi/api/internal/repository/redis DomainCacheInterface,APIKeyCacheInterface,UserCacheInterface,MXCacheInterface,ReputationCacheInterface,UnsubscribeCacheInterface,PendingAttachmentCacheInterface
 
 import (
 	"context"
@@ -76,9 +76,20 @@ type UnsubscribeCacheInterface interface {
 	Delete(ctx context.Context, userID, emailHash string) error
 }
 
+// PendingAttachmentCacheInterface defines the interface for pending attachment caching.
+// Used for event-driven attachment scanning with GuardDuty.
+type PendingAttachmentCacheInterface interface {
+	Store(ctx context.Context, data *PendingAttachmentData) error
+	GetByEmailID(ctx context.Context, emailID string) (*PendingAttachmentData, error)
+	GetByS3Key(ctx context.Context, s3Key string) (*PendingAttachmentData, error)
+	Delete(ctx context.Context, emailID string) error
+	MarkAttachmentScanned(ctx context.Context, s3Key string) (*PendingAttachmentData, bool, error)
+}
+
 // Ensure concrete types implement interfaces
 var _ DomainCacheInterface = (*DomainCache)(nil)
 var _ APIKeyCacheInterface = (*APIKeyCache)(nil)
 var _ UserCacheInterface = (*UserCache)(nil)
 var _ ReputationCacheInterface = (*ReputationCache)(nil)
 var _ UnsubscribeCacheInterface = (*UnsubscribeCache)(nil)
+var _ PendingAttachmentCacheInterface = (*PendingAttachmentCache)(nil)

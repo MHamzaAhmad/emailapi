@@ -9,23 +9,25 @@ const (
 
 // CacheAggregator implements service.Cache using Redis.
 type CacheAggregator struct {
-	domain      *DomainCache
-	apiKey      *APIKeyCache
-	user        *UserCache
-	mx          *MXCache
-	reputation  *ReputationCache
-	unsubscribe *UnsubscribeCache
+	domain            *DomainCache
+	apiKey            *APIKeyCache
+	user              *UserCache
+	mx                *MXCache
+	reputation        *ReputationCache
+	unsubscribe       *UnsubscribeCache
+	pendingAttachment *PendingAttachmentCache
 }
 
 // NewCacheAggregator creates a new CacheAggregator with all caches.
 func NewCacheAggregator(client *Client) *CacheAggregator {
 	return &CacheAggregator{
-		domain:      NewDomainCache(client, defaultCacheTTL),
-		apiKey:      NewAPIKeyCache(client, defaultCacheTTL),
-		user:        NewUserCache(client, defaultCacheTTL),
-		mx:          NewMXCache(client),
-		reputation:  NewReputationCache(client),
-		unsubscribe: NewUnsubscribeCache(client),
+		domain:            NewDomainCache(client, defaultCacheTTL),
+		apiKey:            NewAPIKeyCache(client, defaultCacheTTL),
+		user:              NewUserCache(client, defaultCacheTTL),
+		mx:                NewMXCache(client),
+		reputation:        NewReputationCache(client),
+		unsubscribe:       NewUnsubscribeCache(client),
+		pendingAttachment: NewPendingAttachmentCache(client),
 	}
 }
 
@@ -57,4 +59,9 @@ func (c *CacheAggregator) Reputation() ReputationCacheInterface {
 // Unsubscribe returns the unsubscribe cache.
 func (c *CacheAggregator) Unsubscribe() UnsubscribeCacheInterface {
 	return c.unsubscribe
+}
+
+// PendingAttachment returns the pending attachment cache.
+func (c *CacheAggregator) PendingAttachment() PendingAttachmentCacheInterface {
+	return c.pendingAttachment
 }

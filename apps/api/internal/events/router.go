@@ -20,11 +20,17 @@ type InboundHandler interface {
 	HandleS3Event(ctx context.Context, bucket, key string) error
 }
 
+// GuardDutyHandler processes GuardDuty scan result events.
+type GuardDutyHandler interface {
+	Handle(ctx context.Context, detail *GuardDutyEventDetail) error
+}
+
 // Router routes incoming SQS messages to appropriate handlers.
 type Router struct {
-	handlers       map[EventType]Handler
-	inboundHandler InboundHandler
-	inboundBucket  string // Expected bucket name for inbound emails
+	handlers         map[EventType]Handler
+	inboundHandler   InboundHandler
+	guarddutyHandler GuardDutyHandler
+	inboundBucket    string // Expected bucket name for inbound emails
 }
 
 // NewRouter creates a new event router.
@@ -43,6 +49,11 @@ func (r *Router) RegisterHandler(eventType EventType, handler Handler) {
 func (r *Router) RegisterInboundHandler(handler InboundHandler, bucketName string) {
 	r.inboundHandler = handler
 	r.inboundBucket = bucketName
+}
+
+// RegisterGuardDutyHandler registers the handler for GuardDuty scan result events.
+func (r *Router) RegisterGuardDutyHandler(handler GuardDutyHandler) {
+	r.guarddutyHandler = handler
 }
 
 // Route parses and routes the message to the appropriate handler.
@@ -78,6 +89,9 @@ func (r *Router) routeEventBridge(ctx context.Context, envelope *EventEnvelope, 
 		// SES event - bounce, complaint, delivery, etc.
 		detailBytes, _ := json.Marshal(envelope.Detail)
 		return r.routeSending(ctx, string(detailBytes))
+	case GuardDutyEventSource:
+		// GuardDuty Malware Protection scan result
+		return r.routeGuardDutyEvent(ctx, envelope)
 	default:
 		fmt.Printf("Unknown EventBridge source: %s\n", envelope.Source)
 		return nil
@@ -140,4 +154,24 @@ func (r *Router) routeSending(ctx context.Context, body string) error {
 	}
 
 	return handler.Handle(ctx, &event)
+}
+
+// routeGuardDutyEvent handles GuardDuty Malware Protection scan result events.
+func (r *Router) routeGuardDutyEvent(ctx context.Context, envelope *EventEnvelope) error {
+	if r.guarddutyHandler == nil {
+		fmt.Printf("No GuardDuty handler registered, skipping event\n")
+		return nil
+	}
+
+	detailBytes, err := json.Marshal(envelope.Detail)
+	if err != nil {
+		return fmt.Errorf("failed to marshal GuardDuty event detail: %w", err)
+	}
+
+	var detail GuardDutyEventDetail
+	if err := json.Unmarshal(detailBytes, &detail); err != nil {
+		return fmt.Errorf("failed to parse GuardDuty event detail: %w", err)
+	}
+
+	return r.guarddutyHandler.Handle(ctx, &detail)
 }

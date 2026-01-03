@@ -17,8 +17,8 @@ interface LogEvent {
 
 export default function Home() {
   // Form State
-  const [from, setFrom] = useState("sender@example.com");
-  const [to, setTo] = useState("recipient@example.com");
+  const [from, setFrom] = useState("sender@halftwin.com");
+  const [to, setTo] = useState("hamzabuzz88@gmail.com");
   const [subject, setSubject] = useState("Test Email");
   const [body, setBody] = useState("This is a test email body.");
   const [isAsync, setIsAsync] = useState(false);
@@ -110,7 +110,7 @@ export default function Home() {
 
     const payload: any = {
       from,
-      to,
+      to: [to], // Backend expects an array of email addresses
       subject,
       body,
       async: isAsync,
