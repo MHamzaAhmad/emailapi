@@ -52,6 +52,7 @@ var publicProcedures = map[string]bool{
 var apiKeyAllowedProcedures = map[string]bool{
 	"/v1.EmailService/SendEmail":     true,
 	"/v1.EmailService/StreamEvents":  true,
+	"/v1.EmailService/AckEvents":     true,
 	"/v1.DomainService/AddDomain":    true,
 	"/v1.DomainService/GetDomain":    true,
 	"/v1.DomainService/ListDomains":  true,
@@ -64,6 +65,7 @@ var apiKeyAllowedProcedures = map[string]bool{
 var requiredScopes = map[string][]domain.Scope{
 	"/v1.EmailService/SendEmail":     {domain.ScopeEmailSend},
 	"/v1.EmailService/StreamEvents":  {domain.ScopeEmailSend}, // Use same scope as send for streaming events
+	"/v1.EmailService/AckEvents":     {domain.ScopeEmailSend}, // Use same scope as send for acking events
 	"/v1.DomainService/AddDomain":    {domain.ScopeDomainWrite},
 	"/v1.DomainService/GetDomain":    {domain.ScopeDomainRead},
 	"/v1.DomainService/ListDomains":  {domain.ScopeDomainRead},

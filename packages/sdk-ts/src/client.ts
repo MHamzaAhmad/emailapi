@@ -233,35 +233,45 @@ export function createClient(options: ClientOptions): EmailApiClient {
         })
 
         // Handle messages from worker
-        worker.on('message', (msg: { type: string; payload?: unknown }) => {
+        worker.on('message', (msg: { type: string; payload?: unknown; eventId?: string }) => {
             if (msg.type === 'event' && msg.payload) {
                 const { case: eventCase, value } = msg.payload as { case: string; value: unknown }
 
-                switch (eventCase) {
-                    case 'emailSent':
-                        handlers.onSent?.(value as EmailSentEvent)
-                        break
-                    case 'emailDelivered':
-                        handlers.onDelivered?.(value as EmailDeliveredEvent)
-                        break
-                    case 'emailBounced':
-                        handlers.onBounced?.(value as EmailBouncedEvent)
-                        break
-                    case 'emailComplained':
-                        handlers.onComplained?.(value as EmailComplainedEvent)
-                        break
-                    case 'emailRejected':
-                        handlers.onRejected?.(value as EmailRejectedEvent)
-                        break
-                    case 'emailDelayed':
-                        handlers.onDelayed?.(value as EmailDelayedEvent)
-                        break
-                    case 'emailReplied':
-                        handlers.onReplied?.(value as EmailRepliedEvent)
-                        break
-                    case 'emailFailed':
-                        handlers.onFailed?.(value as EmailFailedEvent)
-                        break
+                try {
+                    switch (eventCase) {
+                        case 'emailSent':
+                            handlers.onSent?.(value as EmailSentEvent)
+                            break
+                        case 'emailDelivered':
+                            handlers.onDelivered?.(value as EmailDeliveredEvent)
+                            break
+                        case 'emailBounced':
+                            handlers.onBounced?.(value as EmailBouncedEvent)
+                            break
+                        case 'emailComplained':
+                            handlers.onComplained?.(value as EmailComplainedEvent)
+                            break
+                        case 'emailRejected':
+                            handlers.onRejected?.(value as EmailRejectedEvent)
+                            break
+                        case 'emailDelayed':
+                            handlers.onDelayed?.(value as EmailDelayedEvent)
+                            break
+                        case 'emailReplied':
+                            handlers.onReplied?.(value as EmailRepliedEvent)
+                            break
+                        case 'emailFailed':
+                            handlers.onFailed?.(value as EmailFailedEvent)
+                            break
+                    }
+
+                    // After handler completes successfully, tell worker to ack
+                    if (msg.eventId && handlers.ackMode !== 'manual') {
+                        worker.postMessage({ type: 'ack', eventId: msg.eventId })
+                    }
+                } catch (err) {
+                    handlers.onError?.(err instanceof Error ? err : new Error(String(err)))
+                    // Don't ack if handler threw an error - event will be replayed
                 }
             } else if (msg.type === 'error') {
                 handlers.onError?.(new Error(String(msg.payload)))

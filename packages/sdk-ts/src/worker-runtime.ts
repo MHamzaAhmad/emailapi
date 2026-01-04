@@ -27,6 +27,7 @@ interface WorkerConfig {
 interface WorkerMessage {
     type: 'event' | 'connected' | 'disconnected' | 'error'
     payload?: unknown
+    eventId?: string
 }
 
 const config = workerData as WorkerConfig
@@ -48,11 +49,14 @@ let pendingAcks: string[] = []
 let ackFlushTimer: ReturnType<typeof setTimeout> | null = null
 
 // Listen for abort signal from parent
-parentPort?.on('message', (msg: { type: string }) => {
+parentPort?.on('message', (msg: { type: string; eventId?: string }) => {
     if (msg.type === 'abort') {
         shouldStop = true
         // Flush any pending acks before stopping
         flushAcks()
+    } else if (msg.type === 'ack' && msg.eventId) {
+        // Parent confirmed event was handled successfully
+        queueAck(msg.eventId)
     }
 })
 
@@ -95,14 +99,15 @@ function scheduleAckFlush(): void {
     }, ACK_FLUSH_INTERVAL_MS)
 }
 
-async function queueAck(eventId: string): Promise<void> {
+function queueAck(eventId: string): void {
     if (config.ackMode !== 'auto') return
 
     pendingAcks.push(eventId)
 
     // Flush immediately if batch is full
     if (pendingAcks.length >= ACK_BATCH_SIZE) {
-        await flushAcks()
+        // Don't await - let it run in background
+        flushAcks().catch(err => console.error('Flush ack error:', err))
     } else {
         // Otherwise schedule a flush
         scheduleAckFlush()
@@ -149,13 +154,8 @@ async function startStreaming(): Promise<void> {
                             case: payload.case,
                             value: payload.value,
                         },
+                        eventId: event.id, // Include event ID for acking after handler completes
                     })
-
-                    // Queue auto-ack after handler completes
-                    // (we assume handler completed once we send the message)
-                    if (event.id) {
-                        await queueAck(event.id)
-                    }
                 }
             }
 
