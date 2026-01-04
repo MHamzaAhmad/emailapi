@@ -216,7 +216,10 @@ func main() {
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault: {MaxWorkers: 100},
 		},
-		Workers: workers,
+		Workers:                     workers,
+		CompletedJobRetentionPeriod: 24 * time.Hour,
+		CancelledJobRetentionPeriod: 24 * time.Hour,
+		DiscardedJobRetentionPeriod: 7 * 24 * time.Hour,
 	})
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create River client")
