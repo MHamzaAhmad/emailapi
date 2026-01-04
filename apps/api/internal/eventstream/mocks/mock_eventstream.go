@@ -79,17 +79,32 @@ func (m *MockConsumer) EXPECT() *MockConsumerMockRecorder {
 	return m.recorder
 }
 
-// Subscribe mocks base method.
-func (m *MockConsumer) Subscribe(ctx context.Context, userID, cursor string, eventTypes []v1.EventType, batchSize int32) (<-chan *v1.Event, error) {
+// Ack mocks base method.
+func (m *MockConsumer) Ack(ctx context.Context, userID string, eventIDs []string) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Subscribe", ctx, userID, cursor, eventTypes, batchSize)
+	ret := m.ctrl.Call(m, "Ack", ctx, userID, eventIDs)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Ack indicates an expected call of Ack.
+func (mr *MockConsumerMockRecorder) Ack(ctx, userID, eventIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ack", reflect.TypeOf((*MockConsumer)(nil).Ack), ctx, userID, eventIDs)
+}
+
+// Subscribe mocks base method.
+func (m *MockConsumer) Subscribe(ctx context.Context, userID, apiKeyID string, eventTypes []v1.EventType, batchSize int32) (<-chan *v1.Event, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Subscribe", ctx, userID, apiKeyID, eventTypes, batchSize)
 	ret0, _ := ret[0].(<-chan *v1.Event)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Subscribe indicates an expected call of Subscribe.
-func (mr *MockConsumerMockRecorder) Subscribe(ctx, userID, cursor, eventTypes, batchSize any) *gomock.Call {
+func (mr *MockConsumerMockRecorder) Subscribe(ctx, userID, apiKeyID, eventTypes, batchSize any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockConsumer)(nil).Subscribe), ctx, userID, cursor, eventTypes, batchSize)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockConsumer)(nil).Subscribe), ctx, userID, apiKeyID, eventTypes, batchSize)
 }

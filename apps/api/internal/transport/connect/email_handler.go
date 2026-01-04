@@ -46,8 +46,10 @@ func (h *EmailHandler) SendEmail(
 	return connect.NewResponse(result), nil
 }
 
-// StreamEvents streams email events to the client.
-// Sends heartbeat events every 30 seconds to keep the connection alive.
+// StreamEvents streams email events to the client using Redis Consumer Groups.
+// Uses the API key ID as the consumer identifier for at-least-once delivery.
+// Unacknowledged events are automatically replayed on reconnect.
+// Sends heartbeat events every 25 seconds to keep the connection alive.
 func (h *EmailHandler) StreamEvents(
 	ctx context.Context,
 	req *connect.Request[v1.StreamEventsRequest],
@@ -58,6 +60,11 @@ func (h *EmailHandler) StreamEvents(
 		return connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
 	}
 
+	apiKeyID := interceptor.GetAPIKeyID(ctx)
+	if apiKeyID == "" {
+		return connect.NewError(connect.CodeUnauthenticated, errors.New("api key not found"))
+	}
+
 	batchSize := req.Msg.BatchSize
 	if batchSize <= 0 {
 		batchSize = 10
@@ -66,7 +73,7 @@ func (h *EmailHandler) StreamEvents(
 		batchSize = 100
 	}
 
-	events, err := h.svc.StreamEvents(ctx, userID, req.Msg.Cursor, req.Msg.EventTypes, batchSize)
+	events, err := h.svc.StreamEvents(ctx, userID, apiKeyID, req.Msg.EventTypes, batchSize)
 	if err != nil {
 		return connect.NewError(connect.CodeInternal, err)
 	}
@@ -103,4 +110,28 @@ func (h *EmailHandler) StreamEvents(
 			}
 		}
 	}
+}
+
+// AckEvents acknowledges events as processed, preventing replay on reconnect.
+func (h *EmailHandler) AckEvents(
+	ctx context.Context,
+	req *connect.Request[v1.AckEventsRequest],
+) (*connect.Response[v1.AckEventsResponse], error) {
+	userID := interceptor.GetUserID(ctx)
+	if userID == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+	}
+
+	if len(req.Msg.EventIds) == 0 {
+		return connect.NewResponse(&v1.AckEventsResponse{AckedCount: 0}), nil
+	}
+
+	acked, err := h.svc.AckEvents(ctx, userID, req.Msg.EventIds)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	return connect.NewResponse(&v1.AckEventsResponse{
+		AckedCount: int32(acked),
+	}), nil
 }

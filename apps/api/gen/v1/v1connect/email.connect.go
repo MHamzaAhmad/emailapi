@@ -38,6 +38,8 @@ const (
 	// EmailServiceStreamEventsProcedure is the fully-qualified name of the EmailService's StreamEvents
 	// RPC.
 	EmailServiceStreamEventsProcedure = "/v1.EmailService/StreamEvents"
+	// EmailServiceAckEventsProcedure is the fully-qualified name of the EmailService's AckEvents RPC.
+	EmailServiceAckEventsProcedure = "/v1.EmailService/AckEvents"
 )
 
 // EmailServiceClient is a client for the v1.EmailService service.
@@ -45,7 +47,12 @@ type EmailServiceClient interface {
 	// Send an email.
 	SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error)
 	// Stream real-time email events.
+	// Uses Redis Consumer Groups with API key as consumer ID.
+	// Unacknowledged events are automatically replayed on reconnect.
 	StreamEvents(context.Context, *connect.Request[v1.StreamEventsRequest]) (*connect.ServerStreamForClient[v1.Event], error)
+	// Acknowledge events as processed.
+	// Call this after successfully processing events to prevent replay.
+	AckEvents(context.Context, *connect.Request[v1.AckEventsRequest]) (*connect.Response[v1.AckEventsResponse], error)
 }
 
 // NewEmailServiceClient constructs a client for the v1.EmailService service. By default, it uses
@@ -71,6 +78,12 @@ func NewEmailServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(emailServiceMethods.ByName("StreamEvents")),
 			connect.WithClientOptions(opts...),
 		),
+		ackEvents: connect.NewClient[v1.AckEventsRequest, v1.AckEventsResponse](
+			httpClient,
+			baseURL+EmailServiceAckEventsProcedure,
+			connect.WithSchema(emailServiceMethods.ByName("AckEvents")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -78,6 +91,7 @@ func NewEmailServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 type emailServiceClient struct {
 	sendEmail    *connect.Client[v1.SendEmailRequest, v1.SendEmailResponse]
 	streamEvents *connect.Client[v1.StreamEventsRequest, v1.Event]
+	ackEvents    *connect.Client[v1.AckEventsRequest, v1.AckEventsResponse]
 }
 
 // SendEmail calls v1.EmailService.SendEmail.
@@ -90,12 +104,22 @@ func (c *emailServiceClient) StreamEvents(ctx context.Context, req *connect.Requ
 	return c.streamEvents.CallServerStream(ctx, req)
 }
 
+// AckEvents calls v1.EmailService.AckEvents.
+func (c *emailServiceClient) AckEvents(ctx context.Context, req *connect.Request[v1.AckEventsRequest]) (*connect.Response[v1.AckEventsResponse], error) {
+	return c.ackEvents.CallUnary(ctx, req)
+}
+
 // EmailServiceHandler is an implementation of the v1.EmailService service.
 type EmailServiceHandler interface {
 	// Send an email.
 	SendEmail(context.Context, *connect.Request[v1.SendEmailRequest]) (*connect.Response[v1.SendEmailResponse], error)
 	// Stream real-time email events.
+	// Uses Redis Consumer Groups with API key as consumer ID.
+	// Unacknowledged events are automatically replayed on reconnect.
 	StreamEvents(context.Context, *connect.Request[v1.StreamEventsRequest], *connect.ServerStream[v1.Event]) error
+	// Acknowledge events as processed.
+	// Call this after successfully processing events to prevent replay.
+	AckEvents(context.Context, *connect.Request[v1.AckEventsRequest]) (*connect.Response[v1.AckEventsResponse], error)
 }
 
 // NewEmailServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -117,12 +141,20 @@ func NewEmailServiceHandler(svc EmailServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(emailServiceMethods.ByName("StreamEvents")),
 		connect.WithHandlerOptions(opts...),
 	)
+	emailServiceAckEventsHandler := connect.NewUnaryHandler(
+		EmailServiceAckEventsProcedure,
+		svc.AckEvents,
+		connect.WithSchema(emailServiceMethods.ByName("AckEvents")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/v1.EmailService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case EmailServiceSendEmailProcedure:
 			emailServiceSendEmailHandler.ServeHTTP(w, r)
 		case EmailServiceStreamEventsProcedure:
 			emailServiceStreamEventsHandler.ServeHTTP(w, r)
+		case EmailServiceAckEventsProcedure:
+			emailServiceAckEventsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -138,4 +170,8 @@ func (UnimplementedEmailServiceHandler) SendEmail(context.Context, *connect.Requ
 
 func (UnimplementedEmailServiceHandler) StreamEvents(context.Context, *connect.Request[v1.StreamEventsRequest], *connect.ServerStream[v1.Event]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("v1.EmailService.StreamEvents is not implemented"))
+}
+
+func (UnimplementedEmailServiceHandler) AckEvents(context.Context, *connect.Request[v1.AckEventsRequest]) (*connect.Response[v1.AckEventsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.EmailService.AckEvents is not implemented"))
 }

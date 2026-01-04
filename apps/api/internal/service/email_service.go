@@ -447,8 +447,10 @@ func (s *EmailService) sendWebhook(ctx context.Context, userID, emailID, message
 	s.webhookSender.SendEmailSent(ctx, userID, event)
 }
 
-// StreamEvents returns a channel of events for the user starting from cursor.
-func (s *EmailService) StreamEvents(ctx context.Context, userID, cursor string, eventTypes []emailapi.EventType, batchSize int32) (<-chan *emailapi.Event, error) {
+// StreamEvents returns a channel of events for the user using Redis Consumer Groups.
+// The apiKeyID is used as the consumer identifier for tracking acknowledgment state.
+// Unacknowledged events are automatically replayed on reconnect.
+func (s *EmailService) StreamEvents(ctx context.Context, userID, apiKeyID string, eventTypes []emailapi.EventType, batchSize int32) (<-chan *emailapi.Event, error) {
 	// Check reputation - suspended users cannot access streaming API
 	if s.reputationChecker != nil {
 		if err := s.reputationChecker.CheckSendPermission(ctx, userID); err != nil {
@@ -459,7 +461,22 @@ func (s *EmailService) StreamEvents(ctx context.Context, userID, cursor string, 
 	if s.eventConsumer == nil {
 		return nil, fmt.Errorf("event streaming not configured")
 	}
-	return s.eventConsumer.Subscribe(ctx, userID, cursor, eventTypes, batchSize)
+	return s.eventConsumer.Subscribe(ctx, userID, apiKeyID, eventTypes, batchSize)
+}
+
+// AckEvents acknowledges events as processed, preventing replay on reconnect.
+func (s *EmailService) AckEvents(ctx context.Context, userID string, eventIDs []string) (int64, error) {
+	// Check reputation - suspended users cannot ack events
+	if s.reputationChecker != nil {
+		if err := s.reputationChecker.CheckSendPermission(ctx, userID); err != nil {
+			return 0, err
+		}
+	}
+
+	if s.eventConsumer == nil {
+		return 0, fmt.Errorf("event streaming not configured")
+	}
+	return s.eventConsumer.Ack(ctx, userID, eventIDs)
 }
 
 // filterEmails removes emails that are in the exclusion set.

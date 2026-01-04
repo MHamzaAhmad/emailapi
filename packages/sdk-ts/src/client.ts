@@ -21,6 +21,7 @@
  * console.log(result.id, result.status)
  * 
  * // Stream events - runs in background worker thread
+ * // Events are automatically acknowledged after your handler completes
  * const controller = client.onReceive({
  *   onDelivered: (event) => console.log('Delivered to:', event.recipients),
  *   onReplied: (event) => console.log('Reply from:', event.from),
@@ -95,15 +96,17 @@ export interface ClientOptions {
  * Behind the scenes, onReceive:
  * - Runs in a worker thread (non-blocking)
  * - Auto-reconnects on disconnect
- * - Resumes from last cursor
+ * - Server-side tracking ensures you never miss or double-process events
+ * - Events are automatically acknowledged after your handler completes
  */
 export interface EventHandlers {
     /**
-     * Starting cursor position for the stream.
-     * Use '0' to start from the beginning, or a previous event ID to resume.
-     * @default '0'
+     * Acknowledgment mode.
+     * - 'auto' (default): Events are automatically acknowledged after your handler completes
+     * - 'manual': You must call ackEvents() to acknowledge processed events
+     * @default 'auto'
      */
-    cursor?: string
+    ackMode?: 'auto' | 'manual'
 
     /**
      * Number of events to buffer per batch.
@@ -167,7 +170,8 @@ export interface EmailApiClient {
      * Stream events in real-time with typed callbacks.
      * 
      * Runs in a background worker thread for non-blocking operation.
-     * Auto-reconnects on disconnect with exponential backoff.
+     * Server-side tracking ensures you never miss or double-process events.
+     * Events are automatically acknowledged after your handler completes.
      * 
      * @returns AbortController to stop the stream
      * 
@@ -208,6 +212,7 @@ export function createClient(options: ClientOptions): EmailApiClient {
      * onReceive - Worker thread backed event streaming
      * 
      * Spawns a worker thread to handle streaming, keeping main thread responsive.
+     * Server tracks acknowledgment state using API key ID.
      */
     function onReceive(handlers: EventHandlers): AbortController {
         const controller = new AbortController()
@@ -222,13 +227,13 @@ export function createClient(options: ClientOptions): EmailApiClient {
             workerData: {
                 apiKey: options.apiKey,
                 baseUrl,
-                cursor: handlers.cursor ?? '0',
                 batchSize: handlers.batchSize ?? 10,
+                ackMode: handlers.ackMode ?? 'auto',
             },
         })
 
         // Handle messages from worker
-        worker.on('message', (msg: { type: string; payload?: unknown; cursor?: string }) => {
+        worker.on('message', (msg: { type: string; payload?: unknown }) => {
             if (msg.type === 'event' && msg.payload) {
                 const { case: eventCase, value } = msg.payload as { case: string; value: unknown }
 

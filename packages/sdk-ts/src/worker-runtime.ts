@@ -3,9 +3,10 @@
  * 
  * This runs in a separate worker thread to keep the main event loop responsive.
  * It handles:
- * - gRPC streaming connection
+ * - gRPC streaming connection with Redis Consumer Groups
  * - Auto-reconnection with exponential backoff
- * - Cursor tracking for resume
+ * - Automatic event acknowledgment (when ackMode is 'auto')
+ * - Batched acks for efficiency
  */
 
 import { parentPort, workerData } from 'worker_threads'
@@ -19,14 +20,13 @@ import { EventType } from './gen/v1/events_pb'
 interface WorkerConfig {
     apiKey: string
     baseUrl: string
-    cursor: string
     batchSize: number
+    ackMode: 'auto' | 'manual'
 }
 
 interface WorkerMessage {
     type: 'event' | 'connected' | 'disconnected' | 'error'
     payload?: unknown
-    cursor?: string
 }
 
 const config = workerData as WorkerConfig
@@ -36,14 +36,23 @@ const INITIAL_DELAY = 1000
 const MAX_DELAY = 30000
 const BACKOFF_MULTIPLIER = 2
 
+// Ack batching settings
+const ACK_BATCH_SIZE = 10
+const ACK_FLUSH_INTERVAL_MS = 1000
+
 let currentDelay = INITIAL_DELAY
-let lastCursor = config.cursor
 let shouldStop = false
+
+// Pending event IDs to acknowledge
+let pendingAcks: string[] = []
+let ackFlushTimer: ReturnType<typeof setTimeout> | null = null
 
 // Listen for abort signal from parent
 parentPort?.on('message', (msg: { type: string }) => {
     if (msg.type === 'abort') {
         shouldStop = true
+        // Flush any pending acks before stopping
+        flushAcks()
     }
 })
 
@@ -53,6 +62,51 @@ function post(message: WorkerMessage) {
 
 async function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+// Email service reference for acking
+let emailService: ReturnType<typeof createConnectClient<typeof EmailService>> | null = null
+
+async function flushAcks(): Promise<void> {
+    if (pendingAcks.length === 0 || !emailService) return
+
+    const idsToAck = [...pendingAcks]
+    pendingAcks = []
+
+    if (ackFlushTimer) {
+        clearTimeout(ackFlushTimer)
+        ackFlushTimer = null
+    }
+
+    try {
+        await emailService.ackEvents({ eventIds: idsToAck })
+    } catch (err) {
+        // Log but don't fail - server will replay on next connect
+        console.error('Failed to ack events:', err)
+    }
+}
+
+function scheduleAckFlush(): void {
+    if (ackFlushTimer) return // Already scheduled
+
+    ackFlushTimer = setTimeout(async () => {
+        ackFlushTimer = null
+        await flushAcks()
+    }, ACK_FLUSH_INTERVAL_MS)
+}
+
+async function queueAck(eventId: string): Promise<void> {
+    if (config.ackMode !== 'auto') return
+
+    pendingAcks.push(eventId)
+
+    // Flush immediately if batch is full
+    if (pendingAcks.length >= ACK_BATCH_SIZE) {
+        await flushAcks()
+    } else {
+        // Otherwise schedule a flush
+        scheduleAckFlush()
+    }
 }
 
 async function startStreaming(): Promise<void> {
@@ -66,15 +120,14 @@ async function startStreaming(): Promise<void> {
         interceptors: [authInterceptor],
     })
 
-    const email = createConnectClient(EmailService, transport)
+    emailService = createConnectClient(EmailService, transport)
 
     while (!shouldStop) {
         try {
             post({ type: 'connected' })
             currentDelay = INITIAL_DELAY // Reset backoff on successful connect
 
-            const stream = email.streamEvents({
-                cursor: lastCursor,
+            const stream = emailService.streamEvents({
                 eventTypes: [],
                 batchSize: config.batchSize,
             })
@@ -82,12 +135,7 @@ async function startStreaming(): Promise<void> {
             for await (const event of stream) {
                 if (shouldStop) break
 
-                // Update cursor for resume
-                if (event.id) {
-                    lastCursor = event.id
-                }
-
-                // Skip heartbeats
+                // Skip heartbeats (don't need to ack these)
                 if (event.type === EventType.HEARTBEAT) {
                     continue
                 }
@@ -101,17 +149,27 @@ async function startStreaming(): Promise<void> {
                             case: payload.case,
                             value: payload.value,
                         },
-                        cursor: lastCursor,
                     })
+
+                    // Queue auto-ack after handler completes
+                    // (we assume handler completed once we send the message)
+                    if (event.id) {
+                        await queueAck(event.id)
+                    }
                 }
             }
 
-            // Stream ended normally
+            // Stream ended normally - flush remaining acks
+            await flushAcks()
+
             if (!shouldStop) {
                 post({ type: 'disconnected' })
             }
         } catch (err) {
             if (shouldStop) break
+
+            // Try to flush acks before reconnecting
+            await flushAcks()
 
             post({
                 type: 'error',
@@ -124,6 +182,9 @@ async function startStreaming(): Promise<void> {
             currentDelay = Math.min(currentDelay * BACKOFF_MULTIPLIER, MAX_DELAY)
         }
     }
+
+    // Final flush before exit
+    await flushAcks()
 }
 
 // Start streaming

@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/email.proto.
  */
 export const file_v1_email: GenFile = /*@__PURE__*/
-  fileDesc("Cg52MS9lbWFpbC5wcm90bxICdjEi6AIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSNAoIbWV0YWRhdGEYCCADKAsyIi52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIjCgthdHRhY2htZW50cxgKIAMoCzIOLnYxLkF0dGFjaG1lbnQSEwoLaW5fcmVwbHlfdG8YCyABKAkSEgoKcmVmZXJlbmNlcxgMIAMoCRINCgVhc3luYxgNIAEoCBovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiZwoKQXR0YWNobWVudBIQCghmaWxlbmFtZRgBIAEoCRIUCgxjb250ZW50X3R5cGUYAiABKAkSDQoDdXJsGAMgASgJSAASGAoOYmFzZTY0X2NvbnRlbnQYBCABKAlIAEIICgZzb3VyY2UibAoRU2VuZEVtYWlsUmVzcG9uc2USCgoCaWQYASABKAkSHwoGc3RhdHVzGAIgASgOMg8udjEuRW1haWxTdGF0dXMSEgoKbWVzc2FnZV9pZBgDIAEoCRIWCg5zdGF0dXNfbWVzc2FnZRgEIAEoCSJdChNTdHJlYW1FdmVudHNSZXF1ZXN0Eg4KBmN1cnNvchgBIAEoCRIiCgtldmVudF90eXBlcxgCIAMoDjINLnYxLkV2ZW50VHlwZRISCgpiYXRjaF9zaXplGAMgASgFKpEBCgtFbWFpbFN0YXR1cxIcChhFTUFJTF9TVEFUVVNfVU5TUEVDSUZJRUQQABIXChNFTUFJTF9TVEFUVVNfUVVFVUVEEAESGwoXRU1BSUxfU1RBVFVTX1BST0NFU1NJTkcQAhIVChFFTUFJTF9TVEFUVVNfU0VOVBADEhcKE0VNQUlMX1NUQVRVU19GQUlMRUQQBDKCAQoMRW1haWxTZXJ2aWNlEjoKCVNlbmRFbWFpbBIULnYxLlNlbmRFbWFpbFJlcXVlc3QaFS52MS5TZW5kRW1haWxSZXNwb25zZSIAEjYKDFN0cmVhbUV2ZW50cxIXLnYxLlN0cmVhbUV2ZW50c1JlcXVlc3QaCS52MS5FdmVudCIAMAFCXAoGY29tLnYxQgpFbWFpbFByb3RvUAFaHmdpdGh1Yi5jb20vZW1haWxhcGkvYXBpL2dlbi92MaICA1ZYWKoCAlYxygICVjHiAg5WMVxHUEJNZXRhZGF0YeoCAlYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_v1_events]);
+  fileDesc("Cg52MS9lbWFpbC5wcm90bxICdjEi6AIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSNAoIbWV0YWRhdGEYCCADKAsyIi52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIjCgthdHRhY2htZW50cxgKIAMoCzIOLnYxLkF0dGFjaG1lbnQSEwoLaW5fcmVwbHlfdG8YCyABKAkSEgoKcmVmZXJlbmNlcxgMIAMoCRINCgVhc3luYxgNIAEoCBovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiZwoKQXR0YWNobWVudBIQCghmaWxlbmFtZRgBIAEoCRIUCgxjb250ZW50X3R5cGUYAiABKAkSDQoDdXJsGAMgASgJSAASGAoOYmFzZTY0X2NvbnRlbnQYBCABKAlIAEIICgZzb3VyY2UibAoRU2VuZEVtYWlsUmVzcG9uc2USCgoCaWQYASABKAkSHwoGc3RhdHVzGAIgASgOMg8udjEuRW1haWxTdGF0dXMSEgoKbWVzc2FnZV9pZBgDIAEoCRIWCg5zdGF0dXNfbWVzc2FnZRgEIAEoCSJNChNTdHJlYW1FdmVudHNSZXF1ZXN0EiIKC2V2ZW50X3R5cGVzGAEgAygOMg0udjEuRXZlbnRUeXBlEhIKCmJhdGNoX3NpemUYAiABKAUiJQoQQWNrRXZlbnRzUmVxdWVzdBIRCglldmVudF9pZHMYASADKAkiKAoRQWNrRXZlbnRzUmVzcG9uc2USEwoLYWNrZWRfY291bnQYASABKAUqkQEKC0VtYWlsU3RhdHVzEhwKGEVNQUlMX1NUQVRVU19VTlNQRUNJRklFRBAAEhcKE0VNQUlMX1NUQVRVU19RVUVVRUQQARIbChdFTUFJTF9TVEFUVVNfUFJPQ0VTU0lORxACEhUKEUVNQUlMX1NUQVRVU19TRU5UEAMSFwoTRU1BSUxfU1RBVFVTX0ZBSUxFRBAEMr4BCgxFbWFpbFNlcnZpY2USOgoJU2VuZEVtYWlsEhQudjEuU2VuZEVtYWlsUmVxdWVzdBoVLnYxLlNlbmRFbWFpbFJlc3BvbnNlIgASNgoMU3RyZWFtRXZlbnRzEhcudjEuU3RyZWFtRXZlbnRzUmVxdWVzdBoJLnYxLkV2ZW50IgAwARI6CglBY2tFdmVudHMSFC52MS5BY2tFdmVudHNSZXF1ZXN0GhUudjEuQWNrRXZlbnRzUmVzcG9uc2UiAEJcCgZjb20udjFCCkVtYWlsUHJvdG9QAVoeZ2l0aHViLmNvbS9lbWFpbGFwaS9hcGkvZ2VuL3YxogIDVlhYqgICVjHKAgJWMeICDlYxXEdQQk1ldGFkYXRh6gICVjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_v1_events]);
 
 /**
  * Request to send an email.
@@ -218,31 +218,22 @@ export const SendEmailResponseSchema: GenMessage<SendEmailResponse> = /*@__PURE_
 
 /**
  * Request to stream events.
+ * Server uses API key from auth context to track acknowledgment state.
  *
  * @generated from message v1.StreamEventsRequest
  */
 export type StreamEventsRequest = Message<"v1.StreamEventsRequest"> & {
   /**
-   * Checkpoint to resume streaming from.
-   * - Leave empty to start from *now* (live events only).
-   * - Set to "0" to read from the very beginning.
-   * - Set to a specific event ID to resume from that event.
-   *
-   * @generated from field: string cursor = 1;
-   */
-  cursor: string;
-
-  /**
    * Filter by specific event types.
    *
-   * @generated from field: repeated v1.EventType event_types = 2;
+   * @generated from field: repeated v1.EventType event_types = 1;
    */
   eventTypes: EventType[];
 
   /**
    * Internal batch size hints.
    *
-   * @generated from field: int32 batch_size = 3;
+   * @generated from field: int32 batch_size = 2;
    */
   batchSize: number;
 };
@@ -253,6 +244,48 @@ export type StreamEventsRequest = Message<"v1.StreamEventsRequest"> & {
  */
 export const StreamEventsRequestSchema: GenMessage<StreamEventsRequest> = /*@__PURE__*/
   messageDesc(file_v1_email, 3);
+
+/**
+ * Request to acknowledge events as processed.
+ *
+ * @generated from message v1.AckEventsRequest
+ */
+export type AckEventsRequest = Message<"v1.AckEventsRequest"> & {
+  /**
+   * Event IDs to acknowledge as processed.
+   *
+   * @generated from field: repeated string event_ids = 1;
+   */
+  eventIds: string[];
+};
+
+/**
+ * Describes the message v1.AckEventsRequest.
+ * Use `create(AckEventsRequestSchema)` to create a new message.
+ */
+export const AckEventsRequestSchema: GenMessage<AckEventsRequest> = /*@__PURE__*/
+  messageDesc(file_v1_email, 4);
+
+/**
+ * Response after acknowledging events.
+ *
+ * @generated from message v1.AckEventsResponse
+ */
+export type AckEventsResponse = Message<"v1.AckEventsResponse"> & {
+  /**
+   * Number of events successfully acknowledged.
+   *
+   * @generated from field: int32 acked_count = 1;
+   */
+  ackedCount: number;
+};
+
+/**
+ * Describes the message v1.AckEventsResponse.
+ * Use `create(AckEventsResponseSchema)` to create a new message.
+ */
+export const AckEventsResponseSchema: GenMessage<AckEventsResponse> = /*@__PURE__*/
+  messageDesc(file_v1_email, 5);
 
 /**
  * Represents the current status of an email delivery.
@@ -319,6 +352,8 @@ export const EmailService: GenService<{
   },
   /**
    * Stream real-time email events.
+   * Uses Redis Consumer Groups with API key as consumer ID.
+   * Unacknowledged events are automatically replayed on reconnect.
    *
    * @generated from rpc v1.EmailService.StreamEvents
    */
@@ -326,6 +361,17 @@ export const EmailService: GenService<{
     methodKind: "server_streaming";
     input: typeof StreamEventsRequestSchema;
     output: typeof EventSchema;
+  },
+  /**
+   * Acknowledge events as processed.
+   * Call this after successfully processing events to prevent replay.
+   *
+   * @generated from rpc v1.EmailService.AckEvents
+   */
+  ackEvents: {
+    methodKind: "unary";
+    input: typeof AckEventsRequestSchema;
+    output: typeof AckEventsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_v1_email, 0);
