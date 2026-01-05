@@ -1,13 +1,15 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { UserButton } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
+import { useCurrentSubscription } from '@/hooks'
 import {
     PackageIcon,
     Home01Icon,
     GlobeIcon,
     Key01Icon,
     WebhookIcon,
-    Book02Icon
+    Book02Icon,
+    Settings02Icon
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/mode-toggle'
@@ -26,6 +28,8 @@ const mainNav = [
 export function Shell({ children }: ShellProps) {
     const routerState = useRouterState()
     const currentPath = routerState.location.pathname
+    const { data: subscription } = useCurrentSubscription()
+    const hasActivePlan = subscription?.plan && subscription.plan !== 'free'
 
     return (
         <div className="min-h-screen bg-background flex flex-col font-sans">
@@ -69,6 +73,19 @@ export function Shell({ children }: ShellProps) {
                                 <HugeiconsIcon icon={Book02Icon} size={16} />
                             </Link>
                         </Button>
+                        {hasActivePlan ? (
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" asChild>
+                                <Link to="/settings/billing">
+                                    <HugeiconsIcon icon={Settings02Icon} size={16} />
+                                </Link>
+                            </Button>
+                        ) : (
+                            <Button variant="default" size="sm" className="h-8 text-xs font-medium" asChild>
+                                <Link to="/settings/billing">
+                                    Upgrade
+                                </Link>
+                            </Button>
+                        )}
                         <ModeToggle />
                         <div className="h-4 w-[1px] bg-border/60 mx-1" />
                         <UserButton
