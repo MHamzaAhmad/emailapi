@@ -28,9 +28,6 @@ type UserRepository interface {
 	// Update updates an existing user.
 	Update(ctx context.Context, user *domain.User) error
 
-	// UpdatePlan updates only the user's plan.
-	UpdatePlan(ctx context.Context, id string, plan domain.UserPlan) error
-
 	// UpdatePolarCustomerID updates only the user's Polar customer ID.
 	UpdatePolarCustomerID(ctx context.Context, id, polarCustomerID string) error
 

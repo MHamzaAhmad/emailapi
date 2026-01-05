@@ -20,6 +20,9 @@ type Client interface {
 	// GetCustomerByExternalID finds customer by external ID (our user ID).
 	GetCustomerByExternalID(ctx context.Context, userID string) (*Customer, error)
 
+	// GetCustomerStateByExternalID fetches customer state including credit balance.
+	GetCustomerStateByExternalID(ctx context.Context, userID string) (*CustomerState, error)
+
 	// GetSubscription gets active subscription for customer.
 	GetSubscription(ctx context.Context, customerID string) (*Subscription, error)
 
@@ -31,6 +34,9 @@ type Client interface {
 
 	// CreateCustomerPortal creates a customer portal session.
 	CreateCustomerPortal(ctx context.Context, customerID string) (string, error)
+
+	// CreateFreeSubscription creates a subscription for the free product (on signup).
+	CreateFreeSubscription(ctx context.Context, customerID, freeProductID string) error
 }
 
 // CheckoutParams for creating a checkout session.
@@ -53,6 +59,15 @@ type Subscription struct {
 	Status      string // active, past_due, canceled
 	ProductID   string
 	ProductName string
+}
+
+// CustomerState represents customer state with credit balance from Polar.
+type CustomerState struct {
+	CustomerID    string
+	IsPaid        bool   // Has paid subscription (starter/growth)
+	PlanType      string // "free", "starter", "growth"
+	CreditBalance int64  // From active_meters[0].balance
+	ProductID     string // Current product ID
 }
 
 // polarClient implements Client.
@@ -181,4 +196,56 @@ func (c *polarClient) CreateCustomerPortal(ctx context.Context, customerID strin
 	}
 
 	return resp.CustomerSession.CustomerPortalURL, nil
+}
+
+// GetCustomerStateByExternalID fetches customer state including credit balance.
+func (c *polarClient) GetCustomerStateByExternalID(ctx context.Context, userID string) (*CustomerState, error) {
+	resp, err := c.sdk.Customers.GetStateExternal(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Polar customer state: %w", err)
+	}
+
+	state := &CustomerState{
+		CustomerID:    resp.CustomerState.ID,
+		IsPaid:        false,
+		PlanType:      "free",
+		CreditBalance: 0,
+	}
+
+	// Check active subscriptions to determine plan type
+	if len(resp.CustomerState.ActiveSubscriptions) > 0 {
+		sub := resp.CustomerState.ActiveSubscriptions[0]
+		state.ProductID = sub.ProductID
+
+		// Determine if paid subscription based on amount (free = 0)
+		if sub.Amount > 0 {
+			state.IsPaid = true
+			// Map product ID to plan type will be done by caller using domain.GetPlanFromProductID
+			state.PlanType = "paid" // Caller maps to specific plan
+		}
+	}
+
+	// Get credit balance from active meters
+	if len(resp.CustomerState.ActiveMeters) > 0 {
+		state.CreditBalance = int64(resp.CustomerState.ActiveMeters[0].Balance)
+	}
+
+	return state, nil
+}
+
+// CreateFreeSubscription creates a subscription for the free product (on signup).
+func (c *polarClient) CreateFreeSubscription(ctx context.Context, customerID, freeProductID string) error {
+	_, err := c.sdk.Subscriptions.Create(ctx,
+		operations.CreateSubscriptionsCreateSubscriptionCreateSubscriptionCreateCustomer(
+			components.SubscriptionCreateCustomer{
+				ProductID:  freeProductID,
+				CustomerID: customerID,
+			},
+		),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create free subscription: %w", err)
+	}
+
+	return nil
 }

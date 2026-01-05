@@ -48,17 +48,17 @@ func TestBillingService_SyncSubscription(t *testing.T) {
 	mockStore := serviceMocks.NewMockStore(ctrl)
 	mockUserRepo := repoMocks.NewMockUserRepository(ctrl)
 	mockPolar := polarMocks.NewMockClient(ctrl)
-	mockUsageCache := redisMocks.NewMockUsageCacheInterface(ctrl)
+	mockCreditCache := redisMocks.NewMockCreditCacheInterface(ctrl)
 
 	mockStore.EXPECT().Users().Return(mockUserRepo).AnyTimes()
 
-	svc := NewBillingService(mockPolar, mockUsageCache, mockStore)
+	svc := NewBillingService(mockPolar, mockCreditCache, mockStore)
 	ctx := context.Background()
 	userID := "user_123"
 
 	t.Run("no polar client", func(t *testing.T) {
 		svcNoPolar := NewBillingService(nil, nil, mockStore)
-		user := &domain.User{ID: userID, Plan: domain.UserPlanFree}
+		user := &domain.User{ID: userID}
 		mockUserRepo.EXPECT().GetByID(ctx, userID).Return(user, nil)
 
 		result, err := svcNoPolar.SyncSubscription(ctx, userID)
@@ -75,13 +75,24 @@ func TestBillingService_SyncSubscription(t *testing.T) {
 	})
 
 	t.Run("no polar customer", func(t *testing.T) {
-		user := &domain.User{ID: userID, Plan: domain.UserPlanFree}
+		user := &domain.User{ID: userID}
 		mockUserRepo.EXPECT().GetByID(ctx, userID).Return(user, nil)
 		mockPolar.EXPECT().GetCustomerByExternalID(ctx, userID).Return(nil, errors.New("not found"))
 
 		result, err := svc.SyncSubscription(ctx, userID)
 		require.NoError(t, err)
-		assert.Equal(t, domain.UserPlanFree, result.Plan)
+		assert.Equal(t, userID, result.ID)
+	})
+
+	t.Run("with polar customer invalidates cache", func(t *testing.T) {
+		polarCustomerID := "cus_polar_abc"
+		user := &domain.User{ID: userID, PolarCustomerID: &polarCustomerID}
+		mockUserRepo.EXPECT().GetByID(ctx, userID).Return(user, nil)
+		mockCreditCache.EXPECT().Invalidate(ctx, userID).Return(nil)
+
+		result, err := svc.SyncSubscription(ctx, userID)
+		require.NoError(t, err)
+		assert.Equal(t, userID, result.ID)
 	})
 }
 

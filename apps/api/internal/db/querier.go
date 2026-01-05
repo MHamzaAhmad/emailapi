@@ -69,7 +69,6 @@ type Querier interface {
 	UpdateApiKeyLastUsed(ctx context.Context, id string) error
 	UpdateDomain(ctx context.Context, arg UpdateDomainParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
-	UpdateUserPlan(ctx context.Context, arg UpdateUserPlanParams) error
 	UpdateUserPolarCustomerID(ctx context.Context, arg UpdateUserPolarCustomerIDParams) error
 	UpdateUserReputationStats(ctx context.Context, arg UpdateUserReputationStatsParams) error
 }

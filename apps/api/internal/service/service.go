@@ -77,10 +77,11 @@ type ServiceDeps struct {
 	// SQS event processing
 	InboundBucket string
 
-	// Polar Client
-	PolarClient       polar.Client
-	PolarProductScale string // Product ID for Scale plan
-	PolarProductPAYG  string // Product ID for PAYG plan
+	// Polar Client and Product IDs
+	PolarClient           polar.Client
+	PolarFreeProductID    string // Product ID for Free plan
+	PolarStarterProductID string // Product ID for Starter plan
+	PolarGrowthProductID  string // Product ID for Growth plan
 }
 
 // NewWithDeps creates a new Service with all dependencies.
@@ -124,7 +125,10 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	svc.Email = NewEmailService(deps.RiverClient, deps.Analytics, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer, svc.Reputation, unsubscribeSvc)
 	svc.Internal = NewInternalService(InternalServiceConfig{
 		UserService:        svc.User,
+		Store:              deps.Store,
 		ClerkWebhookSecret: deps.ClerkWebhookSecret,
+		PolarClient:        deps.PolarClient,
+		FreeProductID:      deps.PolarFreeProductID,
 	})
 
 	// Initialize Activity service
@@ -168,14 +172,14 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	svc.Admin = NewAdminService(deps.Store, svc.User, svc.Reputation)
 
 	// Initialize product mappings from config
-	domain.InitProductMappings(deps.PolarProductScale, deps.PolarProductPAYG)
+	domain.InitProductMappings(deps.PolarStarterProductID, deps.PolarGrowthProductID)
 
 	// Initialize Billing service
-	var usageCache rediscache.UsageCacheInterface
+	var creditCache rediscache.CreditCacheInterface
 	if deps.Cache != nil {
-		usageCache = deps.Cache.Usage()
+		creditCache = deps.Cache.Credit()
 	}
-	svc.Billing = NewBillingService(deps.PolarClient, usageCache, deps.Store)
+	svc.Billing = NewBillingService(deps.PolarClient, creditCache, deps.Store)
 
 	return svc
 }

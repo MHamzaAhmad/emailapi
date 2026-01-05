@@ -1,22 +1,22 @@
 -- name: CreateUser :one
-INSERT INTO users (id, email, name, role, is_active, external_id, plan, polar_customer_id, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO users (id, email, name, role, is_active, external_id, polar_customer_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
 
 -- name: GetUserByID :one
-SELECT id, email, name, role, is_active, external_id, plan, polar_customer_id, created_at, updated_at
+SELECT id, email, name, role, is_active, external_id, polar_customer_id, created_at, updated_at
 FROM users WHERE id = $1;
 
 -- name: GetUserByEmail :one
-SELECT id, email, name, role, is_active, external_id, plan, polar_customer_id, created_at, updated_at
+SELECT id, email, name, role, is_active, external_id, polar_customer_id, created_at, updated_at
 FROM users WHERE email = $1;
 
 -- name: GetUserByExternalID :one
-SELECT id, email, name, role, is_active, external_id, plan, polar_customer_id, created_at, updated_at
+SELECT id, email, name, role, is_active, external_id, polar_customer_id, created_at, updated_at
 FROM users WHERE external_id = $1;
 
 -- name: GetUserByPolarCustomerID :one
-SELECT id, email, name, role, is_active, external_id, plan, polar_customer_id, created_at, updated_at
+SELECT id, email, name, role, is_active, external_id, polar_customer_id, created_at, updated_at
 FROM users WHERE polar_customer_id = $1;
 
 -- name: UpdateUser :one
@@ -26,14 +26,10 @@ UPDATE users SET
     role = $4,
     is_active = $5,
     external_id = $6,
-    plan = $7,
-    polar_customer_id = $8,
-    updated_at = $9
+    polar_customer_id = $7,
+    updated_at = $8
 WHERE id = $1
 RETURNING *;
-
--- name: UpdateUserPlan :exec
-UPDATE users SET plan = $2, updated_at = NOW() WHERE id = $1;
 
 -- name: UpdateUserPolarCustomerID :exec
 UPDATE users SET polar_customer_id = $2, updated_at = NOW() WHERE id = $1;
@@ -42,7 +38,7 @@ UPDATE users SET polar_customer_id = $2, updated_at = NOW() WHERE id = $1;
 DELETE FROM users WHERE id = $1;
 
 -- name: ListUsers :many
-SELECT id, email, name, role, is_active, external_id, plan, polar_customer_id, created_at, updated_at
+SELECT id, email, name, role, is_active, external_id, polar_customer_id, created_at, updated_at
 FROM users
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;
@@ -52,7 +48,7 @@ SELECT COUNT(*)::INTEGER as total FROM users;
 
 -- name: ListUsersWithReputation :many
 SELECT 
-    u.id, u.email, u.name, u.role, u.is_active, u.external_id, u.plan, u.polar_customer_id, u.created_at, u.updated_at,
+    u.id, u.email, u.name, u.role, u.is_active, u.external_id, u.polar_customer_id, u.created_at, u.updated_at,
     COALESCE(r.is_suspended, FALSE) as is_suspended,
     COALESCE(r.is_flagged, FALSE) as is_flagged
 FROM users u
@@ -62,7 +58,7 @@ LIMIT $1 OFFSET $2;
 
 -- name: GetUserWithReputation :one
 SELECT 
-    u.id, u.email, u.name, u.role, u.is_active, u.external_id, u.plan, u.polar_customer_id, u.created_at, u.updated_at,
+    u.id, u.email, u.name, u.role, u.is_active, u.external_id, u.polar_customer_id, u.created_at, u.updated_at,
     COALESCE(r.total_bounces, 0) as total_bounces,
     COALESCE(r.hard_bounces, 0) as hard_bounces,
     COALESCE(r.soft_bounces, 0) as soft_bounces,

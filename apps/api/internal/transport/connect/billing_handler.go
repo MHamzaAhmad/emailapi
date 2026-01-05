@@ -37,9 +37,10 @@ func (h *billingHandler) SyncSubscription(ctx context.Context, req *connect.Requ
 		polarCustomerID = *user.PolarCustomerID
 	}
 
+	// Plan is now managed entirely by Polar, not stored locally
 	return connect.NewResponse(&pb.SyncSubscriptionResponse{
 		UserId:          user.ID,
-		Plan:            string(user.Plan),
+		Plan:            "", // Plan is now fetched from Polar
 		PolarCustomerId: polarCustomerID,
 	}), nil
 }

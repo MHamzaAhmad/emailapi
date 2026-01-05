@@ -82,11 +82,12 @@ type Config struct {
 	SQSEventQueueURL string `envconfig:"SQS_EVENT_QUEUE_URL" default:""`
 
 	// Polar Configuration (for payments)
-	PolarAccessToken   string `envconfig:"POLAR_ACCESS_TOKEN"`
-	PolarWebhookSecret string `envconfig:"POLAR_WEBHOOK_SECRET"`
-	PolarEmailMeterID  string `envconfig:"POLAR_EMAIL_METER_ID"`
-	PolarProductScale  string `envconfig:"POLAR_PRODUCT_SCALE"` // Product ID for Scale plan
-	PolarProductPAYG   string `envconfig:"POLAR_PRODUCT_PAYG"`  // Product ID for PAYG plan
+	PolarAccessToken      string `envconfig:"POLAR_ACCESS_TOKEN"`
+	PolarWebhookSecret    string `envconfig:"POLAR_WEBHOOK_SECRET"`
+	PolarEmailMeterID     string `envconfig:"POLAR_EMAIL_METER_ID"`
+	PolarFreeProductID    string `envconfig:"POLAR_FREE_PRODUCT_ID"`    // Product ID for Free plan
+	PolarStarterProductID string `envconfig:"POLAR_STARTER_PRODUCT_ID"` // Product ID for Starter plan
+	PolarGrowthProductID  string `envconfig:"POLAR_GROWTH_PRODUCT_ID"`  // Product ID for Growth plan
 
 	// Usage limit checking
 	UsageLimitEnabled bool `envconfig:"USAGE_LIMIT_ENABLED" default:"true"`

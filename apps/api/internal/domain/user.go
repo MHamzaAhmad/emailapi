@@ -20,7 +20,6 @@ type User struct {
 	Role            UserRole  `json:"role"`
 	IsActive        bool      `json:"is_active"`
 	ExternalID      *string   `json:"external_id,omitempty"`       // Clerk user ID
-	Plan            UserPlan  `json:"plan"`                        // Billing plan
 	PolarCustomerID *string   `json:"polar_customer_id,omitempty"` // Polar customer ID
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
@@ -41,6 +40,5 @@ type UpdateUserRequest struct {
 	Role            *UserRole `json:"role,omitempty"`
 	IsActive        *bool     `json:"is_active,omitempty"`
 	ExternalID      *string   `json:"external_id,omitempty"`
-	Plan            *UserPlan `json:"plan,omitempty"`
 	PolarCustomerID *string   `json:"polar_customer_id,omitempty"`
 }

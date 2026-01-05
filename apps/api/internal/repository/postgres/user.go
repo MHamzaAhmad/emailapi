@@ -34,7 +34,6 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, user *domain.User) erro
 		Role:            user.Role,
 		IsActive:        user.IsActive,
 		ExternalID:      stringPtrToPgText(user.ExternalID),
-		Plan:            db.UserPlan(user.Plan),
 		PolarCustomerID: stringPtrToPgText(user.PolarCustomerID),
 		CreatedAt:       toPgTimestampNow(),
 		UpdatedAt:       toPgTimestampNow(),
@@ -93,7 +92,6 @@ func (r *UserRepositoryImpl) Update(ctx context.Context, user *domain.User) erro
 		Role:            user.Role,
 		IsActive:        user.IsActive,
 		ExternalID:      stringPtrToPgText(user.ExternalID),
-		Plan:            db.UserPlan(user.Plan),
 		PolarCustomerID: stringPtrToPgText(user.PolarCustomerID),
 		UpdatedAt:       toPgTimestampNow(),
 	})
@@ -102,18 +100,6 @@ func (r *UserRepositoryImpl) Update(ctx context.Context, user *domain.User) erro
 	}
 
 	user.UpdatedAt = result.UpdatedAt.Time
-	return nil
-}
-
-// UpdatePlan updates only the user's plan.
-func (r *UserRepositoryImpl) UpdatePlan(ctx context.Context, id string, plan domain.UserPlan) error {
-	err := r.queries.UpdateUserPlan(ctx, db.UpdateUserPlanParams{
-		ID:   id,
-		Plan: db.UserPlan(plan),
-	})
-	if err != nil {
-		return fmt.Errorf("failed to update user plan: %w", err)
-	}
 	return nil
 }
 
@@ -184,7 +170,6 @@ func (r *UserRepositoryImpl) ListWithReputation(ctx context.Context, limit, offs
 				Role:            domain.UserRole(row.Role),
 				IsActive:        row.IsActive,
 				ExternalID:      pgTextToStringPtr(row.ExternalID),
-				Plan:            domain.UserPlan(row.Plan),
 				PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
 				CreatedAt:       row.CreatedAt.Time,
 				UpdatedAt:       row.UpdatedAt.Time,
@@ -210,7 +195,6 @@ func (r *UserRepositoryImpl) GetWithReputation(ctx context.Context, userID strin
 		Role:            domain.UserRole(row.Role),
 		IsActive:        row.IsActive,
 		ExternalID:      pgTextToStringPtr(row.ExternalID),
-		Plan:            domain.UserPlan(row.Plan),
 		PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
 		CreatedAt:       row.CreatedAt.Time,
 		UpdatedAt:       row.UpdatedAt.Time,
@@ -269,7 +253,6 @@ func dbUserByIDToDomain(row db.GetUserByIDRow) *domain.User {
 		Role:            row.Role,
 		IsActive:        row.IsActive,
 		ExternalID:      pgTextToStringPtr(row.ExternalID),
-		Plan:            domain.UserPlan(row.Plan),
 		PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
 		CreatedAt:       row.CreatedAt.Time,
 		UpdatedAt:       row.UpdatedAt.Time,
@@ -284,7 +267,6 @@ func dbUserByEmailToDomain(row db.GetUserByEmailRow) *domain.User {
 		Role:            row.Role,
 		IsActive:        row.IsActive,
 		ExternalID:      pgTextToStringPtr(row.ExternalID),
-		Plan:            domain.UserPlan(row.Plan),
 		PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
 		CreatedAt:       row.CreatedAt.Time,
 		UpdatedAt:       row.UpdatedAt.Time,
@@ -299,7 +281,6 @@ func dbUserByExternalIDToDomain(row db.GetUserByExternalIDRow) *domain.User {
 		Role:            row.Role,
 		IsActive:        row.IsActive,
 		ExternalID:      pgTextToStringPtr(row.ExternalID),
-		Plan:            domain.UserPlan(row.Plan),
 		PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
 		CreatedAt:       row.CreatedAt.Time,
 		UpdatedAt:       row.UpdatedAt.Time,
@@ -314,7 +295,6 @@ func dbListUserToDomain(row db.ListUsersRow) *domain.User {
 		Role:            row.Role,
 		IsActive:        row.IsActive,
 		ExternalID:      pgTextToStringPtr(row.ExternalID),
-		Plan:            domain.UserPlan(row.Plan),
 		PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
 		CreatedAt:       row.CreatedAt.Time,
 		UpdatedAt:       row.UpdatedAt.Time,
@@ -329,7 +309,6 @@ func dbUserByPolarCustomerIDToDomain(row db.GetUserByPolarCustomerIDRow) *domain
 		Role:            row.Role,
 		IsActive:        row.IsActive,
 		ExternalID:      pgTextToStringPtr(row.ExternalID),
-		Plan:            domain.UserPlan(row.Plan),
 		PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
 		CreatedAt:       row.CreatedAt.Time,
 		UpdatedAt:       row.UpdatedAt.Time,

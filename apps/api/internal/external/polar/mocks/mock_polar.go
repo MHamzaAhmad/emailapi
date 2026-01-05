@@ -86,6 +86,20 @@ func (mr *MockClientMockRecorder) CreateCustomerPortal(ctx, customerID any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCustomerPortal", reflect.TypeOf((*MockClient)(nil).CreateCustomerPortal), ctx, customerID)
 }
 
+// CreateFreeSubscription mocks base method.
+func (m *MockClient) CreateFreeSubscription(ctx context.Context, customerID, freeProductID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateFreeSubscription", ctx, customerID, freeProductID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateFreeSubscription indicates an expected call of CreateFreeSubscription.
+func (mr *MockClientMockRecorder) CreateFreeSubscription(ctx, customerID, freeProductID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFreeSubscription", reflect.TypeOf((*MockClient)(nil).CreateFreeSubscription), ctx, customerID, freeProductID)
+}
+
 // GetCustomerByExternalID mocks base method.
 func (m *MockClient) GetCustomerByExternalID(ctx context.Context, userID string) (*polar.Customer, error) {
 	m.ctrl.T.Helper()
@@ -99,6 +113,21 @@ func (m *MockClient) GetCustomerByExternalID(ctx context.Context, userID string)
 func (mr *MockClientMockRecorder) GetCustomerByExternalID(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCustomerByExternalID", reflect.TypeOf((*MockClient)(nil).GetCustomerByExternalID), ctx, userID)
+}
+
+// GetCustomerStateByExternalID mocks base method.
+func (m *MockClient) GetCustomerStateByExternalID(ctx context.Context, userID string) (*polar.CustomerState, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCustomerStateByExternalID", ctx, userID)
+	ret0, _ := ret[0].(*polar.CustomerState)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCustomerStateByExternalID indicates an expected call of GetCustomerStateByExternalID.
+func (mr *MockClientMockRecorder) GetCustomerStateByExternalID(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCustomerStateByExternalID", reflect.TypeOf((*MockClient)(nil).GetCustomerStateByExternalID), ctx, userID)
 }
 
 // GetSubscription mocks base method.

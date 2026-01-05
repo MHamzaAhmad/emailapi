@@ -11,25 +11,35 @@ import (
 	svix "github.com/svix/svix-webhooks/go"
 
 	"github.com/emailapi/api/internal/domain"
+	"github.com/emailapi/api/internal/external/polar"
 )
 
 // InternalService handles internal webhook endpoints.
 type InternalService struct {
 	userService        *UserService
+	store              Store
 	clerkWebhookSecret string
+	polarClient        polar.Client
+	freeProductID      string
 }
 
 // InternalServiceConfig holds configuration for InternalService.
 type InternalServiceConfig struct {
 	UserService        *UserService
+	Store              Store
 	ClerkWebhookSecret string
+	PolarClient        polar.Client
+	FreeProductID      string
 }
 
 // NewInternalService creates a new InternalService.
 func NewInternalService(cfg InternalServiceConfig) *InternalService {
 	return &InternalService{
 		userService:        cfg.UserService,
+		store:              cfg.Store,
 		clerkWebhookSecret: cfg.ClerkWebhookSecret,
+		polarClient:        cfg.PolarClient,
+		freeProductID:      cfg.FreeProductID,
 	}
 }
 
@@ -162,5 +172,49 @@ func (s *InternalService) handleUserCreated(ctx context.Context, data json.RawMe
 		Str("email", primaryEmail).
 		Msg("Created new user from Clerk webhook")
 
+	// Create Polar customer and free subscription (async, non-blocking)
+	go s.provisionPolarCustomer(context.Background(), user)
+
 	return true, fmt.Sprintf("user created: %s", user.ID), nil
+}
+
+// provisionPolarCustomer creates Polar customer and free subscription for new user.
+func (s *InternalService) provisionPolarCustomer(ctx context.Context, user *domain.User) {
+	if s.polarClient == nil {
+		return // Polar not configured
+	}
+
+	// Create Polar customer with user ID as external ID
+	customerID, err := s.polarClient.CreateCustomer(ctx, user.ID, user.Email, user.Name)
+	if err != nil {
+		log.Warn().Err(err).Str("user_id", user.ID).Msg("Failed to create Polar customer")
+		return
+	}
+
+	// Save customer ID to user record
+	if s.store != nil {
+		if err := s.store.Users().UpdatePolarCustomerID(ctx, user.ID, customerID); err != nil {
+			log.Warn().Err(err).Str("user_id", user.ID).Msg("Failed to save Polar customer ID")
+		}
+	}
+
+	log.Info().
+		Str("user_id", user.ID).
+		Str("polar_customer_id", customerID).
+		Msg("Created Polar customer")
+
+	// Create free subscription if product ID is configured
+	if s.freeProductID == "" {
+		return
+	}
+
+	if err := s.polarClient.CreateFreeSubscription(ctx, customerID, s.freeProductID); err != nil {
+		log.Warn().Err(err).Str("user_id", user.ID).Msg("Failed to create free subscription")
+		return
+	}
+
+	log.Info().
+		Str("user_id", user.ID).
+		Str("product_id", s.freeProductID).
+		Msg("Created free subscription")
 }

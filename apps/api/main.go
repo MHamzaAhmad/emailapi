@@ -262,8 +262,9 @@ func main() {
 		UnsubscribeBaseURL:     cfg.UnsubscribeBaseURL,
 		UnsubscribeTokenSecret: cfg.UnsubscribeTokenSecret,
 		InboundBucket:          cfg.S3InboundBucket,
-		PolarProductScale:      cfg.PolarProductScale,
-		PolarProductPAYG:       cfg.PolarProductPAYG,
+		PolarStarterProductID:  cfg.PolarStarterProductID,
+		PolarGrowthProductID:   cfg.PolarGrowthProductID,
+		PolarFreeProductID:     cfg.PolarFreeProductID,
 	})
 
 	// Start SQS consumer goroutine if configured

@@ -14,22 +14,21 @@ import (
 // BillingService handles plan and subscription management.
 type BillingService struct {
 	polarClient polar.Client
-	usageCache  redisrepo.UsageCacheInterface
+	creditCache redisrepo.CreditCacheInterface
 	store       Store
 }
 
 // NewBillingService creates a new BillingService.
-func NewBillingService(polarClient polar.Client, usageCache redisrepo.UsageCacheInterface, store Store) *BillingService {
+func NewBillingService(polarClient polar.Client, creditCache redisrepo.CreditCacheInterface, store Store) *BillingService {
 	return &BillingService{
 		polarClient: polarClient,
-		usageCache:  usageCache,
+		creditCache: creditCache,
 		store:       store,
 	}
 }
 
-// SyncSubscription queries Polar API directly and updates user plan.
+// SyncSubscription queries Polar API and invalidates cache so new plan applies immediately.
 // Called by frontend immediately after checkout success redirect.
-// This bypasses webhook delay - user sees upgrade instantly.
 func (s *BillingService) SyncSubscription(ctx context.Context, userID string) (*domain.User, error) {
 	user, err := s.store.Users().GetByID(ctx, userID)
 	if err != nil {
@@ -55,39 +54,14 @@ func (s *BillingService) SyncSubscription(ctx context.Context, userID string) (*
 		user.PolarCustomerID = &customer.ID
 	}
 
-	// Query Polar for current subscription
-	sub, err := s.polarClient.GetSubscription(ctx, *user.PolarCustomerID)
-	if err != nil {
-		// No active subscription - stay on free
-		log.Debug().Str("user_id", userID).Msg("No active Polar subscription")
-		return user, nil
+	// Invalidate credit cache so next request fetches fresh state from Polar
+	if s.creditCache != nil {
+		if err := s.creditCache.Invalidate(ctx, userID); err != nil {
+			log.Warn().Err(err).Str("user_id", userID).Msg("Failed to invalidate credit cache")
+		}
 	}
 
-	// Map subscription to plan
-	newPlan := domain.GetPlanFromProductID(sub.ProductID)
-
-	// Update if different
-	if newPlan != user.Plan {
-		if err := s.store.Users().UpdatePlan(ctx, userID, newPlan); err != nil {
-			return nil, fmt.Errorf("failed to update plan: %w", err)
-		}
-		oldPlan := user.Plan
-		user.Plan = newPlan
-
-		// Invalidate cache so new limits apply immediately
-		if s.usageCache != nil {
-			if err := s.usageCache.InvalidatePlanState(ctx, userID); err != nil {
-				log.Warn().Err(err).Str("user_id", userID).Msg("Failed to invalidate cache")
-			}
-		}
-
-		log.Info().
-			Str("user_id", userID).
-			Str("old_plan", string(oldPlan)).
-			Str("new_plan", string(newPlan)).
-			Msg("User plan upgraded via sync")
-	}
-
+	log.Info().Str("user_id", userID).Msg("Subscription synced, cache invalidated")
 	return user, nil
 }
 
@@ -129,63 +103,31 @@ type PolarWebhookEvent struct {
 	ProductID  string `json:"product_id"`
 }
 
-// HandlePolarWebhook processes Polar subscription webhooks (backup for sync).
+// HandlePolarWebhook processes Polar subscription webhooks.
+// With credit cache architecture, we just invalidate cache on any subscription change.
 func (s *BillingService) HandlePolarWebhook(ctx context.Context, event *PolarWebhookEvent) error {
 	switch event.Type {
-	case "subscription.active":
-		return s.handleSubscriptionActive(ctx, event)
-	case "subscription.canceled":
-		return s.handleSubscriptionCanceled(ctx, event)
+	case "subscription.active", "subscription.canceled", "subscription.updated":
+		return s.handleSubscriptionChange(ctx, event)
 	}
 	return nil
 }
 
-func (s *BillingService) handleSubscriptionActive(ctx context.Context, event *PolarWebhookEvent) error {
+func (s *BillingService) handleSubscriptionChange(ctx context.Context, event *PolarWebhookEvent) error {
 	// Find user by Polar customer ID
 	user, err := s.store.Users().GetByPolarCustomerID(ctx, event.CustomerID)
 	if err != nil {
 		return fmt.Errorf("user not found for Polar customer %s: %w", event.CustomerID, err)
 	}
 
-	// Map Polar product to our plan
-	plan := domain.GetPlanFromProductID(event.ProductID)
-
-	// Only update if different (sync might have already set it)
-	if plan != user.Plan {
-		if err := s.store.Users().UpdatePlan(ctx, user.ID, plan); err != nil {
-			return fmt.Errorf("failed to update plan: %w", err)
-		}
-		// Invalidate cached state
-		if s.usageCache != nil {
-			if err := s.usageCache.InvalidatePlanState(ctx, user.ID); err != nil {
-				log.Warn().Err(err).Str("user_id", user.ID).Msg("Failed to invalidate cache")
-			}
-		}
-		log.Info().Str("user_id", user.ID).Str("plan", string(plan)).Msg("Plan updated via webhook")
-	}
-	return nil
-}
-
-func (s *BillingService) handleSubscriptionCanceled(ctx context.Context, event *PolarWebhookEvent) error {
-	// Find user by Polar customer ID
-	user, err := s.store.Users().GetByPolarCustomerID(ctx, event.CustomerID)
-	if err != nil {
-		return fmt.Errorf("user not found for Polar customer %s: %w", event.CustomerID, err)
-	}
-
-	// Downgrade to free
-	if err := s.store.Users().UpdatePlan(ctx, user.ID, domain.UserPlanFree); err != nil {
-		return fmt.Errorf("failed to downgrade plan: %w", err)
-	}
-
-	// Invalidate cached state
-	if s.usageCache != nil {
-		if err := s.usageCache.InvalidatePlanState(ctx, user.ID); err != nil {
-			log.Warn().Err(err).Str("user_id", user.ID).Msg("Failed to invalidate cache")
+	// Invalidate credit cache so next request fetches fresh state from Polar
+	if s.creditCache != nil {
+		if err := s.creditCache.Invalidate(ctx, user.ID); err != nil {
+			log.Warn().Err(err).Str("user_id", user.ID).Msg("Failed to invalidate credit cache")
 		}
 	}
 
-	log.Info().Str("user_id", user.ID).Msg("Plan downgraded to free via webhook")
+	log.Info().Str("user_id", user.ID).Str("event", event.Type).Msg("Credit cache invalidated via webhook")
 	return nil
 }
 

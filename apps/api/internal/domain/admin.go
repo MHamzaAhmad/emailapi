@@ -18,7 +18,6 @@ type UserWithReputation struct {
 	Role            UserRole  `json:"role"`
 	IsActive        bool      `json:"is_active"`
 	ExternalID      *string   `json:"external_id,omitempty"`
-	Plan            UserPlan  `json:"plan"`
 	PolarCustomerID *string   `json:"polar_customer_id,omitempty"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
