@@ -370,6 +370,12 @@ func main() {
 	)
 	mux.Handle(path, handler)
 
+	path, handler = v1connect.NewBillingServiceHandler(
+		connecttransport.NewBillingHandler(svc.Billing),
+		interceptors,
+	)
+	mux.Handle(path, handler)
+
 	// Register unsubscribe HTTP handlers (non-Connect, for web page serving)
 	if svc.Unsubscribe != nil {
 		unsubHandler, err := httphandler.NewUnsubscribeHandler(svc.Unsubscribe)

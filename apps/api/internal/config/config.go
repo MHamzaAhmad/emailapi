@@ -80,6 +80,14 @@ type Config struct {
 
 	// SQS Configuration (for receiving SES events)
 	SQSEventQueueURL string `envconfig:"SQS_EVENT_QUEUE_URL" default:""`
+
+	// Polar Configuration (for payments)
+	PolarAccessToken   string `envconfig:"POLAR_ACCESS_TOKEN"`
+	PolarWebhookSecret string `envconfig:"POLAR_WEBHOOK_SECRET"`
+	PolarEmailMeterID  string `envconfig:"POLAR_EMAIL_METER_ID"`
+
+	// Usage limit checking
+	UsageLimitEnabled bool `envconfig:"USAGE_LIMIT_ENABLED" default:"true"`
 }
 
 // Load reads configuration from environment variables.

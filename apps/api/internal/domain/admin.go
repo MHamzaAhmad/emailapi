@@ -12,14 +12,16 @@ type AdminUser struct {
 // UserWithReputation represents a user with full reputation data.
 type UserWithReputation struct {
 	// User fields
-	ID         string    `json:"id"`
-	Email      string    `json:"email"`
-	Name       string    `json:"name"`
-	Role       UserRole  `json:"role"`
-	IsActive   bool      `json:"is_active"`
-	ExternalID *string   `json:"external_id,omitempty"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID              string    `json:"id"`
+	Email           string    `json:"email"`
+	Name            string    `json:"name"`
+	Role            UserRole  `json:"role"`
+	IsActive        bool      `json:"is_active"`
+	ExternalID      *string   `json:"external_id,omitempty"`
+	Plan            UserPlan  `json:"plan"`
+	PolarCustomerID *string   `json:"polar_customer_id,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 
 	// Reputation fields
 	TotalBounces     int        `json:"total_bounces"`

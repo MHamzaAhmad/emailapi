@@ -28,14 +28,16 @@ func NewUserRepository(pool *pgxpool.Pool) *UserRepositoryImpl {
 // Create stores a new user using sqlc.
 func (r *UserRepositoryImpl) Create(ctx context.Context, user *domain.User) error {
 	result, err := r.queries.CreateUser(ctx, db.CreateUserParams{
-		ID:         user.ID,
-		Email:      user.Email,
-		Name:       user.Name,
-		Role:       user.Role,
-		IsActive:   user.IsActive,
-		ExternalID: stringPtrToPgText(user.ExternalID),
-		CreatedAt:  toPgTimestampNow(),
-		UpdatedAt:  toPgTimestampNow(),
+		ID:              user.ID,
+		Email:           user.Email,
+		Name:            user.Name,
+		Role:            user.Role,
+		IsActive:        user.IsActive,
+		ExternalID:      stringPtrToPgText(user.ExternalID),
+		Plan:            db.UserPlan(user.Plan),
+		PolarCustomerID: stringPtrToPgText(user.PolarCustomerID),
+		CreatedAt:       toPgTimestampNow(),
+		UpdatedAt:       toPgTimestampNow(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
@@ -73,22 +75,57 @@ func (r *UserRepositoryImpl) GetByExternalID(ctx context.Context, externalID str
 	return dbUserByExternalIDToDomain(row), nil
 }
 
+// GetByPolarCustomerID retrieves a user by their Polar customer ID.
+func (r *UserRepositoryImpl) GetByPolarCustomerID(ctx context.Context, polarCustomerID string) (*domain.User, error) {
+	row, err := r.queries.GetUserByPolarCustomerID(ctx, pgtype.Text{String: polarCustomerID, Valid: true})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by polar_customer_id: %w", err)
+	}
+	return dbUserByPolarCustomerIDToDomain(row), nil
+}
+
 // Update updates an existing user using sqlc.
 func (r *UserRepositoryImpl) Update(ctx context.Context, user *domain.User) error {
 	result, err := r.queries.UpdateUser(ctx, db.UpdateUserParams{
-		ID:         user.ID,
-		Email:      user.Email,
-		Name:       user.Name,
-		Role:       user.Role,
-		IsActive:   user.IsActive,
-		ExternalID: stringPtrToPgText(user.ExternalID),
-		UpdatedAt:  toPgTimestampNow(),
+		ID:              user.ID,
+		Email:           user.Email,
+		Name:            user.Name,
+		Role:            user.Role,
+		IsActive:        user.IsActive,
+		ExternalID:      stringPtrToPgText(user.ExternalID),
+		Plan:            db.UserPlan(user.Plan),
+		PolarCustomerID: stringPtrToPgText(user.PolarCustomerID),
+		UpdatedAt:       toPgTimestampNow(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update user: %w", err)
 	}
 
 	user.UpdatedAt = result.UpdatedAt.Time
+	return nil
+}
+
+// UpdatePlan updates only the user's plan.
+func (r *UserRepositoryImpl) UpdatePlan(ctx context.Context, id string, plan domain.UserPlan) error {
+	err := r.queries.UpdateUserPlan(ctx, db.UpdateUserPlanParams{
+		ID:   id,
+		Plan: db.UserPlan(plan),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update user plan: %w", err)
+	}
+	return nil
+}
+
+// UpdatePolarCustomerID updates only the user's Polar customer ID.
+func (r *UserRepositoryImpl) UpdatePolarCustomerID(ctx context.Context, id, polarCustomerID string) error {
+	err := r.queries.UpdateUserPolarCustomerID(ctx, db.UpdateUserPolarCustomerIDParams{
+		ID:              id,
+		PolarCustomerID: pgtype.Text{String: polarCustomerID, Valid: true},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update polar customer id: %w", err)
+	}
 	return nil
 }
 
@@ -141,14 +178,16 @@ func (r *UserRepositoryImpl) ListWithReputation(ctx context.Context, limit, offs
 	for i, row := range rows {
 		users[i] = &domain.AdminUser{
 			User: &domain.User{
-				ID:         row.ID,
-				Email:      row.Email,
-				Name:       row.Name,
-				Role:       domain.UserRole(row.Role),
-				IsActive:   row.IsActive,
-				ExternalID: pgTextToStringPtr(row.ExternalID),
-				CreatedAt:  row.CreatedAt.Time,
-				UpdatedAt:  row.UpdatedAt.Time,
+				ID:              row.ID,
+				Email:           row.Email,
+				Name:            row.Name,
+				Role:            domain.UserRole(row.Role),
+				IsActive:        row.IsActive,
+				ExternalID:      pgTextToStringPtr(row.ExternalID),
+				Plan:            domain.UserPlan(row.Plan),
+				PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
+				CreatedAt:       row.CreatedAt.Time,
+				UpdatedAt:       row.UpdatedAt.Time,
 			},
 			IsSuspended: row.IsSuspended,
 			IsFlagged:   row.IsFlagged,
@@ -171,6 +210,8 @@ func (r *UserRepositoryImpl) GetWithReputation(ctx context.Context, userID strin
 		Role:            domain.UserRole(row.Role),
 		IsActive:        row.IsActive,
 		ExternalID:      pgTextToStringPtr(row.ExternalID),
+		Plan:            domain.UserPlan(row.Plan),
+		PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
 		CreatedAt:       row.CreatedAt.Time,
 		UpdatedAt:       row.UpdatedAt.Time,
 		TotalBounces:    int(row.TotalBounces),
@@ -222,53 +263,76 @@ func numericToFloat64(n interface{}) float64 {
 
 func dbUserByIDToDomain(row db.GetUserByIDRow) *domain.User {
 	return &domain.User{
-		ID:         row.ID,
-		Email:      row.Email,
-		Name:       row.Name,
-		Role:       row.Role,
-		IsActive:   row.IsActive,
-		ExternalID: pgTextToStringPtr(row.ExternalID),
-		CreatedAt:  row.CreatedAt.Time,
-		UpdatedAt:  row.UpdatedAt.Time,
+		ID:              row.ID,
+		Email:           row.Email,
+		Name:            row.Name,
+		Role:            row.Role,
+		IsActive:        row.IsActive,
+		ExternalID:      pgTextToStringPtr(row.ExternalID),
+		Plan:            domain.UserPlan(row.Plan),
+		PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
+		CreatedAt:       row.CreatedAt.Time,
+		UpdatedAt:       row.UpdatedAt.Time,
 	}
 }
 
 func dbUserByEmailToDomain(row db.GetUserByEmailRow) *domain.User {
 	return &domain.User{
-		ID:         row.ID,
-		Email:      row.Email,
-		Name:       row.Name,
-		Role:       row.Role,
-		IsActive:   row.IsActive,
-		ExternalID: pgTextToStringPtr(row.ExternalID),
-		CreatedAt:  row.CreatedAt.Time,
-		UpdatedAt:  row.UpdatedAt.Time,
+		ID:              row.ID,
+		Email:           row.Email,
+		Name:            row.Name,
+		Role:            row.Role,
+		IsActive:        row.IsActive,
+		ExternalID:      pgTextToStringPtr(row.ExternalID),
+		Plan:            domain.UserPlan(row.Plan),
+		PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
+		CreatedAt:       row.CreatedAt.Time,
+		UpdatedAt:       row.UpdatedAt.Time,
 	}
 }
 
 func dbUserByExternalIDToDomain(row db.GetUserByExternalIDRow) *domain.User {
 	return &domain.User{
-		ID:         row.ID,
-		Email:      row.Email,
-		Name:       row.Name,
-		Role:       row.Role,
-		IsActive:   row.IsActive,
-		ExternalID: pgTextToStringPtr(row.ExternalID),
-		CreatedAt:  row.CreatedAt.Time,
-		UpdatedAt:  row.UpdatedAt.Time,
+		ID:              row.ID,
+		Email:           row.Email,
+		Name:            row.Name,
+		Role:            row.Role,
+		IsActive:        row.IsActive,
+		ExternalID:      pgTextToStringPtr(row.ExternalID),
+		Plan:            domain.UserPlan(row.Plan),
+		PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
+		CreatedAt:       row.CreatedAt.Time,
+		UpdatedAt:       row.UpdatedAt.Time,
 	}
 }
 
 func dbListUserToDomain(row db.ListUsersRow) *domain.User {
 	return &domain.User{
-		ID:         row.ID,
-		Email:      row.Email,
-		Name:       row.Name,
-		Role:       row.Role,
-		IsActive:   row.IsActive,
-		ExternalID: pgTextToStringPtr(row.ExternalID),
-		CreatedAt:  row.CreatedAt.Time,
-		UpdatedAt:  row.UpdatedAt.Time,
+		ID:              row.ID,
+		Email:           row.Email,
+		Name:            row.Name,
+		Role:            row.Role,
+		IsActive:        row.IsActive,
+		ExternalID:      pgTextToStringPtr(row.ExternalID),
+		Plan:            domain.UserPlan(row.Plan),
+		PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
+		CreatedAt:       row.CreatedAt.Time,
+		UpdatedAt:       row.UpdatedAt.Time,
+	}
+}
+
+func dbUserByPolarCustomerIDToDomain(row db.GetUserByPolarCustomerIDRow) *domain.User {
+	return &domain.User{
+		ID:              row.ID,
+		Email:           row.Email,
+		Name:            row.Name,
+		Role:            row.Role,
+		IsActive:        row.IsActive,
+		ExternalID:      pgTextToStringPtr(row.ExternalID),
+		Plan:            domain.UserPlan(row.Plan),
+		PolarCustomerID: pgTextToStringPtr(row.PolarCustomerID),
+		CreatedAt:       row.CreatedAt.Time,
+		UpdatedAt:       row.UpdatedAt.Time,
 	}
 }
 

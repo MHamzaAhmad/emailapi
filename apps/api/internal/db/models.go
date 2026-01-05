@@ -12,6 +12,49 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type UserPlan string
+
+const (
+	UserPlanFree  UserPlan = "free"
+	UserPlanScale UserPlan = "scale"
+	UserPlanPayg  UserPlan = "payg"
+)
+
+func (e *UserPlan) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = UserPlan(s)
+	case string:
+		*e = UserPlan(s)
+	default:
+		return fmt.Errorf("unsupported scan type for UserPlan: %T", src)
+	}
+	return nil
+}
+
+type NullUserPlan struct {
+	UserPlan UserPlan `json:"user_plan"`
+	Valid    bool     `json:"valid"` // Valid is true if UserPlan is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullUserPlan) Scan(value interface{}) error {
+	if value == nil {
+		ns.UserPlan, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.UserPlan.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullUserPlan) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.UserPlan), nil
+}
+
 type UserRole string
 
 const (
@@ -117,14 +160,16 @@ type UnsubscribeList struct {
 }
 
 type User struct {
-	ID         string             `json:"id"`
-	Email      string             `json:"email"`
-	Name       string             `json:"name"`
-	Role       domain.UserRole    `json:"role"`
-	IsActive   bool               `json:"is_active"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
-	ExternalID pgtype.Text        `json:"external_id"`
+	ID              string             `json:"id"`
+	Email           string             `json:"email"`
+	Name            string             `json:"name"`
+	Role            domain.UserRole    `json:"role"`
+	IsActive        bool               `json:"is_active"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	ExternalID      pgtype.Text        `json:"external_id"`
+	Plan            UserPlan           `json:"plan"`
+	PolarCustomerID pgtype.Text        `json:"polar_customer_id"`
 }
 
 type UserReputation struct {

@@ -16,4 +16,5 @@ type Cache interface {
 	Reputation() rediscache.ReputationCacheInterface
 	Unsubscribe() rediscache.UnsubscribeCacheInterface
 	PendingAttachment() rediscache.PendingAttachmentCacheInterface
+	Usage() rediscache.UsageCacheInterface
 }

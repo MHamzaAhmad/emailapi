@@ -45,6 +45,7 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error)
 	GetUserByExternalID(ctx context.Context, externalID pgtype.Text) (GetUserByExternalIDRow, error)
 	GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error)
+	GetUserByPolarCustomerID(ctx context.Context, polarCustomerID pgtype.Text) (GetUserByPolarCustomerIDRow, error)
 	GetUserReputation(ctx context.Context, userID string) (UserReputation, error)
 	GetUserWithReputation(ctx context.Context, id string) (GetUserWithReputationRow, error)
 	InsertReputationIncident(ctx context.Context, arg InsertReputationIncidentParams) error
@@ -68,6 +69,8 @@ type Querier interface {
 	UpdateApiKeyLastUsed(ctx context.Context, id string) error
 	UpdateDomain(ctx context.Context, arg UpdateDomainParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	UpdateUserPlan(ctx context.Context, arg UpdateUserPlanParams) error
+	UpdateUserPolarCustomerID(ctx context.Context, arg UpdateUserPolarCustomerIDParams) error
 	UpdateUserReputationStats(ctx context.Context, arg UpdateUserReputationStatsParams) error
 }
 

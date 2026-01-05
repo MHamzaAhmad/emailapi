@@ -22,8 +22,17 @@ type UserRepository interface {
 	// GetByExternalID retrieves a user by their Clerk external ID.
 	GetByExternalID(ctx context.Context, externalID string) (*domain.User, error)
 
+	// GetByPolarCustomerID retrieves a user by their Polar customer ID.
+	GetByPolarCustomerID(ctx context.Context, polarCustomerID string) (*domain.User, error)
+
 	// Update updates an existing user.
 	Update(ctx context.Context, user *domain.User) error
+
+	// UpdatePlan updates only the user's plan.
+	UpdatePlan(ctx context.Context, id string, plan domain.UserPlan) error
+
+	// UpdatePolarCustomerID updates only the user's Polar customer ID.
+	UpdatePolarCustomerID(ctx context.Context, id, polarCustomerID string) error
 
 	// Delete removes a user.
 	Delete(ctx context.Context, id string) error

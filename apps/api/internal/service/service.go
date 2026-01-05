@@ -3,6 +3,7 @@ package service
 import (
 	internaldns "github.com/emailapi/api/internal/dns"
 	"github.com/emailapi/api/internal/eventstream"
+	"github.com/emailapi/api/internal/external/polar"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/external/sqs"
@@ -34,6 +35,7 @@ type Service struct {
 	Reputation   *ReputationService
 	Unsubscribe  *UnsubscribeService
 	Admin        *AdminService
+	Billing      *BillingService
 }
 
 // New creates a new Service with the given Store.
@@ -73,6 +75,9 @@ type ServiceDeps struct {
 	UnsubscribeTokenSecret string
 	// SQS event processing
 	InboundBucket string
+
+	// Polar Client
+	PolarClient polar.Client
 }
 
 // NewWithDeps creates a new Service with all dependencies.
@@ -158,6 +163,13 @@ func NewWithDeps(deps ServiceDeps) *Service {
 
 	// Initialize Admin service for admin operations
 	svc.Admin = NewAdminService(deps.Store, svc.User, svc.Reputation)
+
+	// Initialize Billing service
+	var usageCache rediscache.UsageCacheInterface
+	if deps.Cache != nil {
+		usageCache = deps.Cache.Usage()
+	}
+	svc.Billing = NewBillingService(deps.PolarClient, usageCache, deps.Store)
 
 	return svc
 }

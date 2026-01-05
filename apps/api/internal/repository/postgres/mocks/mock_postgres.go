@@ -130,6 +130,21 @@ func (mr *MockUserRepositoryMockRecorder) GetByID(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockUserRepository)(nil).GetByID), ctx, id)
 }
 
+// GetByPolarCustomerID mocks base method.
+func (m *MockUserRepository) GetByPolarCustomerID(ctx context.Context, polarCustomerID string) (*domain.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByPolarCustomerID", ctx, polarCustomerID)
+	ret0, _ := ret[0].(*domain.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByPolarCustomerID indicates an expected call of GetByPolarCustomerID.
+func (mr *MockUserRepositoryMockRecorder) GetByPolarCustomerID(ctx, polarCustomerID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByPolarCustomerID", reflect.TypeOf((*MockUserRepository)(nil).GetByPolarCustomerID), ctx, polarCustomerID)
+}
+
 // GetWithReputation mocks base method.
 func (m *MockUserRepository) GetWithReputation(ctx context.Context, userID string) (*domain.UserWithReputation, error) {
 	m.ctrl.T.Helper()
@@ -187,6 +202,34 @@ func (m *MockUserRepository) Update(ctx context.Context, user *domain.User) erro
 func (mr *MockUserRepositoryMockRecorder) Update(ctx, user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), ctx, user)
+}
+
+// UpdatePlan mocks base method.
+func (m *MockUserRepository) UpdatePlan(ctx context.Context, id string, plan domain.UserPlan) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePlan", ctx, id, plan)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdatePlan indicates an expected call of UpdatePlan.
+func (mr *MockUserRepositoryMockRecorder) UpdatePlan(ctx, id, plan any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePlan", reflect.TypeOf((*MockUserRepository)(nil).UpdatePlan), ctx, id, plan)
+}
+
+// UpdatePolarCustomerID mocks base method.
+func (m *MockUserRepository) UpdatePolarCustomerID(ctx context.Context, id, polarCustomerID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePolarCustomerID", ctx, id, polarCustomerID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdatePolarCustomerID indicates an expected call of UpdatePolarCustomerID.
+func (mr *MockUserRepositoryMockRecorder) UpdatePolarCustomerID(ctx, id, polarCustomerID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolarCustomerID", reflect.TypeOf((*MockUserRepository)(nil).UpdatePolarCustomerID), ctx, id, polarCustomerID)
 }
 
 // MockAPIKeyRepository is a mock of APIKeyRepository interface.

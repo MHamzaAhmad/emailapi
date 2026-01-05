@@ -16,6 +16,7 @@ type CacheAggregator struct {
 	reputation        *ReputationCache
 	unsubscribe       *UnsubscribeCache
 	pendingAttachment *PendingAttachmentCache
+	usage             *UsageCache
 }
 
 // NewCacheAggregator creates a new CacheAggregator with all caches.
@@ -28,6 +29,7 @@ func NewCacheAggregator(client *Client) *CacheAggregator {
 		reputation:        NewReputationCache(client),
 		unsubscribe:       NewUnsubscribeCache(client),
 		pendingAttachment: NewPendingAttachmentCache(client),
+		usage:             NewUsageCache(client),
 	}
 }
 
@@ -64,4 +66,9 @@ func (c *CacheAggregator) Unsubscribe() UnsubscribeCacheInterface {
 // PendingAttachment returns the pending attachment cache.
 func (c *CacheAggregator) PendingAttachment() PendingAttachmentCacheInterface {
 	return c.pendingAttachment
+}
+
+// Usage returns the usage cache for billing.
+func (c *CacheAggregator) Usage() UsageCacheInterface {
+	return c.usage
 }

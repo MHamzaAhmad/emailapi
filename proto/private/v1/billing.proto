@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "github.com/emailapi/api/gen/v1";
+
+service BillingService {
+  // SyncSubscription checks the remote payment provider (Polar) for the latest subscription status
+  // and updates the local user record. Call this after a successful checkout redirect.
+  rpc SyncSubscription(SyncSubscriptionRequest) returns (SyncSubscriptionResponse) {}
+}
+
+message SyncSubscriptionRequest {
+  // empty request - user context comes from auth
+}
+
+message SyncSubscriptionResponse {
+  string user_id = 1;
+  string plan = 2;
+  string polar_customer_id = 3;
+}
