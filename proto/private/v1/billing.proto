@@ -18,6 +18,12 @@ service BillingService {
   rpc GetCustomerPortalUrl(GetCustomerPortalUrlRequest) returns (GetCustomerPortalUrlResponse) {}
 }
 
+// Feature represents a plan feature with optional tooltip.
+message Feature {
+  string name = 1;
+  string tooltip = 2; // Optional markdown/text for tooltip
+}
+
 // Plan represents a pricing tier.
 message Plan {
   string id = 1;
@@ -26,6 +32,8 @@ message Plan {
   int64 monthly_limit = 4;  // -1 = unlimited
   int64 daily_limit = 5;    // -1 = unlimited
   int64 price_cents = 6;    // Monthly price in cents
+  int64 overage_price_cents = 7; // Price per 1000 emails in cents (for PAYG or overage)
+  repeated Feature features = 8;  // List of plan features
 }
 
 message SyncSubscriptionRequest {}

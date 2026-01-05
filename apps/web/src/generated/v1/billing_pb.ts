@@ -10,7 +10,33 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/billing.proto.
  */
 export const file_v1_billing: GenFile = /*@__PURE__*/
-  fileDesc("ChB2MS9iaWxsaW5nLnByb3RvEgJ2MSJ2CgRQbGFuEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSFQoNbW9udGhseV9saW1pdBgEIAEoAxITCgtkYWlseV9saW1pdBgFIAEoAxITCgtwcmljZV9jZW50cxgGIAEoAyIZChdTeW5jU3Vic2NyaXB0aW9uUmVxdWVzdCJUChhTeW5jU3Vic2NyaXB0aW9uUmVzcG9uc2USDwoHdXNlcl9pZBgBIAEoCRIMCgRwbGFuGAIgASgJEhkKEXBvbGFyX2N1c3RvbWVyX2lkGAMgASgJIhEKD0dldFBsYW5zUmVxdWVzdCIrChBHZXRQbGFuc1Jlc3BvbnNlEhcKBXBsYW5zGAEgAygLMggudjEuUGxhbiJEChxDcmVhdGVDaGVja291dFNlc3Npb25SZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkSEwoLc3VjY2Vzc191cmwYAiABKAkiNQodQ3JlYXRlQ2hlY2tvdXRTZXNzaW9uUmVzcG9uc2USFAoMY2hlY2tvdXRfdXJsGAEgASgJIh0KG0dldEN1c3RvbWVyUG9ydGFsVXJsUmVxdWVzdCIyChxHZXRDdXN0b21lclBvcnRhbFVybFJlc3BvbnNlEhIKCnBvcnRhbF91cmwYASABKAky1wIKDkJpbGxpbmdTZXJ2aWNlEk8KEFN5bmNTdWJzY3JpcHRpb24SGy52MS5TeW5jU3Vic2NyaXB0aW9uUmVxdWVzdBocLnYxLlN5bmNTdWJzY3JpcHRpb25SZXNwb25zZSIAEjcKCEdldFBsYW5zEhMudjEuR2V0UGxhbnNSZXF1ZXN0GhQudjEuR2V0UGxhbnNSZXNwb25zZSIAEl4KFUNyZWF0ZUNoZWNrb3V0U2Vzc2lvbhIgLnYxLkNyZWF0ZUNoZWNrb3V0U2Vzc2lvblJlcXVlc3QaIS52MS5DcmVhdGVDaGVja291dFNlc3Npb25SZXNwb25zZSIAElsKFEdldEN1c3RvbWVyUG9ydGFsVXJsEh8udjEuR2V0Q3VzdG9tZXJQb3J0YWxVcmxSZXF1ZXN0GiAudjEuR2V0Q3VzdG9tZXJQb3J0YWxVcmxSZXNwb25zZSIAQl4KBmNvbS52MUIMQmlsbGluZ1Byb3RvUAFaHmdpdGh1Yi5jb20vZW1haWxhcGkvYXBpL2dlbi92MaICA1ZYWKoCAlYxygICVjHiAg5WMVxHUEJNZXRhZGF0YeoCAlYxYgZwcm90bzM");
+  fileDesc("ChB2MS9iaWxsaW5nLnByb3RvEgJ2MSIoCgdGZWF0dXJlEgwKBG5hbWUYASABKAkSDwoHdG9vbHRpcBgCIAEoCSKyAQoEUGxhbhIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhUKDW1vbnRobHlfbGltaXQYBCABKAMSEwoLZGFpbHlfbGltaXQYBSABKAMSEwoLcHJpY2VfY2VudHMYBiABKAMSGwoTb3ZlcmFnZV9wcmljZV9jZW50cxgHIAEoAxIdCghmZWF0dXJlcxgIIAMoCzILLnYxLkZlYXR1cmUiGQoXU3luY1N1YnNjcmlwdGlvblJlcXVlc3QiVAoYU3luY1N1YnNjcmlwdGlvblJlc3BvbnNlEg8KB3VzZXJfaWQYASABKAkSDAoEcGxhbhgCIAEoCRIZChFwb2xhcl9jdXN0b21lcl9pZBgDIAEoCSIRCg9HZXRQbGFuc1JlcXVlc3QiKwoQR2V0UGxhbnNSZXNwb25zZRIXCgVwbGFucxgBIAMoCzIILnYxLlBsYW4iRAocQ3JlYXRlQ2hlY2tvdXRTZXNzaW9uUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJEhMKC3N1Y2Nlc3NfdXJsGAIgASgJIjUKHUNyZWF0ZUNoZWNrb3V0U2Vzc2lvblJlc3BvbnNlEhQKDGNoZWNrb3V0X3VybBgBIAEoCSIdChtHZXRDdXN0b21lclBvcnRhbFVybFJlcXVlc3QiMgocR2V0Q3VzdG9tZXJQb3J0YWxVcmxSZXNwb25zZRISCgpwb3J0YWxfdXJsGAEgASgJMtcCCg5CaWxsaW5nU2VydmljZRJPChBTeW5jU3Vic2NyaXB0aW9uEhsudjEuU3luY1N1YnNjcmlwdGlvblJlcXVlc3QaHC52MS5TeW5jU3Vic2NyaXB0aW9uUmVzcG9uc2UiABI3CghHZXRQbGFucxITLnYxLkdldFBsYW5zUmVxdWVzdBoULnYxLkdldFBsYW5zUmVzcG9uc2UiABJeChVDcmVhdGVDaGVja291dFNlc3Npb24SIC52MS5DcmVhdGVDaGVja291dFNlc3Npb25SZXF1ZXN0GiEudjEuQ3JlYXRlQ2hlY2tvdXRTZXNzaW9uUmVzcG9uc2UiABJbChRHZXRDdXN0b21lclBvcnRhbFVybBIfLnYxLkdldEN1c3RvbWVyUG9ydGFsVXJsUmVxdWVzdBogLnYxLkdldEN1c3RvbWVyUG9ydGFsVXJsUmVzcG9uc2UiAEJeCgZjb20udjFCDEJpbGxpbmdQcm90b1ABWh5naXRodWIuY29tL2VtYWlsYXBpL2FwaS9nZW4vdjGiAgNWWFiqAgJWMcoCAlYx4gIOVjFcR1BCTWV0YWRhdGHqAgJWMWIGcHJvdG8z");
+
+/**
+ * Feature represents a plan feature with optional tooltip.
+ *
+ * @generated from message v1.Feature
+ */
+export type Feature = Message<"v1.Feature"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * Optional markdown/text for tooltip
+   *
+   * @generated from field: string tooltip = 2;
+   */
+  tooltip: string;
+};
+
+/**
+ * Describes the message v1.Feature.
+ * Use `create(FeatureSchema)` to create a new message.
+ */
+export const FeatureSchema: GenMessage<Feature> = /*@__PURE__*/
+  messageDesc(file_v1_billing, 0);
 
 /**
  * Plan represents a pricing tier.
@@ -53,6 +79,20 @@ export type Plan = Message<"v1.Plan"> & {
    * @generated from field: int64 price_cents = 6;
    */
   priceCents: bigint;
+
+  /**
+   * Price per 1000 emails in cents (for PAYG or overage)
+   *
+   * @generated from field: int64 overage_price_cents = 7;
+   */
+  overagePriceCents: bigint;
+
+  /**
+   * List of plan features
+   *
+   * @generated from field: repeated v1.Feature features = 8;
+   */
+  features: Feature[];
 };
 
 /**
@@ -60,7 +100,7 @@ export type Plan = Message<"v1.Plan"> & {
  * Use `create(PlanSchema)` to create a new message.
  */
 export const PlanSchema: GenMessage<Plan> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 0);
+  messageDesc(file_v1_billing, 1);
 
 /**
  * @generated from message v1.SyncSubscriptionRequest
@@ -73,7 +113,7 @@ export type SyncSubscriptionRequest = Message<"v1.SyncSubscriptionRequest"> & {
  * Use `create(SyncSubscriptionRequestSchema)` to create a new message.
  */
 export const SyncSubscriptionRequestSchema: GenMessage<SyncSubscriptionRequest> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 1);
+  messageDesc(file_v1_billing, 2);
 
 /**
  * @generated from message v1.SyncSubscriptionResponse
@@ -100,7 +140,7 @@ export type SyncSubscriptionResponse = Message<"v1.SyncSubscriptionResponse"> & 
  * Use `create(SyncSubscriptionResponseSchema)` to create a new message.
  */
 export const SyncSubscriptionResponseSchema: GenMessage<SyncSubscriptionResponse> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 2);
+  messageDesc(file_v1_billing, 3);
 
 /**
  * @generated from message v1.GetPlansRequest
@@ -113,7 +153,7 @@ export type GetPlansRequest = Message<"v1.GetPlansRequest"> & {
  * Use `create(GetPlansRequestSchema)` to create a new message.
  */
 export const GetPlansRequestSchema: GenMessage<GetPlansRequest> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 3);
+  messageDesc(file_v1_billing, 4);
 
 /**
  * @generated from message v1.GetPlansResponse
@@ -130,7 +170,7 @@ export type GetPlansResponse = Message<"v1.GetPlansResponse"> & {
  * Use `create(GetPlansResponseSchema)` to create a new message.
  */
 export const GetPlansResponseSchema: GenMessage<GetPlansResponse> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 4);
+  messageDesc(file_v1_billing, 5);
 
 /**
  * @generated from message v1.CreateCheckoutSessionRequest
@@ -152,7 +192,7 @@ export type CreateCheckoutSessionRequest = Message<"v1.CreateCheckoutSessionRequ
  * Use `create(CreateCheckoutSessionRequestSchema)` to create a new message.
  */
 export const CreateCheckoutSessionRequestSchema: GenMessage<CreateCheckoutSessionRequest> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 5);
+  messageDesc(file_v1_billing, 6);
 
 /**
  * @generated from message v1.CreateCheckoutSessionResponse
@@ -169,7 +209,7 @@ export type CreateCheckoutSessionResponse = Message<"v1.CreateCheckoutSessionRes
  * Use `create(CreateCheckoutSessionResponseSchema)` to create a new message.
  */
 export const CreateCheckoutSessionResponseSchema: GenMessage<CreateCheckoutSessionResponse> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 6);
+  messageDesc(file_v1_billing, 7);
 
 /**
  * @generated from message v1.GetCustomerPortalUrlRequest
@@ -182,7 +222,7 @@ export type GetCustomerPortalUrlRequest = Message<"v1.GetCustomerPortalUrlReques
  * Use `create(GetCustomerPortalUrlRequestSchema)` to create a new message.
  */
 export const GetCustomerPortalUrlRequestSchema: GenMessage<GetCustomerPortalUrlRequest> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 7);
+  messageDesc(file_v1_billing, 8);
 
 /**
  * @generated from message v1.GetCustomerPortalUrlResponse
@@ -199,7 +239,7 @@ export type GetCustomerPortalUrlResponse = Message<"v1.GetCustomerPortalUrlRespo
  * Use `create(GetCustomerPortalUrlResponseSchema)` to create a new message.
  */
 export const GetCustomerPortalUrlResponseSchema: GenMessage<GetCustomerPortalUrlResponse> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 8);
+  messageDesc(file_v1_billing, 9);
 
 /**
  * @generated from service v1.BillingService

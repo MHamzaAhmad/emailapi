@@ -4,9 +4,9 @@ package domain
 type UserPlan string
 
 const (
-	UserPlanFree  UserPlan = "free"
-	UserPlanScale UserPlan = "scale"
-	UserPlanPAYG  UserPlan = "payg"
+	UserPlanFree    UserPlan = "free"
+	UserPlanStarter UserPlan = "starter"
+	UserPlanGrowth  UserPlan = "growth"
 )
 
 // PlanConfig defines limits and billing behavior per plan.
@@ -25,17 +25,17 @@ var PlanConfigs = map[UserPlan]PlanConfig{
 		HardLimit:    true,
 		BillAllUsage: false,
 	},
-	UserPlanScale: {
+	UserPlanStarter: {
 		MonthlyLimit: 50000,
 		DailyLimit:   -1,
 		HardLimit:    false, // Overage allowed
 		BillAllUsage: false, // Only overage billed
 	},
-	UserPlanPAYG: {
-		MonthlyLimit: -1,
+	UserPlanGrowth: {
+		MonthlyLimit: 200000,
 		DailyLimit:   -1,
 		HardLimit:    false,
-		BillAllUsage: true, // All emails billed
+		BillAllUsage: false, // Only overage billed, base price covers first 200k
 	},
 }
 
@@ -47,41 +47,95 @@ func (p UserPlan) GetConfig() PlanConfig {
 	return PlanConfigs[UserPlanFree]
 }
 
+// Feature represents a plan feature with optional tooltip.
+type Feature struct {
+	Name    string
+	Tooltip string // Markdown/Text for tooltip
+}
+
 // PlanInfo contains display information for a plan.
 type PlanInfo struct {
-	ID           string
-	Name         string
-	Description  string
-	PriceCents   int64
-	MonthlyLimit int64
-	DailyLimit   int64
+	ID                string
+	Name              string
+	Description       string
+	PriceCents        int64
+	OveragePriceCents int64
+	MonthlyLimit      int64
+	DailyLimit        int64
+	Features          []Feature
 }
 
 // PlanInfos provides display information for each plan.
 var PlanInfos = map[UserPlan]PlanInfo{
 	UserPlanFree: {
 		ID:           "free",
-		Name:         "Free",
+		Name:         "Indie",
 		Description:  "Perfect for getting started",
 		PriceCents:   0,
 		MonthlyLimit: 3000,
 		DailyLimit:   100,
+		Features: []Feature{
+			{Name: "3,000 emails / month"},
+			{Name: "100 emails / day"},
+			{Name: "Unlimited domains"},
+			{
+				Name:    "Webhook & onReceive events",
+				Tooltip: "**onReceive:** Zero-config, callback-based event stream perfect for coding agents & prototypes.\n\n**Webhooks:** Standard implementation for production apps.\n\nBoth support replies, bounces, complaints & delivery.",
+			},
+			{
+				Name:    "Inbound & Outbound",
+				Tooltip: "Every email you send is repliable and it's up to you if you handle the replies or not",
+			},
+			{Name: "Standard support"},
+		},
 	},
-	UserPlanScale: {
-		ID:           "scale",
-		Name:         "Scale",
-		Description:  "For growing applications",
-		PriceCents:   2900, // $29/mo
-		MonthlyLimit: 50000,
-		DailyLimit:   -1, // Unlimited
+	UserPlanStarter: {
+		ID:                "starter",
+		Name:              "Starter",
+		Description:       "For growing applications",
+		PriceCents:        1250, // $12.50/mo
+		OveragePriceCents: 25,   // $0.25 per 1000 emails
+		MonthlyLimit:      50000,
+		DailyLimit:        -1, // Unlimited
+		Features: []Feature{
+			{Name: "50,000 emails included"},
+			{Name: "Overages: $0.25 / 1K"}, // Hardcoded formatted price
+			{Name: "Unlimited daily sending"},
+			{Name: "Unlimited domains"},
+			{
+				Name:    "Webhook & onReceive events",
+				Tooltip: "**onReceive:** Zero-config, callback-based event stream perfect for coding agents & prototypes.\n\n**Webhooks:** Standard implementation for production apps.\n\nBoth support replies, bounces, complaints & delivery.",
+			},
+			{
+				Name:    "Inbound & Outbound",
+				Tooltip: "Every email you send is repliable and it's up to you if you handle the replies or not",
+			},
+			{Name: "Priority support"},
+		},
 	},
-	UserPlanPAYG: {
-		ID:           "payg",
-		Name:         "Pay As You Go",
-		Description:  "Usage-based pricing",
-		PriceCents:   0,  // Usage-based
-		MonthlyLimit: -1, // Unlimited
-		DailyLimit:   -1, // Unlimited
+	UserPlanGrowth: {
+		ID:                "growth",
+		Name:              "Growth",
+		Description:       "For high volume usage",
+		PriceCents:        5000, // $50.00/mo
+		OveragePriceCents: 25,   // $0.25 per 1000 emails
+		MonthlyLimit:      200000,
+		DailyLimit:        -1, // Unlimited
+		Features: []Feature{
+			{Name: "200,000 emails included"},
+			{Name: "Overages: $0.25 / 1K"},
+			{Name: "Unlimited daily sending"},
+			{Name: "Unlimited domains"},
+			{
+				Name:    "Webhook & onReceive events",
+				Tooltip: "**onReceive:** Zero-config, callback-based event stream perfect for coding agents & prototypes.\n\n**Webhooks:** Standard implementation for production apps.\n\nBoth support replies, bounces, complaints & delivery.",
+			},
+			{
+				Name:    "Inbound & Outbound",
+				Tooltip: "Every email you send is repliable and it's up to you if you handle the replies or not",
+			},
+			{Name: "Enterprise support"},
+		},
 	},
 }
 
@@ -103,19 +157,19 @@ var PlanProductMap = map[string]string{}
 
 // InitProductMappings configures the product-plan mappings from config.
 // Call this at application startup with values from config.
-func InitProductMappings(scaleProductID, paygProductID string) {
+func InitProductMappings(starterProductID, growthProductID string) {
 	// Clear existing maps
 	ProductPlanMap = make(map[string]UserPlan)
 	PlanProductMap = make(map[string]string)
 
 	// Set up mappings from config
-	if scaleProductID != "" {
-		ProductPlanMap[scaleProductID] = UserPlanScale
-		PlanProductMap["scale"] = scaleProductID
+	if starterProductID != "" {
+		ProductPlanMap[starterProductID] = UserPlanStarter
+		PlanProductMap["starter"] = starterProductID
 	}
-	if paygProductID != "" {
-		ProductPlanMap[paygProductID] = UserPlanPAYG
-		PlanProductMap["payg"] = paygProductID
+	if growthProductID != "" {
+		ProductPlanMap[growthProductID] = UserPlanGrowth
+		PlanProductMap["growth"] = growthProductID
 	}
 }
 
@@ -135,5 +189,5 @@ func GetProductIDFromPlanID(planID string) (string, bool) {
 
 // AllPlans returns all plan types in display order.
 func AllPlans() []UserPlan {
-	return []UserPlan{UserPlanFree, UserPlanScale, UserPlanPAYG}
+	return []UserPlan{UserPlanFree, UserPlanStarter, UserPlanGrowth}
 }

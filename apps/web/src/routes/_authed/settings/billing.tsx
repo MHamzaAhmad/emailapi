@@ -1,6 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { Shell, PageHeader } from '@/components/shell'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { HelpCircleIcon } from '@hugeicons/core-free-icons'
 import { usePlans, useCurrentSubscription, useCreateCheckoutSession, useGetCustomerPortalUrl } from '@/hooks'
 
 export const Route = createFileRoute('/_authed/settings/billing')({
@@ -38,9 +41,14 @@ function BillingSettingsPage() {
         }
     }
 
-    const formatPrice = (priceCents: bigint): string => {
+    const formatPrice = (priceCents: bigint | number): string => {
         const dollars = Number(priceCents) / 100
-        return dollars === 0 ? '$0' : `$${dollars}`
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+        }).format(dollars)
     }
 
     const formatLimit = (limit: bigint): string => {
@@ -118,30 +126,38 @@ function BillingSettingsPage() {
 
                             <div className="mb-4">
                                 <span className="text-2xl font-bold">{formatPrice(plan.priceCents)}</span>
-                                <span className="text-xs text-muted-foreground ml-1">
-                                    {plan.id === 'payg' ? '/1K emails' : '/mo'}
-                                </span>
+                                <span className="text-xs text-muted-foreground ml-1">/mo</span>
                             </div>
 
                             <ul className="space-y-2 mb-6 flex-1">
-                                <li className="flex items-start gap-2 text-xs text-muted-foreground">
-                                    <span className="text-foreground/60 mt-0.5">—</span>
-                                    <span>{formatLimit(plan.monthlyLimit)} emails / month</span>
-                                </li>
-                                <li className="flex items-start gap-2 text-xs text-muted-foreground">
-                                    <span className="text-foreground/60 mt-0.5">—</span>
-                                    <span>
-                                        {plan.dailyLimit === BigInt(-1)
-                                            ? 'No daily limit'
-                                            : `${formatLimit(plan.dailyLimit)} emails / day`}
-                                    </span>
-                                </li>
-                                <li className="flex items-start gap-2 text-xs text-muted-foreground">
-                                    <span className="text-foreground/60 mt-0.5">—</span>
-                                    <span>Unlimited domains</span>
-                                </li>
+                                {plan.features.map((feature, idx) => (
+                                    <li key={idx} className="flex items-start gap-2 text-xs text-muted-foreground">
+                                        <span className="text-foreground/60 mt-0.5">—</span>
+                                        <div className="flex items-center gap-1.5 flex-1">
+                                            <span>{feature.name}</span>
+                                            {feature.tooltip && (
+                                                <Tooltip>
+                                                    <TooltipTrigger className="cursor-help flex items-center">
+                                                        <HugeiconsIcon icon={HelpCircleIcon} size={12} className="text-muted-foreground/60 hover:text-foreground transition-colors" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent className="max-w-[220px] text-[10px] leading-tight bg-popover text-popover-foreground border border-border shadow-md p-2">
+                                                        {feature.tooltip.split('\n\n').map((part, i) => (
+                                                            <div key={i} className={i > 0 ? "mt-2" : ""}>
+                                                                {part.split(/(\*\*.*?\*\*)/).map((segment, j) => {
+                                                                    if (segment.startsWith('**') && segment.endsWith('**')) {
+                                                                        return <span key={j} className="font-semibold">{segment.slice(2, -2)}</span>
+                                                                    }
+                                                                    return segment
+                                                                })}
+                                                            </div>
+                                                        ))}
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            )}
+                                        </div>
+                                    </li>
+                                ))}
                             </ul>
-
                             {plan.id !== currentPlan && plan.id !== 'free' && (
                                 <Button
                                     variant="outline"

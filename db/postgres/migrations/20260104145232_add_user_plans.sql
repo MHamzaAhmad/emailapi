@@ -2,7 +2,7 @@
 -- Add user plan enum and polar customer tracking
 
 -- Create plan enum type
-CREATE TYPE user_plan AS ENUM ('free', 'scale', 'payg');
+CREATE TYPE user_plan AS ENUM ('free', 'starter', 'growth');
 
 -- Add plan column with default 'free'
 ALTER TABLE users ADD COLUMN plan user_plan NOT NULL DEFAULT 'free';

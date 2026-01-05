@@ -1,15 +1,23 @@
 import { SignInButton, SignedIn, SignedOut } from '@clerk/clerk-react'
 import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { HelpCircleIcon } from '@hugeicons/core-free-icons'
 import { usePlans } from '@/hooks'
 
 export function Pricing() {
     const { data: plansData, isLoading } = usePlans()
     const plans = plansData?.plans || []
 
-    const formatPrice = (priceCents: bigint): string => {
+    const formatPrice = (priceCents: bigint | number): string => {
         const dollars = Number(priceCents) / 100
-        return dollars === 0 ? '$0' : `$${dollars}`
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+        }).format(dollars)
     }
 
     const formatLimit = (limit: bigint): string => {
@@ -44,13 +52,13 @@ export function Pricing() {
                             className={`
                                 p-8 flex flex-col
                                 ${i < plans.length - 1 ? 'border-b md:border-b-0 md:border-r border-dashed border-border/40' : ''}
-                                ${plan.id === 'scale' ? 'bg-secondary/20' : ''}
+                                ${plan.id === 'starter' ? 'bg-secondary/20' : ''}
                             `}
                         >
                             <div className="mb-6">
                                 <div className="flex items-center gap-2 mb-1">
                                     <h3 className="text-lg font-bold">{plan.name}</h3>
-                                    {plan.id === 'scale' && (
+                                    {plan.id === 'starter' && (
                                         <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded">
                                             Popular
                                         </span>
@@ -61,46 +69,45 @@ export function Pricing() {
 
                             <div className="mb-6">
                                 <span className="text-4xl font-bold">{formatPrice(plan.priceCents)}</span>
-                                <span className="text-sm text-muted-foreground ml-1">
-                                    {plan.id === 'payg' ? '/1K emails' : '/mo'}
-                                </span>
+                                <span className="text-sm text-muted-foreground ml-1">/mo</span>
                             </div>
 
                             <ul className="space-y-3 mb-8 flex-1">
-                                <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                                    <span className="text-foreground/60 mt-0.5">—</span>
-                                    <span>{formatLimit(plan.monthlyLimit)} emails / month</span>
-                                </li>
-                                <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                                    <span className="text-foreground/60 mt-0.5">—</span>
-                                    <span>
-                                        {plan.dailyLimit === BigInt(-1)
-                                            ? 'No daily limit'
-                                            : `${formatLimit(plan.dailyLimit)} emails / day`}
-                                    </span>
-                                </li>
-                                <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                                    <span className="text-foreground/60 mt-0.5">—</span>
-                                    <span>Unlimited domains</span>
-                                </li>
-                                <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                                    <span className="text-foreground/60 mt-0.5">—</span>
-                                    <span>Webhook events</span>
-                                </li>
-                                {plan.id !== 'free' && (
-                                    <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                                {plan.features.map((feature, idx) => (
+                                    <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
                                         <span className="text-foreground/60 mt-0.5">—</span>
-                                        <span>{plan.id === 'payg' ? 'Enterprise support' : 'Priority support'}</span>
+                                        <div className="flex items-center gap-1.5 flex-1">
+                                            <span>{feature.name}</span>
+                                            {feature.tooltip && (
+                                                <Tooltip>
+                                                    <TooltipTrigger className="cursor-help flex items-center">
+                                                        <HugeiconsIcon icon={HelpCircleIcon} size={14} className="text-muted-foreground/60 hover:text-foreground transition-colors" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent className="max-w-[220px] text-[10px] leading-tight bg-popover text-popover-foreground border border-border shadow-md p-2">
+                                                        {feature.tooltip.split('\n\n').map((part, i) => (
+                                                            <div key={i} className={i > 0 ? "mt-2" : ""}>
+                                                                {part.split(/(\*\*.*?\*\*)/).map((segment, j) => {
+                                                                    if (segment.startsWith('**') && segment.endsWith('**')) {
+                                                                        return <span key={j} className="font-semibold">{segment.slice(2, -2)}</span>
+                                                                    }
+                                                                    return segment
+                                                                })}
+                                                            </div>
+                                                        ))}
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            )}
+                                        </div>
                                     </li>
-                                )}
+                                ))}
                             </ul>
 
                             <SignedOut>
                                 <SignInButton mode="modal">
                                     <Button
-                                        variant={plan.id === 'scale' ? 'default' : 'outline'}
+                                        variant={plan.id === 'starter' ? 'default' : 'outline'}
                                         size="sm"
-                                        className={`w-full h-9 text-xs font-medium ${plan.id !== 'scale' ? 'border-dashed' : ''}`}
+                                        className={`w-full h-9 text-xs font-medium ${plan.id !== 'starter' ? 'border-dashed' : ''}`}
                                     >
                                         Get Started
                                     </Button>
@@ -108,9 +115,9 @@ export function Pricing() {
                             </SignedOut>
                             <SignedIn>
                                 <Button
-                                    variant={plan.id === 'scale' ? 'default' : 'outline'}
+                                    variant={plan.id === 'starter' ? 'default' : 'outline'}
                                     size="sm"
-                                    className={`w-full h-9 text-xs font-medium ${plan.id !== 'scale' ? 'border-dashed' : ''}`}
+                                    className={`w-full h-9 text-xs font-medium ${plan.id !== 'starter' ? 'border-dashed' : ''}`}
                                     asChild
                                 >
                                     <Link to="/settings/billing">

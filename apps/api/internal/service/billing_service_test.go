@@ -18,7 +18,7 @@ import (
 
 func init() {
 	// Initialize plan mappings for tests
-	domain.InitProductMappings("prod_scale_monthly", "prod_payg")
+	domain.InitProductMappings("prod_starter", "prod_growth")
 }
 
 func TestBillingService_GetPlans(t *testing.T) {
@@ -31,8 +31,8 @@ func TestBillingService_GetPlans(t *testing.T) {
 
 	require.Len(t, plans, 3)
 	assert.Equal(t, "free", plans[0].ID)
-	assert.Equal(t, "scale", plans[1].ID)
-	assert.Equal(t, "payg", plans[2].ID)
+	assert.Equal(t, "starter", plans[1].ID)
+	assert.Equal(t, "growth", plans[2].ID)
 
 	// Verify limits are populated
 	assert.Equal(t, int64(3000), plans[0].MonthlyLimit)
@@ -99,7 +99,7 @@ func TestBillingService_CreateCheckoutSession(t *testing.T) {
 
 	t.Run("no polar client", func(t *testing.T) {
 		svcNoPolar := NewBillingService(nil, nil, nil)
-		_, err := svcNoPolar.CreateCheckoutSession(ctx, userID, "scale", successURL)
+		_, err := svcNoPolar.CreateCheckoutSession(ctx, userID, "starter", successURL)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "polar not configured")
 	})
@@ -116,7 +116,7 @@ func TestBillingService_CreateCheckoutSession(t *testing.T) {
 			CreateCheckoutSession(ctx, gomock.Any()).
 			Return(checkoutURL, nil)
 
-		result, err := svc.CreateCheckoutSession(ctx, userID, "scale", successURL)
+		result, err := svc.CreateCheckoutSession(ctx, userID, "starter", successURL)
 		require.NoError(t, err)
 		assert.Equal(t, checkoutURL, result)
 	})
@@ -172,20 +172,19 @@ func TestBillingService_GetCustomerPortalUrl(t *testing.T) {
 
 func TestDomain_PlanFunctions(t *testing.T) {
 	t.Run("GetPlanFromProductID", func(t *testing.T) {
-		assert.Equal(t, domain.UserPlanScale, domain.GetPlanFromProductID("prod_scale_monthly"))
-		assert.Equal(t, domain.UserPlanScale, domain.GetPlanFromProductID("prod_scale_yearly"))
-		assert.Equal(t, domain.UserPlanPAYG, domain.GetPlanFromProductID("prod_payg"))
+		assert.Equal(t, domain.UserPlanStarter, domain.GetPlanFromProductID("prod_starter"))
+		assert.Equal(t, domain.UserPlanGrowth, domain.GetPlanFromProductID("prod_growth"))
 		assert.Equal(t, domain.UserPlanFree, domain.GetPlanFromProductID("unknown"))
 	})
 
 	t.Run("GetProductIDFromPlanID", func(t *testing.T) {
-		productID, ok := domain.GetProductIDFromPlanID("scale")
+		productID, ok := domain.GetProductIDFromPlanID("starter")
 		assert.True(t, ok)
-		assert.Equal(t, "prod_scale_monthly", productID)
+		assert.Equal(t, "prod_starter", productID)
 
-		productID, ok = domain.GetProductIDFromPlanID("payg")
+		productID, ok = domain.GetProductIDFromPlanID("growth")
 		assert.True(t, ok)
-		assert.Equal(t, "prod_payg", productID)
+		assert.Equal(t, "prod_growth", productID)
 
 		_, ok = domain.GetProductIDFromPlanID("free")
 		assert.False(t, ok)
@@ -195,7 +194,7 @@ func TestDomain_PlanFunctions(t *testing.T) {
 		plans := domain.AllPlans()
 		assert.Len(t, plans, 3)
 		assert.Equal(t, domain.UserPlanFree, plans[0])
-		assert.Equal(t, domain.UserPlanScale, plans[1])
-		assert.Equal(t, domain.UserPlanPAYG, plans[2])
+		assert.Equal(t, domain.UserPlanStarter, plans[1])
+		assert.Equal(t, domain.UserPlanGrowth, plans[2])
 	})
 }

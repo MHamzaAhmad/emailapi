@@ -49,13 +49,23 @@ func (h *billingHandler) GetPlans(ctx context.Context, req *connect.Request[pb.G
 
 	pbPlans := make([]*pb.Plan, len(plans))
 	for i, p := range plans {
+		pbFeatures := make([]*pb.Feature, len(p.Features))
+		for j, f := range p.Features {
+			pbFeatures[j] = &pb.Feature{
+				Name:    f.Name,
+				Tooltip: f.Tooltip,
+			}
+		}
+
 		pbPlans[i] = &pb.Plan{
-			Id:           p.ID,
-			Name:         p.Name,
-			Description:  p.Description,
-			MonthlyLimit: p.MonthlyLimit,
-			DailyLimit:   p.DailyLimit,
-			PriceCents:   p.PriceCents,
+			Id:                p.ID,
+			Name:              p.Name,
+			Description:       p.Description,
+			MonthlyLimit:      p.MonthlyLimit,
+			DailyLimit:        p.DailyLimit,
+			PriceCents:        p.PriceCents,
+			OveragePriceCents: p.OveragePriceCents,
+			Features:          pbFeatures,
 		}
 	}
 
