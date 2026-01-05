@@ -94,16 +94,29 @@ func (p UserPlan) GetInfo() PlanInfo {
 }
 
 // ProductPlanMap maps Polar product IDs to plan types.
-var ProductPlanMap = map[string]UserPlan{
-	"prod_scale_monthly": UserPlanScale,
-	"prod_scale_yearly":  UserPlanScale,
-	"prod_payg":          UserPlanPAYG,
-}
+// Initialized via InitProductMappings at startup.
+var ProductPlanMap = map[string]UserPlan{}
 
 // PlanProductMap maps plan IDs to Polar product IDs.
-var PlanProductMap = map[string]string{
-	"scale": "prod_scale_monthly",
-	"payg":  "prod_payg",
+// Initialized via InitProductMappings at startup.
+var PlanProductMap = map[string]string{}
+
+// InitProductMappings configures the product-plan mappings from config.
+// Call this at application startup with values from config.
+func InitProductMappings(scaleProductID, paygProductID string) {
+	// Clear existing maps
+	ProductPlanMap = make(map[string]UserPlan)
+	PlanProductMap = make(map[string]string)
+
+	// Set up mappings from config
+	if scaleProductID != "" {
+		ProductPlanMap[scaleProductID] = UserPlanScale
+		PlanProductMap["scale"] = scaleProductID
+	}
+	if paygProductID != "" {
+		ProductPlanMap[paygProductID] = UserPlanPAYG
+		PlanProductMap["payg"] = paygProductID
+	}
 }
 
 // GetPlanFromProductID returns the plan for a Polar product ID.

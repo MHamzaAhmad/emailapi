@@ -16,6 +16,11 @@ import (
 	serviceMocks "github.com/emailapi/api/internal/service/mocks"
 )
 
+func init() {
+	// Initialize plan mappings for tests
+	domain.InitProductMappings("prod_scale_monthly", "prod_payg")
+}
+
 func TestBillingService_GetPlans(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

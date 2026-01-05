@@ -85,6 +85,8 @@ type Config struct {
 	PolarAccessToken   string `envconfig:"POLAR_ACCESS_TOKEN"`
 	PolarWebhookSecret string `envconfig:"POLAR_WEBHOOK_SECRET"`
 	PolarEmailMeterID  string `envconfig:"POLAR_EMAIL_METER_ID"`
+	PolarProductScale  string `envconfig:"POLAR_PRODUCT_SCALE"` // Product ID for Scale plan
+	PolarProductPAYG   string `envconfig:"POLAR_PRODUCT_PAYG"`  // Product ID for PAYG plan
 
 	// Usage limit checking
 	UsageLimitEnabled bool `envconfig:"USAGE_LIMIT_ENABLED" default:"true"`

@@ -2,6 +2,7 @@ package service
 
 import (
 	internaldns "github.com/emailapi/api/internal/dns"
+	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/eventstream"
 	"github.com/emailapi/api/internal/external/polar"
 	"github.com/emailapi/api/internal/external/s3"
@@ -77,7 +78,9 @@ type ServiceDeps struct {
 	InboundBucket string
 
 	// Polar Client
-	PolarClient polar.Client
+	PolarClient       polar.Client
+	PolarProductScale string // Product ID for Scale plan
+	PolarProductPAYG  string // Product ID for PAYG plan
 }
 
 // NewWithDeps creates a new Service with all dependencies.
@@ -163,6 +166,9 @@ func NewWithDeps(deps ServiceDeps) *Service {
 
 	// Initialize Admin service for admin operations
 	svc.Admin = NewAdminService(deps.Store, svc.User, svc.Reputation)
+
+	// Initialize product mappings from config
+	domain.InitProductMappings(deps.PolarProductScale, deps.PolarProductPAYG)
 
 	// Initialize Billing service
 	var usageCache rediscache.UsageCacheInterface
