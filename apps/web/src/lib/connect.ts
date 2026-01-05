@@ -15,6 +15,7 @@ import { UserService } from '@/generated/v1/user_pb';
 import { ActivityService } from '@/generated/v1/activity_pb';
 import { WebhookService } from '@/generated/v1/webhook_pb';
 import { AdminService } from '@/generated/v1/admin_pb';
+import { BillingService } from '@/generated/v1/billing_pb';
 
 // API base URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -91,6 +92,9 @@ export const webhookClient = (): Client<typeof WebhookService> =>
 
 export const adminClient = (): Client<typeof AdminService> =>
     createClient(AdminService, getTransport());
+
+export const billingClient = (): Client<typeof BillingService> =>
+    createClient(BillingService, getTransport());
 
 // Re-export types for convenience
 export type {

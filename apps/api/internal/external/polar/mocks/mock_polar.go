@@ -41,6 +41,21 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
+// CreateCheckoutSession mocks base method.
+func (m *MockClient) CreateCheckoutSession(ctx context.Context, params polar.CheckoutParams) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateCheckoutSession", ctx, params)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateCheckoutSession indicates an expected call of CreateCheckoutSession.
+func (mr *MockClientMockRecorder) CreateCheckoutSession(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCheckoutSession", reflect.TypeOf((*MockClient)(nil).CreateCheckoutSession), ctx, params)
+}
+
 // CreateCustomer mocks base method.
 func (m *MockClient) CreateCustomer(ctx context.Context, userID, email, name string) (string, error) {
 	m.ctrl.T.Helper()
@@ -54,6 +69,21 @@ func (m *MockClient) CreateCustomer(ctx context.Context, userID, email, name str
 func (mr *MockClientMockRecorder) CreateCustomer(ctx, userID, email, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCustomer", reflect.TypeOf((*MockClient)(nil).CreateCustomer), ctx, userID, email, name)
+}
+
+// CreateCustomerPortal mocks base method.
+func (m *MockClient) CreateCustomerPortal(ctx context.Context, customerID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateCustomerPortal", ctx, customerID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateCustomerPortal indicates an expected call of CreateCustomerPortal.
+func (mr *MockClientMockRecorder) CreateCustomerPortal(ctx, customerID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCustomerPortal", reflect.TypeOf((*MockClient)(nil).CreateCustomerPortal), ctx, customerID)
 }
 
 // GetCustomerByExternalID mocks base method.

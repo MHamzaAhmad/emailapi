@@ -64,7 +64,7 @@ func (s *BillingService) SyncSubscription(ctx context.Context, userID string) (*
 	}
 
 	// Map subscription to plan
-	newPlan := mapProductToPlan(sub.ProductID)
+	newPlan := domain.GetPlanFromProductID(sub.ProductID)
 
 	// Update if different
 	if newPlan != user.Plan {
@@ -148,7 +148,7 @@ func (s *BillingService) handleSubscriptionActive(ctx context.Context, event *Po
 	}
 
 	// Map Polar product to our plan
-	plan := mapProductToPlan(event.ProductID)
+	plan := domain.GetPlanFromProductID(event.ProductID)
 
 	// Only update if different (sync might have already set it)
 	if plan != user.Plan {
@@ -189,18 +189,60 @@ func (s *BillingService) handleSubscriptionCanceled(ctx context.Context, event *
 	return nil
 }
 
-// ProductPlanMap maps Polar product IDs to our plan enum.
-// This should be configured via environment variables in production.
-var ProductPlanMap = map[string]domain.UserPlan{
-	"prod_scale_monthly": domain.UserPlanScale,
-	"prod_scale_yearly":  domain.UserPlanScale,
-	"prod_payg":          domain.UserPlanPAYG,
+// GetPlans returns all available pricing plans.
+func (s *BillingService) GetPlans() []domain.PlanInfo {
+	plans := domain.AllPlans()
+	result := make([]domain.PlanInfo, 0, len(plans))
+	for _, p := range plans {
+		info := p.GetInfo()
+		result = append(result, info)
+	}
+	return result
 }
 
-// mapProductToPlan maps Polar product IDs to our plan enum.
-func mapProductToPlan(productID string) domain.UserPlan {
-	if plan, ok := ProductPlanMap[productID]; ok {
-		return plan
+// CreateCheckoutSession creates a checkout session for upgrading to a plan.
+func (s *BillingService) CreateCheckoutSession(ctx context.Context, userID, planID, successURL string) (string, error) {
+	if s.polarClient == nil {
+		return "", fmt.Errorf("polar not configured")
 	}
-	return domain.UserPlanFree
+
+	// Map plan ID to product ID
+	productID, ok := domain.GetProductIDFromPlanID(planID)
+	if !ok {
+		return "", fmt.Errorf("invalid plan: %s", planID)
+	}
+
+	checkoutURL, err := s.polarClient.CreateCheckoutSession(ctx, polar.CheckoutParams{
+		ProductID:          productID,
+		ExternalCustomerID: userID,
+		SuccessURL:         successURL,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return checkoutURL, nil
+}
+
+// GetCustomerPortalUrl returns the customer portal URL for subscription management.
+func (s *BillingService) GetCustomerPortalUrl(ctx context.Context, userID string) (string, error) {
+	if s.polarClient == nil {
+		return "", fmt.Errorf("polar not configured")
+	}
+
+	user, err := s.store.Users().GetByID(ctx, userID)
+	if err != nil {
+		return "", fmt.Errorf("user not found: %w", err)
+	}
+
+	if user.PolarCustomerID == nil || *user.PolarCustomerID == "" {
+		return "", fmt.Errorf("user has no Polar customer ID")
+	}
+
+	portalURL, err := s.polarClient.CreateCustomerPortal(ctx, *user.PolarCustomerID)
+	if err != nil {
+		return "", err
+	}
+
+	return portalURL, nil
 }

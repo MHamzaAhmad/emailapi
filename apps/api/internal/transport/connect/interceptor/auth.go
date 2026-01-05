@@ -45,7 +45,7 @@ type AuthConfig struct {
 
 // publicProcedures are procedures that don't require authentication.
 var publicProcedures = map[string]bool{
-	// Currently none - add procedures here if needed
+	"/v1.BillingService/GetPlans": true, // Pricing info is public
 }
 
 // apiKeyAllowedProcedures defines which procedures allow API key authentication.

@@ -10,11 +10,59 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/billing.proto.
  */
 export const file_v1_billing: GenFile = /*@__PURE__*/
-  fileDesc("ChB2MS9iaWxsaW5nLnByb3RvEgJ2MSIZChdTeW5jU3Vic2NyaXB0aW9uUmVxdWVzdCJUChhTeW5jU3Vic2NyaXB0aW9uUmVzcG9uc2USDwoHdXNlcl9pZBgBIAEoCRIMCgRwbGFuGAIgASgJEhkKEXBvbGFyX2N1c3RvbWVyX2lkGAMgASgJMmEKDkJpbGxpbmdTZXJ2aWNlEk8KEFN5bmNTdWJzY3JpcHRpb24SGy52MS5TeW5jU3Vic2NyaXB0aW9uUmVxdWVzdBocLnYxLlN5bmNTdWJzY3JpcHRpb25SZXNwb25zZSIAQl4KBmNvbS52MUIMQmlsbGluZ1Byb3RvUAFaHmdpdGh1Yi5jb20vZW1haWxhcGkvYXBpL2dlbi92MaICA1ZYWKoCAlYxygICVjHiAg5WMVxHUEJNZXRhZGF0YeoCAlYxYgZwcm90bzM");
+  fileDesc("ChB2MS9iaWxsaW5nLnByb3RvEgJ2MSJ2CgRQbGFuEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSFQoNbW9udGhseV9saW1pdBgEIAEoAxITCgtkYWlseV9saW1pdBgFIAEoAxITCgtwcmljZV9jZW50cxgGIAEoAyIZChdTeW5jU3Vic2NyaXB0aW9uUmVxdWVzdCJUChhTeW5jU3Vic2NyaXB0aW9uUmVzcG9uc2USDwoHdXNlcl9pZBgBIAEoCRIMCgRwbGFuGAIgASgJEhkKEXBvbGFyX2N1c3RvbWVyX2lkGAMgASgJIhEKD0dldFBsYW5zUmVxdWVzdCIrChBHZXRQbGFuc1Jlc3BvbnNlEhcKBXBsYW5zGAEgAygLMggudjEuUGxhbiJEChxDcmVhdGVDaGVja291dFNlc3Npb25SZXF1ZXN0Eg8KB3BsYW5faWQYASABKAkSEwoLc3VjY2Vzc191cmwYAiABKAkiNQodQ3JlYXRlQ2hlY2tvdXRTZXNzaW9uUmVzcG9uc2USFAoMY2hlY2tvdXRfdXJsGAEgASgJIh0KG0dldEN1c3RvbWVyUG9ydGFsVXJsUmVxdWVzdCIyChxHZXRDdXN0b21lclBvcnRhbFVybFJlc3BvbnNlEhIKCnBvcnRhbF91cmwYASABKAky1wIKDkJpbGxpbmdTZXJ2aWNlEk8KEFN5bmNTdWJzY3JpcHRpb24SGy52MS5TeW5jU3Vic2NyaXB0aW9uUmVxdWVzdBocLnYxLlN5bmNTdWJzY3JpcHRpb25SZXNwb25zZSIAEjcKCEdldFBsYW5zEhMudjEuR2V0UGxhbnNSZXF1ZXN0GhQudjEuR2V0UGxhbnNSZXNwb25zZSIAEl4KFUNyZWF0ZUNoZWNrb3V0U2Vzc2lvbhIgLnYxLkNyZWF0ZUNoZWNrb3V0U2Vzc2lvblJlcXVlc3QaIS52MS5DcmVhdGVDaGVja291dFNlc3Npb25SZXNwb25zZSIAElsKFEdldEN1c3RvbWVyUG9ydGFsVXJsEh8udjEuR2V0Q3VzdG9tZXJQb3J0YWxVcmxSZXF1ZXN0GiAudjEuR2V0Q3VzdG9tZXJQb3J0YWxVcmxSZXNwb25zZSIAQl4KBmNvbS52MUIMQmlsbGluZ1Byb3RvUAFaHmdpdGh1Yi5jb20vZW1haWxhcGkvYXBpL2dlbi92MaICA1ZYWKoCAlYxygICVjHiAg5WMVxHUEJNZXRhZGF0YeoCAlYxYgZwcm90bzM");
 
 /**
- * empty request - user context comes from auth
+ * Plan represents a pricing tier.
  *
+ * @generated from message v1.Plan
+ */
+export type Plan = Message<"v1.Plan"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string description = 3;
+   */
+  description: string;
+
+  /**
+   * -1 = unlimited
+   *
+   * @generated from field: int64 monthly_limit = 4;
+   */
+  monthlyLimit: bigint;
+
+  /**
+   * -1 = unlimited
+   *
+   * @generated from field: int64 daily_limit = 5;
+   */
+  dailyLimit: bigint;
+
+  /**
+   * Monthly price in cents
+   *
+   * @generated from field: int64 price_cents = 6;
+   */
+  priceCents: bigint;
+};
+
+/**
+ * Describes the message v1.Plan.
+ * Use `create(PlanSchema)` to create a new message.
+ */
+export const PlanSchema: GenMessage<Plan> = /*@__PURE__*/
+  messageDesc(file_v1_billing, 0);
+
+/**
  * @generated from message v1.SyncSubscriptionRequest
  */
 export type SyncSubscriptionRequest = Message<"v1.SyncSubscriptionRequest"> & {
@@ -25,7 +73,7 @@ export type SyncSubscriptionRequest = Message<"v1.SyncSubscriptionRequest"> & {
  * Use `create(SyncSubscriptionRequestSchema)` to create a new message.
  */
 export const SyncSubscriptionRequestSchema: GenMessage<SyncSubscriptionRequest> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 0);
+  messageDesc(file_v1_billing, 1);
 
 /**
  * @generated from message v1.SyncSubscriptionResponse
@@ -52,15 +100,113 @@ export type SyncSubscriptionResponse = Message<"v1.SyncSubscriptionResponse"> & 
  * Use `create(SyncSubscriptionResponseSchema)` to create a new message.
  */
 export const SyncSubscriptionResponseSchema: GenMessage<SyncSubscriptionResponse> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 1);
+  messageDesc(file_v1_billing, 2);
+
+/**
+ * @generated from message v1.GetPlansRequest
+ */
+export type GetPlansRequest = Message<"v1.GetPlansRequest"> & {
+};
+
+/**
+ * Describes the message v1.GetPlansRequest.
+ * Use `create(GetPlansRequestSchema)` to create a new message.
+ */
+export const GetPlansRequestSchema: GenMessage<GetPlansRequest> = /*@__PURE__*/
+  messageDesc(file_v1_billing, 3);
+
+/**
+ * @generated from message v1.GetPlansResponse
+ */
+export type GetPlansResponse = Message<"v1.GetPlansResponse"> & {
+  /**
+   * @generated from field: repeated v1.Plan plans = 1;
+   */
+  plans: Plan[];
+};
+
+/**
+ * Describes the message v1.GetPlansResponse.
+ * Use `create(GetPlansResponseSchema)` to create a new message.
+ */
+export const GetPlansResponseSchema: GenMessage<GetPlansResponse> = /*@__PURE__*/
+  messageDesc(file_v1_billing, 4);
+
+/**
+ * @generated from message v1.CreateCheckoutSessionRequest
+ */
+export type CreateCheckoutSessionRequest = Message<"v1.CreateCheckoutSessionRequest"> & {
+  /**
+   * @generated from field: string plan_id = 1;
+   */
+  planId: string;
+
+  /**
+   * @generated from field: string success_url = 2;
+   */
+  successUrl: string;
+};
+
+/**
+ * Describes the message v1.CreateCheckoutSessionRequest.
+ * Use `create(CreateCheckoutSessionRequestSchema)` to create a new message.
+ */
+export const CreateCheckoutSessionRequestSchema: GenMessage<CreateCheckoutSessionRequest> = /*@__PURE__*/
+  messageDesc(file_v1_billing, 5);
+
+/**
+ * @generated from message v1.CreateCheckoutSessionResponse
+ */
+export type CreateCheckoutSessionResponse = Message<"v1.CreateCheckoutSessionResponse"> & {
+  /**
+   * @generated from field: string checkout_url = 1;
+   */
+  checkoutUrl: string;
+};
+
+/**
+ * Describes the message v1.CreateCheckoutSessionResponse.
+ * Use `create(CreateCheckoutSessionResponseSchema)` to create a new message.
+ */
+export const CreateCheckoutSessionResponseSchema: GenMessage<CreateCheckoutSessionResponse> = /*@__PURE__*/
+  messageDesc(file_v1_billing, 6);
+
+/**
+ * @generated from message v1.GetCustomerPortalUrlRequest
+ */
+export type GetCustomerPortalUrlRequest = Message<"v1.GetCustomerPortalUrlRequest"> & {
+};
+
+/**
+ * Describes the message v1.GetCustomerPortalUrlRequest.
+ * Use `create(GetCustomerPortalUrlRequestSchema)` to create a new message.
+ */
+export const GetCustomerPortalUrlRequestSchema: GenMessage<GetCustomerPortalUrlRequest> = /*@__PURE__*/
+  messageDesc(file_v1_billing, 7);
+
+/**
+ * @generated from message v1.GetCustomerPortalUrlResponse
+ */
+export type GetCustomerPortalUrlResponse = Message<"v1.GetCustomerPortalUrlResponse"> & {
+  /**
+   * @generated from field: string portal_url = 1;
+   */
+  portalUrl: string;
+};
+
+/**
+ * Describes the message v1.GetCustomerPortalUrlResponse.
+ * Use `create(GetCustomerPortalUrlResponseSchema)` to create a new message.
+ */
+export const GetCustomerPortalUrlResponseSchema: GenMessage<GetCustomerPortalUrlResponse> = /*@__PURE__*/
+  messageDesc(file_v1_billing, 8);
 
 /**
  * @generated from service v1.BillingService
  */
 export const BillingService: GenService<{
   /**
-   * SyncSubscription checks the remote payment provider (Polar) for the latest subscription status
-   * and updates the local user record. Call this after a successful checkout redirect.
+   * SyncSubscription checks Polar for latest subscription and updates user.
    *
    * @generated from rpc v1.BillingService.SyncSubscription
    */
@@ -68,6 +214,36 @@ export const BillingService: GenService<{
     methodKind: "unary";
     input: typeof SyncSubscriptionRequestSchema;
     output: typeof SyncSubscriptionResponseSchema;
+  },
+  /**
+   * GetPlans returns available pricing plans.
+   *
+   * @generated from rpc v1.BillingService.GetPlans
+   */
+  getPlans: {
+    methodKind: "unary";
+    input: typeof GetPlansRequestSchema;
+    output: typeof GetPlansResponseSchema;
+  },
+  /**
+   * CreateCheckoutSession generates a Polar checkout URL for plan upgrade.
+   *
+   * @generated from rpc v1.BillingService.CreateCheckoutSession
+   */
+  createCheckoutSession: {
+    methodKind: "unary";
+    input: typeof CreateCheckoutSessionRequestSchema;
+    output: typeof CreateCheckoutSessionResponseSchema;
+  },
+  /**
+   * GetCustomerPortalUrl returns URL for subscription management.
+   *
+   * @generated from rpc v1.BillingService.GetCustomerPortalUrl
+   */
+  getCustomerPortalUrl: {
+    methodKind: "unary";
+    input: typeof GetCustomerPortalUrlRequestSchema;
+    output: typeof GetCustomerPortalUrlResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_v1_billing, 0);

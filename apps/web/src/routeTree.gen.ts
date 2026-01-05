@@ -20,6 +20,7 @@ import { Route as AuthedApiKeysRouteImport } from './routes/_authed/api-keys'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AuthedDomainsIndexRouteImport } from './routes/_authed/domains/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
+import { Route as AuthedSettingsBillingRouteImport } from './routes/_authed/settings/billing'
 import { Route as AuthedDomainsDomainIdRouteImport } from './routes/_authed/domains/$domainId'
 
 const AdminRoute = AdminRouteImport.update({
@@ -76,6 +77,11 @@ const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   path: '/users/$userId',
   getParentRoute: () => AdminRoute,
 } as any)
+const AuthedSettingsBillingRoute = AuthedSettingsBillingRouteImport.update({
+  id: '/settings/billing',
+  path: '/settings/billing',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedDomainsDomainIdRoute = AuthedDomainsDomainIdRouteImport.update({
   id: '/domains/$domainId',
   path: '/domains/$domainId',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/admin/flagged': typeof AdminFlaggedRoute
   '/admin/': typeof AdminIndexRoute
   '/domains/$domainId': typeof AuthedDomainsDomainIdRoute
+  '/settings/billing': typeof AuthedSettingsBillingRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/domains': typeof AuthedDomainsIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/admin/flagged': typeof AdminFlaggedRoute
   '/admin': typeof AdminIndexRoute
   '/domains/$domainId': typeof AuthedDomainsDomainIdRoute
+  '/settings/billing': typeof AuthedSettingsBillingRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/domains': typeof AuthedDomainsIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/admin/flagged': typeof AdminFlaggedRoute
   '/admin/': typeof AdminIndexRoute
   '/_authed/domains/$domainId': typeof AuthedDomainsDomainIdRoute
+  '/_authed/settings/billing': typeof AuthedSettingsBillingRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/_authed/domains/': typeof AuthedDomainsIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/admin/flagged'
     | '/admin/'
     | '/domains/$domainId'
+    | '/settings/billing'
     | '/admin/users/$userId'
     | '/domains'
     | '/admin/users'
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
     | '/admin/flagged'
     | '/admin'
     | '/domains/$domainId'
+    | '/settings/billing'
     | '/admin/users/$userId'
     | '/domains'
     | '/admin/users'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '/admin/flagged'
     | '/admin/'
     | '/_authed/domains/$domainId'
+    | '/_authed/settings/billing'
     | '/admin/users/$userId'
     | '/_authed/domains/'
     | '/admin/users/'
@@ -249,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersUserIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_authed/settings/billing': {
+      id: '/_authed/settings/billing'
+      path: '/settings/billing'
+      fullPath: '/settings/billing'
+      preLoaderRoute: typeof AuthedSettingsBillingRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/domains/$domainId': {
       id: '/_authed/domains/$domainId'
       path: '/domains/$domainId'
@@ -264,6 +283,7 @@ interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedWebhooksRoute: typeof AuthedWebhooksRoute
   AuthedDomainsDomainIdRoute: typeof AuthedDomainsDomainIdRoute
+  AuthedSettingsBillingRoute: typeof AuthedSettingsBillingRoute
   AuthedDomainsIndexRoute: typeof AuthedDomainsIndexRoute
 }
 
@@ -272,6 +292,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedWebhooksRoute: AuthedWebhooksRoute,
   AuthedDomainsDomainIdRoute: AuthedDomainsDomainIdRoute,
+  AuthedSettingsBillingRoute: AuthedSettingsBillingRoute,
   AuthedDomainsIndexRoute: AuthedDomainsIndexRoute,
 }
 

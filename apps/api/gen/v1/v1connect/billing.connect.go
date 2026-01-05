@@ -36,13 +36,26 @@ const (
 	// BillingServiceSyncSubscriptionProcedure is the fully-qualified name of the BillingService's
 	// SyncSubscription RPC.
 	BillingServiceSyncSubscriptionProcedure = "/v1.BillingService/SyncSubscription"
+	// BillingServiceGetPlansProcedure is the fully-qualified name of the BillingService's GetPlans RPC.
+	BillingServiceGetPlansProcedure = "/v1.BillingService/GetPlans"
+	// BillingServiceCreateCheckoutSessionProcedure is the fully-qualified name of the BillingService's
+	// CreateCheckoutSession RPC.
+	BillingServiceCreateCheckoutSessionProcedure = "/v1.BillingService/CreateCheckoutSession"
+	// BillingServiceGetCustomerPortalUrlProcedure is the fully-qualified name of the BillingService's
+	// GetCustomerPortalUrl RPC.
+	BillingServiceGetCustomerPortalUrlProcedure = "/v1.BillingService/GetCustomerPortalUrl"
 )
 
 // BillingServiceClient is a client for the v1.BillingService service.
 type BillingServiceClient interface {
-	// SyncSubscription checks the remote payment provider (Polar) for the latest subscription status
-	// and updates the local user record. Call this after a successful checkout redirect.
+	// SyncSubscription checks Polar for latest subscription and updates user.
 	SyncSubscription(context.Context, *connect.Request[v1.SyncSubscriptionRequest]) (*connect.Response[v1.SyncSubscriptionResponse], error)
+	// GetPlans returns available pricing plans.
+	GetPlans(context.Context, *connect.Request[v1.GetPlansRequest]) (*connect.Response[v1.GetPlansResponse], error)
+	// CreateCheckoutSession generates a Polar checkout URL for plan upgrade.
+	CreateCheckoutSession(context.Context, *connect.Request[v1.CreateCheckoutSessionRequest]) (*connect.Response[v1.CreateCheckoutSessionResponse], error)
+	// GetCustomerPortalUrl returns URL for subscription management.
+	GetCustomerPortalUrl(context.Context, *connect.Request[v1.GetCustomerPortalUrlRequest]) (*connect.Response[v1.GetCustomerPortalUrlResponse], error)
 }
 
 // NewBillingServiceClient constructs a client for the v1.BillingService service. By default, it
@@ -62,12 +75,33 @@ func NewBillingServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(billingServiceMethods.ByName("SyncSubscription")),
 			connect.WithClientOptions(opts...),
 		),
+		getPlans: connect.NewClient[v1.GetPlansRequest, v1.GetPlansResponse](
+			httpClient,
+			baseURL+BillingServiceGetPlansProcedure,
+			connect.WithSchema(billingServiceMethods.ByName("GetPlans")),
+			connect.WithClientOptions(opts...),
+		),
+		createCheckoutSession: connect.NewClient[v1.CreateCheckoutSessionRequest, v1.CreateCheckoutSessionResponse](
+			httpClient,
+			baseURL+BillingServiceCreateCheckoutSessionProcedure,
+			connect.WithSchema(billingServiceMethods.ByName("CreateCheckoutSession")),
+			connect.WithClientOptions(opts...),
+		),
+		getCustomerPortalUrl: connect.NewClient[v1.GetCustomerPortalUrlRequest, v1.GetCustomerPortalUrlResponse](
+			httpClient,
+			baseURL+BillingServiceGetCustomerPortalUrlProcedure,
+			connect.WithSchema(billingServiceMethods.ByName("GetCustomerPortalUrl")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // billingServiceClient implements BillingServiceClient.
 type billingServiceClient struct {
-	syncSubscription *connect.Client[v1.SyncSubscriptionRequest, v1.SyncSubscriptionResponse]
+	syncSubscription      *connect.Client[v1.SyncSubscriptionRequest, v1.SyncSubscriptionResponse]
+	getPlans              *connect.Client[v1.GetPlansRequest, v1.GetPlansResponse]
+	createCheckoutSession *connect.Client[v1.CreateCheckoutSessionRequest, v1.CreateCheckoutSessionResponse]
+	getCustomerPortalUrl  *connect.Client[v1.GetCustomerPortalUrlRequest, v1.GetCustomerPortalUrlResponse]
 }
 
 // SyncSubscription calls v1.BillingService.SyncSubscription.
@@ -75,11 +109,31 @@ func (c *billingServiceClient) SyncSubscription(ctx context.Context, req *connec
 	return c.syncSubscription.CallUnary(ctx, req)
 }
 
+// GetPlans calls v1.BillingService.GetPlans.
+func (c *billingServiceClient) GetPlans(ctx context.Context, req *connect.Request[v1.GetPlansRequest]) (*connect.Response[v1.GetPlansResponse], error) {
+	return c.getPlans.CallUnary(ctx, req)
+}
+
+// CreateCheckoutSession calls v1.BillingService.CreateCheckoutSession.
+func (c *billingServiceClient) CreateCheckoutSession(ctx context.Context, req *connect.Request[v1.CreateCheckoutSessionRequest]) (*connect.Response[v1.CreateCheckoutSessionResponse], error) {
+	return c.createCheckoutSession.CallUnary(ctx, req)
+}
+
+// GetCustomerPortalUrl calls v1.BillingService.GetCustomerPortalUrl.
+func (c *billingServiceClient) GetCustomerPortalUrl(ctx context.Context, req *connect.Request[v1.GetCustomerPortalUrlRequest]) (*connect.Response[v1.GetCustomerPortalUrlResponse], error) {
+	return c.getCustomerPortalUrl.CallUnary(ctx, req)
+}
+
 // BillingServiceHandler is an implementation of the v1.BillingService service.
 type BillingServiceHandler interface {
-	// SyncSubscription checks the remote payment provider (Polar) for the latest subscription status
-	// and updates the local user record. Call this after a successful checkout redirect.
+	// SyncSubscription checks Polar for latest subscription and updates user.
 	SyncSubscription(context.Context, *connect.Request[v1.SyncSubscriptionRequest]) (*connect.Response[v1.SyncSubscriptionResponse], error)
+	// GetPlans returns available pricing plans.
+	GetPlans(context.Context, *connect.Request[v1.GetPlansRequest]) (*connect.Response[v1.GetPlansResponse], error)
+	// CreateCheckoutSession generates a Polar checkout URL for plan upgrade.
+	CreateCheckoutSession(context.Context, *connect.Request[v1.CreateCheckoutSessionRequest]) (*connect.Response[v1.CreateCheckoutSessionResponse], error)
+	// GetCustomerPortalUrl returns URL for subscription management.
+	GetCustomerPortalUrl(context.Context, *connect.Request[v1.GetCustomerPortalUrlRequest]) (*connect.Response[v1.GetCustomerPortalUrlResponse], error)
 }
 
 // NewBillingServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -95,10 +149,34 @@ func NewBillingServiceHandler(svc BillingServiceHandler, opts ...connect.Handler
 		connect.WithSchema(billingServiceMethods.ByName("SyncSubscription")),
 		connect.WithHandlerOptions(opts...),
 	)
+	billingServiceGetPlansHandler := connect.NewUnaryHandler(
+		BillingServiceGetPlansProcedure,
+		svc.GetPlans,
+		connect.WithSchema(billingServiceMethods.ByName("GetPlans")),
+		connect.WithHandlerOptions(opts...),
+	)
+	billingServiceCreateCheckoutSessionHandler := connect.NewUnaryHandler(
+		BillingServiceCreateCheckoutSessionProcedure,
+		svc.CreateCheckoutSession,
+		connect.WithSchema(billingServiceMethods.ByName("CreateCheckoutSession")),
+		connect.WithHandlerOptions(opts...),
+	)
+	billingServiceGetCustomerPortalUrlHandler := connect.NewUnaryHandler(
+		BillingServiceGetCustomerPortalUrlProcedure,
+		svc.GetCustomerPortalUrl,
+		connect.WithSchema(billingServiceMethods.ByName("GetCustomerPortalUrl")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/v1.BillingService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case BillingServiceSyncSubscriptionProcedure:
 			billingServiceSyncSubscriptionHandler.ServeHTTP(w, r)
+		case BillingServiceGetPlansProcedure:
+			billingServiceGetPlansHandler.ServeHTTP(w, r)
+		case BillingServiceCreateCheckoutSessionProcedure:
+			billingServiceCreateCheckoutSessionHandler.ServeHTTP(w, r)
+		case BillingServiceGetCustomerPortalUrlProcedure:
+			billingServiceGetCustomerPortalUrlHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -110,4 +188,16 @@ type UnimplementedBillingServiceHandler struct{}
 
 func (UnimplementedBillingServiceHandler) SyncSubscription(context.Context, *connect.Request[v1.SyncSubscriptionRequest]) (*connect.Response[v1.SyncSubscriptionResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.BillingService.SyncSubscription is not implemented"))
+}
+
+func (UnimplementedBillingServiceHandler) GetPlans(context.Context, *connect.Request[v1.GetPlansRequest]) (*connect.Response[v1.GetPlansResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.BillingService.GetPlans is not implemented"))
+}
+
+func (UnimplementedBillingServiceHandler) CreateCheckoutSession(context.Context, *connect.Request[v1.CreateCheckoutSessionRequest]) (*connect.Response[v1.CreateCheckoutSessionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.BillingService.CreateCheckoutSession is not implemented"))
+}
+
+func (UnimplementedBillingServiceHandler) GetCustomerPortalUrl(context.Context, *connect.Request[v1.GetCustomerPortalUrlRequest]) (*connect.Response[v1.GetCustomerPortalUrlResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.BillingService.GetCustomerPortalUrl is not implemented"))
 }

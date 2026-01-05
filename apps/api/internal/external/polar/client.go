@@ -25,6 +25,19 @@ type Client interface {
 
 	// IngestEmailEvent sends a usage event to Polar for billing.
 	IngestEmailEvent(ctx context.Context, userID string, count int64) error
+
+	// CreateCheckoutSession creates a checkout session for plan upgrade.
+	CreateCheckoutSession(ctx context.Context, params CheckoutParams) (string, error)
+
+	// CreateCustomerPortal creates a customer portal session.
+	CreateCustomerPortal(ctx context.Context, customerID string) (string, error)
+}
+
+// CheckoutParams for creating a checkout session.
+type CheckoutParams struct {
+	ProductID          string
+	ExternalCustomerID string
+	SuccessURL         string
 }
 
 // Customer represents a Polar customer.
@@ -138,4 +151,34 @@ func (c *polarClient) IngestEmailEvent(ctx context.Context, userID string, count
 	}
 
 	return nil
+}
+
+// CreateCheckoutSession creates a checkout session for plan upgrade.
+func (c *polarClient) CreateCheckoutSession(ctx context.Context, params CheckoutParams) (string, error) {
+	resp, err := c.sdk.Checkouts.Create(ctx, components.CheckoutCreate{
+		Products:           []string{params.ProductID},
+		ExternalCustomerID: polargo.String(params.ExternalCustomerID),
+		SuccessURL:         polargo.String(params.SuccessURL),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create Polar checkout: %w", err)
+	}
+
+	return resp.Checkout.URL, nil
+}
+
+// CreateCustomerPortal creates a customer portal session.
+func (c *polarClient) CreateCustomerPortal(ctx context.Context, customerID string) (string, error) {
+	resp, err := c.sdk.CustomerSessions.Create(ctx,
+		operations.CreateCustomerSessionsCreateCustomerSessionCreateCustomerSessionCustomerIDCreate(
+			components.CustomerSessionCustomerIDCreate{
+				CustomerID: customerID,
+			},
+		),
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to create Polar customer portal: %w", err)
+	}
+
+	return resp.CustomerSession.CustomerPortalURL, nil
 }
