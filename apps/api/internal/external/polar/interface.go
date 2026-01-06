@@ -18,6 +18,9 @@ type Client interface {
 	// GetSubscription gets active subscription for customer.
 	GetSubscription(ctx context.Context, customerID string) (*Subscription, error)
 
+	// GetActiveSubscriptionByExternalID gets active subscription by external customer ID.
+	GetActiveSubscriptionByExternalID(ctx context.Context, userID string) (*Subscription, error)
+
 	// IngestEmailEvent sends a usage event to Polar for billing.
 	IngestEmailEvent(ctx context.Context, userID string, count int64) error
 
@@ -36,6 +39,7 @@ type CheckoutParams struct {
 	ProductID          string
 	ExternalCustomerID string
 	SuccessURL         string
+	SubscriptionID     string // For upgrading existing free subscription
 }
 
 // Customer represents a Polar customer.
@@ -51,6 +55,7 @@ type Subscription struct {
 	Status      string // active, past_due, canceled
 	ProductID   string
 	ProductName string
+	Amount      int64 // Price in cents (0 = free)
 }
 
 // CustomerState represents customer state with credit balance from Polar.

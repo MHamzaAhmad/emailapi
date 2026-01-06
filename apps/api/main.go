@@ -315,7 +315,7 @@ func main() {
 	clerk.SetKey(cfg.ClerkSecretKey)
 
 	// Create Connect interceptors
-	// Order matters: logging -> SNS/webhook preprocessing -> auth -> admin -> rate limit
+	// Order matters: logging -> SNS/webhook preprocessing -> auth -> admin -> rate limit -> usage
 	interceptors := connect.WithInterceptors(
 		interceptor.NewLoggingInterceptor(logger),
 		interceptor.NewWebhookInterceptor(interceptor.WebhookConfig{
@@ -334,6 +334,14 @@ func main() {
 			RequestsPerMinute:    cfg.RateLimitPerMinute,
 			MaxConcurrentStreams: cfg.MaxConcurrentStreams,
 			Enabled:              cfg.RateLimitEnabled,
+		}),
+		interceptor.NewUsageInterceptor(interceptor.UsageConfig{
+			CreditCache:    cacheAggregator.Credit(),
+			PolarClient:    polarClient,
+			UserRepo:       store.Users(),
+			Enabled:        cfg.UsageLimitEnabled,
+			FreeDailyLimit: 100,
+			FreeProductID:  cfg.PolarFreeProductID,
 		}),
 	)
 

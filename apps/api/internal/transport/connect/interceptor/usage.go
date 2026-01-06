@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/emailapi/api/internal/external/polar"
+	"github.com/emailapi/api/internal/repository/postgres"
 	redisrepo "github.com/emailapi/api/internal/repository/redis"
 )
 
@@ -17,8 +18,10 @@ import (
 type UsageConfig struct {
 	CreditCache    redisrepo.CreditCacheInterface
 	PolarClient    polar.Client
+	UserRepo       postgres.UserRepository // For looking up/updating user
 	Enabled        bool
-	FreeDailyLimit int64 // Daily limit for free users (e.g., 100)
+	FreeDailyLimit int64  // Daily limit for free users (e.g., 100)
+	FreeProductID  string // Polar product ID for free plan (for re-provisioning)
 }
 
 // usageProcedures defines which procedures count against usage limits.
@@ -133,6 +136,7 @@ func (u *usageInterceptor) getOrFetchState(ctx context.Context, userID string) (
 }
 
 // refreshStateFromPolar fetches fresh state from Polar and updates cache.
+// If user has no Polar customer or subscription, it will attempt to provision them.
 func (u *usageInterceptor) refreshStateFromPolar(ctx context.Context, userID string) (*redisrepo.CachedCustomerState, error) {
 	if u.cfg.PolarClient == nil {
 		// No Polar client - return default free state
@@ -146,7 +150,30 @@ func (u *usageInterceptor) refreshStateFromPolar(ctx context.Context, userID str
 
 	polarState, err := u.cfg.PolarClient.GetCustomerStateByExternalID(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch Polar state: %w", err)
+		// User might not have a Polar customer or subscription - try to provision
+		log.Info().Err(err).Str("user_id", userID).Msg("Could not fetch Polar state - attempting to provision")
+
+		if provisionErr := u.ensureCustomerAndSubscription(ctx, userID); provisionErr != nil {
+			log.Warn().Err(provisionErr).Str("user_id", userID).Msg("Failed to provision - treating as free user")
+			state := &redisrepo.CachedCustomerState{
+				IsPaid:       false,
+				PlanType:     "free",
+				PolarBalance: 100,
+			}
+			return state, nil
+		}
+
+		// Retry fetching state after provisioning
+		polarState, err = u.cfg.PolarClient.GetCustomerStateByExternalID(ctx, userID)
+		if err != nil {
+			log.Warn().Err(err).Str("user_id", userID).Msg("Still could not fetch Polar state after provisioning")
+			state := &redisrepo.CachedCustomerState{
+				IsPaid:       false,
+				PlanType:     "free",
+				PolarBalance: 100,
+			}
+			return state, nil
+		}
 	}
 
 	state := &redisrepo.CachedCustomerState{
@@ -162,6 +189,56 @@ func (u *usageInterceptor) refreshStateFromPolar(ctx context.Context, userID str
 	}
 
 	return state, nil
+}
+
+// ensureCustomerAndSubscription creates Polar customer and free subscription if missing.
+func (u *usageInterceptor) ensureCustomerAndSubscription(ctx context.Context, userID string) error {
+	if u.cfg.PolarClient == nil || u.cfg.UserRepo == nil || u.cfg.FreeProductID == "" {
+		return fmt.Errorf("polar provisioning not configured")
+	}
+
+	// Get user details
+	user, err := u.cfg.UserRepo.GetByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("user not found: %w", err)
+	}
+
+	var customerID string
+
+	// Check if user already has a Polar customer ID
+	if user.PolarCustomerID != nil && *user.PolarCustomerID != "" {
+		customerID = *user.PolarCustomerID
+	} else {
+		// Try to get existing customer from Polar
+		customer, err := u.cfg.PolarClient.GetCustomerByExternalID(ctx, userID)
+		if err != nil {
+			// Create new customer
+			customerID, err = u.cfg.PolarClient.CreateCustomer(ctx, userID, user.Email, user.Name)
+			if err != nil {
+				return fmt.Errorf("failed to create Polar customer: %w", err)
+			}
+			log.Info().Str("user_id", userID).Str("customer_id", customerID).Msg("Created Polar customer")
+		} else {
+			customerID = customer.ID
+		}
+
+		// Save customer ID to database
+		if err := u.cfg.UserRepo.UpdatePolarCustomerID(ctx, userID, customerID); err != nil {
+			log.Warn().Err(err).Str("user_id", userID).Msg("Failed to save Polar customer ID")
+		}
+	}
+
+	// Check if subscription exists
+	sub, err := u.cfg.PolarClient.GetActiveSubscriptionByExternalID(ctx, userID)
+	if err != nil || sub == nil {
+		// Create free subscription
+		if err := u.cfg.PolarClient.CreateFreeSubscription(ctx, customerID, u.cfg.FreeProductID); err != nil {
+			return fmt.Errorf("failed to create free subscription: %w", err)
+		}
+		log.Info().Str("user_id", userID).Str("customer_id", customerID).Msg("Created free subscription")
+	}
+
+	return nil
 }
 
 // postSendPaid handles post-send actions for paid users.

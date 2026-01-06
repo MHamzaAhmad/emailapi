@@ -75,7 +75,7 @@ func (c *polarClient) GetSubscription(ctx context.Context, customerID string) (*
 	}
 
 	if len(resp.ListResourceSubscription.Items) == 0 {
-		return nil, fmt.Errorf("no active subscription found")
+		return nil, nil // No active subscription
 	}
 
 	sub := resp.ListResourceSubscription.Items[0]
@@ -84,7 +84,18 @@ func (c *polarClient) GetSubscription(ctx context.Context, customerID string) (*
 		Status:      string(sub.Status),
 		ProductID:   sub.ProductID,
 		ProductName: sub.Product.Name,
+		Amount:      sub.Amount,
 	}, nil
+}
+
+// GetActiveSubscriptionByExternalID gets active subscription by external customer ID.
+func (c *polarClient) GetActiveSubscriptionByExternalID(ctx context.Context, userID string) (*Subscription, error) {
+	// First get customer by external ID
+	customer, err := c.GetCustomerByExternalID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return c.GetSubscription(ctx, customer.ID)
 }
 
 // IngestEmailEvent sends a usage event to Polar for billing.
@@ -116,11 +127,18 @@ func (c *polarClient) IngestEmailEvent(ctx context.Context, userID string, count
 
 // CreateCheckoutSession creates a checkout session for plan upgrade.
 func (c *polarClient) CreateCheckoutSession(ctx context.Context, params CheckoutParams) (string, error) {
-	resp, err := c.sdk.Checkouts.Create(ctx, components.CheckoutCreate{
+	checkoutCreate := components.CheckoutCreate{
 		Products:           []string{params.ProductID},
 		ExternalCustomerID: polargo.String(params.ExternalCustomerID),
 		SuccessURL:         polargo.String(params.SuccessURL),
-	})
+	}
+
+	// If upgrading an existing subscription, include subscription_id
+	if params.SubscriptionID != "" {
+		checkoutCreate.SubscriptionID = polargo.String(params.SubscriptionID)
+	}
+
+	resp, err := c.sdk.Checkouts.Create(ctx, checkoutCreate)
 	if err != nil {
 		return "", fmt.Errorf("failed to create Polar checkout: %w", err)
 	}

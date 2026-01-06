@@ -100,6 +100,21 @@ func (mr *MockClientMockRecorder) CreateFreeSubscription(ctx, customerID, freePr
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFreeSubscription", reflect.TypeOf((*MockClient)(nil).CreateFreeSubscription), ctx, customerID, freeProductID)
 }
 
+// GetActiveSubscriptionByExternalID mocks base method.
+func (m *MockClient) GetActiveSubscriptionByExternalID(ctx context.Context, userID string) (*polar.Subscription, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActiveSubscriptionByExternalID", ctx, userID)
+	ret0, _ := ret[0].(*polar.Subscription)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetActiveSubscriptionByExternalID indicates an expected call of GetActiveSubscriptionByExternalID.
+func (mr *MockClientMockRecorder) GetActiveSubscriptionByExternalID(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveSubscriptionByExternalID", reflect.TypeOf((*MockClient)(nil).GetActiveSubscriptionByExternalID), ctx, userID)
+}
+
 // GetCustomerByExternalID mocks base method.
 func (m *MockClient) GetCustomerByExternalID(ctx context.Context, userID string) (*polar.Customer, error) {
 	m.ctrl.T.Helper()

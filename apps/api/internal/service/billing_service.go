@@ -143,6 +143,7 @@ func (s *BillingService) GetPlans() []domain.PlanInfo {
 }
 
 // CreateCheckoutSession creates a checkout session for upgrading to a plan.
+// Returns error if user has a paid subscription (should use portal instead).
 func (s *BillingService) CreateCheckoutSession(ctx context.Context, userID, planID, successURL string) (string, error) {
 	if s.polarClient == nil {
 		return "", fmt.Errorf("polar not configured")
@@ -154,11 +155,30 @@ func (s *BillingService) CreateCheckoutSession(ctx context.Context, userID, plan
 		return "", fmt.Errorf("invalid plan: %s", planID)
 	}
 
-	checkoutURL, err := s.polarClient.CreateCheckoutSession(ctx, polar.CheckoutParams{
+	// Check current subscription to determine checkout strategy
+	sub, err := s.polarClient.GetActiveSubscriptionByExternalID(ctx, userID)
+	if err != nil {
+		// If error fetching subscription, proceed without subscription_id
+		log.Warn().Err(err).Str("user_id", userID).Msg("Could not fetch subscription, proceeding without upgrade")
+	}
+
+	checkoutParams := polar.CheckoutParams{
 		ProductID:          productID,
 		ExternalCustomerID: userID,
 		SuccessURL:         successURL,
-	})
+	}
+
+	if sub != nil {
+		// User has an active subscription
+		if sub.Amount > 0 {
+			// Paid subscription - user should use customer portal to change plans
+			return "", fmt.Errorf("already on a paid plan. Use the customer portal to change or cancel your subscription")
+		}
+		// Free subscription - pass subscription_id for upgrade
+		checkoutParams.SubscriptionID = sub.ID
+	}
+
+	checkoutURL, err := s.polarClient.CreateCheckoutSession(ctx, checkoutParams)
 	if err != nil {
 		return "", err
 	}
@@ -187,4 +207,49 @@ func (s *BillingService) GetCustomerPortalUrl(ctx context.Context, userID string
 	}
 
 	return portalURL, nil
+}
+
+// SubscriptionInfo contains current subscription details for frontend.
+type SubscriptionInfo struct {
+	HasSubscription bool   // Whether user has any active subscription
+	IsPaid          bool   // Whether subscription is paid (vs free)
+	PlanID          string // Current plan ID ("free", "starter", "growth")
+	ProductID       string // Polar product ID
+	SubscriptionID  string // Subscription ID for upgrades
+}
+
+// GetSubscriptionInfo returns current subscription info for the frontend.
+func (s *BillingService) GetSubscriptionInfo(ctx context.Context, userID string) (*SubscriptionInfo, error) {
+	info := &SubscriptionInfo{
+		HasSubscription: false,
+		IsPaid:          false,
+		PlanID:          "free",
+	}
+
+	if s.polarClient == nil {
+		return info, nil
+	}
+
+	sub, err := s.polarClient.GetActiveSubscriptionByExternalID(ctx, userID)
+	if err != nil {
+		log.Debug().Err(err).Str("user_id", userID).Msg("Could not fetch subscription")
+		return info, nil // Return default free info
+	}
+
+	if sub == nil {
+		return info, nil
+	}
+
+	info.HasSubscription = true
+	info.SubscriptionID = sub.ID
+	info.ProductID = sub.ProductID
+
+	// Determine if paid and plan ID
+	if sub.Amount > 0 {
+		info.IsPaid = true
+		plan := domain.GetPlanFromProductID(sub.ProductID)
+		info.PlanID = string(plan)
+	}
+
+	return info, nil
 }
