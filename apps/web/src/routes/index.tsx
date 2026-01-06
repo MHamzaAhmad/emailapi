@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { SignedIn, SignedOut, SignInButton, Waitlist, UserButton } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  PackageIcon,
   Menu01Icon
 } from '@hugeicons/core-free-icons'
 import { useEffect, useState } from 'react'
@@ -23,6 +22,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { Logo } from '@/components/logo'
 
 export const Route = createFileRoute('/')(
   {
@@ -63,7 +63,7 @@ function LandingContent() {
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-2 font-bold tracking-tight text-foreground/90">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
-              <HugeiconsIcon icon={PackageIcon} size={14} strokeWidth={2.5} />
+              <Logo className="h-3.5 w-3.5" />
             </div>
             <span className="text-sm">SimpleEmailAPI</span>
           </div>
@@ -103,7 +103,7 @@ function LandingContent() {
                 <div className="flex flex-col gap-6 mt-6">
                   <div className="flex items-center gap-2 font-bold tracking-tight text-foreground/90 mb-4">
                     <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
-                      <HugeiconsIcon icon={PackageIcon} size={14} strokeWidth={2.5} />
+                      <Logo className="h-3.5 w-3.5" />
                     </div>
                     <span className="text-sm">SimpleEmailAPI</span>
                   </div>
@@ -193,7 +193,7 @@ function LandingContent() {
                     language: "typescript",
                     content: `import { createClient } from 'simpleemailapi-sdk'
 
-const client = createClient({ apiKey: 'em_...' })
+const client = createClient({ apiKey: 'sea_live_...' })
 
 // Send an email
 await client.send({
@@ -255,6 +255,7 @@ func main() {
 
         {/* Comparison Section */}
         <ComparisonSection />
+
         {/* Pricing Section */}
         <Pricing />
 
@@ -310,7 +311,7 @@ func main() {
         <div className="mx-auto max-w-7xl flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-2 font-bold tracking-tight text-foreground/80">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-secondary text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/10">
-              <HugeiconsIcon icon={PackageIcon} size={14} strokeWidth={2.5} />
+              <Logo className="h-3.5 w-3.5" />
             </div>
             <span className="text-xs">SimpleEmailAPI</span>
           </div>

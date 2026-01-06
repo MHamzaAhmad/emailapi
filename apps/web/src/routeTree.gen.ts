@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as AssetsRouteImport } from './routes/assets'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthedRouteImport } from './routes/_authed'
@@ -34,6 +35,11 @@ const TermsRoute = TermsRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssetsRoute = AssetsRouteImport.update({
+  id: '/assets',
+  path: '/assets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/assets': typeof AssetsRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/api-keys': typeof AuthedApiKeysRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/assets': typeof AssetsRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/api-keys': typeof AuthedApiKeysRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteWithChildren
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/assets': typeof AssetsRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/_authed/api-keys': typeof AuthedApiKeysRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/assets'
     | '/privacy'
     | '/terms'
     | '/api-keys'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/assets'
     | '/privacy'
     | '/terms'
     | '/api-keys'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/_authed'
     | '/about'
     | '/admin'
+    | '/assets'
     | '/privacy'
     | '/terms'
     | '/_authed/api-keys'
@@ -217,6 +229,7 @@ export interface RootRouteChildren {
   AuthedRoute: typeof AuthedRouteWithChildren
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
+  AssetsRoute: typeof AssetsRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
 }
@@ -235,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assets': {
+      id: '/assets'
+      path: '/assets'
+      fullPath: '/assets'
+      preLoaderRoute: typeof AssetsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -380,6 +400,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthedRoute: AuthedRouteWithChildren,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
+  AssetsRoute: AssetsRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
 }

@@ -1,9 +1,9 @@
 import { Link, useRouterState } from '@tanstack/react-router'
+import { Logo } from '@/components/logo'
 import { UserButton } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useCurrentSubscription } from '@/hooks'
 import {
-    PackageIcon,
     Home01Icon,
     GlobeIcon,
     Key01Icon,
@@ -38,7 +38,7 @@ export function Shell({ children }: ShellProps) {
                 <div className="mx-auto flex h-14 max-w-7xl items-center px-4 md:px-6 gap-4">
                     <Link to="/" className="flex items-center gap-2 font-bold tracking-tight text-foreground/90 hover:text-foreground transition-colors mr-6">
                         <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
-                            <HugeiconsIcon icon={PackageIcon} size={14} strokeWidth={2.5} />
+                            <Logo className="h-3.5 w-3.5" />
                         </div>
                         <span className="hidden md:inline-block text-sm">SimpleEmailAPI</span>
                     </Link>

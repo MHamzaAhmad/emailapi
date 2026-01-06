@@ -93,7 +93,7 @@ var PlanInfos = map[UserPlan]PlanInfo{
 		ID:                "starter",
 		Name:              "Starter",
 		Description:       "For growing applications",
-		PriceCents:        1250, // $12.50/mo
+		PriceCents:        1200, // $12.00/mo
 		OveragePriceCents: 25,   // $0.25 per 1000 emails
 		MonthlyLimit:      50000,
 		DailyLimit:        -1, // Unlimited

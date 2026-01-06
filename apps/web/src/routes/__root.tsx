@@ -23,8 +23,20 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Email API' },
-      { name: 'description', content: 'The simplest email API for developers' },
+      { title: 'SimpleEmailAPI - The simplest API to send and receive emails' },
+      { name: 'description', content: 'The simplest API to send and receive emails.' },
+
+      // Open Graph
+      { property: 'og:title', content: 'SimpleEmailAPI' },
+      { property: 'og:description', content: 'The simplest API to send and receive emails.' },
+      { property: 'og:image', content: '/ogimage.png' },
+      { property: 'og:type', content: 'website' },
+
+      // Twitter
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: 'SimpleEmailAPI' },
+      { name: 'twitter:description', content: 'The simplest API to send and receive emails.' },
+      { name: 'twitter:image', content: '/ogimage.png' },
     ],
     links: [
       // Preconnect to critical origins (~300ms LCP savings)
@@ -34,7 +46,11 @@ export const Route = createRootRoute({
       // Preload critical CSS to reduce render blocking
       { rel: 'preload', as: 'style', href: appCss },
       { rel: 'stylesheet', href: appCss },
+      { rel: 'icon', type: 'image/png', href: '/favicon-96x96.png', sizes: '96x96' },
       { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+      { rel: 'shortcut icon', href: '/favicon.ico' },
+      { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+      { rel: 'manifest', href: '/site.webmanifest' },
     ],
   }),
   component: RootComponent,
