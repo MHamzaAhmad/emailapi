@@ -35,11 +35,12 @@ type EmailValidator struct {
 	suppressionChecker SuppressionChecker
 	bodyValidator      *BodyValidator
 	mxCache            MXCache
+	reputationChecker  ReputationChecker
 }
 
 // NewEmailValidator creates a new EmailValidator.
 // SMTP checking is disabled, as noted by the user.
-func NewEmailValidator(domainChecker DomainChecker, suppressionChecker SuppressionChecker, bodyValidator *BodyValidator, mxCache MXCache) *EmailValidator {
+func NewEmailValidator(domainChecker DomainChecker, suppressionChecker SuppressionChecker, bodyValidator *BodyValidator, mxCache MXCache, reputationChecker ReputationChecker) *EmailValidator {
 	verifier := emailverifier.NewVerifier().
 		EnableDomainSuggest() // Enable typo detection
 
@@ -52,6 +53,7 @@ func NewEmailValidator(domainChecker DomainChecker, suppressionChecker Suppressi
 		suppressionChecker: suppressionChecker,
 		bodyValidator:      bodyValidator,
 		mxCache:            mxCache,
+		reputationChecker:  reputationChecker,
 	}
 }
 
@@ -59,6 +61,14 @@ func NewEmailValidator(domainChecker DomainChecker, suppressionChecker Suppressi
 // Runs email validation, suppression check, and body URL safety check in parallel using errgroup.
 // Returns nil if all validations pass, or ValidationErrors with all failures.
 func (v *EmailValidator) ValidateSendEmail(ctx context.Context, userID, from string, to, cc, bcc []string, body, html string) error {
+	// Fast path: Check reputation first (Redis lookup ~1ms)
+	// This blocks suspended users immediately without expensive validation
+	if v.reputationChecker != nil {
+		if err := v.reputationChecker.CheckSendPermission(ctx, userID); err != nil {
+			return err
+		}
+	}
+
 	g, ctx := errgroup.WithContext(ctx)
 
 	var validationErrors *ValidationErrors

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { CodeWindow } from '@/components/ui/code-window'
 import { ModeToggle } from '@/components/mode-toggle'
 import { GridOfTruth } from '@/components/landing/GridOfTruth'
+import { Pricing } from '@/components/landing/Pricing'
 import { PerformanceChart } from '@/components/landing/PerformanceChart'
 import { ComparisonSection } from '@/components/landing/ComparisonSection'
 import {
@@ -254,6 +255,8 @@ func main() {
 
         {/* Comparison Section */}
         <ComparisonSection />
+        {/* Pricing Section */}
+        <Pricing />
 
         {/* Performance Chart Section */}
         <section className="py-24 px-6 bg-background border-t border-dashed border-border/40">

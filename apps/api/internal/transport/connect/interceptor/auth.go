@@ -10,7 +10,6 @@ import (
 	"github.com/clerk/clerk-sdk-go/v2/jwt"
 
 	"github.com/emailapi/api/internal/domain"
-	"github.com/emailapi/api/internal/service"
 )
 
 // AuthMethod indicates how the request was authenticated.
@@ -38,20 +37,21 @@ type UserLookup interface {
 
 // AuthConfig holds configuration for the auth interceptor.
 type AuthConfig struct {
-	APIKeyService  *service.APIKeyService
+	APIKeyService  APIKeyValidator
 	UserLookup     UserLookup
 	ClerkSecretKey string
 }
 
 // publicProcedures are procedures that don't require authentication.
 var publicProcedures = map[string]bool{
-	// Currently none - add procedures here if needed
+	"/v1.BillingService/GetPlans": true, // Pricing info is public
 }
 
 // apiKeyAllowedProcedures defines which procedures allow API key authentication.
 var apiKeyAllowedProcedures = map[string]bool{
 	"/v1.EmailService/SendEmail":     true,
 	"/v1.EmailService/StreamEvents":  true,
+	"/v1.EmailService/AckEvents":     true,
 	"/v1.DomainService/AddDomain":    true,
 	"/v1.DomainService/GetDomain":    true,
 	"/v1.DomainService/ListDomains":  true,
@@ -64,6 +64,7 @@ var apiKeyAllowedProcedures = map[string]bool{
 var requiredScopes = map[string][]domain.Scope{
 	"/v1.EmailService/SendEmail":     {domain.ScopeEmailSend},
 	"/v1.EmailService/StreamEvents":  {domain.ScopeEmailSend}, // Use same scope as send for streaming events
+	"/v1.EmailService/AckEvents":     {domain.ScopeEmailSend}, // Use same scope as send for acking events
 	"/v1.DomainService/AddDomain":    {domain.ScopeDomainWrite},
 	"/v1.DomainService/GetDomain":    {domain.ScopeDomainRead},
 	"/v1.DomainService/ListDomains":  {domain.ScopeDomainRead},

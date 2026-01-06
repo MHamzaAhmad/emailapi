@@ -9,13 +9,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/riverqueue/river"
-	"github.com/riverqueue/river/rivertype"
 
 	"github.com/emailapi/api/internal/external/s3"
+	redisrepo "github.com/emailapi/api/internal/repository/redis"
 )
 
 // ProcessAttachmentsArgs contains email data + attachments to process.
-// After processing, this job enqueues a SendEmailArgs job.
+// After uploading, pending data is stored in Redis for the GuardDuty handler.
 type ProcessAttachmentsArgs struct {
 	// Full email data (embedded, not stored)
 	EmailID    string            `json:"email_id"`
@@ -34,8 +34,11 @@ type ProcessAttachmentsArgs struct {
 	Attachments []AttachmentSource `json:"attachments"`
 	// Optional scheduled time for email delivery
 	ScheduledAt *time.Time `json:"scheduled_at,omitempty"`
-	// DryRun mode skips S3 upload and returns fake keys (for performance testing)
+	// DryRun mode skips S3 upload and scanning, directly enqueues send job
 	DryRun bool `json:"dry_run,omitempty"`
+	// Unsubscribe config for worker splitting (passthrough to SendEmailArgs)
+	UnsubscribeBaseURL     string `json:"unsubscribe_base_url,omitempty"`
+	UnsubscribeTokenSecret string `json:"unsubscribe_token_secret,omitempty"`
 }
 
 // AttachmentSource represents an attachment to process (from request).
@@ -49,74 +52,97 @@ type AttachmentSource struct {
 func (ProcessAttachmentsArgs) Kind() string { return "process_attachments" }
 
 // AttachmentWorker handles attachment processing jobs.
+// Uses event-driven GuardDuty integration - uploads to S3, stores pending data in Redis,
+// then GuardDuty handler picks up from EventBridge events.
 type AttachmentWorker struct {
 	river.WorkerDefaults[ProcessAttachmentsArgs]
-	s3Factory   *s3.Factory
-	riverClient RiverClient
-}
-
-// RiverClient interface for enqueueing jobs.
-type RiverClient interface {
-	Insert(ctx context.Context, args river.JobArgs, opts *river.InsertOpts) (*rivertype.JobInsertResult, error)
+	s3Factory    s3.FactoryInterface
+	pendingCache redisrepo.PendingAttachmentCacheInterface
 }
 
 // NewAttachmentWorker creates a new AttachmentWorker.
-func NewAttachmentWorker(s3Factory *s3.Factory, riverClient RiverClient) *AttachmentWorker {
+func NewAttachmentWorker(
+	s3Factory s3.FactoryInterface,
+	pendingCache redisrepo.PendingAttachmentCacheInterface,
+) *AttachmentWorker {
 	return &AttachmentWorker{
-		s3Factory:   s3Factory,
-		riverClient: riverClient,
+		s3Factory:    s3Factory,
+		pendingCache: pendingCache,
 	}
 }
 
-// Work processes attachments: downloads from URL or decodes base64, uploads to S3, then enqueues send job.
+// Work processes attachments: downloads from URL or decodes base64, uploads to S3,
+// stores pending email data in Redis for GuardDuty event handler.
 func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttachmentsArgs]) error {
-	args := job.Args
+	args := &job.Args
 
-	// Handle dry-run mode: skip S3 uploads, generate fake keys
+	// Handle dry-run mode: skip S3 uploads and scanning
 	if args.DryRun {
-		// Create fake attachment keys for dry-run
-		fakeKeys := make([]AttachmentInfo, len(args.Attachments))
-		for i, att := range args.Attachments {
-			fakeKeys[i] = AttachmentInfo{
-				S3Key:       fmt.Sprintf("dry-run/%s/%s", args.EmailID, att.Filename),
-				Filename:    att.Filename,
-				ContentType: att.ContentType,
-			}
-		}
-
-		// Enqueue the send email job with dry-run flag
-		sendArgs := SendEmailArgs{
-			EmailID:        args.EmailID,
-			UserID:         args.UserID,
-			From:           args.From,
-			To:             args.To,
-			Cc:             args.Cc,
-			Bcc:            args.Bcc,
-			Subject:        args.Subject,
-			Body:           args.Body,
-			HTML:           args.HTML,
-			InReplyTo:      args.InReplyTo,
-			References:     args.References,
-			Metadata:       args.Metadata,
-			AttachmentKeys: fakeKeys,
-			ScheduledAt:    args.ScheduledAt,
-			DryRun:         true, // Propagate dry-run flag
-		}
-
-		insertOpts := &river.InsertOpts{}
-		if args.ScheduledAt != nil {
-			insertOpts.ScheduledAt = *args.ScheduledAt
-		}
-
-		if _, err := w.riverClient.Insert(ctx, sendArgs, insertOpts); err != nil {
-			return fmt.Errorf("failed to enqueue send job: %w", err)
-		}
-
-		fmt.Printf("[DRY-RUN] Simulated processing %d attachments for email %s\n", len(args.Attachments), args.EmailID)
-		return nil
+		return w.handleDryRun(ctx, args)
 	}
 
-	// Process each attachment in parallel and upload to S3
+	// Upload attachments to S3
+	attachmentKeys, err := w.uploadAttachments(ctx, args)
+	if err != nil {
+		return err
+	}
+
+	// Store pending email data in Redis for GuardDuty handler to pick up
+	if err := w.storePendingData(ctx, args, attachmentKeys); err != nil {
+		// Clean up uploaded attachments on cache failure
+		w.cleanupAttachments(ctx, attachmentKeys)
+		return fmt.Errorf("failed to store pending data: %w", err)
+	}
+
+	fmt.Printf("Uploaded %d attachments for email %s, waiting for GuardDuty scan events...\n", len(attachmentKeys), args.EmailID)
+	return nil
+}
+
+// storePendingData stores email data in Redis for the GuardDuty handler to resume
+func (w *AttachmentWorker) storePendingData(ctx context.Context, args *ProcessAttachmentsArgs, keys []AttachmentInfo) error {
+	// Convert to cache format
+	cacheKeys := make([]redisrepo.AttachmentKeyInfo, len(keys))
+	for i, k := range keys {
+		cacheKeys[i] = redisrepo.AttachmentKeyInfo{
+			S3Key:       k.S3Key,
+			Filename:    k.Filename,
+			ContentType: k.ContentType,
+		}
+	}
+
+	data := &redisrepo.PendingAttachmentData{
+		EmailID:                args.EmailID,
+		UserID:                 args.UserID,
+		From:                   args.From,
+		To:                     args.To,
+		Cc:                     args.Cc,
+		Bcc:                    args.Bcc,
+		Subject:                args.Subject,
+		Body:                   args.Body,
+		HTML:                   args.HTML,
+		InReplyTo:              args.InReplyTo,
+		References:             args.References,
+		Metadata:               args.Metadata,
+		ScheduledAt:            args.ScheduledAt,
+		UnsubscribeBaseURL:     args.UnsubscribeBaseURL,
+		UnsubscribeTokenSecret: args.UnsubscribeTokenSecret,
+		AttachmentKeys:         cacheKeys,
+		PendingCount:           len(keys),
+	}
+
+	return w.pendingCache.Store(ctx, data)
+}
+
+// handleDryRun processes attachments in dry-run mode without S3 uploads or scanning
+func (w *AttachmentWorker) handleDryRun(ctx context.Context, args *ProcessAttachmentsArgs) error {
+	fmt.Printf("[DRY-RUN] Simulated processing %d attachments for email %s (event-driven mode)\n", len(args.Attachments), args.EmailID)
+	// In dry-run mode, we just log - no actual processing
+	// The test UI should handle this case separately
+	return nil
+}
+
+// uploadAttachments downloads/decodes and uploads all attachments to S3 in parallel
+func (w *AttachmentWorker) uploadAttachments(ctx context.Context, args *ProcessAttachmentsArgs) ([]AttachmentInfo, error) {
 	attachmentKeys := make([]AttachmentInfo, len(args.Attachments))
 	errs := make([]error, len(args.Attachments))
 
@@ -159,45 +185,20 @@ func (w *AttachmentWorker) Work(ctx context.Context, job *river.Job[ProcessAttac
 					w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(ctx, att.S3Key)
 				}
 			}
-			return err
+			return nil, err
 		}
 	}
 
-	// Enqueue the send email job with attachment info
-	sendArgs := SendEmailArgs{
-		EmailID:        args.EmailID,
-		UserID:         args.UserID,
-		From:           args.From,
-		To:             args.To,
-		Cc:             args.Cc,
-		Bcc:            args.Bcc,
-		Subject:        args.Subject,
-		Body:           args.Body,
-		HTML:           args.HTML,
-		InReplyTo:      args.InReplyTo,
-		References:     args.References,
-		Metadata:       args.Metadata,
-		AttachmentKeys: attachmentKeys,
-		ScheduledAt:    args.ScheduledAt,
-		DryRun:         false, // Normal mode
-	}
+	return attachmentKeys, nil
+}
 
-	// Prepare insert options
-	insertOpts := &river.InsertOpts{}
-	if args.ScheduledAt != nil {
-		insertOpts.ScheduledAt = *args.ScheduledAt
-	}
-
-	if _, err := w.riverClient.Insert(ctx, sendArgs, insertOpts); err != nil {
-		// Clean up uploaded attachments on failure
-		for _, att := range attachmentKeys {
-			w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(ctx, att.S3Key)
+// cleanupAttachments removes all uploaded attachments from S3
+func (w *AttachmentWorker) cleanupAttachments(ctx context.Context, keys []AttachmentInfo) {
+	for _, att := range keys {
+		if att.S3Key != "" {
+			_ = w.s3Factory.Bucket(s3.BucketAttachments).DeleteObject(ctx, att.S3Key)
 		}
-		return fmt.Errorf("failed to enqueue send job: %w", err)
 	}
-
-	fmt.Printf("Processed %d attachments for email %s, enqueued for sending\n", len(attachmentKeys), args.EmailID)
-	return nil
 }
 
 // getAttachmentContent retrieves attachment content from URL or decodes base64.

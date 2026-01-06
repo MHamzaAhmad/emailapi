@@ -1,12 +1,20 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
-    entry: ['src/index.ts'],
+    entry: {
+        index: 'src/index.ts',
+        'worker-runtime': 'src/worker-runtime.ts',
+    },
     format: ['cjs', 'esm'],
-    dts: true,
-    splitting: false,
-    sourcemap: true,
+    dts: {
+        entry: 'src/index.ts',
+    },
+    splitting: false, // Keep off - SDK consumers bundle this
+    sourcemap: false, // Disable for production
     clean: true,
-    minify: false,
+    minify: true, // Enable - reduces bundle size ~30-40%
     treeshake: true,
+    external: ['worker_threads'], // Node.js built-in
+    // Target modern runtimes
+    target: 'node18',
 })

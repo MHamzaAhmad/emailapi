@@ -3,9 +3,7 @@ package service
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/mail"
 	"strings"
 
@@ -15,58 +13,28 @@ import (
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/autoresponse"
 	"github.com/emailapi/api/internal/external/s3"
-	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/webhook"
 )
 
-// InboundEmailService handles inbound email processing (replies) from SNS/SES.
+// InboundEmailService handles inbound email processing (replies).
+// It now uses SQS event processing via ProcessRawEmail instead of SNS webhooks.
 type InboundEmailService struct {
-	s3Factory     *s3.Factory
-	tbRepo        *tbrepo.EmailRepository
+	s3Factory     s3.FactoryInterface
+	analytics     Analytics
 	webhookSender webhook.Sender
 }
 
 // NewInboundEmailService creates a new InboundEmailService.
 func NewInboundEmailService(
-	s3Factory *s3.Factory,
-	tbRepo *tbrepo.EmailRepository,
+	s3Factory s3.FactoryInterface,
+	analytics Analytics,
 	webhookSender webhook.Sender,
 ) *InboundEmailService {
 	return &InboundEmailService{
 		s3Factory:     s3Factory,
-		tbRepo:        tbRepo,
+		analytics:     analytics,
 		webhookSender: webhookSender,
 	}
-}
-
-// SNSNotification represents the parsed SNS notification payload.
-type SNSNotification struct {
-	Type             string `json:"Type"`
-	MessageID        string `json:"MessageId"`
-	TopicArn         string `json:"TopicArn"`
-	Message          string `json:"Message"`
-	SubscribeURL     string `json:"SubscribeURL"`
-	Timestamp        string `json:"Timestamp"`
-	SignatureVersion string `json:"SignatureVersion"`
-	Signature        string `json:"Signature"`
-	SigningCertURL   string `json:"SigningCertURL"`
-}
-
-// SESNotification represents the SES notification inside SNS Message.
-type SESNotification struct {
-	NotificationType string `json:"notificationType"`
-	Receipt          struct {
-		Action struct {
-			Type       string `json:"type"`
-			BucketName string `json:"bucketName"`
-			ObjectKey  string `json:"objectKey"`
-		} `json:"action"`
-	} `json:"receipt"`
-	Mail struct {
-		MessageID   string   `json:"messageId"`
-		Source      string   `json:"source"`
-		Destination []string `json:"destination"`
-	} `json:"mail"`
 }
 
 // InboundEmail represents a parsed inbound email.
@@ -87,81 +55,91 @@ type InboundEmail struct {
 	AutoResponseInfo string   `json:"auto_response_info,omitempty"`
 }
 
-// SNSNotificationInput contains all fields from an SNS notification for verification and processing.
-type SNSNotificationInput struct {
-	Type             string
-	MessageID        string
-	TopicArn         string
-	Message          string
-	SubscribeURL     string
-	Timestamp        string
-	SignatureVersion string
-	Signature        string
-	SigningCertURL   string
-	Subject          string
-	Token            string // For SubscriptionConfirmation/UnsubscribeConfirmation
-}
-
-// HandleSNSNotification processes SNS notifications from SES for inbound emails.
-// Note: Signature verification is handled by the SNS middleware interceptor.
-func (s *InboundEmailService) HandleSNSNotification(ctx context.Context, input *SNSNotificationInput) error {
-	switch input.Type {
-	case "SubscriptionConfirmation":
-		return s.handleSubscriptionConfirmation(ctx, input.SubscribeURL)
-	case "Notification":
-		return s.handleNotification(ctx, input.Message)
-	case "UnsubscribeConfirmation":
-		return nil
-	default:
-		return fmt.Errorf("unknown SNS notification type: %s", input.Type)
-	}
-}
-
-// handleSubscriptionConfirmation auto-confirms the SNS subscription.
-func (s *InboundEmailService) handleSubscriptionConfirmation(ctx context.Context, subscribeURL string) error {
-	if subscribeURL == "" {
-		return fmt.Errorf("missing subscribe URL")
-	}
-
-	resp, err := http.Get(subscribeURL)
-	if err != nil {
-		return fmt.Errorf("failed to confirm subscription: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("subscription confirmation failed with status: %d", resp.StatusCode)
-	}
-
-	return nil
-}
-
-// handleNotification processes the actual email notification.
-func (s *InboundEmailService) handleNotification(ctx context.Context, message string) error {
-	var sesNotif SESNotification
-	if err := json.Unmarshal([]byte(message), &sesNotif); err != nil {
-		return fmt.Errorf("failed to parse SES notification: %w", err)
-	}
-
-	if sesNotif.NotificationType != "Received" {
-		return nil
-	}
-
-	if sesNotif.Receipt.Action.Type != "S3" {
-		return fmt.Errorf("expected S3 action, got: %s", sesNotif.Receipt.Action.Type)
-	}
-
-	key := sesNotif.Receipt.Action.ObjectKey
+// ProcessRawEmail processes a raw email from S3 (for SQS-based processing).
+// This is the main entry point for the new S3 → EventBridge → SQS flow.
+func (s *InboundEmailService) ProcessRawEmail(ctx context.Context, bucket, key string) error {
+	// Download email from S3
 	rawEmail, err := s.s3Factory.Bucket(s3.BucketInbound).Download(ctx, key)
 	if err != nil {
 		return fmt.Errorf("failed to download email from S3: %w", err)
 	}
 
-	inboundEmail, err := s.parseEmail(rawEmail)
+	// Parse email and check for virus/spam
+	inboundEmail, virusVerdict, spamVerdict, err := s.parseEmailWithVerdicts(rawEmail)
 	if err != nil {
 		return fmt.Errorf("failed to parse email: %w", err)
 	}
 
+	// Check virus verdict (SES adds X-SES-Virus-Verdict header)
+	if virusVerdict == "FAIL" {
+		fmt.Printf("Inbound email %s rejected: virus detected\n", key)
+		// Log activity if we can find routing
+		s.logSecurityEvent(ctx, inboundEmail, "virus_rejected", "Email rejected due to virus detection")
+		return nil // Don't process, but don't error
+	}
+
+	// Log spam verdict (process anyway, but log it)
+	if spamVerdict == "FAIL" {
+		fmt.Printf("Inbound email %s flagged as spam, processing anyway\n", key)
+		s.logSecurityEvent(ctx, inboundEmail, "spam_flagged", "Email flagged as spam but processed")
+	}
+
+	// Process the email (same as handleNotification)
+	return s.processInboundEmail(ctx, inboundEmail)
+}
+
+// logSecurityEvent logs virus/spam events for inbound emails.
+func (s *InboundEmailService) logSecurityEvent(ctx context.Context, email *InboundEmail, action, message string) {
+	if s.analytics == nil {
+		return
+	}
+
+	// Try to find the original email this is replying to
+	replyTo := email.InReplyTo
+	if replyTo == "" && len(email.References) > 0 {
+		replyTo = email.References[len(email.References)-1]
+	}
+
+	if replyTo == "" {
+		// Not a reply - log as system event
+		s.analytics.Activity().Log(ctx, "", "inbound_email", email.ID, action, "blocked",
+			message,
+			map[string]interface{}{
+				"from":       email.From,
+				"subject":    email.Subject,
+				"message_id": email.MessageID,
+			})
+		return
+	}
+
+	routing, err := s.analytics.Email().LookupRouting(ctx, replyTo)
+	if err != nil {
+		// Can't find original email - still log it
+		s.analytics.Activity().Log(ctx, "", "inbound_email", email.ID, action, "blocked",
+			message,
+			map[string]interface{}{
+				"from":        email.From,
+				"subject":     email.Subject,
+				"message_id":  email.MessageID,
+				"in_reply_to": replyTo,
+			})
+		return
+	}
+
+	// Log with user context
+	s.analytics.Activity().Log(ctx, routing.UserID, "email", routing.EmailID, action, "blocked",
+		fmt.Sprintf("%s from %s: %s", message, email.From, email.Subject),
+		map[string]interface{}{
+			"inbound_email_id":  email.ID,
+			"from":              email.From,
+			"subject":           email.Subject,
+			"message_id":        email.MessageID,
+			"original_email_id": routing.EmailID,
+		})
+}
+
+// processInboundEmail handles the core logic for inbound emails.
+func (s *InboundEmailService) processInboundEmail(ctx context.Context, inboundEmail *InboundEmail) error {
 	// Look up original email by In-Reply-To header
 	if inboundEmail.InReplyTo == "" {
 		if len(inboundEmail.References) == 0 {
@@ -171,23 +149,25 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 	}
 
 	// Use routing table as single source of truth
-	routing, err := s.tbRepo.LookupRouting(ctx, inboundEmail.InReplyTo)
+	if s.analytics == nil {
+		return nil
+	}
+	routing, err := s.analytics.Email().LookupRouting(ctx, inboundEmail.InReplyTo)
 	if err != nil {
-		return nil // Reply to email we didn't send (not in our routing table)
+		return nil // Reply to email we didn't send
 	}
 
 	inboundEmail.OriginalEmailID = routing.EmailID
 	inboundEmail.UserID = routing.UserID
 
-	// Add inbound email to routing table so replies to this email can be tracked too
-	if err := s.tbRepo.InsertRouting(ctx, inboundEmail.MessageID, inboundEmail.ID, inboundEmail.UserID); err != nil {
+	// Add inbound email to routing table
+	if err := s.analytics.Email().InsertRouting(ctx, inboundEmail.MessageID, inboundEmail.ID, inboundEmail.UserID); err != nil {
 		fmt.Printf("Warning: failed to insert routing entry for inbound email: %v\n", err)
 	}
 
-	// Check if this is an auto-response (OOO, vacation, bounce, etc.)
+	// Check if this is an auto-response
 	if inboundEmail.IsAutoResponse {
-		// Log auto-response but skip webhook delivery
-		s.tbRepo.LogEmailEvent(
+		s.analytics.Email().LogEmailEvent(
 			ctx,
 			routing.UserID,
 			routing.EmailID,
@@ -196,24 +176,22 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 			fmt.Sprintf("Auto-response (%s) from %s: %s", inboundEmail.AutoResponseType, inboundEmail.From, inboundEmail.Subject),
 			map[string]interface{}{
 				"inbound_email_id":     inboundEmail.ID,
-				"message_id":           inboundEmail.MessageID,
-				"from":                 inboundEmail.From,
-				"subject":              inboundEmail.Subject,
 				"auto_response_type":   inboundEmail.AutoResponseType,
 				"auto_response_reason": inboundEmail.AutoResponseInfo,
 			},
 		)
-		return nil // Skip webhook for auto-responses
+		return nil
 	}
 
-	// Log the reply event to ClickHouse activity_logs
-	s.tbRepo.LogEmailEvent(
+	// Log activity
+	s.analytics.Activity().Log(
 		ctx,
 		routing.UserID,
+		"email",
 		routing.EmailID,
 		"replied",
 		"success",
-		fmt.Sprintf("Reply from %s: %s", inboundEmail.From, inboundEmail.Subject),
+		fmt.Sprintf("Reply received from %s: %s", inboundEmail.From, inboundEmail.Subject),
 		map[string]interface{}{
 			"inbound_email_id": inboundEmail.ID,
 			"message_id":       inboundEmail.MessageID,
@@ -225,12 +203,16 @@ func (s *InboundEmailService) handleNotification(ctx context.Context, message st
 	return s.deliverWebhook(ctx, inboundEmail)
 }
 
-// parseEmail parses raw MIME email using jordan-wright/email package.
-func (s *InboundEmailService) parseEmail(rawEmail []byte) (*InboundEmail, error) {
+// parseEmailWithVerdicts parses email and extracts SES verdict headers.
+func (s *InboundEmailService) parseEmailWithVerdicts(rawEmail []byte) (*InboundEmail, string, string, error) {
 	parsed, err := email.NewEmailFromReader(bytes.NewReader(rawEmail))
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse email: %w", err)
+		return nil, "", "", fmt.Errorf("failed to parse email: %w", err)
 	}
+
+	// Extract SES verdict headers
+	virusVerdict := parsed.Headers.Get("X-SES-Virus-Verdict")
+	spamVerdict := parsed.Headers.Get("X-SES-Spam-Verdict")
 
 	// Detect auto-responses (OOO, vacation, bounces, etc.)
 	detector := autoresponse.NewDetector()
@@ -265,7 +247,13 @@ func (s *InboundEmailService) parseEmail(rawEmail []byte) (*InboundEmail, error)
 		}
 	}
 
-	return inbound, nil
+	return inbound, virusVerdict, spamVerdict, nil
+}
+
+// parseEmail parses raw MIME email (legacy, kept for backward compatibility).
+func (s *InboundEmailService) parseEmail(rawEmail []byte) (*InboundEmail, error) {
+	inbound, _, _, err := s.parseEmailWithVerdicts(rawEmail)
+	return inbound, err
 }
 
 // deliverWebhook sends the reply notification to the user via webhook.Sender.

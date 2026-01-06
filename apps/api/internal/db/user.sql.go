@@ -8,24 +8,37 @@ package db
 import (
 	"context"
 
+	"github.com/emailapi/api/internal/domain"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countUsers = `-- name: CountUsers :one
+SELECT COUNT(*)::INTEGER as total FROM users
+`
+
+func (q *Queries) CountUsers(ctx context.Context) (int32, error) {
+	row := q.db.QueryRow(ctx, countUsers)
+	var total int32
+	err := row.Scan(&total)
+	return total, err
+}
+
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, email, name, role, is_active, external_id, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, email, name, role, is_active, created_at, updated_at, external_id
+INSERT INTO users (id, email, name, role, is_active, external_id, polar_customer_id, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, email, name, role, is_active, created_at, updated_at, external_id, polar_customer_id
 `
 
 type CreateUserParams struct {
-	ID         string             `json:"id"`
-	Email      string             `json:"email"`
-	Name       string             `json:"name"`
-	Role       string             `json:"role"`
-	IsActive   bool               `json:"is_active"`
-	ExternalID pgtype.Text        `json:"external_id"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	ID              string             `json:"id"`
+	Email           string             `json:"email"`
+	Name            string             `json:"name"`
+	Role            domain.UserRole    `json:"role"`
+	IsActive        bool               `json:"is_active"`
+	ExternalID      pgtype.Text        `json:"external_id"`
+	PolarCustomerID pgtype.Text        `json:"polar_customer_id"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -36,6 +49,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Role,
 		arg.IsActive,
 		arg.ExternalID,
+		arg.PolarCustomerID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -49,6 +63,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ExternalID,
+		&i.PolarCustomerID,
 	)
 	return i, err
 }
@@ -63,19 +78,20 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, name, role, is_active, external_id, created_at, updated_at
+SELECT id, email, name, role, is_active, external_id, polar_customer_id, created_at, updated_at
 FROM users WHERE email = $1
 `
 
 type GetUserByEmailRow struct {
-	ID         string             `json:"id"`
-	Email      string             `json:"email"`
-	Name       string             `json:"name"`
-	Role       string             `json:"role"`
-	IsActive   bool               `json:"is_active"`
-	ExternalID pgtype.Text        `json:"external_id"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	ID              string             `json:"id"`
+	Email           string             `json:"email"`
+	Name            string             `json:"name"`
+	Role            domain.UserRole    `json:"role"`
+	IsActive        bool               `json:"is_active"`
+	ExternalID      pgtype.Text        `json:"external_id"`
+	PolarCustomerID pgtype.Text        `json:"polar_customer_id"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
@@ -88,6 +104,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 		&i.Role,
 		&i.IsActive,
 		&i.ExternalID,
+		&i.PolarCustomerID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -95,19 +112,20 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 }
 
 const getUserByExternalID = `-- name: GetUserByExternalID :one
-SELECT id, email, name, role, is_active, external_id, created_at, updated_at
+SELECT id, email, name, role, is_active, external_id, polar_customer_id, created_at, updated_at
 FROM users WHERE external_id = $1
 `
 
 type GetUserByExternalIDRow struct {
-	ID         string             `json:"id"`
-	Email      string             `json:"email"`
-	Name       string             `json:"name"`
-	Role       string             `json:"role"`
-	IsActive   bool               `json:"is_active"`
-	ExternalID pgtype.Text        `json:"external_id"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	ID              string             `json:"id"`
+	Email           string             `json:"email"`
+	Name            string             `json:"name"`
+	Role            domain.UserRole    `json:"role"`
+	IsActive        bool               `json:"is_active"`
+	ExternalID      pgtype.Text        `json:"external_id"`
+	PolarCustomerID pgtype.Text        `json:"polar_customer_id"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) GetUserByExternalID(ctx context.Context, externalID pgtype.Text) (GetUserByExternalIDRow, error) {
@@ -120,6 +138,7 @@ func (q *Queries) GetUserByExternalID(ctx context.Context, externalID pgtype.Tex
 		&i.Role,
 		&i.IsActive,
 		&i.ExternalID,
+		&i.PolarCustomerID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -127,19 +146,20 @@ func (q *Queries) GetUserByExternalID(ctx context.Context, externalID pgtype.Tex
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, name, role, is_active, external_id, created_at, updated_at
+SELECT id, email, name, role, is_active, external_id, polar_customer_id, created_at, updated_at
 FROM users WHERE id = $1
 `
 
 type GetUserByIDRow struct {
-	ID         string             `json:"id"`
-	Email      string             `json:"email"`
-	Name       string             `json:"name"`
-	Role       string             `json:"role"`
-	IsActive   bool               `json:"is_active"`
-	ExternalID pgtype.Text        `json:"external_id"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	ID              string             `json:"id"`
+	Email           string             `json:"email"`
+	Name            string             `json:"name"`
+	Role            domain.UserRole    `json:"role"`
+	IsActive        bool               `json:"is_active"`
+	ExternalID      pgtype.Text        `json:"external_id"`
+	PolarCustomerID pgtype.Text        `json:"polar_customer_id"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error) {
@@ -152,14 +172,128 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, e
 		&i.Role,
 		&i.IsActive,
 		&i.ExternalID,
+		&i.PolarCustomerID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
+const getUserByPolarCustomerID = `-- name: GetUserByPolarCustomerID :one
+SELECT id, email, name, role, is_active, external_id, polar_customer_id, created_at, updated_at
+FROM users WHERE polar_customer_id = $1
+`
+
+type GetUserByPolarCustomerIDRow struct {
+	ID              string             `json:"id"`
+	Email           string             `json:"email"`
+	Name            string             `json:"name"`
+	Role            domain.UserRole    `json:"role"`
+	IsActive        bool               `json:"is_active"`
+	ExternalID      pgtype.Text        `json:"external_id"`
+	PolarCustomerID pgtype.Text        `json:"polar_customer_id"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetUserByPolarCustomerID(ctx context.Context, polarCustomerID pgtype.Text) (GetUserByPolarCustomerIDRow, error) {
+	row := q.db.QueryRow(ctx, getUserByPolarCustomerID, polarCustomerID)
+	var i GetUserByPolarCustomerIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Name,
+		&i.Role,
+		&i.IsActive,
+		&i.ExternalID,
+		&i.PolarCustomerID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserWithReputation = `-- name: GetUserWithReputation :one
+SELECT 
+    u.id, u.email, u.name, u.role, u.is_active, u.external_id, u.polar_customer_id, u.created_at, u.updated_at,
+    COALESCE(r.total_bounces, 0) as total_bounces,
+    COALESCE(r.hard_bounces, 0) as hard_bounces,
+    COALESCE(r.soft_bounces, 0) as soft_bounces,
+    COALESCE(r.complaints, 0) as complaints,
+    COALESCE(r.bounces_30d, 0) as bounces_30d,
+    COALESCE(r.complaints_30d, 0) as complaints_30d,
+    COALESCE(r.suspension_score, 0) as suspension_score,
+    COALESCE(r.is_flagged, FALSE) as is_flagged,
+    r.flagged_at,
+    r.flagged_reason,
+    COALESCE(r.is_suspended, FALSE) as is_suspended,
+    r.suspended_at,
+    r.suspended_by,
+    r.suspension_reason
+FROM users u
+LEFT JOIN user_reputation r ON u.id = r.user_id
+WHERE u.id = $1
+`
+
+type GetUserWithReputationRow struct {
+	ID               string             `json:"id"`
+	Email            string             `json:"email"`
+	Name             string             `json:"name"`
+	Role             domain.UserRole    `json:"role"`
+	IsActive         bool               `json:"is_active"`
+	ExternalID       pgtype.Text        `json:"external_id"`
+	PolarCustomerID  pgtype.Text        `json:"polar_customer_id"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	TotalBounces     int32              `json:"total_bounces"`
+	HardBounces      int32              `json:"hard_bounces"`
+	SoftBounces      int32              `json:"soft_bounces"`
+	Complaints       int32              `json:"complaints"`
+	Bounces30d       int32              `json:"bounces_30d"`
+	Complaints30d    int32              `json:"complaints_30d"`
+	SuspensionScore  pgtype.Numeric     `json:"suspension_score"`
+	IsFlagged        bool               `json:"is_flagged"`
+	FlaggedAt        pgtype.Timestamptz `json:"flagged_at"`
+	FlaggedReason    pgtype.Text        `json:"flagged_reason"`
+	IsSuspended      bool               `json:"is_suspended"`
+	SuspendedAt      pgtype.Timestamptz `json:"suspended_at"`
+	SuspendedBy      pgtype.Text        `json:"suspended_by"`
+	SuspensionReason pgtype.Text        `json:"suspension_reason"`
+}
+
+func (q *Queries) GetUserWithReputation(ctx context.Context, id string) (GetUserWithReputationRow, error) {
+	row := q.db.QueryRow(ctx, getUserWithReputation, id)
+	var i GetUserWithReputationRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Name,
+		&i.Role,
+		&i.IsActive,
+		&i.ExternalID,
+		&i.PolarCustomerID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.TotalBounces,
+		&i.HardBounces,
+		&i.SoftBounces,
+		&i.Complaints,
+		&i.Bounces30d,
+		&i.Complaints30d,
+		&i.SuspensionScore,
+		&i.IsFlagged,
+		&i.FlaggedAt,
+		&i.FlaggedReason,
+		&i.IsSuspended,
+		&i.SuspendedAt,
+		&i.SuspendedBy,
+		&i.SuspensionReason,
+	)
+	return i, err
+}
+
 const listUsers = `-- name: ListUsers :many
-SELECT id, email, name, role, is_active, external_id, created_at, updated_at
+SELECT id, email, name, role, is_active, external_id, polar_customer_id, created_at, updated_at
 FROM users
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
@@ -171,14 +305,15 @@ type ListUsersParams struct {
 }
 
 type ListUsersRow struct {
-	ID         string             `json:"id"`
-	Email      string             `json:"email"`
-	Name       string             `json:"name"`
-	Role       string             `json:"role"`
-	IsActive   bool               `json:"is_active"`
-	ExternalID pgtype.Text        `json:"external_id"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	ID              string             `json:"id"`
+	Email           string             `json:"email"`
+	Name            string             `json:"name"`
+	Role            domain.UserRole    `json:"role"`
+	IsActive        bool               `json:"is_active"`
+	ExternalID      pgtype.Text        `json:"external_id"`
+	PolarCustomerID pgtype.Text        `json:"polar_customer_id"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error) {
@@ -197,8 +332,71 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUse
 			&i.Role,
 			&i.IsActive,
 			&i.ExternalID,
+			&i.PolarCustomerID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersWithReputation = `-- name: ListUsersWithReputation :many
+SELECT 
+    u.id, u.email, u.name, u.role, u.is_active, u.external_id, u.polar_customer_id, u.created_at, u.updated_at,
+    COALESCE(r.is_suspended, FALSE) as is_suspended,
+    COALESCE(r.is_flagged, FALSE) as is_flagged
+FROM users u
+LEFT JOIN user_reputation r ON u.id = r.user_id
+ORDER BY u.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListUsersWithReputationParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListUsersWithReputationRow struct {
+	ID              string             `json:"id"`
+	Email           string             `json:"email"`
+	Name            string             `json:"name"`
+	Role            domain.UserRole    `json:"role"`
+	IsActive        bool               `json:"is_active"`
+	ExternalID      pgtype.Text        `json:"external_id"`
+	PolarCustomerID pgtype.Text        `json:"polar_customer_id"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	IsSuspended     bool               `json:"is_suspended"`
+	IsFlagged       bool               `json:"is_flagged"`
+}
+
+func (q *Queries) ListUsersWithReputation(ctx context.Context, arg ListUsersWithReputationParams) ([]ListUsersWithReputationRow, error) {
+	rows, err := q.db.Query(ctx, listUsersWithReputation, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUsersWithReputationRow
+	for rows.Next() {
+		var i ListUsersWithReputationRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.Name,
+			&i.Role,
+			&i.IsActive,
+			&i.ExternalID,
+			&i.PolarCustomerID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.IsSuspended,
+			&i.IsFlagged,
 		); err != nil {
 			return nil, err
 		}
@@ -217,19 +415,21 @@ UPDATE users SET
     role = $4,
     is_active = $5,
     external_id = $6,
-    updated_at = $7
+    polar_customer_id = $7,
+    updated_at = $8
 WHERE id = $1
-RETURNING id, email, name, role, is_active, created_at, updated_at, external_id
+RETURNING id, email, name, role, is_active, created_at, updated_at, external_id, polar_customer_id
 `
 
 type UpdateUserParams struct {
-	ID         string             `json:"id"`
-	Email      string             `json:"email"`
-	Name       string             `json:"name"`
-	Role       string             `json:"role"`
-	IsActive   bool               `json:"is_active"`
-	ExternalID pgtype.Text        `json:"external_id"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	ID              string             `json:"id"`
+	Email           string             `json:"email"`
+	Name            string             `json:"name"`
+	Role            domain.UserRole    `json:"role"`
+	IsActive        bool               `json:"is_active"`
+	ExternalID      pgtype.Text        `json:"external_id"`
+	PolarCustomerID pgtype.Text        `json:"polar_customer_id"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
@@ -240,6 +440,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		arg.Role,
 		arg.IsActive,
 		arg.ExternalID,
+		arg.PolarCustomerID,
 		arg.UpdatedAt,
 	)
 	var i User
@@ -252,6 +453,21 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ExternalID,
+		&i.PolarCustomerID,
 	)
 	return i, err
+}
+
+const updateUserPolarCustomerID = `-- name: UpdateUserPolarCustomerID :exec
+UPDATE users SET polar_customer_id = $2, updated_at = NOW() WHERE id = $1
+`
+
+type UpdateUserPolarCustomerIDParams struct {
+	ID              string      `json:"id"`
+	PolarCustomerID pgtype.Text `json:"polar_customer_id"`
+}
+
+func (q *Queries) UpdateUserPolarCustomerID(ctx context.Context, arg UpdateUserPolarCustomerIDParams) error {
+	_, err := q.db.Exec(ctx, updateUserPolarCustomerID, arg.ID, arg.PolarCustomerID)
+	return err
 }

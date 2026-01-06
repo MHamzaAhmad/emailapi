@@ -13,8 +13,7 @@ import (
 	internaldns "github.com/emailapi/api/internal/dns"
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/external/ses"
-	rediscache "github.com/emailapi/api/internal/repository/redis"
-	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
+	"github.com/emailapi/api/internal/validation"
 )
 
 const (
@@ -30,28 +29,42 @@ const (
 
 // DomainService handles domain business logic.
 type DomainService struct {
-	store            Store
-	ses              ses.Client
-	dns              *internaldns.Validator
-	cache            rediscache.DomainCacheInterface
-	activity         tbrepo.ActivityRepositoryInterface
-	region           string
-	configurationSet string // SES configuration set for notifications
+	store             Store
+	ses               ses.Client
+	dns               internaldns.ValidatorInterface
+	cache             Cache
+	analytics         Analytics
+	reputationChecker validation.ReputationChecker
+	region            string
+	configurationSet  string // SES configuration set for notifications
 }
 
 // NewDomainService creates a new DomainService.
-func NewDomainService(store Store, sesClient ses.Client, cache rediscache.DomainCacheInterface, activity tbrepo.ActivityRepositoryInterface, region, configurationSet string) *DomainService {
+func NewDomainService(
+	store Store,
+	sesClient ses.Client,
+	dnsValidator internaldns.ValidatorInterface,
+	cache Cache,
+	analytics Analytics,
+	reputationChecker validation.ReputationChecker,
+	region, configurationSet string,
+) *DomainService {
 	if region == "" {
 		region = defaultRegion
 	}
+	// Fallback if nil (though should be injected)
+	if dnsValidator == nil {
+		dnsValidator = internaldns.NewValidator()
+	}
 	return &DomainService{
-		store:            store,
-		ses:              sesClient,
-		dns:              internaldns.NewValidator(),
-		cache:            cache,
-		activity:         activity,
-		region:           region,
-		configurationSet: configurationSet,
+		store:             store,
+		ses:               sesClient,
+		dns:               dnsValidator,
+		cache:             cache,
+		analytics:         analytics,
+		reputationChecker: reputationChecker,
+		region:            region,
+		configurationSet:  configurationSet,
 	}
 }
 
@@ -78,6 +91,13 @@ func (s *DomainService) isStale(d *domain.SendingDomain) bool {
 // Add registers a new sending domain with AWS SES.
 // MAIL FROM is auto-configured as mail.{domain}.
 func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*domain.DomainWithDetails, error) {
+	// Check reputation first - suspended users cannot add domains
+	if s.reputationChecker != nil {
+		if err := s.reputationChecker.CheckSendPermission(ctx, userID); err != nil {
+			return nil, err
+		}
+	}
+
 	// Validate domain name
 	domainName = strings.TrimSpace(strings.ToLower(domainName))
 	if domainName == "" {
@@ -138,12 +158,12 @@ func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*do
 
 	// Invalidate user's domain list cache
 	if s.cache != nil {
-		_ = s.cache.InvalidateByUserID(ctx, userID)
+		_ = s.cache.Domain().InvalidateByUserID(ctx, userID)
 	}
 
 	// Log activity
-	if s.activity != nil {
-		_ = s.activity.LogDomain(ctx, userID, d.ID, "create", "success", fmt.Sprintf("Domain %s created", domainName))
+	if s.analytics != nil {
+		_ = s.analytics.Activity().LogDomain(ctx, userID, d.ID, "create", "success", fmt.Sprintf("Domain %s created", domainName))
 	}
 
 	return s.buildDomainWithDetails(d), nil
@@ -154,7 +174,7 @@ func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*do
 func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*domain.DomainWithDetails, error) {
 	// Try cache first
 	if s.cache != nil {
-		if cached, _ := s.cache.GetByID(ctx, domainID); cached != nil {
+		if cached, _ := s.cache.Domain().GetByID(ctx, domainID); cached != nil {
 			if cached.UserID == userID {
 				return s.buildDomainWithDetails(cached), nil
 			}
@@ -182,7 +202,7 @@ func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*doma
 
 	// Cache the result
 	if s.cache != nil {
-		_ = s.cache.SetByID(ctx, d)
+		_ = s.cache.Domain().SetByID(ctx, d)
 	}
 
 	return s.buildDomainWithDetails(d), nil
@@ -204,7 +224,7 @@ func (s *DomainService) List(ctx context.Context, userID string, page, pageSize 
 	useCache := page == 1 && pageSize >= 25
 
 	if useCache && s.cache != nil {
-		if cached, _ := s.cache.GetByUserID(ctx, userID); cached != nil {
+		if cached, _ := s.cache.Domain().GetByUserID(ctx, userID); cached != nil {
 			// Return cached results (limited to pageSize for consistency)
 			limit := len(cached)
 			if pageSize < limit {
@@ -240,7 +260,7 @@ func (s *DomainService) List(ctx context.Context, userID string, page, pageSize 
 
 	// Cache for first page requests
 	if useCache && s.cache != nil && page == 1 {
-		_ = s.cache.SetByUserID(ctx, userID, domains)
+		_ = s.cache.Domain().SetByUserID(ctx, userID, domains)
 	}
 
 	result := make([]*domain.DomainWithDetails, len(domains))
@@ -262,7 +282,7 @@ func (s *DomainService) List(ctx context.Context, userID string, page, pageSize 
 func (s *DomainService) GetVerifiedDomainForSending(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error) {
 	// Fast-path: check Redis cache first (sub-ms latency)
 	if s.cache != nil {
-		if cached, _ := s.cache.GetSendingStatus(ctx, userID, domainName); cached != nil {
+		if cached, _ := s.cache.Domain().GetSendingStatus(ctx, userID, domainName); cached != nil {
 			return cached, nil
 		}
 	}
@@ -275,7 +295,7 @@ func (s *DomainService) GetVerifiedDomainForSending(ctx context.Context, userID,
 
 	// Populate cache for next lookup
 	if s.cache != nil {
-		_ = s.cache.SetSendingStatus(ctx, d)
+		_ = s.cache.Domain().SetSendingStatus(ctx, d)
 	}
 
 	return d, nil
@@ -304,13 +324,13 @@ func (s *DomainService) Delete(ctx context.Context, userID, domainID string) err
 
 	// Invalidate cache (including fast-path sending cache)
 	if s.cache != nil {
-		_ = s.cache.InvalidateAll(ctx, domainID, userID)
-		_ = s.cache.InvalidateSendingStatus(ctx, userID, d.Domain)
+		_ = s.cache.Domain().InvalidateAll(ctx, domainID, userID)
+		_ = s.cache.Domain().InvalidateSendingStatus(ctx, userID, d.Domain)
 	}
 
 	// Log activity
-	if s.activity != nil {
-		_ = s.activity.LogDomain(ctx, userID, domainID, "delete", "success", fmt.Sprintf("Domain %s deleted", d.Domain))
+	if s.analytics != nil {
+		_ = s.analytics.Activity().LogDomain(ctx, userID, domainID, "delete", "success", fmt.Sprintf("Domain %s deleted", d.Domain))
 	}
 
 	return nil
@@ -365,13 +385,18 @@ func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*d
 		return nil, fmt.Errorf("failed to update domain: %w", err)
 	}
 
+	// Invalidate cache to ensure fresh data on next read
+	if s.cache != nil {
+		_ = s.cache.Domain().InvalidateAll(ctx, domainID, userID)
+	}
+
 	// Log verification activity
-	if s.activity != nil {
+	if s.analytics != nil {
 		status := "success"
 		if d.Status == domain.DomainStatusFailed {
 			status = "failed"
 		}
-		_ = s.activity.LogDomain(ctx, userID, domainID, "verify", status, fmt.Sprintf("Domain verification: %s", d.Status))
+		_ = s.analytics.Activity().LogDomain(ctx, userID, domainID, "verify", status, fmt.Sprintf("Domain verification: %s", d.Status))
 	}
 
 	return &domain.VerifyResult{
@@ -406,6 +431,7 @@ func (s *DomainService) refreshFromSES(ctx context.Context, d *domain.SendingDom
 }
 
 // validateDNS performs live DNS lookups and updates record statuses.
+// Uses key-based lookup (Type:Name) for robust, order-independent mapping.
 func (s *DomainService) validateDNS(ctx context.Context, details *domain.DomainWithDetails) {
 	if details.Records == nil {
 		return
@@ -414,31 +440,11 @@ func (s *DomainService) validateDNS(ctx context.Context, details *domain.DomainW
 	// Build expected records list
 	var expected []internaldns.ExpectedRecord
 
-	for _, rec := range details.Records.DkimRecords {
-		expected = append(expected, internaldns.ExpectedRecord{
-			Type:  rec.Type,
-			Name:  rec.Name,
-			Value: rec.Value,
-		})
-	}
-
-	if details.Records.SpfRecord != nil {
-		expected = append(expected, internaldns.ExpectedRecord{
-			Type:  details.Records.SpfRecord.Type,
-			Name:  details.Records.SpfRecord.Name,
-			Value: details.Records.SpfRecord.Value,
-		})
-	}
-
-	if details.Records.DmarcRecord != nil {
-		expected = append(expected, internaldns.ExpectedRecord{
-			Type:  details.Records.DmarcRecord.Type,
-			Name:  details.Records.DmarcRecord.Name,
-			Value: details.Records.DmarcRecord.Value,
-		})
-	}
-
-	for _, rec := range details.Records.MxRecords {
+	// Helper to add records to expected list
+	addRecord := func(rec *domain.DnsRecord) {
+		if rec == nil {
+			return
+		}
 		expected = append(expected, internaldns.ExpectedRecord{
 			Type:     rec.Type,
 			Name:     rec.Name,
@@ -447,54 +453,43 @@ func (s *DomainService) validateDNS(ctx context.Context, details *domain.DomainW
 		})
 	}
 
-	for _, rec := range details.Records.MailFromRecords {
-		expected = append(expected, internaldns.ExpectedRecord{
-			Type:     rec.Type,
-			Name:     rec.Name,
-			Value:    rec.Value,
-			Priority: rec.Priority,
-		})
+	for i := range details.Records.DkimRecords {
+		addRecord(&details.Records.DkimRecords[i])
+	}
+	addRecord(details.Records.SpfRecord)
+	addRecord(details.Records.DmarcRecord)
+	for i := range details.Records.MxRecords {
+		addRecord(&details.Records.MxRecords[i])
+	}
+	for i := range details.Records.MailFromRecords {
+		addRecord(&details.Records.MailFromRecords[i])
 	}
 
 	// Perform DNS validation
 	result := s.dns.ValidateRecords(ctx, expected)
 
-	// Update record statuses
-	resultIdx := 0
+	// Apply results using key-based lookup (robust, order-independent)
+	updateFromResult := func(rec *domain.DnsRecord) {
+		if rec == nil {
+			return
+		}
+		key := rec.Type + ":" + rec.Name
+		if res, ok := result.Records[key]; ok {
+			rec.Status = toRecordStatus(res.Status)
+			rec.DiscoveredValue = res.DiscoveredValue
+		}
+	}
+
 	for i := range details.Records.DkimRecords {
-		if resultIdx < len(result.Records) {
-			details.Records.DkimRecords[i].Status = toRecordStatus(result.Records[resultIdx].Status)
-			details.Records.DkimRecords[i].DiscoveredValue = result.Records[resultIdx].DiscoveredValue
-			resultIdx++
-		}
+		updateFromResult(&details.Records.DkimRecords[i])
 	}
-
-	if details.Records.SpfRecord != nil && resultIdx < len(result.Records) {
-		details.Records.SpfRecord.Status = toRecordStatus(result.Records[resultIdx].Status)
-		details.Records.SpfRecord.DiscoveredValue = result.Records[resultIdx].DiscoveredValue
-		resultIdx++
-	}
-
-	if details.Records.DmarcRecord != nil && resultIdx < len(result.Records) {
-		details.Records.DmarcRecord.Status = toRecordStatus(result.Records[resultIdx].Status)
-		details.Records.DmarcRecord.DiscoveredValue = result.Records[resultIdx].DiscoveredValue
-		resultIdx++
-	}
-
+	updateFromResult(details.Records.SpfRecord)
+	updateFromResult(details.Records.DmarcRecord)
 	for i := range details.Records.MxRecords {
-		if resultIdx < len(result.Records) {
-			details.Records.MxRecords[i].Status = toRecordStatus(result.Records[resultIdx].Status)
-			details.Records.MxRecords[i].DiscoveredValue = result.Records[resultIdx].DiscoveredValue
-			resultIdx++
-		}
+		updateFromResult(&details.Records.MxRecords[i])
 	}
-
 	for i := range details.Records.MailFromRecords {
-		if resultIdx < len(result.Records) {
-			details.Records.MailFromRecords[i].Status = toRecordStatus(result.Records[resultIdx].Status)
-			details.Records.MailFromRecords[i].DiscoveredValue = result.Records[resultIdx].DiscoveredValue
-			resultIdx++
-		}
+		updateFromResult(&details.Records.MailFromRecords[i])
 	}
 }
 

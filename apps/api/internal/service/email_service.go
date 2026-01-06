@@ -11,14 +11,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"github.com/google/uuid"
-
-	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
 
 	emailapi "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/eventstream"
 	"github.com/emailapi/api/internal/external/ses"
-	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/validation"
 	"github.com/emailapi/api/internal/webhook"
 	"github.com/emailapi/api/internal/worker"
@@ -27,30 +24,36 @@ import (
 // EmailService handles email sending operations.
 // This is a stateless, compliance-first service - no email content is stored permanently.
 type EmailService struct {
-	riverClient   *river.Client[pgx.Tx]
-	tbRepo        *tbrepo.EmailRepository
-	validator     *validation.EmailValidator
-	ses           ses.Client
-	webhookSender webhook.Sender
-	eventConsumer eventstream.Consumer
+	queue             QueueClient
+	analytics         Analytics
+	validator         SenderValidator
+	ses               ses.Client
+	webhookSender     webhook.Sender
+	eventConsumer     eventstream.Consumer
+	reputationChecker validation.ReputationChecker
+	unsubscribeSvc    UnsubscribeManager
 }
 
 // NewEmailService creates a new EmailService.
 func NewEmailService(
-	riverClient *river.Client[pgx.Tx],
-	tbRepo *tbrepo.EmailRepository,
-	validator *validation.EmailValidator,
+	queue QueueClient,
+	analytics Analytics,
+	validator SenderValidator,
 	sesClient ses.Client,
 	webhookSender webhook.Sender,
 	eventConsumer eventstream.Consumer,
+	reputationChecker validation.ReputationChecker,
+	unsubscribeSvc UnsubscribeManager,
 ) *EmailService {
 	return &EmailService{
-		riverClient:   riverClient,
-		tbRepo:        tbRepo,
-		validator:     validator,
-		ses:           sesClient,
-		webhookSender: webhookSender,
-		eventConsumer: eventConsumer,
+		queue:             queue,
+		analytics:         analytics,
+		validator:         validator,
+		ses:               sesClient,
+		webhookSender:     webhookSender,
+		eventConsumer:     eventConsumer,
+		reputationChecker: reputationChecker,
+		unsubscribeSvc:    unsubscribeSvc,
 	}
 }
 
@@ -76,6 +79,56 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 	}
 
 	emailID := uuid.New().String()
+
+	// Check unsubscribe list and filter out unsubscribed recipients
+	if s.unsubscribeSvc != nil {
+		allRecipients := append(append([]string{}, req.To...), req.Cc...)
+		allRecipients = append(allRecipients, req.Bcc...)
+
+		unsubscribed, err := s.unsubscribeSvc.CheckBatch(ctx, userID, allRecipients)
+		if err != nil {
+			// Log but don't fail - unsubscribe check is not critical path
+			fmt.Printf("Warning: failed to check unsubscribes: %v\n", err)
+		} else if len(unsubscribed) > 0 {
+			// Filter out unsubscribed recipients
+			unsubSet := make(map[string]bool, len(unsubscribed))
+			for _, email := range unsubscribed {
+				unsubSet[strings.ToLower(strings.TrimSpace(email))] = true
+			}
+
+			req.To = filterEmails(req.To, unsubSet)
+			req.Cc = filterEmails(req.Cc, unsubSet)
+			req.Bcc = filterEmails(req.Bcc, unsubSet)
+
+			// If no recipients left, return early
+			if len(req.To) == 0 && len(req.Cc) == 0 && len(req.Bcc) == 0 {
+				return &emailapi.SendEmailResponse{
+					Id:            emailID,
+					Status:        emailapi.EmailStatus_EMAIL_STATUS_SENT,
+					StatusMessage: "All recipients have unsubscribed",
+				}, nil
+			}
+		}
+
+		// Replace {{unsubscribe_link}} placeholder for SYNC single-recipient emails only
+		// Async emails are handled by the worker which splits multi-recipient into individual sends
+		hasPlaceholder := strings.Contains(req.Body, "{{unsubscribe_link}}") || strings.Contains(req.Html, "{{unsubscribe_link}}")
+		totalRecipients := len(req.To) + len(req.Cc) + len(req.Bcc)
+		isAsync := req.Async || len(req.Attachments) > 0 || req.ScheduledAt != nil
+
+		if hasPlaceholder && !isAsync && totalRecipients == 1 && len(req.To) == 1 {
+			// Sync + single recipient - generate unique link for them
+			unsubLink, err := s.unsubscribeSvc.GenerateLink(userID, req.To[0], emailID)
+			if err == nil {
+				req.Body = strings.ReplaceAll(req.Body, "{{unsubscribe_link}}", unsubLink)
+				req.Html = strings.ReplaceAll(req.Html, "{{unsubscribe_link}}", unsubLink)
+			}
+		} else if hasPlaceholder && !isAsync && totalRecipients > 1 {
+			// Sync + multi-recipient = skip placeholder, warn user to use async
+			fmt.Printf("Warning: {{unsubscribe_link}} with %d recipients in sync mode - use async for automatic splitting\n", totalRecipients)
+		}
+		// For async/scheduled/attachments with placeholders: worker handles splitting
+	}
 
 	// Convert metadata
 	metadata := make(map[string]string)
@@ -125,9 +178,9 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 	}
 
 	// Write routing entry for reply tracking (async - don't block response)
-	if s.tbRepo != nil {
+	if s.analytics != nil {
 		go func() {
-			if err := s.tbRepo.InsertRouting(context.Background(), messageID, emailID, userID); err != nil {
+			if err := s.analytics.Email().InsertRouting(context.Background(), messageID, emailID, userID); err != nil {
 				// Log but don't fail - routing is for reply tracking, not critical path
 				fmt.Printf("Warning: failed to insert routing entry: %v\n", err)
 			}
@@ -182,13 +235,19 @@ func (s *EmailService) queueWithAttachments(ctx context.Context, emailID, userID
 		DryRun:      dryRun,
 	}
 
+	// Pass unsubscribe config if placeholder is present (for worker to split multi-recipient emails)
+	if s.unsubscribeSvc != nil && (strings.Contains(req.Body, "{{unsubscribe_link}}") || strings.Contains(req.Html, "{{unsubscribe_link}}")) {
+		args.UnsubscribeBaseURL = s.unsubscribeSvc.BaseURL()
+		args.UnsubscribeTokenSecret = s.unsubscribeSvc.TokenSecret()
+	}
+
 	// Add scheduled time if present
 	if req.ScheduledAt != nil {
 		scheduledTime := req.ScheduledAt.AsTime()
 		args.ScheduledAt = &scheduledTime
 	}
 
-	_, err := s.riverClient.Insert(ctx, args, nil)
+	_, err := s.queue.Insert(ctx, args, nil)
 	if err != nil {
 		s.logActivity(ctx, userID, emailID, "failed", fmt.Sprintf("Failed to enqueue: %v", err), req)
 		return nil, fmt.Errorf("failed to enqueue attachment job: %w", err)
@@ -219,7 +278,13 @@ func (s *EmailService) queueForSend(ctx context.Context, emailID, userID string,
 		DryRun:     dryRun,
 	}
 
-	_, err := s.riverClient.Insert(ctx, args, nil)
+	// Pass unsubscribe config if placeholder is present (for worker to split multi-recipient emails)
+	if s.unsubscribeSvc != nil && (strings.Contains(req.Body, "{{unsubscribe_link}}") || strings.Contains(req.Html, "{{unsubscribe_link}}")) {
+		args.UnsubscribeBaseURL = s.unsubscribeSvc.BaseURL()
+		args.UnsubscribeTokenSecret = s.unsubscribeSvc.TokenSecret()
+	}
+
+	_, err := s.queue.Insert(ctx, args, nil)
 	if err != nil {
 		s.logActivity(ctx, userID, emailID, "failed", fmt.Sprintf("Failed to enqueue: %v", err), req)
 		return nil, fmt.Errorf("failed to enqueue send job: %w", err)
@@ -258,8 +323,14 @@ func (s *EmailService) queueScheduled(ctx context.Context, emailID, userID strin
 		DryRun:     dryRun,
 	}
 
+	// Pass unsubscribe config if placeholder is present (for worker to split multi-recipient emails)
+	if s.unsubscribeSvc != nil && (strings.Contains(req.Body, "{{unsubscribe_link}}") || strings.Contains(req.Html, "{{unsubscribe_link}}")) {
+		args.UnsubscribeBaseURL = s.unsubscribeSvc.BaseURL()
+		args.UnsubscribeTokenSecret = s.unsubscribeSvc.TokenSecret()
+	}
+
 	// Queue with scheduled time
-	_, err := s.riverClient.Insert(ctx, args, &river.InsertOpts{
+	_, err := s.queue.Insert(ctx, args, &river.InsertOpts{
 		ScheduledAt: scheduledTime,
 	})
 	if err != nil {
@@ -335,7 +406,7 @@ func (s *EmailService) sendToSES(ctx context.Context, req *emailapi.SendEmailReq
 
 // logActivity logs an activity for debugging (compliant - no email content stored).
 func (s *EmailService) logActivity(ctx context.Context, userID, emailID, action, details string, req *emailapi.SendEmailRequest) {
-	if s.tbRepo == nil {
+	if s.analytics == nil {
 		return
 	}
 
@@ -352,7 +423,7 @@ func (s *EmailService) logActivity(ctx context.Context, userID, emailID, action,
 		"async":           req.Async,
 	}
 
-	s.tbRepo.LogEmailEvent(ctx, userID, emailID, action, status, details, metadata)
+	s.analytics.Email().LogEmailEvent(ctx, userID, emailID, action, status, details, metadata)
 }
 
 // sendWebhook sends a webhook notification for email events.
@@ -376,10 +447,48 @@ func (s *EmailService) sendWebhook(ctx context.Context, userID, emailID, message
 	s.webhookSender.SendEmailSent(ctx, userID, event)
 }
 
-// StreamEvents returns a channel of events for the user starting from cursor.
-func (s *EmailService) StreamEvents(ctx context.Context, userID, cursor string, eventTypes []emailapi.EventType, batchSize int32) (<-chan *emailapi.Event, error) {
+// StreamEvents returns a channel of events for the user using Redis Consumer Groups.
+// The apiKeyID is used as the consumer identifier for tracking acknowledgment state.
+// Unacknowledged events are automatically replayed on reconnect.
+func (s *EmailService) StreamEvents(ctx context.Context, userID, apiKeyID string, eventTypes []emailapi.EventType, batchSize int32) (<-chan *emailapi.Event, error) {
+	// Check reputation - suspended users cannot access streaming API
+	if s.reputationChecker != nil {
+		if err := s.reputationChecker.CheckSendPermission(ctx, userID); err != nil {
+			return nil, err
+		}
+	}
+
 	if s.eventConsumer == nil {
 		return nil, fmt.Errorf("event streaming not configured")
 	}
-	return s.eventConsumer.Subscribe(ctx, userID, cursor, eventTypes, batchSize)
+	return s.eventConsumer.Subscribe(ctx, userID, apiKeyID, eventTypes, batchSize)
+}
+
+// AckEvents acknowledges events as processed, preventing replay on reconnect.
+func (s *EmailService) AckEvents(ctx context.Context, userID string, eventIDs []string) (int64, error) {
+	// Check reputation - suspended users cannot ack events
+	if s.reputationChecker != nil {
+		if err := s.reputationChecker.CheckSendPermission(ctx, userID); err != nil {
+			return 0, err
+		}
+	}
+
+	if s.eventConsumer == nil {
+		return 0, fmt.Errorf("event streaming not configured")
+	}
+	return s.eventConsumer.Ack(ctx, userID, eventIDs)
+}
+
+// filterEmails removes emails that are in the exclusion set.
+func filterEmails(emails []string, exclude map[string]bool) []string {
+	if len(emails) == 0 || len(exclude) == 0 {
+		return emails
+	}
+	result := make([]string, 0, len(emails))
+	for _, email := range emails {
+		if !exclude[strings.ToLower(strings.TrimSpace(email))] {
+			result = append(result, email)
+		}
+	}
+	return result
 }

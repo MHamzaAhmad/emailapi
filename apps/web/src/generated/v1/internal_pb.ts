@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/internal.proto.
  */
 export const file_v1_internal: GenFile = /*@__PURE__*/
-  fileDesc("ChF2MS9pbnRlcm5hbC5wcm90bxICdjEiaQoaR3VhcmREdXR5U2NhblJlc3VsdFJlcXVlc3QSEQoJczNfYnVja2V0GAEgASgJEg4KBnMzX2tleRgCIAEoCRITCgtzY2FuX3N0YXR1cxgDIAEoCRITCgt0aHJlYXRfbmFtZRgEIAEoCSI/ChtHdWFyZER1dHlTY2FuUmVzdWx0UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIiYKE0NsZXJrV2ViaG9va1JlcXVlc3QSDwoHcGF5bG9hZBgBIAEoDCI4ChRDbGVya1dlYmhvb2tSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiygEKDEluYm91bmRFbWFpbBIKCgJpZBgBIAEoCRISCgptZXNzYWdlX2lkGAIgASgJEhMKC2luX3JlcGx5X3RvGAMgASgJEhIKCnJlZmVyZW5jZXMYBCADKAkSDAoEZnJvbRgFIAEoCRIKCgJ0bxgGIAMoCRIPCgdzdWJqZWN0GAcgASgJEgwKBGJvZHkYCCABKAkSDAoEaHRtbBgJIAEoCRIZChFvcmlnaW5hbF9lbWFpbF9pZBgKIAEoCRIPCgd1c2VyX2lkGAsgASgJMrwBCg9JbnRlcm5hbFNlcnZpY2USXgoZSGFuZGxlR3VhcmREdXR5U2NhblJlc3VsdBIeLnYxLkd1YXJkRHV0eVNjYW5SZXN1bHRSZXF1ZXN0Gh8udjEuR3VhcmREdXR5U2NhblJlc3VsdFJlc3BvbnNlIgASSQoSSGFuZGxlQ2xlcmtXZWJob29rEhcudjEuQ2xlcmtXZWJob29rUmVxdWVzdBoYLnYxLkNsZXJrV2ViaG9va1Jlc3BvbnNlIgBCXwoGY29tLnYxQg1JbnRlcm5hbFByb3RvUAFaHmdpdGh1Yi5jb20vZW1haWxhcGkvYXBpL2dlbi92MaICA1ZYWKoCAlYxygICVjHiAg5WMVxHUEJNZXRhZGF0YeoCAlYxYgZwcm90bzM");
+  fileDesc("ChF2MS9pbnRlcm5hbC5wcm90bxICdjEiaQoaR3VhcmREdXR5U2NhblJlc3VsdFJlcXVlc3QSEQoJczNfYnVja2V0GAEgASgJEg4KBnMzX2tleRgCIAEoCRITCgtzY2FuX3N0YXR1cxgDIAEoCRITCgt0aHJlYXRfbmFtZRgEIAEoCSI/ChtHdWFyZER1dHlTY2FuUmVzdWx0UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIiYKE0NsZXJrV2ViaG9va1JlcXVlc3QSDwoHcGF5bG9hZBgBIAEoDCI4ChRDbGVya1dlYmhvb2tSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiygEKDEluYm91bmRFbWFpbBIKCgJpZBgBIAEoCRISCgptZXNzYWdlX2lkGAIgASgJEhMKC2luX3JlcGx5X3RvGAMgASgJEhIKCnJlZmVyZW5jZXMYBCADKAkSDAoEZnJvbRgFIAEoCRIKCgJ0bxgGIAMoCRIPCgdzdWJqZWN0GAcgASgJEgwKBGJvZHkYCCABKAkSDAoEaHRtbBgJIAEoCRIZChFvcmlnaW5hbF9lbWFpbF9pZBgKIAEoCRIPCgd1c2VyX2lkGAsgASgJIiYKE1BvbGFyV2ViaG9va1JlcXVlc3QSDwoHcGF5bG9hZBgBIAEoDCI4ChRQb2xhcldlYmhvb2tSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkyhwIKD0ludGVybmFsU2VydmljZRJeChlIYW5kbGVHdWFyZER1dHlTY2FuUmVzdWx0Eh4udjEuR3VhcmREdXR5U2NhblJlc3VsdFJlcXVlc3QaHy52MS5HdWFyZER1dHlTY2FuUmVzdWx0UmVzcG9uc2UiABJJChJIYW5kbGVDbGVya1dlYmhvb2sSFy52MS5DbGVya1dlYmhvb2tSZXF1ZXN0GhgudjEuQ2xlcmtXZWJob29rUmVzcG9uc2UiABJJChJIYW5kbGVQb2xhcldlYmhvb2sSFy52MS5Qb2xhcldlYmhvb2tSZXF1ZXN0GhgudjEuUG9sYXJXZWJob29rUmVzcG9uc2UiAEJfCgZjb20udjFCDUludGVybmFsUHJvdG9QAVoeZ2l0aHViLmNvbS9lbWFpbGFwaS9hcGkvZ2VuL3YxogIDVlhYqgICVjHKAgJWMeICDlYxXEdQQk1ldGFkYXRh6gICVjFiBnByb3RvMw");
 
 /**
  * GuardDutyScanResultRequest contains the scan result from GuardDuty via EventBridge.
@@ -224,6 +224,49 @@ export const InboundEmailSchema: GenMessage<InboundEmail> = /*@__PURE__*/
   messageDesc(file_v1_internal, 4);
 
 /**
+ * PolarWebhookRequest wraps the raw Polar webhook payload.
+ *
+ * @generated from message v1.PolarWebhookRequest
+ */
+export type PolarWebhookRequest = Message<"v1.PolarWebhookRequest"> & {
+  /**
+   * Raw JSON payload bytes for signature verification.
+   *
+   * @generated from field: bytes payload = 1;
+   */
+  payload: Uint8Array;
+};
+
+/**
+ * Describes the message v1.PolarWebhookRequest.
+ * Use `create(PolarWebhookRequestSchema)` to create a new message.
+ */
+export const PolarWebhookRequestSchema: GenMessage<PolarWebhookRequest> = /*@__PURE__*/
+  messageDesc(file_v1_internal, 5);
+
+/**
+ * @generated from message v1.PolarWebhookResponse
+ */
+export type PolarWebhookResponse = Message<"v1.PolarWebhookResponse"> & {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success: boolean;
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message: string;
+};
+
+/**
+ * Describes the message v1.PolarWebhookResponse.
+ * Use `create(PolarWebhookResponseSchema)` to create a new message.
+ */
+export const PolarWebhookResponseSchema: GenMessage<PolarWebhookResponse> = /*@__PURE__*/
+  messageDesc(file_v1_internal, 6);
+
+/**
  * InternalService handles internal webhook endpoints.
  * These endpoints are authenticated via X-Webhook-Secret header.
  *
@@ -251,6 +294,17 @@ export const InternalService: GenService<{
     methodKind: "unary";
     input: typeof ClerkWebhookRequestSchema;
     output: typeof ClerkWebhookResponseSchema;
+  },
+  /**
+   * HandlePolarWebhook processes Polar subscription events.
+   * Authenticated via Svix signature verification.
+   *
+   * @generated from rpc v1.InternalService.HandlePolarWebhook
+   */
+  handlePolarWebhook: {
+    methodKind: "unary";
+    input: typeof PolarWebhookRequestSchema;
+    output: typeof PolarWebhookResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_v1_internal, 0);

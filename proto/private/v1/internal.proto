@@ -14,6 +14,10 @@ service InternalService {
   // This endpoint is authenticated via Svix signature verification.
   // Raw payload bytes are passed via ClerkWebhookRequest for signature verification.
   rpc HandleClerkWebhook(ClerkWebhookRequest) returns (ClerkWebhookResponse) {}
+
+  // HandlePolarWebhook processes Polar subscription events.
+  // Authenticated via Svix signature verification.
+  rpc HandlePolarWebhook(PolarWebhookRequest) returns (PolarWebhookResponse) {}
 }
 
 // GuardDutyScanResultRequest contains the scan result from GuardDuty via EventBridge.
@@ -75,4 +79,15 @@ message InboundEmail {
   string original_email_id = 10;
   // User who sent the original email
   string user_id = 11;
+}
+
+// PolarWebhookRequest wraps the raw Polar webhook payload.
+message PolarWebhookRequest {
+  // Raw JSON payload bytes for signature verification.
+  bytes payload = 1;
+}
+
+message PolarWebhookResponse {
+  bool success = 1;
+  string message = 2;
 }

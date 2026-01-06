@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "github.com/emailapi/api/gen/v1";
+
+service BillingService {
+  // GetPlans returns available pricing plans.
+  rpc GetPlans(GetPlansRequest) returns (GetPlansResponse) {}
+  
+  // CreateCheckoutSession generates a Polar checkout URL for plan upgrade.
+  rpc CreateCheckoutSession(CreateCheckoutSessionRequest) returns (CreateCheckoutSessionResponse) {}
+  
+  // GetCustomerPortalUrl returns URL for subscription management.
+  rpc GetCustomerPortalUrl(GetCustomerPortalUrlRequest) returns (GetCustomerPortalUrlResponse) {}
+
+  // GetSubscription returns current subscription details.
+  rpc GetSubscription(GetSubscriptionRequest) returns (GetSubscriptionResponse) {}
+}
+
+// Feature represents a plan feature with optional tooltip.
+message Feature {
+  string name = 1;
+  string tooltip = 2; // Optional markdown/text for tooltip
+}
+
+// Plan represents a pricing tier.
+message Plan {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int64 monthly_limit = 4;  // -1 = unlimited
+  int64 daily_limit = 5;    // -1 = unlimited
+  int64 price_cents = 6;    // Monthly price in cents
+  int64 overage_price_cents = 7; // Price per 1000 emails in cents (for PAYG or overage)
+  repeated Feature features = 8;  // List of plan features
+}
+
+
+
+message GetPlansRequest {}
+message GetPlansResponse {
+  repeated Plan plans = 1;
+}
+
+message CreateCheckoutSessionRequest {
+  string plan_id = 1;
+  string success_url = 2;
+}
+message CreateCheckoutSessionResponse {
+  string checkout_url = 1;
+}
+
+message GetCustomerPortalUrlRequest {}
+message GetCustomerPortalUrlResponse {
+  string portal_url = 1;
+}
+
+message GetSubscriptionRequest {}
+message GetSubscriptionResponse {
+  bool has_subscription = 1;
+  bool is_paid = 2;
+  string plan_id = 3;
+  string subscription_id = 4;
+  string polar_customer_id = 5;
+}

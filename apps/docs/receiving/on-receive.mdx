@@ -11,16 +11,16 @@ The `onReceive` method provides a persistent connection to our event stream with
   This is the recommended way to handle reply-to-bot flows, chat interfaces, or real-time dashboards.
 </Info>
 
-## Usage
+## Zero-Config Usage
 
-Pass only the callbacks you need. Each callback receives a strongly-typed event payload.
+Just pass the callbacks you need. **No cursor tracking, no deduplication logic** — we handle it all server-side.
 
 ```typescript
 import { createClient } from '@msgmorph/sdk'
 
 const client = createClient({ apiKey: 'em_...' })
 
-// Listen for replies
+// Listen for replies - events are auto-acknowledged after your handler completes
 client.onReceive({
   onReplied: (reply) => {
     console.log('Reply from:', reply.from)
@@ -29,13 +29,20 @@ client.onReceive({
 })
 ```
 
-## All Event Handlers
+## How It Works
 
-Handle only what you need — no switch statements required.
+Behind the scenes, `onReceive`:
+- **Server-side tracking**: Uses your API key to track which events you've processed
+- **Automatic acknowledgment**: Events are acknowledged after your handler completes
+- **Replay on reconnect**: Unacknowledged events are replayed if your app disconnects
+- **No duplicates**: You never see the same event twice
+
+This means if your server crashes mid-processing, you'll get those events again on restart. No data loss.
+
+## All Event Handlers
 
 ```typescript
 const controller = client.onReceive({
-  cursor: '0',        // Start from beginning, or pass last event ID to resume
   batchSize: 10,      // Optional: events per batch
 
   onSent: (event) => console.log('Sent:', event.subject),
@@ -80,10 +87,30 @@ controller.abort()
   Called when a recipient marks your email as spam.
 </ResponseField>
 
-## Resiliency
+## Manual Acknowledgment
 
-The stream automatically handles keep-alives (heartbeats). If the connection drops, the `onError` callback fires so your application can reconnect with the last cursor.
+For critical workflows where you need to ensure database writes complete before acknowledging:
+
+```typescript
+client.onReceive({
+  ackMode: 'manual',  // Don't auto-ack
+  
+  onReplied: async (event) => {
+    await saveToDatabase(event)  // Make sure this completes
+    // Note: Manual ack not yet implemented via SDK
+    // Server will replay unacked events on next connect
+  }
+})
+```
 
 <Tip>
-  Store the last event cursor in your database so you can resume from where you left off after a restart.
+  For most use cases, auto-ack (the default) is recommended. It provides exactly-once semantics for well-behaved handlers.
 </Tip>
+
+## Resiliency
+
+The stream automatically handles keep-alives (heartbeats). If the connection drops:
+1. Your `onError` callback fires
+2. SDK auto-reconnects with exponential backoff
+3. Server replays any unacknowledged events
+4. Your handlers process them normally

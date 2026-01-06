@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -18,8 +20,10 @@ import (
 	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/config"
 	"github.com/emailapi/api/internal/eventstream"
+	"github.com/emailapi/api/internal/external/polar"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
+	"github.com/emailapi/api/internal/external/sqs"
 	"github.com/emailapi/api/internal/external/svix"
 	"github.com/emailapi/api/internal/external/webrisk"
 	"github.com/emailapi/api/internal/repository/postgres"
@@ -29,6 +33,7 @@ import (
 	"github.com/emailapi/api/internal/service"
 	connecttransport "github.com/emailapi/api/internal/transport/connect"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
+	httphandler "github.com/emailapi/api/internal/transport/http"
 	"github.com/emailapi/api/internal/webhook"
 	worker "github.com/emailapi/api/internal/worker"
 
@@ -90,14 +95,35 @@ func main() {
 	s3Factory.RegisterBucket(s3.BucketInbound, cfg.S3InboundBucket)
 	logger.Info().Msg("✓ Initialized S3 factory")
 
+	// Initialize SQS client for event processing (optional)
+	var sqsClient sqs.Client
+	if cfg.SQSEventQueueURL != "" {
+		awsCfg, err := awsconfig.LoadDefaultConfig(context.Background(),
+			awsconfig.WithRegion(cfg.AWSRegion),
+			awsconfig.WithCredentialsProvider(aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
+				return aws.Credentials{
+					AccessKeyID:     cfg.AWSAccessKeyID,
+					SecretAccessKey: cfg.AWSSecretAccessKey,
+				}, nil
+			})),
+		)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to load AWS config for SQS")
+		}
+		sqsClient = sqs.New(awsCfg, cfg.SQSEventQueueURL)
+		logger.Info().Str("queue", cfg.SQSEventQueueURL).Msg("✓ Initialized SQS client")
+	}
+
 	// Initialize Tinybird client
 	tbClient := tbrepo.NewClient(cfg.TinybirdToken, cfg.TinybirdBaseURL)
 	if err := tbClient.Ping(context.Background()); err != nil {
 		logger.Fatal().Err(err).Msg("Failed to ping Tinybird")
 	}
 	logger.Info().Msg("✓ Connected to Tinybird")
-	tbEmailRepo := tbrepo.NewEmailRepository(tbClient)
-	tbActivityRepo := tbrepo.NewActivityRepository(tbClient)
+	analyticsAggregator := tbrepo.NewAnalyticsAggregator(
+		tbrepo.NewEmailRepository(tbClient),
+		tbrepo.NewActivityRepository(tbClient),
+	)
 	logger.Info().Msg("✓ Initialized Tinybird repositories")
 
 	// Initialize Redis client
@@ -119,11 +145,7 @@ func main() {
 	suppressionRepo := suppression.NewRepository(redisClient, store.Queries())
 
 	// Initialize cache repositories
-	const cacheTTL = 5 * time.Minute
-	domainCache := redisrepo.NewDomainCache(redisClient, cacheTTL)
-	apiKeyCache := redisrepo.NewAPIKeyCache(redisClient, cacheTTL)
-	userCache := redisrepo.NewUserCache(redisClient, cacheTTL)
-	mxCache := redisrepo.NewMXCache(redisClient)
+	cacheAggregator := redisrepo.NewCacheAggregator(redisClient)
 	logger.Info().Msg("✓ Initialized cache repositories")
 
 	// Initialize rate limiter
@@ -181,12 +203,26 @@ func main() {
 	eventConsumer := eventstream.NewConsumer(redisClient)
 	logger.Info().Msg("✓ Initialized event stream")
 
+	// Initialize Polar client (optional - for billing integration)
+	var polarClient polar.Client
+	if cfg.PolarAccessToken != "" {
+		var err error
+		polarClient, err = polar.NewClient(cfg.PolarAccessToken, cfg.PolarMeterName)
+		if err != nil {
+			logger.Warn().Err(err).Msg("Failed to create Polar client - billing features disabled")
+		} else {
+			logger.Info().Msg("✓ Initialized Polar client")
+		}
+	} else {
+		logger.Info().Msg("Polar not configured - billing features disabled")
+	}
+
 	// Create webhook sender with event stream publisher
 	webhookSender := webhook.NewSender(svixClient, eventPublisher)
 
 	// Create and register workers
 	workers := river.NewWorkers()
-	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, tbEmailRepo, webhookSender)
+	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, analyticsAggregator.Email(), webhookSender)
 	river.AddWorker(workers, emailWorker)
 	logger.Info().Msg("✓ Registered River workers")
 
@@ -195,15 +231,22 @@ func main() {
 		Queues: map[string]river.QueueConfig{
 			river.QueueDefault: {MaxWorkers: 100},
 		},
-		Workers: workers,
+		Workers:                     workers,
+		CompletedJobRetentionPeriod: 24 * time.Hour,
+		CancelledJobRetentionPeriod: 24 * time.Hour,
+		DiscardedJobRetentionPeriod: 7 * 24 * time.Hour,
 	})
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create River client")
 	}
 
-	// Register attachment worker (needs riverClient reference)
-	attachmentWorker := worker.NewAttachmentWorker(s3Factory, riverClient)
+	// Register attachment worker (uses PendingAttachmentCache for event-driven GuardDuty integration)
+	attachmentWorker := worker.NewAttachmentWorker(s3Factory, cacheAggregator.PendingAttachment())
 	river.AddWorker(workers, attachmentWorker)
+
+	// Register reputation worker for async evaluation
+	reputationWorker := worker.NewReputationWorker(store.Reputation(), analyticsAggregator.Activity(), cacheAggregator.Reputation())
+	river.AddWorker(workers, reputationWorker)
 
 	// Start River client
 	if err := riverClient.Start(context.Background()); err != nil {
@@ -214,36 +257,68 @@ func main() {
 
 	// Initialize service layer
 	svc := service.NewWithDeps(service.ServiceDeps{
-		Store:               store,
-		SESClient:           sesClient,
-		S3Factory:           s3Factory,
-		Region:              cfg.AWSRegion,
-		SESConfigurationSet: cfg.SESConfigurationSet,
-		RiverClient:         riverClient,
-		TBEmailRepo:         tbEmailRepo,
-		TBActivityRepo:      tbActivityRepo,
-		SvixClient:          svixClient,
-		WebhookSender:       webhookSender,
-		SuppressionRepo:     suppressionRepo,
-		DomainCache:         domainCache,
-		APIKeyCache:         apiKeyCache,
-		UserCache:           userCache,
-		MXCache:             mxCache,
-		EventConsumer:       eventConsumer,
-		ClerkWebhookSecret:  cfg.ClerkWebhookSecret,
-		APIKeyHMACSecret:    cfg.APIKeyHMACSecret,
-		RedisClient:         redisClient,
-		WebRiskClient:       webRiskClient,
+		Store:                  store,
+		Cache:                  cacheAggregator,
+		Analytics:              analyticsAggregator,
+		SESClient:              sesClient,
+		S3Factory:              s3Factory,
+		SQSClient:              sqsClient, // New: for SQS event processing
+		Region:                 cfg.AWSRegion,
+		SESConfigurationSet:    cfg.SESConfigurationSet,
+		RiverClient:            riverClient,
+		SvixClient:             svixClient,
+		WebhookSender:          webhookSender,
+		SuppressionRepo:        suppressionRepo,
+		EventConsumer:          eventConsumer,
+		ClerkWebhookSecret:     cfg.ClerkWebhookSecret,
+		PolarWebhookSecret:     cfg.PolarWebhookSecret,
+		APIKeyHMACSecret:       cfg.APIKeyHMACSecret,
+		RedisClient:            redisClient,
+		WebRiskClient:          webRiskClient,
+		UnsubscribeBaseURL:     cfg.UnsubscribeBaseURL,
+		UnsubscribeTokenSecret: cfg.UnsubscribeTokenSecret,
+		InboundBucket:          cfg.S3InboundBucket,
+		PolarClient:            polarClient,
+		PolarStarterProductID:  cfg.PolarStarterProductID,
+		PolarGrowthProductID:   cfg.PolarGrowthProductID,
+		PolarFreeProductID:     cfg.PolarFreeProductID,
 	})
+
+	// Start SQS consumer goroutine if configured
+	// Uses a cancellable context for graceful shutdown
+	sqsCtx, sqsCancel := context.WithCancel(context.Background())
+	defer sqsCancel()
+	if svc.SQSEvent != nil {
+		sqsConsumer := sqs.NewConsumer(
+			svc.SQSEvent.GetClient(),
+			svc.SQSEvent.GetRouter(),
+			sqs.DefaultConsumerConfig(),
+		)
+		go func() {
+			logger.Info().Msg("✓ Starting SQS consumer")
+			if err := sqsConsumer.Start(sqsCtx); err != nil {
+				logger.Error().Err(err).Msg("SQS consumer stopped with error")
+			}
+		}()
+	}
+
+	// Sync unsubscribe list from PostgreSQL to Redis on startup
+	if svc.Unsubscribe != nil {
+		go func() {
+			if err := svc.Unsubscribe.SyncCache(context.Background()); err != nil {
+				logger.Warn().Err(err).Msg("Failed to sync unsubscribe list from PostgreSQL")
+			}
+		}()
+		logger.Info().Msg("✓ Initialized unsubscribe service")
+	}
 
 	// Initialize Clerk SDK with secret key
 	clerk.SetKey(cfg.ClerkSecretKey)
 
 	// Create Connect interceptors
-	// Order matters: logging -> SNS/webhook preprocessing -> auth -> rate limit
+	// Order matters: logging -> SNS/webhook preprocessing -> auth -> admin -> rate limit -> usage
 	interceptors := connect.WithInterceptors(
 		interceptor.NewLoggingInterceptor(logger),
-		interceptor.NewSNSInterceptor(),
 		interceptor.NewWebhookInterceptor(interceptor.WebhookConfig{
 			InternalWebhookSecret: cfg.InternalWebhookSecret,
 		}),
@@ -252,11 +327,22 @@ func main() {
 			UserLookup:     svc.User,
 			ClerkSecretKey: cfg.ClerkSecretKey,
 		}),
+		interceptor.NewAdminInterceptor(interceptor.AdminConfig{
+			UserLookup: svc.User,
+		}),
 		interceptor.NewRateLimitInterceptor(interceptor.RateLimitConfig{
 			RateLimiter:          rateLimiter,
 			RequestsPerMinute:    cfg.RateLimitPerMinute,
 			MaxConcurrentStreams: cfg.MaxConcurrentStreams,
 			Enabled:              cfg.RateLimitEnabled,
+		}),
+		interceptor.NewUsageInterceptor(interceptor.UsageConfig{
+			CreditCache:    cacheAggregator.Credit(),
+			PolarClient:    polarClient,
+			UserRepo:       store.Users(),
+			Enabled:        cfg.UsageLimitEnabled,
+			FreeDailyLimit: 100,
+			FreeProductID:  cfg.PolarFreeProductID,
 		}),
 	)
 
@@ -265,7 +351,7 @@ func main() {
 
 	// Register all service handlers
 	path, handler := v1connect.NewUserServiceHandler(
-		connecttransport.NewUserHandler(svc.User),
+		connecttransport.NewUserHandler(svc.User, svc.Reputation),
 		interceptors,
 	)
 	mux.Handle(path, handler)
@@ -300,17 +386,34 @@ func main() {
 	)
 	mux.Handle(path, handler)
 
-	path, handler = v1connect.NewSnsServiceHandler(
-		connecttransport.NewSnsHandler(svc.SNSNotification, svc.InboundEmail),
-		interceptors,
-	)
-	mux.Handle(path, handler)
-
 	path, handler = v1connect.NewActivityServiceHandler(
 		connecttransport.NewActivityHandler(svc.Activity),
 		interceptors,
 	)
 	mux.Handle(path, handler)
+
+	path, handler = v1connect.NewAdminServiceHandler(
+		connecttransport.NewAdminHandler(svc.Admin),
+		interceptors,
+	)
+	mux.Handle(path, handler)
+
+	path, handler = v1connect.NewBillingServiceHandler(
+		connecttransport.NewBillingHandler(svc.Billing),
+		interceptors,
+	)
+	mux.Handle(path, handler)
+
+	// Register unsubscribe HTTP handlers (non-Connect, for web page serving)
+	if svc.Unsubscribe != nil {
+		unsubHandler, err := httphandler.NewUnsubscribeHandler(svc.Unsubscribe)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to create unsubscribe handler")
+		}
+		mux.HandleFunc("/unsubscribe", unsubHandler.Handle)
+		mux.HandleFunc("/unsubscribe/one-click", unsubHandler.HandleOneClick)
+		logger.Info().Msg("✓ Registered unsubscribe HTTP handlers")
+	}
 
 	// Apply raw body capture middleware (for webhook signature verification)
 	rawBodyHandler := interceptor.RawBodyHTTPMiddleware(mux)

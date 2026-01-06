@@ -1,9 +1,5 @@
 package webrisk
 
-import (
-	"context"
-)
-
 // ThreatType represents the type of threat detected.
 type ThreatType string
 
@@ -27,15 +23,4 @@ type UpdateResponse struct {
 	StateToken string
 	// NegativeCacheDuration in seconds before next update.
 	NegativeCacheDuration int64
-}
-
-// Client defines the interface for Web Risk API operations.
-type Client interface {
-	// Lookup verifies URLs against Web Risk Lookup API.
-	// Called after Bloom filter indicates a potential match.
-	Lookup(ctx context.Context, urls []string) ([]ThreatMatch, error)
-
-	// FetchHashPrefixes gets hash prefixes from Web Risk Update API.
-	// stateToken can be empty for initial fetch, or previous token for incremental updates.
-	FetchHashPrefixes(ctx context.Context, stateToken string) (*UpdateResponse, error)
 }

@@ -39,6 +39,9 @@ const (
 	// InternalServiceHandleClerkWebhookProcedure is the fully-qualified name of the InternalService's
 	// HandleClerkWebhook RPC.
 	InternalServiceHandleClerkWebhookProcedure = "/v1.InternalService/HandleClerkWebhook"
+	// InternalServiceHandlePolarWebhookProcedure is the fully-qualified name of the InternalService's
+	// HandlePolarWebhook RPC.
+	InternalServiceHandlePolarWebhookProcedure = "/v1.InternalService/HandlePolarWebhook"
 )
 
 // InternalServiceClient is a client for the v1.InternalService service.
@@ -49,6 +52,9 @@ type InternalServiceClient interface {
 	// This endpoint is authenticated via Svix signature verification.
 	// Raw payload bytes are passed via ClerkWebhookRequest for signature verification.
 	HandleClerkWebhook(context.Context, *connect.Request[v1.ClerkWebhookRequest]) (*connect.Response[v1.ClerkWebhookResponse], error)
+	// HandlePolarWebhook processes Polar subscription events.
+	// Authenticated via Svix signature verification.
+	HandlePolarWebhook(context.Context, *connect.Request[v1.PolarWebhookRequest]) (*connect.Response[v1.PolarWebhookResponse], error)
 }
 
 // NewInternalServiceClient constructs a client for the v1.InternalService service. By default, it
@@ -74,6 +80,12 @@ func NewInternalServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(internalServiceMethods.ByName("HandleClerkWebhook")),
 			connect.WithClientOptions(opts...),
 		),
+		handlePolarWebhook: connect.NewClient[v1.PolarWebhookRequest, v1.PolarWebhookResponse](
+			httpClient,
+			baseURL+InternalServiceHandlePolarWebhookProcedure,
+			connect.WithSchema(internalServiceMethods.ByName("HandlePolarWebhook")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -81,6 +93,7 @@ func NewInternalServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 type internalServiceClient struct {
 	handleGuardDutyScanResult *connect.Client[v1.GuardDutyScanResultRequest, v1.GuardDutyScanResultResponse]
 	handleClerkWebhook        *connect.Client[v1.ClerkWebhookRequest, v1.ClerkWebhookResponse]
+	handlePolarWebhook        *connect.Client[v1.PolarWebhookRequest, v1.PolarWebhookResponse]
 }
 
 // HandleGuardDutyScanResult calls v1.InternalService.HandleGuardDutyScanResult.
@@ -93,6 +106,11 @@ func (c *internalServiceClient) HandleClerkWebhook(ctx context.Context, req *con
 	return c.handleClerkWebhook.CallUnary(ctx, req)
 }
 
+// HandlePolarWebhook calls v1.InternalService.HandlePolarWebhook.
+func (c *internalServiceClient) HandlePolarWebhook(ctx context.Context, req *connect.Request[v1.PolarWebhookRequest]) (*connect.Response[v1.PolarWebhookResponse], error) {
+	return c.handlePolarWebhook.CallUnary(ctx, req)
+}
+
 // InternalServiceHandler is an implementation of the v1.InternalService service.
 type InternalServiceHandler interface {
 	// HandleGuardDutyScanResult processes GuardDuty malware scan results from EventBridge.
@@ -101,6 +119,9 @@ type InternalServiceHandler interface {
 	// This endpoint is authenticated via Svix signature verification.
 	// Raw payload bytes are passed via ClerkWebhookRequest for signature verification.
 	HandleClerkWebhook(context.Context, *connect.Request[v1.ClerkWebhookRequest]) (*connect.Response[v1.ClerkWebhookResponse], error)
+	// HandlePolarWebhook processes Polar subscription events.
+	// Authenticated via Svix signature verification.
+	HandlePolarWebhook(context.Context, *connect.Request[v1.PolarWebhookRequest]) (*connect.Response[v1.PolarWebhookResponse], error)
 }
 
 // NewInternalServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -122,12 +143,20 @@ func NewInternalServiceHandler(svc InternalServiceHandler, opts ...connect.Handl
 		connect.WithSchema(internalServiceMethods.ByName("HandleClerkWebhook")),
 		connect.WithHandlerOptions(opts...),
 	)
+	internalServiceHandlePolarWebhookHandler := connect.NewUnaryHandler(
+		InternalServiceHandlePolarWebhookProcedure,
+		svc.HandlePolarWebhook,
+		connect.WithSchema(internalServiceMethods.ByName("HandlePolarWebhook")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/v1.InternalService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case InternalServiceHandleGuardDutyScanResultProcedure:
 			internalServiceHandleGuardDutyScanResultHandler.ServeHTTP(w, r)
 		case InternalServiceHandleClerkWebhookProcedure:
 			internalServiceHandleClerkWebhookHandler.ServeHTTP(w, r)
+		case InternalServiceHandlePolarWebhookProcedure:
+			internalServiceHandlePolarWebhookHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -143,4 +172,8 @@ func (UnimplementedInternalServiceHandler) HandleGuardDutyScanResult(context.Con
 
 func (UnimplementedInternalServiceHandler) HandleClerkWebhook(context.Context, *connect.Request[v1.ClerkWebhookRequest]) (*connect.Response[v1.ClerkWebhookResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.InternalService.HandleClerkWebhook is not implemented"))
+}
+
+func (UnimplementedInternalServiceHandler) HandlePolarWebhook(context.Context, *connect.Request[v1.PolarWebhookRequest]) (*connect.Response[v1.PolarWebhookResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.InternalService.HandlePolarWebhook is not implemented"))
 }

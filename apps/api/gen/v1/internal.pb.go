@@ -387,6 +387,104 @@ func (x *InboundEmail) GetUserId() string {
 	return ""
 }
 
+// PolarWebhookRequest wraps the raw Polar webhook payload.
+type PolarWebhookRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Raw JSON payload bytes for signature verification.
+	Payload       []byte `protobuf:"bytes,1,opt,name=payload,proto3" json:"payload,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PolarWebhookRequest) Reset() {
+	*x = PolarWebhookRequest{}
+	mi := &file_v1_internal_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PolarWebhookRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PolarWebhookRequest) ProtoMessage() {}
+
+func (x *PolarWebhookRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_internal_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PolarWebhookRequest.ProtoReflect.Descriptor instead.
+func (*PolarWebhookRequest) Descriptor() ([]byte, []int) {
+	return file_v1_internal_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *PolarWebhookRequest) GetPayload() []byte {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+type PolarWebhookResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PolarWebhookResponse) Reset() {
+	*x = PolarWebhookResponse{}
+	mi := &file_v1_internal_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PolarWebhookResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PolarWebhookResponse) ProtoMessage() {}
+
+func (x *PolarWebhookResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_internal_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PolarWebhookResponse.ProtoReflect.Descriptor instead.
+func (*PolarWebhookResponse) Descriptor() ([]byte, []int) {
+	return file_v1_internal_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *PolarWebhookResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *PolarWebhookResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_v1_internal_proto protoreflect.FileDescriptor
 
 const file_v1_internal_proto_rawDesc = "" +
@@ -422,10 +520,16 @@ const file_v1_internal_proto_rawDesc = "" +
 	"\x04html\x18\t \x01(\tR\x04html\x12*\n" +
 	"\x11original_email_id\x18\n" +
 	" \x01(\tR\x0foriginalEmailId\x12\x17\n" +
-	"\auser_id\x18\v \x01(\tR\x06userId2\xbc\x01\n" +
+	"\auser_id\x18\v \x01(\tR\x06userId\"/\n" +
+	"\x13PolarWebhookRequest\x12\x18\n" +
+	"\apayload\x18\x01 \x01(\fR\apayload\"J\n" +
+	"\x14PolarWebhookResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\x87\x02\n" +
 	"\x0fInternalService\x12^\n" +
 	"\x19HandleGuardDutyScanResult\x12\x1e.v1.GuardDutyScanResultRequest\x1a\x1f.v1.GuardDutyScanResultResponse\"\x00\x12I\n" +
-	"\x12HandleClerkWebhook\x12\x17.v1.ClerkWebhookRequest\x1a\x18.v1.ClerkWebhookResponse\"\x00B_\n" +
+	"\x12HandleClerkWebhook\x12\x17.v1.ClerkWebhookRequest\x1a\x18.v1.ClerkWebhookResponse\"\x00\x12I\n" +
+	"\x12HandlePolarWebhook\x12\x17.v1.PolarWebhookRequest\x1a\x18.v1.PolarWebhookResponse\"\x00B_\n" +
 	"\x06com.v1B\rInternalProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (
@@ -440,21 +544,25 @@ func file_v1_internal_proto_rawDescGZIP() []byte {
 	return file_v1_internal_proto_rawDescData
 }
 
-var file_v1_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_v1_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_v1_internal_proto_goTypes = []any{
 	(*GuardDutyScanResultRequest)(nil),  // 0: v1.GuardDutyScanResultRequest
 	(*GuardDutyScanResultResponse)(nil), // 1: v1.GuardDutyScanResultResponse
 	(*ClerkWebhookRequest)(nil),         // 2: v1.ClerkWebhookRequest
 	(*ClerkWebhookResponse)(nil),        // 3: v1.ClerkWebhookResponse
 	(*InboundEmail)(nil),                // 4: v1.InboundEmail
+	(*PolarWebhookRequest)(nil),         // 5: v1.PolarWebhookRequest
+	(*PolarWebhookResponse)(nil),        // 6: v1.PolarWebhookResponse
 }
 var file_v1_internal_proto_depIdxs = []int32{
 	0, // 0: v1.InternalService.HandleGuardDutyScanResult:input_type -> v1.GuardDutyScanResultRequest
 	2, // 1: v1.InternalService.HandleClerkWebhook:input_type -> v1.ClerkWebhookRequest
-	1, // 2: v1.InternalService.HandleGuardDutyScanResult:output_type -> v1.GuardDutyScanResultResponse
-	3, // 3: v1.InternalService.HandleClerkWebhook:output_type -> v1.ClerkWebhookResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	5, // 2: v1.InternalService.HandlePolarWebhook:input_type -> v1.PolarWebhookRequest
+	1, // 3: v1.InternalService.HandleGuardDutyScanResult:output_type -> v1.GuardDutyScanResultResponse
+	3, // 4: v1.InternalService.HandleClerkWebhook:output_type -> v1.ClerkWebhookResponse
+	6, // 5: v1.InternalService.HandlePolarWebhook:output_type -> v1.PolarWebhookResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -471,7 +579,7 @@ func file_v1_internal_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_internal_proto_rawDesc), len(file_v1_internal_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

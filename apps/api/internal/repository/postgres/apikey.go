@@ -13,21 +13,21 @@ import (
 )
 
 // APIKeyRepository implements repository.APIKeyRepository using sqlc-generated queries.
-type APIKeyRepository struct {
+type APIKeyRepositoryImpl struct {
 	pool    *pgxpool.Pool
 	queries *db.Queries
 }
 
 // NewAPIKeyRepository creates a new APIKeyRepository.
-func NewAPIKeyRepository(pool *pgxpool.Pool) *APIKeyRepository {
-	return &APIKeyRepository{
+func NewAPIKeyRepository(pool *pgxpool.Pool) *APIKeyRepositoryImpl {
+	return &APIKeyRepositoryImpl{
 		pool:    pool,
 		queries: db.New(pool),
 	}
 }
 
 // Create stores a new API key using sqlc.
-func (r *APIKeyRepository) Create(ctx context.Context, apiKey *domain.APIKey) error {
+func (r *APIKeyRepositoryImpl) Create(ctx context.Context, apiKey *domain.APIKey) error {
 	scopes := make([]string, len(apiKey.Scopes))
 	for i, s := range apiKey.Scopes {
 		scopes[i] = string(s)
@@ -55,7 +55,7 @@ func (r *APIKeyRepository) Create(ctx context.Context, apiKey *domain.APIKey) er
 }
 
 // GetByID retrieves an API key by its ID using sqlc.
-func (r *APIKeyRepository) GetByID(ctx context.Context, id string) (*domain.APIKey, error) {
+func (r *APIKeyRepositoryImpl) GetByID(ctx context.Context, id string) (*domain.APIKey, error) {
 	row, err := r.queries.GetApiKeyByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get API key: %w", err)
@@ -64,7 +64,7 @@ func (r *APIKeyRepository) GetByID(ctx context.Context, id string) (*domain.APIK
 }
 
 // GetByHash retrieves an active API key by its hash using sqlc.
-func (r *APIKeyRepository) GetByHash(ctx context.Context, keyHash string) (*domain.APIKey, error) {
+func (r *APIKeyRepositoryImpl) GetByHash(ctx context.Context, keyHash string) (*domain.APIKey, error) {
 	row, err := r.queries.GetApiKeyByHash(ctx, keyHash)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get API key by hash: %w", err)
@@ -73,7 +73,7 @@ func (r *APIKeyRepository) GetByHash(ctx context.Context, keyHash string) (*doma
 }
 
 // GetByPrefix retrieves an API key by its prefix using sqlc.
-func (r *APIKeyRepository) GetByPrefix(ctx context.Context, keyPrefix string) (*domain.APIKey, error) {
+func (r *APIKeyRepositoryImpl) GetByPrefix(ctx context.Context, keyPrefix string) (*domain.APIKey, error) {
 	row, err := r.queries.GetApiKeyByPrefix(ctx, keyPrefix)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get API key by prefix: %w", err)
@@ -82,7 +82,7 @@ func (r *APIKeyRepository) GetByPrefix(ctx context.Context, keyPrefix string) (*
 }
 
 // ListByUserID retrieves all API keys for a user with pagination using sqlc.
-func (r *APIKeyRepository) ListByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.APIKey, error) {
+func (r *APIKeyRepositoryImpl) ListByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.APIKey, error) {
 	rows, err := r.queries.ListApiKeysByUserIDPaginated(ctx, db.ListApiKeysByUserIDPaginatedParams{
 		UserID: userID,
 		Limit:  int32(limit),
@@ -100,7 +100,7 @@ func (r *APIKeyRepository) ListByUserID(ctx context.Context, userID string, limi
 }
 
 // CountByUserID counts the total number of API keys for a user.
-func (r *APIKeyRepository) CountByUserID(ctx context.Context, userID string) (int, error) {
+func (r *APIKeyRepositoryImpl) CountByUserID(ctx context.Context, userID string) (int, error) {
 	count, err := r.queries.CountApiKeysByUserID(ctx, userID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to count API keys: %w", err)
@@ -109,7 +109,7 @@ func (r *APIKeyRepository) CountByUserID(ctx context.Context, userID string) (in
 }
 
 // Update updates an existing API key using sqlc.
-func (r *APIKeyRepository) Update(ctx context.Context, apiKey *domain.APIKey) error {
+func (r *APIKeyRepositoryImpl) Update(ctx context.Context, apiKey *domain.APIKey) error {
 	scopes := make([]string, len(apiKey.Scopes))
 	for i, s := range apiKey.Scopes {
 		scopes[i] = string(s)
@@ -132,7 +132,7 @@ func (r *APIKeyRepository) Update(ctx context.Context, apiKey *domain.APIKey) er
 }
 
 // UpdateLastUsed updates the last_used_at timestamp using sqlc.
-func (r *APIKeyRepository) UpdateLastUsed(ctx context.Context, id string) error {
+func (r *APIKeyRepositoryImpl) UpdateLastUsed(ctx context.Context, id string) error {
 	err := r.queries.UpdateApiKeyLastUsed(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to update API key last used: %w", err)
@@ -141,7 +141,7 @@ func (r *APIKeyRepository) UpdateLastUsed(ctx context.Context, id string) error 
 }
 
 // Revoke deactivates an API key using sqlc.
-func (r *APIKeyRepository) Revoke(ctx context.Context, id string) (*domain.APIKey, error) {
+func (r *APIKeyRepositoryImpl) Revoke(ctx context.Context, id string) (*domain.APIKey, error) {
 	row, err := r.queries.RevokeApiKey(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to revoke API key: %w", err)
@@ -150,7 +150,7 @@ func (r *APIKeyRepository) Revoke(ctx context.Context, id string) (*domain.APIKe
 }
 
 // Delete removes an API key using sqlc.
-func (r *APIKeyRepository) Delete(ctx context.Context, id string) error {
+func (r *APIKeyRepositoryImpl) Delete(ctx context.Context, id string) error {
 	err := r.queries.DeleteApiKey(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete API key: %w", err)
@@ -159,7 +159,7 @@ func (r *APIKeyRepository) Delete(ctx context.Context, id string) error {
 }
 
 // CountActiveByUserID counts active API keys for a user using sqlc.
-func (r *APIKeyRepository) CountActiveByUserID(ctx context.Context, userID string) (int64, error) {
+func (r *APIKeyRepositoryImpl) CountActiveByUserID(ctx context.Context, userID string) (int64, error) {
 	count, err := r.queries.CountActiveApiKeysByUserID(ctx, userID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to count active API keys: %w", err)

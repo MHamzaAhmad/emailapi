@@ -13,7 +13,8 @@ gen: proto gen-sqlc
 proto:
 	cd proto && buf dep update && buf generate
 	cd proto && buf generate --template buf.gen.yaml
-	cd proto && buf generate --template buf.gen.openapi.yaml	
+	cd proto && buf generate --template buf.gen.openapi.yaml
+	cd proto && buf generate --template buf.gen.sdk.yaml
 
 gen-sqlc:
 	cd tools && sqlc generate
@@ -21,7 +22,7 @@ gen-sqlc:
 # Database migrations (Goose)
 # Postgres
 migrate-pg-up:
-	goose -dir db/postgres/migrations postgres "$(DATABASE_URL)" up
+	goose -dir db/postgres/migrations postgres "$(DATABASE_URL)" up -allow-missing
 
 migrate-pg-down:
 	goose -dir db/postgres/migrations postgres "$(DATABASE_URL)" down
@@ -35,10 +36,10 @@ migrate-pg-create:
 
 # Tinybird
 tinybird-push:
-	cd tinybird && tb push
+	cd db/tinybird && tb push
 
 tinybird-test:
-	cd tinybird && tb pipe data list_activity --user_id "test" --limit 10
+	cd db/tinybird && tb pipe data list_activity --user_id "test" --limit 10
 
 # River
 migrate-river:

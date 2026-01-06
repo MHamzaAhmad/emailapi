@@ -14,37 +14,37 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/email.proto.
  */
 export const file_v1_email: GenFile = /*@__PURE__*/
-  fileDesc("Cg52MS9lbWFpbC5wcm90bxICdjEi6AIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSNAoIbWV0YWRhdGEYCCADKAsyIi52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIjCgthdHRhY2htZW50cxgKIAMoCzIOLnYxLkF0dGFjaG1lbnQSEwoLaW5fcmVwbHlfdG8YCyABKAkSEgoKcmVmZXJlbmNlcxgMIAMoCRINCgVhc3luYxgNIAEoCBovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiZwoKQXR0YWNobWVudBIQCghmaWxlbmFtZRgBIAEoCRIUCgxjb250ZW50X3R5cGUYAiABKAkSDQoDdXJsGAMgASgJSAASGAoOYmFzZTY0X2NvbnRlbnQYBCABKAlIAEIICgZzb3VyY2UibAoRU2VuZEVtYWlsUmVzcG9uc2USCgoCaWQYASABKAkSHwoGc3RhdHVzGAIgASgOMg8udjEuRW1haWxTdGF0dXMSEgoKbWVzc2FnZV9pZBgDIAEoCRIWCg5zdGF0dXNfbWVzc2FnZRgEIAEoCSJdChNTdHJlYW1FdmVudHNSZXF1ZXN0Eg4KBmN1cnNvchgBIAEoCRIiCgtldmVudF90eXBlcxgCIAMoDjINLnYxLkV2ZW50VHlwZRISCgpiYXRjaF9zaXplGAMgASgFKpEBCgtFbWFpbFN0YXR1cxIcChhFTUFJTF9TVEFUVVNfVU5TUEVDSUZJRUQQABIXChNFTUFJTF9TVEFUVVNfUVVFVUVEEAESGwoXRU1BSUxfU1RBVFVTX1BST0NFU1NJTkcQAhIVChFFTUFJTF9TVEFUVVNfU0VOVBADEhcKE0VNQUlMX1NUQVRVU19GQUlMRUQQBDKCAQoMRW1haWxTZXJ2aWNlEjoKCVNlbmRFbWFpbBIULnYxLlNlbmRFbWFpbFJlcXVlc3QaFS52MS5TZW5kRW1haWxSZXNwb25zZSIAEjYKDFN0cmVhbUV2ZW50cxIXLnYxLlN0cmVhbUV2ZW50c1JlcXVlc3QaCS52MS5FdmVudCIAMAFCIFoeZ2l0aHViLmNvbS9lbWFpbGFwaS9hcGkvZ2VuL3YxYgZwcm90bzM", [file_google_protobuf_timestamp, file_v1_events]);
+  fileDesc("Cg52MS9lbWFpbC5wcm90bxICdjEi6AIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSNAoIbWV0YWRhdGEYCCADKAsyIi52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIjCgthdHRhY2htZW50cxgKIAMoCzIOLnYxLkF0dGFjaG1lbnQSEwoLaW5fcmVwbHlfdG8YCyABKAkSEgoKcmVmZXJlbmNlcxgMIAMoCRINCgVhc3luYxgNIAEoCBovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiZwoKQXR0YWNobWVudBIQCghmaWxlbmFtZRgBIAEoCRIUCgxjb250ZW50X3R5cGUYAiABKAkSDQoDdXJsGAMgASgJSAASGAoOYmFzZTY0X2NvbnRlbnQYBCABKAlIAEIICgZzb3VyY2UibAoRU2VuZEVtYWlsUmVzcG9uc2USCgoCaWQYASABKAkSHwoGc3RhdHVzGAIgASgOMg8udjEuRW1haWxTdGF0dXMSEgoKbWVzc2FnZV9pZBgDIAEoCRIWCg5zdGF0dXNfbWVzc2FnZRgEIAEoCSJNChNTdHJlYW1FdmVudHNSZXF1ZXN0EiIKC2V2ZW50X3R5cGVzGAEgAygOMg0udjEuRXZlbnRUeXBlEhIKCmJhdGNoX3NpemUYAiABKAUiJQoQQWNrRXZlbnRzUmVxdWVzdBIRCglldmVudF9pZHMYASADKAkiKAoRQWNrRXZlbnRzUmVzcG9uc2USEwoLYWNrZWRfY291bnQYASABKAUqkQEKC0VtYWlsU3RhdHVzEhwKGEVNQUlMX1NUQVRVU19VTlNQRUNJRklFRBAAEhcKE0VNQUlMX1NUQVRVU19RVUVVRUQQARIbChdFTUFJTF9TVEFUVVNfUFJPQ0VTU0lORxACEhUKEUVNQUlMX1NUQVRVU19TRU5UEAMSFwoTRU1BSUxfU1RBVFVTX0ZBSUxFRBAEMr4BCgxFbWFpbFNlcnZpY2USOgoJU2VuZEVtYWlsEhQudjEuU2VuZEVtYWlsUmVxdWVzdBoVLnYxLlNlbmRFbWFpbFJlc3BvbnNlIgASNgoMU3RyZWFtRXZlbnRzEhcudjEuU3RyZWFtRXZlbnRzUmVxdWVzdBoJLnYxLkV2ZW50IgAwARI6CglBY2tFdmVudHMSFC52MS5BY2tFdmVudHNSZXF1ZXN0GhUudjEuQWNrRXZlbnRzUmVzcG9uc2UiAEIgWh5naXRodWIuY29tL2VtYWlsYXBpL2FwaS9nZW4vdjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_v1_events]);
 
 /**
- * SendEmailRequest is the payload for sending an email.
+ * Request to send an email.
  *
  * @generated from message v1.SendEmailRequest
  */
 export type SendEmailRequest = Message<"v1.SendEmailRequest"> & {
   /**
-   * Sender email address (must be from a verified domain).
+   * Verified sender email address (e.g., "notifications@yourdomain.com").
    *
    * @generated from field: string from = 1;
    */
   from: string;
 
   /**
-   * List of primary recipient email addresses.
+   * Primary recipients.
    *
    * @generated from field: repeated string to = 2;
    */
   to: string[];
 
   /**
-   * List of CC recipient email addresses.
+   * Carbon copy recipients.
    *
    * @generated from field: repeated string cc = 3;
    */
   cc: string[];
 
   /**
-   * List of BCC recipient email addresses.
+   * Blind carbon copy recipients.
    *
    * @generated from field: repeated string bcc = 4;
    */
@@ -58,61 +58,58 @@ export type SendEmailRequest = Message<"v1.SendEmailRequest"> & {
   subject: string;
 
   /**
-   * Plain text content of the email.
+   * Plain text content. Always recommended for better deliverability.
    *
    * @generated from field: string body = 6;
    */
   body: string;
 
   /**
-   * HTML content of the email.
+   * HTML content.
    *
    * @generated from field: string html = 7;
    */
   html: string;
 
   /**
-   * Custom key-value metadata (returned in webhooks).
+   * Custom metadata to track this email. These values are returned in webhooks and events.
    *
    * @generated from field: map<string, string> metadata = 8;
    */
   metadata: { [key: string]: string };
 
   /**
-   * Optional timestamp to schedule the email for future delivery (UTC).
-   * If set, the email will be sent at this time instead of immediately.
-   * Uses UTC timezone - clients should convert local time to UTC before sending.
+   * Schedule this email for a future time (UTC).
    *
    * @generated from field: google.protobuf.Timestamp scheduled_at = 9;
    */
   scheduledAt?: Timestamp;
 
   /**
-   * List of attachments.
+   * File attachments.
    *
    * @generated from field: repeated v1.Attachment attachments = 10;
    */
   attachments: Attachment[];
 
   /**
-   * Message-ID of the email being replied to (for threading).
+   * Message-ID of the email to reply to. Setting this automatically handles
+   * threading headers (In-Reply-To, References).
    *
    * @generated from field: string in_reply_to = 11;
    */
   inReplyTo: string;
 
   /**
-   * Full list of message IDs in the thread (for proper threading).
-   * Should include in_reply_to and all previous message IDs.
+   * Explicit threading references. Usually not needed if `in_reply_to` is set.
    *
    * @generated from field: repeated string references = 12;
    */
   references: string[];
 
   /**
-   * If true, queue for async processing (we handle retries).
-   * If false, send synchronously and return message_id immediately.
-   * Note: Emails with attachments are always processed async.
+   * Set to `true` to return immediately and send the email in the background.
+   * Recommended for bulk sending or when attachments are large.
    *
    * @generated from field: bool async = 13;
    */
@@ -127,33 +124,33 @@ export const SendEmailRequestSchema: GenMessage<SendEmailRequest> = /*@__PURE__*
   messageDesc(file_v1_email, 0);
 
 /**
- * Attachment represents a file to be attached to the email.
+ * A file attachment.
  *
  * @generated from message v1.Attachment
  */
 export type Attachment = Message<"v1.Attachment"> & {
   /**
-   * Filename of the attachment.
+   * Name of the file (e.g., "invoice.pdf").
    *
    * @generated from field: string filename = 1;
    */
   filename: string;
 
   /**
-   * MIME type of the attachment (e.g., application/pdf).
+   * MIME type (e.g., "application/pdf").
    *
    * @generated from field: string content_type = 2;
    */
   contentType: string;
 
   /**
-   * Content source - either a URL to download from or base64-encoded content.
+   * The content of the file.
    *
    * @generated from oneof v1.Attachment.source
    */
   source: {
     /**
-     * URL to download the attachment from.
+     * Publicly accessible URL to download the file from.
      *
      * @generated from field: string url = 3;
      */
@@ -161,7 +158,7 @@ export type Attachment = Message<"v1.Attachment"> & {
     case: "url";
   } | {
     /**
-     * Base64-encoded content of the attachment.
+     * Base64-encoded file content.
      *
      * @generated from field: string base64_content = 4;
      */
@@ -178,34 +175,34 @@ export const AttachmentSchema: GenMessage<Attachment> = /*@__PURE__*/
   messageDesc(file_v1_email, 1);
 
 /**
- * SendEmailResponse contains the result of a send request.
+ * Response after sending an email.
  *
  * @generated from message v1.SendEmailResponse
  */
 export type SendEmailResponse = Message<"v1.SendEmailResponse"> & {
   /**
-   * Unique identifier for tracking this email.
+   * Unique system ID for this email. Use this to track events.
    *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
-   * Current status of the email.
+   * Current status.
    *
    * @generated from field: v1.EmailStatus status = 2;
    */
   status: EmailStatus;
 
   /**
-   * SES Message-ID (only present if sync send succeeded).
+   * Upstream Message-ID (if available immediately).
    *
    * @generated from field: string message_id = 3;
    */
   messageId: string;
 
   /**
-   * Human-readable status message.
+   * Human-readable description of the status.
    *
    * @generated from field: string status_message = 4;
    */
@@ -220,31 +217,23 @@ export const SendEmailResponseSchema: GenMessage<SendEmailResponse> = /*@__PURE_
   messageDesc(file_v1_email, 2);
 
 /**
- * StreamEventsRequest is the request for streaming events.
+ * Request to stream events.
+ * Server uses API key from auth context to track acknowledgment state.
  *
  * @generated from message v1.StreamEventsRequest
  */
 export type StreamEventsRequest = Message<"v1.StreamEventsRequest"> & {
   /**
-   * Cursor position to start from (event ID).
-   * Empty string means start from latest events.
-   * Use "0" to start from the beginning of the stream.
+   * Filter by specific event types.
    *
-   * @generated from field: string cursor = 1;
-   */
-  cursor: string;
-
-  /**
-   * Optional: Filter by event types.
-   *
-   * @generated from field: repeated v1.EventType event_types = 2;
+   * @generated from field: repeated v1.EventType event_types = 1;
    */
   eventTypes: EventType[];
 
   /**
-   * Number of events to batch (1-100, default: 10).
+   * Internal batch size hints.
    *
-   * @generated from field: int32 batch_size = 3;
+   * @generated from field: int32 batch_size = 2;
    */
   batchSize: number;
 };
@@ -257,7 +246,49 @@ export const StreamEventsRequestSchema: GenMessage<StreamEventsRequest> = /*@__P
   messageDesc(file_v1_email, 3);
 
 /**
- * EmailStatus represents the current processing status.
+ * Request to acknowledge events as processed.
+ *
+ * @generated from message v1.AckEventsRequest
+ */
+export type AckEventsRequest = Message<"v1.AckEventsRequest"> & {
+  /**
+   * Event IDs to acknowledge as processed.
+   *
+   * @generated from field: repeated string event_ids = 1;
+   */
+  eventIds: string[];
+};
+
+/**
+ * Describes the message v1.AckEventsRequest.
+ * Use `create(AckEventsRequestSchema)` to create a new message.
+ */
+export const AckEventsRequestSchema: GenMessage<AckEventsRequest> = /*@__PURE__*/
+  messageDesc(file_v1_email, 4);
+
+/**
+ * Response after acknowledging events.
+ *
+ * @generated from message v1.AckEventsResponse
+ */
+export type AckEventsResponse = Message<"v1.AckEventsResponse"> & {
+  /**
+   * Number of events successfully acknowledged.
+   *
+   * @generated from field: int32 acked_count = 1;
+   */
+  ackedCount: number;
+};
+
+/**
+ * Describes the message v1.AckEventsResponse.
+ * Use `create(AckEventsResponseSchema)` to create a new message.
+ */
+export const AckEventsResponseSchema: GenMessage<AckEventsResponse> = /*@__PURE__*/
+  messageDesc(file_v1_email, 5);
+
+/**
+ * Represents the current status of an email delivery.
  *
  * @generated from enum v1.EmailStatus
  */
@@ -268,21 +299,29 @@ export enum EmailStatus {
   UNSPECIFIED = 0,
 
   /**
+   * The email is queued for background processing.
+   *
    * @generated from enum value: EMAIL_STATUS_QUEUED = 1;
    */
   QUEUED = 1,
 
   /**
+   * The email is currently being processed.
+   *
    * @generated from enum value: EMAIL_STATUS_PROCESSING = 2;
    */
   PROCESSING = 2,
 
   /**
+   * The email was successfully sent to the upstream provider.
+   *
    * @generated from enum value: EMAIL_STATUS_SENT = 3;
    */
   SENT = 3,
 
   /**
+   * The email failed to send.
+   *
    * @generated from enum value: EMAIL_STATUS_FAILED = 4;
    */
   FAILED = 4,
@@ -295,20 +334,14 @@ export const EmailStatusSchema: GenEnum<EmailStatus> = /*@__PURE__*/
   enumDesc(file_v1_email, 0);
 
 /**
- * EmailService handles email sending operations.
- * This is a stateless, compliance-first API - no email content is stored.
+ * EmailService is the core service for sending emails and listening to events.
+ * It provides a simple, stateless API designed for developer happiness.
  *
  * @generated from service v1.EmailService
  */
 export const EmailService: GenService<{
   /**
-   * SendEmail sends an email immediately or queues it for async processing.
-   *
-   * Behavior:
-   * - async=false + no attachments: Send synchronously, return message_id
-   * - async=true OR has attachments: Queue for processing with retries
-   *
-   * Delivery status is sent to your webhook endpoint.
+   * Send an email.
    *
    * @generated from rpc v1.EmailService.SendEmail
    */
@@ -318,9 +351,9 @@ export const EmailService: GenService<{
     output: typeof SendEmailResponseSchema;
   },
   /**
-   * StreamEvents streams email events to the client in real-time.
-   * Alternative to webhooks for consuming events.
-   * Use cursor to resume from a specific position.
+   * Stream real-time email events.
+   * Uses Redis Consumer Groups with API key as consumer ID.
+   * Unacknowledged events are automatically replayed on reconnect.
    *
    * @generated from rpc v1.EmailService.StreamEvents
    */
@@ -328,6 +361,17 @@ export const EmailService: GenService<{
     methodKind: "server_streaming";
     input: typeof StreamEventsRequestSchema;
     output: typeof EventSchema;
+  },
+  /**
+   * Acknowledge events as processed.
+   * Call this after successfully processing events to prevent replay.
+   *
+   * @generated from rpc v1.EmailService.AckEvents
+   */
+  ackEvents: {
+    methodKind: "unary";
+    input: typeof AckEventsRequestSchema;
+    output: typeof AckEventsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_v1_email, 0);

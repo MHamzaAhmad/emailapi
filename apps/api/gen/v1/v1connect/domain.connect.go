@@ -50,19 +50,15 @@ const (
 
 // DomainServiceClient is a client for the v1.DomainService service.
 type DomainServiceClient interface {
-	// Register a new domain for sending.
-	// Returns the DNS records you need to add to your DNS provider (e.g. Cloudflare, GoDaddy).
+	// Register a new domain.
 	AddDomain(context.Context, *connect.Request[v1.AddDomainRequest]) (*connect.Response[v1.AddDomainResponse], error)
-	// Get details for a specific domain, including current DNS status.
-	// We automatically refresh the status if it's stale (>5 minutes old).
+	// Get domain details and DNS status.
 	GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.GetDomainResponse], error)
-	// List all your domains.
+	// List all domains.
 	ListDomains(context.Context, *connect.Request[v1.ListDomainsRequest]) (*connect.Response[v1.ListDomainsResponse], error)
-	// Remove a domain. You won't be able to send from it anymore.
+	// Remove a domain.
 	DeleteDomain(context.Context, *connect.Request[v1.DeleteDomainRequest]) (*connect.Response[v1.DeleteDomainResponse], error)
-	// Trigger an immediate check of DNS records.
-	// Useful if you just updated your DNS and don't want to wait for the auto-refresh.
-	// Rate limited to once every 30 seconds.
+	// Trigger DNS verification.
 	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error)
 }
 
@@ -146,19 +142,15 @@ func (c *domainServiceClient) VerifyDomain(ctx context.Context, req *connect.Req
 
 // DomainServiceHandler is an implementation of the v1.DomainService service.
 type DomainServiceHandler interface {
-	// Register a new domain for sending.
-	// Returns the DNS records you need to add to your DNS provider (e.g. Cloudflare, GoDaddy).
+	// Register a new domain.
 	AddDomain(context.Context, *connect.Request[v1.AddDomainRequest]) (*connect.Response[v1.AddDomainResponse], error)
-	// Get details for a specific domain, including current DNS status.
-	// We automatically refresh the status if it's stale (>5 minutes old).
+	// Get domain details and DNS status.
 	GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.GetDomainResponse], error)
-	// List all your domains.
+	// List all domains.
 	ListDomains(context.Context, *connect.Request[v1.ListDomainsRequest]) (*connect.Response[v1.ListDomainsResponse], error)
-	// Remove a domain. You won't be able to send from it anymore.
+	// Remove a domain.
 	DeleteDomain(context.Context, *connect.Request[v1.DeleteDomainRequest]) (*connect.Response[v1.DeleteDomainResponse], error)
-	// Trigger an immediate check of DNS records.
-	// Useful if you just updated your DNS and don't want to wait for the auto-refresh.
-	// Rate limited to once every 30 seconds.
+	// Trigger DNS verification.
 	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error)
 }
 

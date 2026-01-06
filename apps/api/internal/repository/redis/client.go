@@ -94,6 +94,39 @@ func (c *Client) XTrimMaxLenApprox(ctx context.Context, stream string, maxLen in
 	return c.rdb.XTrimMaxLenApprox(ctx, stream, maxLen, 0).Err()
 }
 
+// =============================================================================
+// Redis Consumer Groups (for at-least-once delivery)
+// =============================================================================
+
+// XGroupCreateMkStream creates a consumer group, creating the stream if needed.
+// Uses MKSTREAM option to create stream if it doesn't exist.
+// Returns nil if group already exists (ignores BUSYGROUP error).
+func (c *Client) XGroupCreateMkStream(ctx context.Context, stream, group, start string) error {
+	err := c.rdb.XGroupCreateMkStream(ctx, stream, group, start).Err()
+	if err != nil && err.Error() == "BUSYGROUP Consumer Group name already exists" {
+		return nil // Group already exists, that's fine
+	}
+	return err
+}
+
+// XReadGroup reads entries from a stream using consumer groups.
+// Returns pending entries first (if id is "0"), then new entries (if id is ">").
+// block=0 means no blocking; use a duration to block for new entries.
+func (c *Client) XReadGroup(ctx context.Context, group, consumer, stream, id string, count int64, block time.Duration) ([]redis.XStream, error) {
+	return c.rdb.XReadGroup(ctx, &redis.XReadGroupArgs{
+		Group:    group,
+		Consumer: consumer,
+		Streams:  []string{stream, id},
+		Count:    count,
+		Block:    block,
+	}).Result()
+}
+
+// XAck acknowledges messages as processed, removing them from the pending list.
+func (c *Client) XAck(ctx context.Context, stream, group string, ids ...string) (int64, error) {
+	return c.rdb.XAck(ctx, stream, group, ids...).Result()
+}
+
 // Underlying returns the raw redis client for advanced operations.
 func (c *Client) Underlying() *redis.Client {
 	return c.rdb

@@ -29,6 +29,9 @@ type Factory struct {
 	mu      sync.RWMutex
 }
 
+// Ensure Factory implements FactoryInterface
+var _ FactoryInterface = (*Factory)(nil)
+
 // NewFactory creates a new S3 factory with AWS credentials.
 func NewFactory(ctx context.Context, region, accessKeyID, secretAccessKey string) (*Factory, error) {
 	var cfg aws.Config

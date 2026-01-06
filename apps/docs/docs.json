@@ -57,7 +57,8 @@
                             "sending/typescript-sdk",
                             "sending/connect-rpc",
                             "sending/curl",
-                            "sending/grpc"
+                            "sending/grpc",
+                            "sending/unsubscribe"
                         ]
                     },
                     {

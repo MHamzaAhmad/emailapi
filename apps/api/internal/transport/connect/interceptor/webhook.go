@@ -24,8 +24,8 @@ func NewWebhookInterceptor(cfg WebhookConfig) connect.UnaryInterceptorFunc {
 				return next(ctx, req)
 			}
 
-			// Skip webhook secret check for Clerk webhook (uses Svix signature)
-			if strings.Contains(procedure, "HandleClerkWebhook") {
+			// Skip webhook secret check for Clerk (uses Svix) and Polar (uses Standard Webhooks)
+			if strings.Contains(procedure, "HandleClerkWebhook") || strings.Contains(procedure, "HandlePolarWebhook") {
 				return next(ctx, req)
 			}
 

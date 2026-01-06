@@ -88,6 +88,17 @@ export const queryKeys = {
         all: ['activity'] as const,
         list: (params?: any) => [...queryKeys.activity.all, 'list', params] as const,
     },
+
+    // Admin keys
+    admin: {
+        all: ['admin'] as const,
+        users: (params?: any) => [...queryKeys.admin.all, 'users', params] as const,
+        flaggedUsers: (params?: any) => [...queryKeys.admin.all, 'flagged', params] as const,
+        userDetails: (id: string) => [...queryKeys.admin.all, 'user', id] as const,
+    },
+
+    // Suspension status
+    suspensionStatus: ['suspensionStatus'] as const,
 } as const;
 
 export default getQueryClient;

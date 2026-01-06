@@ -88,3 +88,42 @@ func (h *InternalHandler) HandleClerkWebhook(
 		Message: message,
 	}), nil
 }
+
+// HandlePolarWebhook processes Polar subscription webhooks.
+func (h *InternalHandler) HandlePolarWebhook(
+	ctx context.Context,
+	req *connect.Request[v1.PolarWebhookRequest],
+) (*connect.Response[v1.PolarWebhookResponse], error) {
+	// Import the interceptor package to access GetRawBody
+	// Get the raw body from context (captured by middleware before Connect unmarshaling)
+	rawBody := interceptor.GetRawBody(ctx)
+	if rawBody == nil {
+		log.Error().Msg("HandlePolarWebhook: No raw body in context - middleware not working?")
+		return connect.NewResponse(&v1.PolarWebhookResponse{
+			Success: false,
+			Message: "Internal error: raw body not captured",
+		}), nil
+	}
+
+	// Collect headers
+	headers := http.Header{}
+	for k, values := range req.Header() {
+		for _, v := range values {
+			headers.Add(k, v)
+		}
+	}
+
+	// Call service with RAW body
+	success, message, err := h.svc.HandlePolarWebhook(ctx, rawBody, headers)
+	if err != nil {
+		return connect.NewResponse(&v1.PolarWebhookResponse{
+			Success: false,
+			Message: err.Error(),
+		}), nil
+	}
+
+	return connect.NewResponse(&v1.PolarWebhookResponse{
+		Success: success,
+		Message: message,
+	}), nil
+}

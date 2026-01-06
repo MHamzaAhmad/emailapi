@@ -5,8 +5,54 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
+
+	"github.com/emailapi/api/internal/domain"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type UserRole string
+
+const (
+	UserRoleMember UserRole = "member"
+	UserRoleAdmin  UserRole = "admin"
+)
+
+func (e *UserRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = UserRole(s)
+	case string:
+		*e = UserRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for UserRole: %T", src)
+	}
+	return nil
+}
+
+type NullUserRole struct {
+	UserRole UserRole `json:"user_role"`
+	Valid    bool     `json:"valid"` // Valid is true if UserRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullUserRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.UserRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.UserRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullUserRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.UserRole), nil
+}
 
 type ApiKey struct {
 	ID         string             `json:"id"`
@@ -38,6 +84,19 @@ type Domain struct {
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
+type ReputationIncident struct {
+	ID                    string             `json:"id"`
+	UserID                string             `json:"user_id"`
+	IncidentType          string             `json:"incident_type"`
+	MessageID             string             `json:"message_id"`
+	RecipientEmailHash    string             `json:"recipient_email_hash"`
+	BounceType            pgtype.Text        `json:"bounce_type"`
+	BounceSubtype         pgtype.Text        `json:"bounce_subtype"`
+	ComplaintFeedbackType pgtype.Text        `json:"complaint_feedback_type"`
+	DiagnosticCode        pgtype.Text        `json:"diagnostic_code"`
+	CreatedAt             pgtype.Timestamptz `json:"created_at"`
+}
+
 type SuppressionList struct {
 	EmailHash       string             `json:"email_hash"`
 	UserID          pgtype.Text        `json:"user_id"`
@@ -48,13 +107,44 @@ type SuppressionList struct {
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 }
 
+type UnsubscribeList struct {
+	ID            string             `json:"id"`
+	UserID        string             `json:"user_id"`
+	EmailHash     string             `json:"email_hash"`
+	SourceEmailID pgtype.Text        `json:"source_email_id"`
+	Source        string             `json:"source"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
 type User struct {
-	ID         string             `json:"id"`
-	Email      string             `json:"email"`
-	Name       string             `json:"name"`
-	Role       string             `json:"role"`
-	IsActive   bool               `json:"is_active"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
-	ExternalID pgtype.Text        `json:"external_id"`
+	ID              string             `json:"id"`
+	Email           string             `json:"email"`
+	Name            string             `json:"name"`
+	Role            domain.UserRole    `json:"role"`
+	IsActive        bool               `json:"is_active"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	ExternalID      pgtype.Text        `json:"external_id"`
+	PolarCustomerID pgtype.Text        `json:"polar_customer_id"`
+}
+
+type UserReputation struct {
+	ID               string             `json:"id"`
+	UserID           string             `json:"user_id"`
+	TotalBounces     int32              `json:"total_bounces"`
+	HardBounces      int32              `json:"hard_bounces"`
+	SoftBounces      int32              `json:"soft_bounces"`
+	Complaints       int32              `json:"complaints"`
+	Bounces30d       int32              `json:"bounces_30d"`
+	Complaints30d    int32              `json:"complaints_30d"`
+	SuspensionScore  pgtype.Numeric     `json:"suspension_score"`
+	IsFlagged        bool               `json:"is_flagged"`
+	FlaggedAt        pgtype.Timestamptz `json:"flagged_at"`
+	FlaggedReason    pgtype.Text        `json:"flagged_reason"`
+	IsSuspended      bool               `json:"is_suspended"`
+	SuspendedAt      pgtype.Timestamptz `json:"suspended_at"`
+	SuspendedBy      pgtype.Text        `json:"suspended_by"`
+	SuspensionReason pgtype.Text        `json:"suspension_reason"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }

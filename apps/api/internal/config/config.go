@@ -73,6 +73,24 @@ type Config struct {
 	// Web Risk Configuration (for URL safety validation)
 	WebRiskAPIKey    string `envconfig:"WEB_RISK_API_KEY"`
 	WebRiskProjectID string `envconfig:"WEB_RISK_PROJECT_ID"`
+
+	// Unsubscribe Configuration
+	UnsubscribeBaseURL     string `envconfig:"UNSUBSCRIBE_BASE_URL" default:"https://api.simpleemailapi.dev"`
+	UnsubscribeTokenSecret string `envconfig:"UNSUBSCRIBE_TOKEN_SECRET" default:"dev-unsubscribe-secret-change-in-production"`
+
+	// SQS Configuration (for receiving SES events)
+	SQSEventQueueURL string `envconfig:"SQS_EVENT_QUEUE_URL" default:""`
+
+	// Polar Configuration (for payments)
+	PolarAccessToken      string `envconfig:"POLAR_ACCESS_TOKEN"`
+	PolarMeterName        string `envconfig:"POLAR_METER_NAME" default:"emails"` // Meter event name for usage tracking
+	PolarFreeProductID    string `envconfig:"POLAR_FREE_PRODUCT_ID"`             // Product ID for Free plan
+	PolarStarterProductID string `envconfig:"POLAR_STARTER_PRODUCT_ID"`          // Product ID for Starter plan
+	PolarGrowthProductID  string `envconfig:"POLAR_GROWTH_PRODUCT_ID"`           // Product ID for Growth plan
+	PolarWebhookSecret    string `envconfig:"POLAR_WEBHOOK_SECRET"`              // Secret for verifying Polar webhooks
+
+	// Usage limit checking
+	UsageLimitEnabled bool `envconfig:"USAGE_LIMIT_ENABLED" default:"true"`
 }
 
 // Load reads configuration from environment variables.

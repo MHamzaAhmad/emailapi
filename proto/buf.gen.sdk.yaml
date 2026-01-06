@@ -1,0 +1,13 @@
+version: v2
+
+plugins:
+  # TypeScript protobuf messages for SDK (Connect v2)
+  - remote: buf.build/bufbuild/es:v2.2.3
+    out: ../packages/sdk-ts/src/gen
+    opt:
+      - target=ts
+      - import_extension=none
+    include_imports: true
+
+inputs:
+  - directory: public

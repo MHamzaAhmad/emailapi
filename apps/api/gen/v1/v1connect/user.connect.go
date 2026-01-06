@@ -42,6 +42,9 @@ const (
 	UserServiceUpdateUserProcedure = "/v1.UserService/UpdateUser"
 	// UserServiceListUsersProcedure is the fully-qualified name of the UserService's ListUsers RPC.
 	UserServiceListUsersProcedure = "/v1.UserService/ListUsers"
+	// UserServiceGetSuspensionStatusProcedure is the fully-qualified name of the UserService's
+	// GetSuspensionStatus RPC.
+	UserServiceGetSuspensionStatusProcedure = "/v1.UserService/GetSuspensionStatus"
 )
 
 // UserServiceClient is a client for the v1.UserService service.
@@ -54,6 +57,8 @@ type UserServiceClient interface {
 	UpdateUser(context.Context, *connect.Request[v1.UpdateUserRequest]) (*connect.Response[v1.User], error)
 	// ListUsers lists all users.
 	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
+	// GetSuspensionStatus returns the current user's suspension status for FE banner.
+	GetSuspensionStatus(context.Context, *connect.Request[v1.GetSuspensionStatusRequest]) (*connect.Response[v1.SuspensionStatus], error)
 }
 
 // NewUserServiceClient constructs a client for the v1.UserService service. By default, it uses the
@@ -91,15 +96,22 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(userServiceMethods.ByName("ListUsers")),
 			connect.WithClientOptions(opts...),
 		),
+		getSuspensionStatus: connect.NewClient[v1.GetSuspensionStatusRequest, v1.SuspensionStatus](
+			httpClient,
+			baseURL+UserServiceGetSuspensionStatusProcedure,
+			connect.WithSchema(userServiceMethods.ByName("GetSuspensionStatus")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	createUser     *connect.Client[v1.CreateUserRequest, v1.CreateUserResponse]
-	getCurrentUser *connect.Client[v1.GetCurrentUserRequest, v1.User]
-	updateUser     *connect.Client[v1.UpdateUserRequest, v1.User]
-	listUsers      *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
+	createUser          *connect.Client[v1.CreateUserRequest, v1.CreateUserResponse]
+	getCurrentUser      *connect.Client[v1.GetCurrentUserRequest, v1.User]
+	updateUser          *connect.Client[v1.UpdateUserRequest, v1.User]
+	listUsers           *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
+	getSuspensionStatus *connect.Client[v1.GetSuspensionStatusRequest, v1.SuspensionStatus]
 }
 
 // CreateUser calls v1.UserService.CreateUser.
@@ -122,6 +134,11 @@ func (c *userServiceClient) ListUsers(ctx context.Context, req *connect.Request[
 	return c.listUsers.CallUnary(ctx, req)
 }
 
+// GetSuspensionStatus calls v1.UserService.GetSuspensionStatus.
+func (c *userServiceClient) GetSuspensionStatus(ctx context.Context, req *connect.Request[v1.GetSuspensionStatusRequest]) (*connect.Response[v1.SuspensionStatus], error) {
+	return c.getSuspensionStatus.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the v1.UserService service.
 type UserServiceHandler interface {
 	// CreateUser creates a new user.
@@ -132,6 +149,8 @@ type UserServiceHandler interface {
 	UpdateUser(context.Context, *connect.Request[v1.UpdateUserRequest]) (*connect.Response[v1.User], error)
 	// ListUsers lists all users.
 	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
+	// GetSuspensionStatus returns the current user's suspension status for FE banner.
+	GetSuspensionStatus(context.Context, *connect.Request[v1.GetSuspensionStatusRequest]) (*connect.Response[v1.SuspensionStatus], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -165,6 +184,12 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceMethods.ByName("ListUsers")),
 		connect.WithHandlerOptions(opts...),
 	)
+	userServiceGetSuspensionStatusHandler := connect.NewUnaryHandler(
+		UserServiceGetSuspensionStatusProcedure,
+		svc.GetSuspensionStatus,
+		connect.WithSchema(userServiceMethods.ByName("GetSuspensionStatus")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case UserServiceCreateUserProcedure:
@@ -175,6 +200,8 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 			userServiceUpdateUserHandler.ServeHTTP(w, r)
 		case UserServiceListUsersProcedure:
 			userServiceListUsersHandler.ServeHTTP(w, r)
+		case UserServiceGetSuspensionStatusProcedure:
+			userServiceGetSuspensionStatusHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -198,4 +225,8 @@ func (UnimplementedUserServiceHandler) UpdateUser(context.Context, *connect.Requ
 
 func (UnimplementedUserServiceHandler) ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.UserService.ListUsers is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) GetSuspensionStatus(context.Context, *connect.Request[v1.GetSuspensionStatusRequest]) (*connect.Response[v1.SuspensionStatus], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.UserService.GetSuspensionStatus is not implemented"))
 }

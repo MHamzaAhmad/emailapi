@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/emailapi/api/internal/db"
-	"github.com/emailapi/api/internal/repository"
 )
 
 // Store implements the service.Store interface using PostgreSQL.
@@ -17,9 +16,11 @@ type Store struct {
 	pool    *pgxpool.Pool
 	queries *db.Queries
 
-	user   *UserRepository
-	apiKey *APIKeyRepository
-	domain *DomainRepository
+	user        *UserRepositoryImpl
+	apiKey      *APIKeyRepositoryImpl
+	domain      *DomainRepositoryImpl
+	reputation  *ReputationRepositoryImpl
+	unsubscribe *UnsubscribeRepositoryImpl
 }
 
 // StoreConfig holds configuration for the PostgreSQL store.
@@ -60,6 +61,8 @@ func NewStore(cfg StoreConfig) (*Store, error) {
 	store.user = NewUserRepository(pool)
 	store.apiKey = NewAPIKeyRepository(pool)
 	store.domain = NewDomainRepository(store.queries)
+	store.reputation = NewReputationRepository(pool)
+	store.unsubscribe = NewUnsubscribeRepository(pool)
 
 	return store, nil
 }
@@ -70,18 +73,23 @@ func (s *Store) Close() {
 }
 
 // Users returns the user repository.
-func (s *Store) Users() repository.UserRepository {
+func (s *Store) Users() UserRepository {
 	return s.user
 }
 
 // APIKeys returns the API key repository.
-func (s *Store) APIKeys() repository.APIKeyRepository {
+func (s *Store) APIKeys() APIKeyRepository {
 	return s.apiKey
 }
 
 // Domains returns the domain repository.
-func (s *Store) Domains() repository.DomainRepository {
+func (s *Store) Domains() DomainRepository {
 	return s.domain
+}
+
+// Reputation returns the reputation repository.
+func (s *Store) Reputation() ReputationRepository {
+	return s.reputation
 }
 
 // Pool returns the underlying connection pool for use by other repositories.
@@ -92,4 +100,9 @@ func (s *Store) Pool() *pgxpool.Pool {
 // Queries returns the sqlc generated queries.
 func (s *Store) Queries() *db.Queries {
 	return s.queries
+}
+
+// Unsubscribe returns the unsubscribe repository.
+func (s *Store) Unsubscribe() UnsubscribeRepository {
+	return s.unsubscribe
 }

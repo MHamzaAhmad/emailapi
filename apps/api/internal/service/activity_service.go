@@ -8,13 +8,13 @@ import (
 
 // ActivityService handles activity log business logic.
 type ActivityService struct {
-	activityRepo tbrepo.ActivityRepositoryInterface
+	analytics Analytics
 }
 
 // NewActivityService creates a new ActivityService.
-func NewActivityService(activityRepo tbrepo.ActivityRepositoryInterface) *ActivityService {
+func NewActivityService(analytics Analytics) *ActivityService {
 	return &ActivityService{
-		activityRepo: activityRepo,
+		analytics: analytics,
 	}
 }
 
@@ -51,5 +51,9 @@ func (s *ActivityService) List(ctx context.Context, userID string, filters ListF
 		repoFilters.EndTime = filters.EndTime
 	}
 
-	return s.activityRepo.List(ctx, userID, repoFilters, limit, offset)
+	if s.analytics == nil {
+		return nil, 0, nil
+	}
+
+	return s.analytics.Activity().List(ctx, userID, repoFilters, limit, offset)
 }
