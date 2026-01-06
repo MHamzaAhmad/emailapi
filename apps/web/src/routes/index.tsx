@@ -322,6 +322,8 @@ func main() {
             <span className="text-border/40">|</span>
             <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
             <span className="text-border/40">|</span>
+            <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
+            <span className="text-border/40">|</span>
             <p>&copy; {new Date().getFullYear()} SimpleEmailAPI</p>
           </div>
 
