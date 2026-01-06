@@ -29,7 +29,7 @@ export function Shell({ children }: ShellProps) {
     const routerState = useRouterState()
     const currentPath = routerState.location.pathname
     const { data: subscription } = useCurrentSubscription()
-    const hasActivePlan = subscription?.plan && subscription.plan !== 'free'
+    const hasActivePlan = subscription?.planId && subscription.planId !== 'free'
 
     return (
         <div className="min-h-screen bg-background flex flex-col font-sans">

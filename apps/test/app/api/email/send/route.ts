@@ -5,6 +5,7 @@ export async function POST(request: NextRequest) {
     try {
         const client = createClient({
             apiKey: process.env.SIMPLE_EMAIL_API_KEY!,
+            baseUrl: "http://localhost:8080"
         })
 
         const body = await request.json() as SendEmailRequest

@@ -271,6 +271,7 @@ func main() {
 		SuppressionRepo:        suppressionRepo,
 		EventConsumer:          eventConsumer,
 		ClerkWebhookSecret:     cfg.ClerkWebhookSecret,
+		PolarWebhookSecret:     cfg.PolarWebhookSecret,
 		APIKeyHMACSecret:       cfg.APIKeyHMACSecret,
 		RedisClient:            redisClient,
 		WebRiskClient:          webRiskClient,
