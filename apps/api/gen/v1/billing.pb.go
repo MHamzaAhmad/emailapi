@@ -175,102 +175,6 @@ func (x *Plan) GetFeatures() []*Feature {
 	return nil
 }
 
-type SyncSubscriptionRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SyncSubscriptionRequest) Reset() {
-	*x = SyncSubscriptionRequest{}
-	mi := &file_v1_billing_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SyncSubscriptionRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SyncSubscriptionRequest) ProtoMessage() {}
-
-func (x *SyncSubscriptionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_billing_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SyncSubscriptionRequest.ProtoReflect.Descriptor instead.
-func (*SyncSubscriptionRequest) Descriptor() ([]byte, []int) {
-	return file_v1_billing_proto_rawDescGZIP(), []int{2}
-}
-
-type SyncSubscriptionResponse struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	UserId          string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Plan            string                 `protobuf:"bytes,2,opt,name=plan,proto3" json:"plan,omitempty"`
-	PolarCustomerId string                 `protobuf:"bytes,3,opt,name=polar_customer_id,json=polarCustomerId,proto3" json:"polar_customer_id,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *SyncSubscriptionResponse) Reset() {
-	*x = SyncSubscriptionResponse{}
-	mi := &file_v1_billing_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SyncSubscriptionResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SyncSubscriptionResponse) ProtoMessage() {}
-
-func (x *SyncSubscriptionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_billing_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SyncSubscriptionResponse.ProtoReflect.Descriptor instead.
-func (*SyncSubscriptionResponse) Descriptor() ([]byte, []int) {
-	return file_v1_billing_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *SyncSubscriptionResponse) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *SyncSubscriptionResponse) GetPlan() string {
-	if x != nil {
-		return x.Plan
-	}
-	return ""
-}
-
-func (x *SyncSubscriptionResponse) GetPolarCustomerId() string {
-	if x != nil {
-		return x.PolarCustomerId
-	}
-	return ""
-}
-
 type GetPlansRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -279,7 +183,7 @@ type GetPlansRequest struct {
 
 func (x *GetPlansRequest) Reset() {
 	*x = GetPlansRequest{}
-	mi := &file_v1_billing_proto_msgTypes[4]
+	mi := &file_v1_billing_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -291,7 +195,7 @@ func (x *GetPlansRequest) String() string {
 func (*GetPlansRequest) ProtoMessage() {}
 
 func (x *GetPlansRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_billing_proto_msgTypes[4]
+	mi := &file_v1_billing_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -304,7 +208,7 @@ func (x *GetPlansRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlansRequest.ProtoReflect.Descriptor instead.
 func (*GetPlansRequest) Descriptor() ([]byte, []int) {
-	return file_v1_billing_proto_rawDescGZIP(), []int{4}
+	return file_v1_billing_proto_rawDescGZIP(), []int{2}
 }
 
 type GetPlansResponse struct {
@@ -316,7 +220,7 @@ type GetPlansResponse struct {
 
 func (x *GetPlansResponse) Reset() {
 	*x = GetPlansResponse{}
-	mi := &file_v1_billing_proto_msgTypes[5]
+	mi := &file_v1_billing_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -328,7 +232,7 @@ func (x *GetPlansResponse) String() string {
 func (*GetPlansResponse) ProtoMessage() {}
 
 func (x *GetPlansResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_billing_proto_msgTypes[5]
+	mi := &file_v1_billing_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -341,7 +245,7 @@ func (x *GetPlansResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPlansResponse.ProtoReflect.Descriptor instead.
 func (*GetPlansResponse) Descriptor() ([]byte, []int) {
-	return file_v1_billing_proto_rawDescGZIP(), []int{5}
+	return file_v1_billing_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetPlansResponse) GetPlans() []*Plan {
@@ -361,7 +265,7 @@ type CreateCheckoutSessionRequest struct {
 
 func (x *CreateCheckoutSessionRequest) Reset() {
 	*x = CreateCheckoutSessionRequest{}
-	mi := &file_v1_billing_proto_msgTypes[6]
+	mi := &file_v1_billing_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -373,7 +277,7 @@ func (x *CreateCheckoutSessionRequest) String() string {
 func (*CreateCheckoutSessionRequest) ProtoMessage() {}
 
 func (x *CreateCheckoutSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_billing_proto_msgTypes[6]
+	mi := &file_v1_billing_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -386,7 +290,7 @@ func (x *CreateCheckoutSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCheckoutSessionRequest.ProtoReflect.Descriptor instead.
 func (*CreateCheckoutSessionRequest) Descriptor() ([]byte, []int) {
-	return file_v1_billing_proto_rawDescGZIP(), []int{6}
+	return file_v1_billing_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateCheckoutSessionRequest) GetPlanId() string {
@@ -412,7 +316,7 @@ type CreateCheckoutSessionResponse struct {
 
 func (x *CreateCheckoutSessionResponse) Reset() {
 	*x = CreateCheckoutSessionResponse{}
-	mi := &file_v1_billing_proto_msgTypes[7]
+	mi := &file_v1_billing_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -424,7 +328,7 @@ func (x *CreateCheckoutSessionResponse) String() string {
 func (*CreateCheckoutSessionResponse) ProtoMessage() {}
 
 func (x *CreateCheckoutSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_billing_proto_msgTypes[7]
+	mi := &file_v1_billing_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -437,7 +341,7 @@ func (x *CreateCheckoutSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCheckoutSessionResponse.ProtoReflect.Descriptor instead.
 func (*CreateCheckoutSessionResponse) Descriptor() ([]byte, []int) {
-	return file_v1_billing_proto_rawDescGZIP(), []int{7}
+	return file_v1_billing_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CreateCheckoutSessionResponse) GetCheckoutUrl() string {
@@ -455,7 +359,7 @@ type GetCustomerPortalUrlRequest struct {
 
 func (x *GetCustomerPortalUrlRequest) Reset() {
 	*x = GetCustomerPortalUrlRequest{}
-	mi := &file_v1_billing_proto_msgTypes[8]
+	mi := &file_v1_billing_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -467,7 +371,7 @@ func (x *GetCustomerPortalUrlRequest) String() string {
 func (*GetCustomerPortalUrlRequest) ProtoMessage() {}
 
 func (x *GetCustomerPortalUrlRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_billing_proto_msgTypes[8]
+	mi := &file_v1_billing_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -480,7 +384,7 @@ func (x *GetCustomerPortalUrlRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCustomerPortalUrlRequest.ProtoReflect.Descriptor instead.
 func (*GetCustomerPortalUrlRequest) Descriptor() ([]byte, []int) {
-	return file_v1_billing_proto_rawDescGZIP(), []int{8}
+	return file_v1_billing_proto_rawDescGZIP(), []int{6}
 }
 
 type GetCustomerPortalUrlResponse struct {
@@ -492,7 +396,7 @@ type GetCustomerPortalUrlResponse struct {
 
 func (x *GetCustomerPortalUrlResponse) Reset() {
 	*x = GetCustomerPortalUrlResponse{}
-	mi := &file_v1_billing_proto_msgTypes[9]
+	mi := &file_v1_billing_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -504,7 +408,7 @@ func (x *GetCustomerPortalUrlResponse) String() string {
 func (*GetCustomerPortalUrlResponse) ProtoMessage() {}
 
 func (x *GetCustomerPortalUrlResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_v1_billing_proto_msgTypes[9]
+	mi := &file_v1_billing_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -517,12 +421,124 @@ func (x *GetCustomerPortalUrlResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCustomerPortalUrlResponse.ProtoReflect.Descriptor instead.
 func (*GetCustomerPortalUrlResponse) Descriptor() ([]byte, []int) {
-	return file_v1_billing_proto_rawDescGZIP(), []int{9}
+	return file_v1_billing_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetCustomerPortalUrlResponse) GetPortalUrl() string {
 	if x != nil {
 		return x.PortalUrl
+	}
+	return ""
+}
+
+type GetSubscriptionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSubscriptionRequest) Reset() {
+	*x = GetSubscriptionRequest{}
+	mi := &file_v1_billing_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSubscriptionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSubscriptionRequest) ProtoMessage() {}
+
+func (x *GetSubscriptionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_billing_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSubscriptionRequest.ProtoReflect.Descriptor instead.
+func (*GetSubscriptionRequest) Descriptor() ([]byte, []int) {
+	return file_v1_billing_proto_rawDescGZIP(), []int{8}
+}
+
+type GetSubscriptionResponse struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	HasSubscription bool                   `protobuf:"varint,1,opt,name=has_subscription,json=hasSubscription,proto3" json:"has_subscription,omitempty"`
+	IsPaid          bool                   `protobuf:"varint,2,opt,name=is_paid,json=isPaid,proto3" json:"is_paid,omitempty"`
+	PlanId          string                 `protobuf:"bytes,3,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	SubscriptionId  string                 `protobuf:"bytes,4,opt,name=subscription_id,json=subscriptionId,proto3" json:"subscription_id,omitempty"`
+	PolarCustomerId string                 `protobuf:"bytes,5,opt,name=polar_customer_id,json=polarCustomerId,proto3" json:"polar_customer_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *GetSubscriptionResponse) Reset() {
+	*x = GetSubscriptionResponse{}
+	mi := &file_v1_billing_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSubscriptionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSubscriptionResponse) ProtoMessage() {}
+
+func (x *GetSubscriptionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_billing_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSubscriptionResponse.ProtoReflect.Descriptor instead.
+func (*GetSubscriptionResponse) Descriptor() ([]byte, []int) {
+	return file_v1_billing_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetSubscriptionResponse) GetHasSubscription() bool {
+	if x != nil {
+		return x.HasSubscription
+	}
+	return false
+}
+
+func (x *GetSubscriptionResponse) GetIsPaid() bool {
+	if x != nil {
+		return x.IsPaid
+	}
+	return false
+}
+
+func (x *GetSubscriptionResponse) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+func (x *GetSubscriptionResponse) GetSubscriptionId() string {
+	if x != nil {
+		return x.SubscriptionId
+	}
+	return ""
+}
+
+func (x *GetSubscriptionResponse) GetPolarCustomerId() string {
+	if x != nil {
+		return x.PolarCustomerId
 	}
 	return ""
 }
@@ -545,12 +561,7 @@ const file_v1_billing_proto_rawDesc = "" +
 	"\vprice_cents\x18\x06 \x01(\x03R\n" +
 	"priceCents\x12.\n" +
 	"\x13overage_price_cents\x18\a \x01(\x03R\x11overagePriceCents\x12'\n" +
-	"\bfeatures\x18\b \x03(\v2\v.v1.FeatureR\bfeatures\"\x19\n" +
-	"\x17SyncSubscriptionRequest\"s\n" +
-	"\x18SyncSubscriptionResponse\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04plan\x18\x02 \x01(\tR\x04plan\x12*\n" +
-	"\x11polar_customer_id\x18\x03 \x01(\tR\x0fpolarCustomerId\"\x11\n" +
+	"\bfeatures\x18\b \x03(\v2\v.v1.FeatureR\bfeatures\"\x11\n" +
 	"\x0fGetPlansRequest\"2\n" +
 	"\x10GetPlansResponse\x12\x1e\n" +
 	"\x05plans\x18\x01 \x03(\v2\b.v1.PlanR\x05plans\"X\n" +
@@ -563,12 +574,19 @@ const file_v1_billing_proto_rawDesc = "" +
 	"\x1bGetCustomerPortalUrlRequest\"=\n" +
 	"\x1cGetCustomerPortalUrlResponse\x12\x1d\n" +
 	"\n" +
-	"portal_url\x18\x01 \x01(\tR\tportalUrl2\xd7\x02\n" +
-	"\x0eBillingService\x12O\n" +
-	"\x10SyncSubscription\x12\x1b.v1.SyncSubscriptionRequest\x1a\x1c.v1.SyncSubscriptionResponse\"\x00\x127\n" +
+	"portal_url\x18\x01 \x01(\tR\tportalUrl\"\x18\n" +
+	"\x16GetSubscriptionRequest\"\xcb\x01\n" +
+	"\x17GetSubscriptionResponse\x12)\n" +
+	"\x10has_subscription\x18\x01 \x01(\bR\x0fhasSubscription\x12\x17\n" +
+	"\ais_paid\x18\x02 \x01(\bR\x06isPaid\x12\x17\n" +
+	"\aplan_id\x18\x03 \x01(\tR\x06planId\x12'\n" +
+	"\x0fsubscription_id\x18\x04 \x01(\tR\x0esubscriptionId\x12*\n" +
+	"\x11polar_customer_id\x18\x05 \x01(\tR\x0fpolarCustomerId2\xd4\x02\n" +
+	"\x0eBillingService\x127\n" +
 	"\bGetPlans\x12\x13.v1.GetPlansRequest\x1a\x14.v1.GetPlansResponse\"\x00\x12^\n" +
 	"\x15CreateCheckoutSession\x12 .v1.CreateCheckoutSessionRequest\x1a!.v1.CreateCheckoutSessionResponse\"\x00\x12[\n" +
-	"\x14GetCustomerPortalUrl\x12\x1f.v1.GetCustomerPortalUrlRequest\x1a .v1.GetCustomerPortalUrlResponse\"\x00B^\n" +
+	"\x14GetCustomerPortalUrl\x12\x1f.v1.GetCustomerPortalUrlRequest\x1a .v1.GetCustomerPortalUrlResponse\"\x00\x12L\n" +
+	"\x0fGetSubscription\x12\x1a.v1.GetSubscriptionRequest\x1a\x1b.v1.GetSubscriptionResponse\"\x00B^\n" +
 	"\x06com.v1B\fBillingProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (
@@ -587,26 +605,26 @@ var file_v1_billing_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_v1_billing_proto_goTypes = []any{
 	(*Feature)(nil),                       // 0: v1.Feature
 	(*Plan)(nil),                          // 1: v1.Plan
-	(*SyncSubscriptionRequest)(nil),       // 2: v1.SyncSubscriptionRequest
-	(*SyncSubscriptionResponse)(nil),      // 3: v1.SyncSubscriptionResponse
-	(*GetPlansRequest)(nil),               // 4: v1.GetPlansRequest
-	(*GetPlansResponse)(nil),              // 5: v1.GetPlansResponse
-	(*CreateCheckoutSessionRequest)(nil),  // 6: v1.CreateCheckoutSessionRequest
-	(*CreateCheckoutSessionResponse)(nil), // 7: v1.CreateCheckoutSessionResponse
-	(*GetCustomerPortalUrlRequest)(nil),   // 8: v1.GetCustomerPortalUrlRequest
-	(*GetCustomerPortalUrlResponse)(nil),  // 9: v1.GetCustomerPortalUrlResponse
+	(*GetPlansRequest)(nil),               // 2: v1.GetPlansRequest
+	(*GetPlansResponse)(nil),              // 3: v1.GetPlansResponse
+	(*CreateCheckoutSessionRequest)(nil),  // 4: v1.CreateCheckoutSessionRequest
+	(*CreateCheckoutSessionResponse)(nil), // 5: v1.CreateCheckoutSessionResponse
+	(*GetCustomerPortalUrlRequest)(nil),   // 6: v1.GetCustomerPortalUrlRequest
+	(*GetCustomerPortalUrlResponse)(nil),  // 7: v1.GetCustomerPortalUrlResponse
+	(*GetSubscriptionRequest)(nil),        // 8: v1.GetSubscriptionRequest
+	(*GetSubscriptionResponse)(nil),       // 9: v1.GetSubscriptionResponse
 }
 var file_v1_billing_proto_depIdxs = []int32{
 	0, // 0: v1.Plan.features:type_name -> v1.Feature
 	1, // 1: v1.GetPlansResponse.plans:type_name -> v1.Plan
-	2, // 2: v1.BillingService.SyncSubscription:input_type -> v1.SyncSubscriptionRequest
-	4, // 3: v1.BillingService.GetPlans:input_type -> v1.GetPlansRequest
-	6, // 4: v1.BillingService.CreateCheckoutSession:input_type -> v1.CreateCheckoutSessionRequest
-	8, // 5: v1.BillingService.GetCustomerPortalUrl:input_type -> v1.GetCustomerPortalUrlRequest
-	3, // 6: v1.BillingService.SyncSubscription:output_type -> v1.SyncSubscriptionResponse
-	5, // 7: v1.BillingService.GetPlans:output_type -> v1.GetPlansResponse
-	7, // 8: v1.BillingService.CreateCheckoutSession:output_type -> v1.CreateCheckoutSessionResponse
-	9, // 9: v1.BillingService.GetCustomerPortalUrl:output_type -> v1.GetCustomerPortalUrlResponse
+	2, // 2: v1.BillingService.GetPlans:input_type -> v1.GetPlansRequest
+	4, // 3: v1.BillingService.CreateCheckoutSession:input_type -> v1.CreateCheckoutSessionRequest
+	6, // 4: v1.BillingService.GetCustomerPortalUrl:input_type -> v1.GetCustomerPortalUrlRequest
+	8, // 5: v1.BillingService.GetSubscription:input_type -> v1.GetSubscriptionRequest
+	3, // 6: v1.BillingService.GetPlans:output_type -> v1.GetPlansResponse
+	5, // 7: v1.BillingService.CreateCheckoutSession:output_type -> v1.CreateCheckoutSessionResponse
+	7, // 8: v1.BillingService.GetCustomerPortalUrl:output_type -> v1.GetCustomerPortalUrlResponse
+	9, // 9: v1.BillingService.GetSubscription:output_type -> v1.GetSubscriptionResponse
 	6, // [6:10] is the sub-list for method output_type
 	2, // [2:6] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name

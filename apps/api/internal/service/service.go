@@ -66,6 +66,8 @@ type ServiceDeps struct {
 	EventConsumer eventstream.Consumer
 	// Clerk configuration
 	ClerkWebhookSecret string
+	// Polar Webhook Secret
+	PolarWebhookSecret string
 	// API Key Configuration
 	APIKeyHMACSecret string
 	// Web Risk client for URL safety validation
@@ -123,10 +125,21 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	}
 
 	svc.Email = NewEmailService(deps.RiverClient, deps.Analytics, emailValidator, deps.SESClient, deps.WebhookSender, deps.EventConsumer, svc.Reputation, unsubscribeSvc)
+	// Initialize Billing service
+	var creditCache rediscache.CreditCacheInterface
+	var usageCache rediscache.UsageCacheInterface
+	if deps.Cache != nil {
+		creditCache = deps.Cache.Credit()
+		usageCache = deps.Cache.Usage()
+	}
+	svc.Billing = NewBillingService(deps.PolarClient, creditCache, usageCache, deps.Store)
+
 	svc.Internal = NewInternalService(InternalServiceConfig{
 		UserService:        svc.User,
+		BillingService:     svc.Billing,
 		Store:              deps.Store,
 		ClerkWebhookSecret: deps.ClerkWebhookSecret,
+		PolarWebhookSecret: deps.PolarWebhookSecret,
 		PolarClient:        deps.PolarClient,
 		FreeProductID:      deps.PolarFreeProductID,
 	})
@@ -175,11 +188,6 @@ func NewWithDeps(deps ServiceDeps) *Service {
 	domain.InitProductMappings(deps.PolarStarterProductID, deps.PolarGrowthProductID)
 
 	// Initialize Billing service
-	var creditCache rediscache.CreditCacheInterface
-	if deps.Cache != nil {
-		creditCache = deps.Cache.Credit()
-	}
-	svc.Billing = NewBillingService(deps.PolarClient, creditCache, deps.Store)
 
 	return svc
 }

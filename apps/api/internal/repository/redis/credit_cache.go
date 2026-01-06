@@ -33,6 +33,22 @@ type CreditCacheInterface interface {
 
 	// Invalidate removes all cached data for user.
 	Invalidate(ctx context.Context, userID string) error
+
+	// GetSubscription returns cached subscription info.
+	GetSubscription(ctx context.Context, userID string) (*CachedSubscription, error)
+
+	// SetSubscription caches subscription info.
+	SetSubscription(ctx context.Context, userID string, sub *CachedSubscription) error
+}
+
+// CachedSubscription represents cached subscription details (lighter than full state).
+type CachedSubscription struct {
+	HasSubscription bool   `json:"has_subscription"`
+	IsPaid          bool   `json:"is_paid"`
+	PlanID          string `json:"plan_id"`
+	ProductID       string `json:"product_id"`
+	SubscriptionID  string `json:"subscription_id"`
+	PolarCustomerID string `json:"polar_customer_id"`
 }
 
 // CachedCustomerState represents cached Polar customer state.
@@ -67,6 +83,11 @@ func (c *CreditCache) consumedKey(userID string) string {
 // dailyLimitKey returns Redis key for daily limit: daily:limit:{userID}:{YYYYMMDD}
 func (c *CreditCache) dailyLimitKey(userID string) string {
 	return fmt.Sprintf("daily:limit:%s:%s", userID, time.Now().UTC().Format("20060102"))
+}
+
+// subscriptionKey returns Redis key for subscription info: polar:subscription:{userID}
+func (c *CreditCache) subscriptionKey(userID string) string {
+	return fmt.Sprintf("polar:subscription:%s", userID)
 }
 
 // GetState returns cached customer state (nil if cache miss).
@@ -131,6 +152,7 @@ func (c *CreditCache) Invalidate(ctx context.Context, userID string) error {
 	pipe.Del(ctx, c.stateKey(userID))
 	pipe.Del(ctx, c.consumedKey(userID))
 	pipe.Del(ctx, c.dailyLimitKey(userID))
+	pipe.Del(ctx, c.subscriptionKey(userID))
 	_, err := pipe.Exec(ctx)
 	return err
 }
@@ -152,6 +174,31 @@ func (c *CreditCache) IncrDailyUsage(ctx context.Context, userID string, count i
 	pipe.Expire(ctx, key, 48*time.Hour)
 	_, err := pipe.Exec(ctx)
 	return err
+}
+
+// GetSubscription returns cached subscription info.
+func (c *CreditCache) GetSubscription(ctx context.Context, userID string) (*CachedSubscription, error) {
+	data, err := c.client.rdb.Get(ctx, c.subscriptionKey(userID)).Bytes()
+	if err == redis.Nil {
+		return nil, nil // Cache miss
+	}
+	if err != nil {
+		return nil, err
+	}
+	var sub CachedSubscription
+	if err := json.Unmarshal(data, &sub); err != nil {
+		return nil, err
+	}
+	return &sub, nil
+}
+
+// SetSubscription caches subscription info with 5 minute TTL.
+func (c *CreditCache) SetSubscription(ctx context.Context, userID string, sub *CachedSubscription) error {
+	data, err := json.Marshal(sub)
+	if err != nil {
+		return err
+	}
+	return c.client.rdb.Set(ctx, c.subscriptionKey(userID), data, 5*time.Minute).Err()
 }
 
 // Ensure concrete type implements interface

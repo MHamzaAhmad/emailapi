@@ -10,8 +10,10 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/emailapi/api/internal/domain"
+	"github.com/emailapi/api/internal/external/polar"
 	polarMocks "github.com/emailapi/api/internal/external/polar/mocks"
 	repoMocks "github.com/emailapi/api/internal/repository/postgres/mocks"
+	redisrepo "github.com/emailapi/api/internal/repository/redis"
 	redisMocks "github.com/emailapi/api/internal/repository/redis/mocks"
 	serviceMocks "github.com/emailapi/api/internal/service/mocks"
 )
@@ -25,7 +27,7 @@ func TestBillingService_GetPlans(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	svc := NewBillingService(nil, nil, nil)
+	svc := NewBillingService(nil, nil, nil, nil)
 
 	plans := svc.GetPlans()
 
@@ -41,7 +43,7 @@ func TestBillingService_GetPlans(t *testing.T) {
 	assert.Equal(t, int64(-1), plans[1].DailyLimit)
 }
 
-func TestBillingService_SyncSubscription(t *testing.T) {
+func TestBillingService_HandlePolarWebhook(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -49,50 +51,31 @@ func TestBillingService_SyncSubscription(t *testing.T) {
 	mockUserRepo := repoMocks.NewMockUserRepository(ctrl)
 	mockPolar := polarMocks.NewMockClient(ctrl)
 	mockCreditCache := redisMocks.NewMockCreditCacheInterface(ctrl)
+	mockUsageCache := redisMocks.NewMockUsageCacheInterface(ctrl)
 
 	mockStore.EXPECT().Users().Return(mockUserRepo).AnyTimes()
 
-	svc := NewBillingService(mockPolar, mockCreditCache, mockStore)
+	svc := NewBillingService(mockPolar, mockCreditCache, mockUsageCache, mockStore)
 	ctx := context.Background()
-	userID := "user_123"
-
-	t.Run("no polar client", func(t *testing.T) {
-		svcNoPolar := NewBillingService(nil, nil, mockStore)
-		user := &domain.User{ID: userID}
-		mockUserRepo.EXPECT().GetByID(ctx, userID).Return(user, nil)
-
-		result, err := svcNoPolar.SyncSubscription(ctx, userID)
-		require.NoError(t, err)
-		assert.Equal(t, userID, result.ID)
-	})
+	user := &domain.User{ID: "user_123"}
+	event := &PolarWebhookEvent{
+		Type:       "subscription.active",
+		CustomerID: "cus_polar_abc",
+	}
 
 	t.Run("user not found", func(t *testing.T) {
-		mockUserRepo.EXPECT().GetByID(ctx, userID).Return(nil, errors.New("not found"))
-
-		_, err := svc.SyncSubscription(ctx, userID)
+		mockUserRepo.EXPECT().GetByPolarCustomerID(ctx, event.CustomerID).Return(nil, errors.New("not found"))
+		err := svc.HandlePolarWebhook(ctx, event)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "user not found")
 	})
 
-	t.Run("no polar customer", func(t *testing.T) {
-		user := &domain.User{ID: userID}
-		mockUserRepo.EXPECT().GetByID(ctx, userID).Return(user, nil)
-		mockPolar.EXPECT().GetCustomerByExternalID(ctx, userID).Return(nil, errors.New("not found"))
+	t.Run("success invalidates caches", func(t *testing.T) {
+		mockUserRepo.EXPECT().GetByPolarCustomerID(ctx, event.CustomerID).Return(user, nil)
+		mockCreditCache.EXPECT().Invalidate(ctx, user.ID).Return(nil)
+		mockUsageCache.EXPECT().InvalidatePlanState(ctx, user.ID).Return(nil)
 
-		result, err := svc.SyncSubscription(ctx, userID)
+		err := svc.HandlePolarWebhook(ctx, event)
 		require.NoError(t, err)
-		assert.Equal(t, userID, result.ID)
-	})
-
-	t.Run("with polar customer invalidates cache", func(t *testing.T) {
-		polarCustomerID := "cus_polar_abc"
-		user := &domain.User{ID: userID, PolarCustomerID: &polarCustomerID}
-		mockUserRepo.EXPECT().GetByID(ctx, userID).Return(user, nil)
-		mockCreditCache.EXPECT().Invalidate(ctx, userID).Return(nil)
-
-		result, err := svc.SyncSubscription(ctx, userID)
-		require.NoError(t, err)
-		assert.Equal(t, userID, result.ID)
 	})
 }
 
@@ -103,13 +86,13 @@ func TestBillingService_CreateCheckoutSession(t *testing.T) {
 	mockStore := serviceMocks.NewMockStore(ctrl)
 	mockPolar := polarMocks.NewMockClient(ctrl)
 
-	svc := NewBillingService(mockPolar, nil, mockStore)
+	svc := NewBillingService(mockPolar, nil, nil, mockStore)
 	ctx := context.Background()
 	userID := "user_123"
 	successURL := "https://app.com/success"
 
 	t.Run("no polar client", func(t *testing.T) {
-		svcNoPolar := NewBillingService(nil, nil, nil)
+		svcNoPolar := NewBillingService(nil, nil, nil, nil)
 		_, err := svcNoPolar.CreateCheckoutSession(ctx, userID, "starter", successURL)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "polar not configured")
@@ -149,13 +132,13 @@ func TestBillingService_GetCustomerPortalUrl(t *testing.T) {
 
 	mockStore.EXPECT().Users().Return(mockUserRepo).AnyTimes()
 
-	svc := NewBillingService(mockPolar, nil, mockStore)
+	svc := NewBillingService(mockPolar, nil, nil, mockStore)
 	ctx := context.Background()
 	userID := "user_123"
 	polarCustomerID := "cus_polar_abc"
 
 	t.Run("no polar client", func(t *testing.T) {
-		svcNoPolar := NewBillingService(nil, nil, nil)
+		svcNoPolar := NewBillingService(nil, nil, nil, nil)
 		_, err := svcNoPolar.GetCustomerPortalUrl(ctx, userID)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "polar not configured")
@@ -184,6 +167,61 @@ func TestBillingService_GetCustomerPortalUrl(t *testing.T) {
 		result, err := svc.GetCustomerPortalUrl(ctx, userID)
 		require.NoError(t, err)
 		assert.Equal(t, portalURL, result)
+	})
+}
+
+func TestBillingService_GetSubscriptionInfo(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := serviceMocks.NewMockStore(ctrl)
+	mockUserRepo := repoMocks.NewMockUserRepository(ctrl)
+	mockPolar := polarMocks.NewMockClient(ctrl)
+	mockCreditCache := redisMocks.NewMockCreditCacheInterface(ctrl)
+
+	mockStore.EXPECT().Users().Return(mockUserRepo).AnyTimes()
+
+	svc := NewBillingService(mockPolar, mockCreditCache, nil, mockStore)
+	ctx := context.Background()
+	userID := "user_123"
+
+	t.Run("cache hit", func(t *testing.T) {
+		cached := &redisrepo.CachedSubscription{
+			HasSubscription: true,
+			IsPaid:          true,
+			PlanID:          "starter",
+			SubscriptionID:  "sub_123",
+		}
+		mockCreditCache.EXPECT().GetSubscription(ctx, userID).Return(cached, nil)
+
+		info, err := svc.GetSubscriptionInfo(ctx, userID)
+		require.NoError(t, err)
+		assert.True(t, info.HasSubscription)
+		assert.True(t, info.IsPaid)
+		assert.Equal(t, "starter", info.PlanID)
+		assert.Equal(t, "sub_123", info.SubscriptionID)
+	})
+
+	t.Run("cache miss", func(t *testing.T) {
+		mockCreditCache.EXPECT().GetSubscription(ctx, userID).Return(nil, nil)
+
+		user := &domain.User{ID: userID}
+		mockUserRepo.EXPECT().GetByID(ctx, userID).Return(user, nil)
+
+		prodID := "prod_starter"
+		mockPolar.EXPECT().GetActiveSubscriptionByExternalID(ctx, userID).Return(&polar.Subscription{
+			ID:          "sub_new",
+			ProductName: "Starter",
+			ProductID:   prodID,
+			Amount:      1250,
+		}, nil)
+
+		mockCreditCache.EXPECT().SetSubscription(ctx, userID, gomock.Any()).Return(nil)
+
+		info, err := svc.GetSubscriptionInfo(ctx, userID)
+		require.NoError(t, err)
+		assert.Equal(t, "sub_new", info.SubscriptionID)
+		assert.Equal(t, "starter", info.PlanID)
 	})
 }
 

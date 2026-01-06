@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/billing.proto.
  */
 export const file_v1_billing: GenFile = /*@__PURE__*/
-  fileDesc("ChB2MS9iaWxsaW5nLnByb3RvEgJ2MSIoCgdGZWF0dXJlEgwKBG5hbWUYASABKAkSDwoHdG9vbHRpcBgCIAEoCSKyAQoEUGxhbhIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhUKDW1vbnRobHlfbGltaXQYBCABKAMSEwoLZGFpbHlfbGltaXQYBSABKAMSEwoLcHJpY2VfY2VudHMYBiABKAMSGwoTb3ZlcmFnZV9wcmljZV9jZW50cxgHIAEoAxIdCghmZWF0dXJlcxgIIAMoCzILLnYxLkZlYXR1cmUiGQoXU3luY1N1YnNjcmlwdGlvblJlcXVlc3QiVAoYU3luY1N1YnNjcmlwdGlvblJlc3BvbnNlEg8KB3VzZXJfaWQYASABKAkSDAoEcGxhbhgCIAEoCRIZChFwb2xhcl9jdXN0b21lcl9pZBgDIAEoCSIRCg9HZXRQbGFuc1JlcXVlc3QiKwoQR2V0UGxhbnNSZXNwb25zZRIXCgVwbGFucxgBIAMoCzIILnYxLlBsYW4iRAocQ3JlYXRlQ2hlY2tvdXRTZXNzaW9uUmVxdWVzdBIPCgdwbGFuX2lkGAEgASgJEhMKC3N1Y2Nlc3NfdXJsGAIgASgJIjUKHUNyZWF0ZUNoZWNrb3V0U2Vzc2lvblJlc3BvbnNlEhQKDGNoZWNrb3V0X3VybBgBIAEoCSIdChtHZXRDdXN0b21lclBvcnRhbFVybFJlcXVlc3QiMgocR2V0Q3VzdG9tZXJQb3J0YWxVcmxSZXNwb25zZRISCgpwb3J0YWxfdXJsGAEgASgJMtcCCg5CaWxsaW5nU2VydmljZRJPChBTeW5jU3Vic2NyaXB0aW9uEhsudjEuU3luY1N1YnNjcmlwdGlvblJlcXVlc3QaHC52MS5TeW5jU3Vic2NyaXB0aW9uUmVzcG9uc2UiABI3CghHZXRQbGFucxITLnYxLkdldFBsYW5zUmVxdWVzdBoULnYxLkdldFBsYW5zUmVzcG9uc2UiABJeChVDcmVhdGVDaGVja291dFNlc3Npb24SIC52MS5DcmVhdGVDaGVja291dFNlc3Npb25SZXF1ZXN0GiEudjEuQ3JlYXRlQ2hlY2tvdXRTZXNzaW9uUmVzcG9uc2UiABJbChRHZXRDdXN0b21lclBvcnRhbFVybBIfLnYxLkdldEN1c3RvbWVyUG9ydGFsVXJsUmVxdWVzdBogLnYxLkdldEN1c3RvbWVyUG9ydGFsVXJsUmVzcG9uc2UiAEJeCgZjb20udjFCDEJpbGxpbmdQcm90b1ABWh5naXRodWIuY29tL2VtYWlsYXBpL2FwaS9nZW4vdjGiAgNWWFiqAgJWMcoCAlYx4gIOVjFcR1BCTWV0YWRhdGHqAgJWMWIGcHJvdG8z");
+  fileDesc("ChB2MS9iaWxsaW5nLnByb3RvEgJ2MSIoCgdGZWF0dXJlEgwKBG5hbWUYASABKAkSDwoHdG9vbHRpcBgCIAEoCSKyAQoEUGxhbhIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhUKDW1vbnRobHlfbGltaXQYBCABKAMSEwoLZGFpbHlfbGltaXQYBSABKAMSEwoLcHJpY2VfY2VudHMYBiABKAMSGwoTb3ZlcmFnZV9wcmljZV9jZW50cxgHIAEoAxIdCghmZWF0dXJlcxgIIAMoCzILLnYxLkZlYXR1cmUiEQoPR2V0UGxhbnNSZXF1ZXN0IisKEEdldFBsYW5zUmVzcG9uc2USFwoFcGxhbnMYASADKAsyCC52MS5QbGFuIkQKHENyZWF0ZUNoZWNrb3V0U2Vzc2lvblJlcXVlc3QSDwoHcGxhbl9pZBgBIAEoCRITCgtzdWNjZXNzX3VybBgCIAEoCSI1Ch1DcmVhdGVDaGVja291dFNlc3Npb25SZXNwb25zZRIUCgxjaGVja291dF91cmwYASABKAkiHQobR2V0Q3VzdG9tZXJQb3J0YWxVcmxSZXF1ZXN0IjIKHEdldEN1c3RvbWVyUG9ydGFsVXJsUmVzcG9uc2USEgoKcG9ydGFsX3VybBgBIAEoCSIYChZHZXRTdWJzY3JpcHRpb25SZXF1ZXN0IokBChdHZXRTdWJzY3JpcHRpb25SZXNwb25zZRIYChBoYXNfc3Vic2NyaXB0aW9uGAEgASgIEg8KB2lzX3BhaWQYAiABKAgSDwoHcGxhbl9pZBgDIAEoCRIXCg9zdWJzY3JpcHRpb25faWQYBCABKAkSGQoRcG9sYXJfY3VzdG9tZXJfaWQYBSABKAky1AIKDkJpbGxpbmdTZXJ2aWNlEjcKCEdldFBsYW5zEhMudjEuR2V0UGxhbnNSZXF1ZXN0GhQudjEuR2V0UGxhbnNSZXNwb25zZSIAEl4KFUNyZWF0ZUNoZWNrb3V0U2Vzc2lvbhIgLnYxLkNyZWF0ZUNoZWNrb3V0U2Vzc2lvblJlcXVlc3QaIS52MS5DcmVhdGVDaGVja291dFNlc3Npb25SZXNwb25zZSIAElsKFEdldEN1c3RvbWVyUG9ydGFsVXJsEh8udjEuR2V0Q3VzdG9tZXJQb3J0YWxVcmxSZXF1ZXN0GiAudjEuR2V0Q3VzdG9tZXJQb3J0YWxVcmxSZXNwb25zZSIAEkwKD0dldFN1YnNjcmlwdGlvbhIaLnYxLkdldFN1YnNjcmlwdGlvblJlcXVlc3QaGy52MS5HZXRTdWJzY3JpcHRpb25SZXNwb25zZSIAQl4KBmNvbS52MUIMQmlsbGluZ1Byb3RvUAFaHmdpdGh1Yi5jb20vZW1haWxhcGkvYXBpL2dlbi92MaICA1ZYWKoCAlYxygICVjHiAg5WMVxHUEJNZXRhZGF0YeoCAlYxYgZwcm90bzM");
 
 /**
  * Feature represents a plan feature with optional tooltip.
@@ -103,46 +103,6 @@ export const PlanSchema: GenMessage<Plan> = /*@__PURE__*/
   messageDesc(file_v1_billing, 1);
 
 /**
- * @generated from message v1.SyncSubscriptionRequest
- */
-export type SyncSubscriptionRequest = Message<"v1.SyncSubscriptionRequest"> & {
-};
-
-/**
- * Describes the message v1.SyncSubscriptionRequest.
- * Use `create(SyncSubscriptionRequestSchema)` to create a new message.
- */
-export const SyncSubscriptionRequestSchema: GenMessage<SyncSubscriptionRequest> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 2);
-
-/**
- * @generated from message v1.SyncSubscriptionResponse
- */
-export type SyncSubscriptionResponse = Message<"v1.SyncSubscriptionResponse"> & {
-  /**
-   * @generated from field: string user_id = 1;
-   */
-  userId: string;
-
-  /**
-   * @generated from field: string plan = 2;
-   */
-  plan: string;
-
-  /**
-   * @generated from field: string polar_customer_id = 3;
-   */
-  polarCustomerId: string;
-};
-
-/**
- * Describes the message v1.SyncSubscriptionResponse.
- * Use `create(SyncSubscriptionResponseSchema)` to create a new message.
- */
-export const SyncSubscriptionResponseSchema: GenMessage<SyncSubscriptionResponse> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 3);
-
-/**
  * @generated from message v1.GetPlansRequest
  */
 export type GetPlansRequest = Message<"v1.GetPlansRequest"> & {
@@ -153,7 +113,7 @@ export type GetPlansRequest = Message<"v1.GetPlansRequest"> & {
  * Use `create(GetPlansRequestSchema)` to create a new message.
  */
 export const GetPlansRequestSchema: GenMessage<GetPlansRequest> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 4);
+  messageDesc(file_v1_billing, 2);
 
 /**
  * @generated from message v1.GetPlansResponse
@@ -170,7 +130,7 @@ export type GetPlansResponse = Message<"v1.GetPlansResponse"> & {
  * Use `create(GetPlansResponseSchema)` to create a new message.
  */
 export const GetPlansResponseSchema: GenMessage<GetPlansResponse> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 5);
+  messageDesc(file_v1_billing, 3);
 
 /**
  * @generated from message v1.CreateCheckoutSessionRequest
@@ -192,7 +152,7 @@ export type CreateCheckoutSessionRequest = Message<"v1.CreateCheckoutSessionRequ
  * Use `create(CreateCheckoutSessionRequestSchema)` to create a new message.
  */
 export const CreateCheckoutSessionRequestSchema: GenMessage<CreateCheckoutSessionRequest> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 6);
+  messageDesc(file_v1_billing, 4);
 
 /**
  * @generated from message v1.CreateCheckoutSessionResponse
@@ -209,7 +169,7 @@ export type CreateCheckoutSessionResponse = Message<"v1.CreateCheckoutSessionRes
  * Use `create(CreateCheckoutSessionResponseSchema)` to create a new message.
  */
 export const CreateCheckoutSessionResponseSchema: GenMessage<CreateCheckoutSessionResponse> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 7);
+  messageDesc(file_v1_billing, 5);
 
 /**
  * @generated from message v1.GetCustomerPortalUrlRequest
@@ -222,7 +182,7 @@ export type GetCustomerPortalUrlRequest = Message<"v1.GetCustomerPortalUrlReques
  * Use `create(GetCustomerPortalUrlRequestSchema)` to create a new message.
  */
 export const GetCustomerPortalUrlRequestSchema: GenMessage<GetCustomerPortalUrlRequest> = /*@__PURE__*/
-  messageDesc(file_v1_billing, 8);
+  messageDesc(file_v1_billing, 6);
 
 /**
  * @generated from message v1.GetCustomerPortalUrlResponse
@@ -239,22 +199,62 @@ export type GetCustomerPortalUrlResponse = Message<"v1.GetCustomerPortalUrlRespo
  * Use `create(GetCustomerPortalUrlResponseSchema)` to create a new message.
  */
 export const GetCustomerPortalUrlResponseSchema: GenMessage<GetCustomerPortalUrlResponse> = /*@__PURE__*/
+  messageDesc(file_v1_billing, 7);
+
+/**
+ * @generated from message v1.GetSubscriptionRequest
+ */
+export type GetSubscriptionRequest = Message<"v1.GetSubscriptionRequest"> & {
+};
+
+/**
+ * Describes the message v1.GetSubscriptionRequest.
+ * Use `create(GetSubscriptionRequestSchema)` to create a new message.
+ */
+export const GetSubscriptionRequestSchema: GenMessage<GetSubscriptionRequest> = /*@__PURE__*/
+  messageDesc(file_v1_billing, 8);
+
+/**
+ * @generated from message v1.GetSubscriptionResponse
+ */
+export type GetSubscriptionResponse = Message<"v1.GetSubscriptionResponse"> & {
+  /**
+   * @generated from field: bool has_subscription = 1;
+   */
+  hasSubscription: boolean;
+
+  /**
+   * @generated from field: bool is_paid = 2;
+   */
+  isPaid: boolean;
+
+  /**
+   * @generated from field: string plan_id = 3;
+   */
+  planId: string;
+
+  /**
+   * @generated from field: string subscription_id = 4;
+   */
+  subscriptionId: string;
+
+  /**
+   * @generated from field: string polar_customer_id = 5;
+   */
+  polarCustomerId: string;
+};
+
+/**
+ * Describes the message v1.GetSubscriptionResponse.
+ * Use `create(GetSubscriptionResponseSchema)` to create a new message.
+ */
+export const GetSubscriptionResponseSchema: GenMessage<GetSubscriptionResponse> = /*@__PURE__*/
   messageDesc(file_v1_billing, 9);
 
 /**
  * @generated from service v1.BillingService
  */
 export const BillingService: GenService<{
-  /**
-   * SyncSubscription checks Polar for latest subscription and updates user.
-   *
-   * @generated from rpc v1.BillingService.SyncSubscription
-   */
-  syncSubscription: {
-    methodKind: "unary";
-    input: typeof SyncSubscriptionRequestSchema;
-    output: typeof SyncSubscriptionResponseSchema;
-  },
   /**
    * GetPlans returns available pricing plans.
    *
@@ -284,6 +284,16 @@ export const BillingService: GenService<{
     methodKind: "unary";
     input: typeof GetCustomerPortalUrlRequestSchema;
     output: typeof GetCustomerPortalUrlResponseSchema;
+  },
+  /**
+   * GetSubscription returns current subscription details.
+   *
+   * @generated from rpc v1.BillingService.GetSubscription
+   */
+  getSubscription: {
+    methodKind: "unary";
+    input: typeof GetSubscriptionRequestSchema;
+    output: typeof GetSubscriptionResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_v1_billing, 0);

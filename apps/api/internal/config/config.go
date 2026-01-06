@@ -87,6 +87,7 @@ type Config struct {
 	PolarFreeProductID    string `envconfig:"POLAR_FREE_PRODUCT_ID"`             // Product ID for Free plan
 	PolarStarterProductID string `envconfig:"POLAR_STARTER_PRODUCT_ID"`          // Product ID for Starter plan
 	PolarGrowthProductID  string `envconfig:"POLAR_GROWTH_PRODUCT_ID"`           // Product ID for Growth plan
+	PolarWebhookSecret    string `envconfig:"POLAR_WEBHOOK_SECRET"`              // Secret for verifying Polar webhooks
 
 	// Usage limit checking
 	UsageLimitEnabled bool `envconfig:"USAGE_LIMIT_ENABLED" default:"true"`

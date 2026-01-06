@@ -1,6 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { billingClient } from '@/lib/connect';
-import { queryKeys } from '@/lib/queryClient';
 
 /**
  * Hook to get available pricing plans
@@ -22,7 +21,7 @@ export const useCurrentSubscription = () => {
     return useQuery({
         queryKey: ['billing', 'subscription'],
         queryFn: async () => {
-            return billingClient().syncSubscription({});
+            return billingClient().getSubscription({});
         },
     });
 };
@@ -49,23 +48,7 @@ export const useGetCustomerPortalUrl = () => {
     });
 };
 
-/**
- * Hook to sync subscription after checkout redirect
- */
-export const useSyncSubscription = () => {
-    const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: async () => {
-            return billingClient().syncSubscription({});
-        },
-        onSuccess: () => {
-            // Invalidate subscription and user queries after sync
-            queryClient.invalidateQueries({ queryKey: ['billing', 'subscription'] });
-            queryClient.invalidateQueries({ queryKey: queryKeys.users.me() });
-        },
-    });
-};
 
 // Re-export Plan type for convenience
 export type { Plan } from '@/generated/v1/billing_pb';

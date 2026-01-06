@@ -32,6 +32,7 @@ func NewRawBodyInterceptor() connect.UnaryInterceptorFunc {
 
 			// Only capture raw body for webhook endpoints that need signature verification
 			needsRawBody := procedure == "/v1.InternalService/HandleClerkWebhook" ||
+				procedure == "/v1.InternalService/HandlePolarWebhook" ||
 				procedure == "/v1.SnsService/HandleSNSNotification"
 
 			if !needsRawBody {
@@ -56,6 +57,7 @@ func RawBodyHTTPMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Only capture for webhook endpoints
 		needsRawBody := r.URL.Path == "/v1.InternalService/HandleClerkWebhook" ||
+			r.URL.Path == "/v1.InternalService/HandlePolarWebhook" ||
 			r.URL.Path == "/v1.SnsService/HandleSNSNotification"
 
 		if needsRawBody && r.Body != nil {

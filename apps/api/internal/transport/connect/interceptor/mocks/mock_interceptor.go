@@ -197,6 +197,21 @@ func (mr *MockCreditCacheInterfaceMockRecorder) GetState(ctx, userID any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetState", reflect.TypeOf((*MockCreditCacheInterface)(nil).GetState), ctx, userID)
 }
 
+// GetSubscription mocks base method.
+func (m *MockCreditCacheInterface) GetSubscription(ctx context.Context, userID string) (*redis.CachedSubscription, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubscription", ctx, userID)
+	ret0, _ := ret[0].(*redis.CachedSubscription)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSubscription indicates an expected call of GetSubscription.
+func (mr *MockCreditCacheInterfaceMockRecorder) GetSubscription(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscription", reflect.TypeOf((*MockCreditCacheInterface)(nil).GetSubscription), ctx, userID)
+}
+
 // IncrConsumed mocks base method.
 func (m *MockCreditCacheInterface) IncrConsumed(ctx context.Context, userID string, count int64) error {
 	m.ctrl.T.Helper()
@@ -251,6 +266,20 @@ func (m *MockCreditCacheInterface) SetStateAndResetConsumed(ctx context.Context,
 func (mr *MockCreditCacheInterfaceMockRecorder) SetStateAndResetConsumed(ctx, userID, state any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStateAndResetConsumed", reflect.TypeOf((*MockCreditCacheInterface)(nil).SetStateAndResetConsumed), ctx, userID, state)
+}
+
+// SetSubscription mocks base method.
+func (m *MockCreditCacheInterface) SetSubscription(ctx context.Context, userID string, sub *redis.CachedSubscription) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetSubscription", ctx, userID, sub)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetSubscription indicates an expected call of SetSubscription.
+func (mr *MockCreditCacheInterfaceMockRecorder) SetSubscription(ctx, userID, sub any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSubscription", reflect.TypeOf((*MockCreditCacheInterface)(nil).SetSubscription), ctx, userID, sub)
 }
 
 // MockPolarClientInterface is a mock of PolarClientInterface interface.

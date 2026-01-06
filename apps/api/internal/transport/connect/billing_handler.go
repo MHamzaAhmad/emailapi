@@ -21,27 +21,23 @@ func NewBillingHandler(billingService *service.BillingService) v1connect.Billing
 	}
 }
 
-func (h *billingHandler) SyncSubscription(ctx context.Context, req *connect.Request[pb.SyncSubscriptionRequest]) (*connect.Response[pb.SyncSubscriptionResponse], error) {
+func (h *billingHandler) GetSubscription(ctx context.Context, req *connect.Request[pb.GetSubscriptionRequest]) (*connect.Response[pb.GetSubscriptionResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, nil)
 	}
 
-	user, err := h.billingService.SyncSubscription(ctx, userID)
+	info, err := h.billingService.GetSubscriptionInfo(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	polarCustomerID := ""
-	if user.PolarCustomerID != nil {
-		polarCustomerID = *user.PolarCustomerID
-	}
-
-	// Plan is now managed entirely by Polar, not stored locally
-	return connect.NewResponse(&pb.SyncSubscriptionResponse{
-		UserId:          user.ID,
-		Plan:            "", // Plan is now fetched from Polar
-		PolarCustomerId: polarCustomerID,
+	return connect.NewResponse(&pb.GetSubscriptionResponse{
+		HasSubscription: info.HasSubscription,
+		IsPaid:          info.IsPaid,
+		PlanId:          info.PlanID,
+		SubscriptionId:  info.SubscriptionID,
+		PolarCustomerId: info.PolarCustomerID,
 	}), nil
 }
 

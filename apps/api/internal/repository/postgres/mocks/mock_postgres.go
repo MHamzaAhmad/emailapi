@@ -204,20 +204,6 @@ func (mr *MockUserRepositoryMockRecorder) Update(ctx, user any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), ctx, user)
 }
 
-// UpdatePlan mocks base method.
-func (m *MockUserRepository) UpdatePlan(ctx context.Context, id string, plan domain.UserPlan) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdatePlan", ctx, id, plan)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdatePlan indicates an expected call of UpdatePlan.
-func (mr *MockUserRepositoryMockRecorder) UpdatePlan(ctx, id, plan any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePlan", reflect.TypeOf((*MockUserRepository)(nil).UpdatePlan), ctx, id, plan)
-}
-
 // UpdatePolarCustomerID mocks base method.
 func (m *MockUserRepository) UpdatePolarCustomerID(ctx context.Context, id, polarCustomerID string) error {
 	m.ctrl.T.Helper()

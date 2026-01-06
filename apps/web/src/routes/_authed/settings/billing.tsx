@@ -1,4 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/queryClient'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -6,6 +9,9 @@ import { HelpCircleIcon, Tick02Icon, Settings02Icon, CreditCardIcon } from '@hug
 import { usePlans, useCurrentSubscription, useCreateCheckoutSession, useGetCustomerPortalUrl } from '@/hooks'
 
 export const Route = createFileRoute('/_authed/settings/billing')({
+    validateSearch: (search: Record<string, unknown>): { success?: boolean } => ({
+        success: search.success === 'true',
+    }),
     component: BillingSettingsPage,
 })
 
@@ -15,8 +21,11 @@ function BillingSettingsPage() {
     const createCheckout = useCreateCheckoutSession()
     const getPortal = useGetCustomerPortalUrl()
 
+    const queryClient = useQueryClient()
+    const { success } = Route.useSearch()
+
     const plans = plansData?.plans || []
-    const currentPlan = subscription?.plan || 'free'
+    const currentPlan = subscription?.planId || 'free'
     const hasPolarCustomer = Boolean(subscription?.polarCustomerId)
 
     const handleUpgrade = async (planId: string) => {
@@ -39,6 +48,18 @@ function BillingSettingsPage() {
             console.error('Failed to get portal URL:', error)
         }
     }
+
+    // Invalidate cache if we just returned from a successful checkout
+    useEffect(() => {
+        if (success) {
+            void queryClient.invalidateQueries({ queryKey: ['billing', 'subscription'] })
+            void queryClient.invalidateQueries({ queryKey: queryKeys.users.me() })
+
+            // Clean up the URL without reloading
+            const newUrl = window.location.pathname
+            window.history.replaceState({}, '', newUrl)
+        }
+    }, [success, queryClient])
 
     const formatPrice = (priceCents: bigint | number): string => {
         const dollars = Number(priceCents) / 100

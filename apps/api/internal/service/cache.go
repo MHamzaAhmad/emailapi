@@ -17,4 +17,5 @@ type Cache interface {
 	Unsubscribe() rediscache.UnsubscribeCacheInterface
 	PendingAttachment() rediscache.PendingAttachmentCacheInterface
 	Credit() rediscache.CreditCacheInterface
+	Usage() rediscache.UsageCacheInterface
 }

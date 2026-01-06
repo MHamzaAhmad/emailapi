@@ -138,6 +138,20 @@ func (mr *MockCacheMockRecorder) Unsubscribe() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unsubscribe", reflect.TypeOf((*MockCache)(nil).Unsubscribe))
 }
 
+// Usage mocks base method.
+func (m *MockCache) Usage() redis.UsageCacheInterface {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Usage")
+	ret0, _ := ret[0].(redis.UsageCacheInterface)
+	return ret0
+}
+
+// Usage indicates an expected call of Usage.
+func (mr *MockCacheMockRecorder) Usage() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Usage", reflect.TypeOf((*MockCache)(nil).Usage))
+}
+
 // User mocks base method.
 func (m *MockCache) User() redis.UserCacheInterface {
 	m.ctrl.T.Helper()

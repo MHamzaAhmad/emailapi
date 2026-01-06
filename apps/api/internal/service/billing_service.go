@@ -15,54 +15,24 @@ import (
 type BillingService struct {
 	polarClient polar.Client
 	creditCache redisrepo.CreditCacheInterface
+	usageCache  redisrepo.UsageCacheInterface
 	store       Store
 }
 
 // NewBillingService creates a new BillingService.
-func NewBillingService(polarClient polar.Client, creditCache redisrepo.CreditCacheInterface, store Store) *BillingService {
+// NewBillingService creates a new BillingService.
+func NewBillingService(
+	polarClient polar.Client,
+	creditCache redisrepo.CreditCacheInterface,
+	usageCache redisrepo.UsageCacheInterface,
+	store Store,
+) *BillingService {
 	return &BillingService{
 		polarClient: polarClient,
 		creditCache: creditCache,
+		usageCache:  usageCache,
 		store:       store,
 	}
-}
-
-// SyncSubscription queries Polar API and invalidates cache so new plan applies immediately.
-// Called by frontend immediately after checkout success redirect.
-func (s *BillingService) SyncSubscription(ctx context.Context, userID string) (*domain.User, error) {
-	user, err := s.store.Users().GetByID(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("user not found: %w", err)
-	}
-
-	if s.polarClient == nil {
-		return user, nil // Polar not configured
-	}
-
-	// If user has no Polar customer ID, try to find by external ID
-	if user.PolarCustomerID == nil || *user.PolarCustomerID == "" {
-		customer, err := s.polarClient.GetCustomerByExternalID(ctx, userID)
-		if err != nil {
-			// No Polar customer yet - stay on current plan
-			log.Debug().Str("user_id", userID).Msg("No Polar customer found")
-			return user, nil
-		}
-		// Save the customer ID for future lookups
-		if err := s.store.Users().UpdatePolarCustomerID(ctx, userID, customer.ID); err != nil {
-			log.Warn().Err(err).Str("user_id", userID).Msg("Failed to save Polar customer ID")
-		}
-		user.PolarCustomerID = &customer.ID
-	}
-
-	// Invalidate credit cache so next request fetches fresh state from Polar
-	if s.creditCache != nil {
-		if err := s.creditCache.Invalidate(ctx, userID); err != nil {
-			log.Warn().Err(err).Str("user_id", userID).Msg("Failed to invalidate credit cache")
-		}
-	}
-
-	log.Info().Str("user_id", userID).Msg("Subscription synced, cache invalidated")
-	return user, nil
 }
 
 // CreatePolarCustomer creates a Polar customer for a user if needed.
@@ -127,7 +97,14 @@ func (s *BillingService) handleSubscriptionChange(ctx context.Context, event *Po
 		}
 	}
 
-	log.Info().Str("user_id", user.ID).Str("event", event.Type).Msg("Credit cache invalidated via webhook")
+	// Invalidate usage cache so plan limits are updated immediately
+	if s.usageCache != nil {
+		if err := s.usageCache.InvalidatePlanState(ctx, user.ID); err != nil {
+			log.Warn().Err(err).Str("user_id", user.ID).Msg("Failed to invalidate usage cache")
+		}
+	}
+
+	log.Info().Str("user_id", user.ID).Str("event", event.Type).Msg("Caches invalidated via webhook")
 	return nil
 }
 
@@ -216,6 +193,7 @@ type SubscriptionInfo struct {
 	PlanID          string // Current plan ID ("free", "starter", "growth")
 	ProductID       string // Polar product ID
 	SubscriptionID  string // Subscription ID for upgrades
+	PolarCustomerID string // Polar Customer ID
 }
 
 // GetSubscriptionInfo returns current subscription info for the frontend.
@@ -228,6 +206,29 @@ func (s *BillingService) GetSubscriptionInfo(ctx context.Context, userID string)
 
 	if s.polarClient == nil {
 		return info, nil
+	}
+
+	// Check cache first
+	if s.creditCache != nil {
+		cached, err := s.creditCache.GetSubscription(ctx, userID)
+		if err == nil && cached != nil {
+			return &SubscriptionInfo{
+				HasSubscription: cached.HasSubscription,
+				IsPaid:          cached.IsPaid,
+				PlanID:          cached.PlanID,
+				ProductID:       cached.ProductID,
+				SubscriptionID:  cached.SubscriptionID,
+				PolarCustomerID: cached.PolarCustomerID,
+			}, nil
+		}
+	}
+
+	user, err := s.store.Users().GetByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("user not found: %w", err)
+	}
+	if user.PolarCustomerID != nil {
+		info.PolarCustomerID = *user.PolarCustomerID
 	}
 
 	sub, err := s.polarClient.GetActiveSubscriptionByExternalID(ctx, userID)
@@ -244,11 +245,32 @@ func (s *BillingService) GetSubscriptionInfo(ctx context.Context, userID string)
 	info.SubscriptionID = sub.ID
 	info.ProductID = sub.ProductID
 
-	// Determine if paid and plan ID
+	// Re-calculate basic fields based on sub
 	if sub.Amount > 0 {
 		info.IsPaid = true
-		plan := domain.GetPlanFromProductID(sub.ProductID)
-		info.PlanID = string(plan)
+	}
+	// Determine plan ID
+	switch {
+	case sub.ProductName == "Starter" || sub.Amount == 1250:
+		info.PlanID = "starter"
+	case sub.ProductName == "Growth" || sub.Amount == 5000:
+		info.PlanID = "growth"
+	default:
+		info.PlanID = "free"
+	}
+
+	// Update cache
+	if s.creditCache != nil {
+		if err := s.creditCache.SetSubscription(ctx, userID, &redisrepo.CachedSubscription{
+			HasSubscription: info.HasSubscription,
+			IsPaid:          info.IsPaid,
+			PlanID:          info.PlanID,
+			ProductID:       info.ProductID,
+			SubscriptionID:  info.SubscriptionID,
+			PolarCustomerID: info.PolarCustomerID,
+		}); err != nil {
+			log.Warn().Err(err).Msg("Failed to cache subscription")
+		}
 	}
 
 	return info, nil

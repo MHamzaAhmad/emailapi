@@ -17,8 +17,10 @@ import (
 // InternalService handles internal webhook endpoints.
 type InternalService struct {
 	userService        *UserService
+	billingService     *BillingService // New: for delegating business logic
 	store              Store
 	clerkWebhookSecret string
+	polarWebhookSecret string
 	polarClient        polar.Client
 	freeProductID      string
 }
@@ -26,8 +28,10 @@ type InternalService struct {
 // InternalServiceConfig holds configuration for InternalService.
 type InternalServiceConfig struct {
 	UserService        *UserService
+	BillingService     *BillingService // Inject to delegate subscription logic
 	Store              Store
 	ClerkWebhookSecret string
+	PolarWebhookSecret string
 	PolarClient        polar.Client
 	FreeProductID      string
 }
@@ -36,8 +40,10 @@ type InternalServiceConfig struct {
 func NewInternalService(cfg InternalServiceConfig) *InternalService {
 	return &InternalService{
 		userService:        cfg.UserService,
+		billingService:     cfg.BillingService,
 		store:              cfg.Store,
 		clerkWebhookSecret: cfg.ClerkWebhookSecret,
+		polarWebhookSecret: cfg.PolarWebhookSecret,
 		polarClient:        cfg.PolarClient,
 		freeProductID:      cfg.FreeProductID,
 	}
@@ -217,4 +223,41 @@ func (s *InternalService) provisionPolarCustomer(ctx context.Context, user *doma
 		Str("user_id", user.ID).
 		Str("product_id", s.freeProductID).
 		Msg("Created free subscription")
+}
+
+// HandlePolarWebhook processes Polar subscription events.
+func (s *InternalService) HandlePolarWebhook(ctx context.Context, payload []byte, headers http.Header) (bool, string, error) {
+	// Verify Svix webhook signature
+	wh, err := svix.NewWebhook(s.polarWebhookSecret)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create Svix webhook verifier for Polar")
+		return false, "", fmt.Errorf("webhook verification setup failed: %w", err)
+	}
+
+	err = wh.Verify(payload, headers)
+	if err != nil {
+		log.Warn().Err(err).Msg("Polar webhook signature verification failed")
+		return false, "", fmt.Errorf("webhook signature verification failed: %w", err)
+	}
+
+	// Parse the webhook event
+	var event PolarWebhookEvent
+	if err := json.Unmarshal(payload, &event); err != nil {
+		log.Error().Err(err).Msg("Failed to parse Polar webhook payload")
+		return false, "", fmt.Errorf("failed to parse webhook payload: %w", err)
+	}
+
+	log.Info().Str("type", event.Type).Msg("Processing Polar webhook event")
+
+	if s.billingService == nil {
+		return false, "", fmt.Errorf("billing service not configured")
+	}
+
+	// Delegate to BillingService
+	if err := s.billingService.HandlePolarWebhook(ctx, &event); err != nil {
+		log.Error().Err(err).Msg("Failed to handle Polar webhook in BillingService")
+		return false, "", err
+	}
+
+	return true, "processed", nil
 }
