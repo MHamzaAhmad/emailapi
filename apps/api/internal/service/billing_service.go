@@ -68,9 +68,14 @@ func (s *BillingService) CreatePolarCustomer(ctx context.Context, userID string)
 
 // PolarWebhookEvent represents a Polar webhook event.
 type PolarWebhookEvent struct {
-	Type       string `json:"type"`
-	CustomerID string `json:"customer_id"`
-	ProductID  string `json:"product_id"`
+	Type string `json:"type"`
+	Data struct {
+		CustomerID string `json:"customer_id"`
+		ProductID  string `json:"product_id"`
+		Customer   struct {
+			ExternalID string `json:"external_id"` // This is our user_id
+		} `json:"customer"`
+	} `json:"data"`
 }
 
 // HandlePolarWebhook processes Polar subscription webhooks.
@@ -84,27 +89,32 @@ func (s *BillingService) HandlePolarWebhook(ctx context.Context, event *PolarWeb
 }
 
 func (s *BillingService) handleSubscriptionChange(ctx context.Context, event *PolarWebhookEvent) error {
-	// Find user by Polar customer ID
-	user, err := s.store.Users().GetByPolarCustomerID(ctx, event.CustomerID)
-	if err != nil {
-		return fmt.Errorf("user not found for Polar customer %s: %w", event.CustomerID, err)
+	// Use external_id (our user_id) from the webhook for direct lookup
+	userID := event.Data.Customer.ExternalID
+	if userID == "" {
+		// Fallback to looking up by Polar customer_id if external_id is missing
+		user, err := s.store.Users().GetByPolarCustomerID(ctx, event.Data.CustomerID)
+		if err != nil {
+			return fmt.Errorf("user not found for Polar customer %s: %w", event.Data.CustomerID, err)
+		}
+		userID = user.ID
 	}
 
 	// Invalidate credit cache so next request fetches fresh state from Polar
 	if s.creditCache != nil {
-		if err := s.creditCache.Invalidate(ctx, user.ID); err != nil {
-			log.Warn().Err(err).Str("user_id", user.ID).Msg("Failed to invalidate credit cache")
+		if err := s.creditCache.Invalidate(ctx, userID); err != nil {
+			log.Warn().Err(err).Str("user_id", userID).Msg("Failed to invalidate credit cache")
 		}
 	}
 
 	// Invalidate usage cache so plan limits are updated immediately
 	if s.usageCache != nil {
-		if err := s.usageCache.InvalidatePlanState(ctx, user.ID); err != nil {
-			log.Warn().Err(err).Str("user_id", user.ID).Msg("Failed to invalidate usage cache")
+		if err := s.usageCache.InvalidatePlanState(ctx, userID); err != nil {
+			log.Warn().Err(err).Str("user_id", userID).Msg("Failed to invalidate usage cache")
 		}
 	}
 
-	log.Info().Str("user_id", user.ID).Str("event", event.Type).Msg("Caches invalidated via webhook")
+	log.Info().Str("user_id", userID).Str("event", event.Type).Msg("Caches invalidated via webhook")
 	return nil
 }
 

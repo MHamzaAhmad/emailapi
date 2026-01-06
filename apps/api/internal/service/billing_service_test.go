@@ -59,22 +59,36 @@ func TestBillingService_HandlePolarWebhook(t *testing.T) {
 	ctx := context.Background()
 	user := &domain.User{ID: "user_123"}
 	event := &PolarWebhookEvent{
-		Type:       "subscription.active",
-		CustomerID: "cus_polar_abc",
+		Type: "subscription.active",
 	}
+	event.Data.CustomerID = "cus_polar_abc"
+	event.Data.Customer.ExternalID = "" // Empty to force fallback
 
 	t.Run("user not found", func(t *testing.T) {
-		mockUserRepo.EXPECT().GetByPolarCustomerID(ctx, event.CustomerID).Return(nil, errors.New("not found"))
+		mockUserRepo.EXPECT().GetByPolarCustomerID(ctx, event.Data.CustomerID).Return(nil, errors.New("not found"))
 		err := svc.HandlePolarWebhook(ctx, event)
 		assert.Error(t, err)
 	})
 
 	t.Run("success invalidates caches", func(t *testing.T) {
-		mockUserRepo.EXPECT().GetByPolarCustomerID(ctx, event.CustomerID).Return(user, nil)
+		mockUserRepo.EXPECT().GetByPolarCustomerID(ctx, event.Data.CustomerID).Return(user, nil)
 		mockCreditCache.EXPECT().Invalidate(ctx, user.ID).Return(nil)
 		mockUsageCache.EXPECT().InvalidatePlanState(ctx, user.ID).Return(nil)
 
 		err := svc.HandlePolarWebhook(ctx, event)
+		require.NoError(t, err)
+	})
+
+	t.Run("success with external_id", func(t *testing.T) {
+		eventWithExternalID := &PolarWebhookEvent{
+			Type: "subscription.updated",
+		}
+		eventWithExternalID.Data.Customer.ExternalID = "user_123"
+
+		mockCreditCache.EXPECT().Invalidate(ctx, "user_123").Return(nil)
+		mockUsageCache.EXPECT().InvalidatePlanState(ctx, "user_123").Return(nil)
+
+		err := svc.HandlePolarWebhook(ctx, eventWithExternalID)
 		require.NoError(t, err)
 	})
 }

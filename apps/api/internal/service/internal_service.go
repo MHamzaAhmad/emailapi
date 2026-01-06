@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
 	"net/http"
 
 	"github.com/rs/zerolog/log"
+	standardwebhooks "github.com/standard-webhooks/standard-webhooks/libraries/go"
 	svix "github.com/svix/svix-webhooks/go"
 
 	"github.com/emailapi/api/internal/domain"
@@ -227,10 +229,11 @@ func (s *InternalService) provisionPolarCustomer(ctx context.Context, user *doma
 
 // HandlePolarWebhook processes Polar subscription events.
 func (s *InternalService) HandlePolarWebhook(ctx context.Context, payload []byte, headers http.Header) (bool, string, error) {
-	// Verify Svix webhook signature
-	wh, err := svix.NewWebhook(s.polarWebhookSecret)
+	encodedSecret := base64.StdEncoding.EncodeToString([]byte(s.polarWebhookSecret))
+
+	wh, err := standardwebhooks.NewWebhook(encodedSecret)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create Svix webhook verifier for Polar")
+		log.Error().Err(err).Msg("Failed to create Standard Webhooks verifier for Polar")
 		return false, "", fmt.Errorf("webhook verification setup failed: %w", err)
 	}
 
