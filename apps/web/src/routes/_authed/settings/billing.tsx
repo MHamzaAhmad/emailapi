@@ -26,9 +26,15 @@ function BillingSettingsPage() {
 
     const plans = plansData?.plans || []
     const currentPlan = subscription?.planId || 'free'
+    const isPaid = currentPlan !== 'free'
     const hasPolarCustomer = Boolean(subscription?.polarCustomerId)
 
     const handleUpgrade = async (planId: string) => {
+        if (isPaid) {
+            await handleOpenPortal()
+            return
+        }
+
         try {
             const result = await createCheckout.mutateAsync({
                 planId,
@@ -189,10 +195,10 @@ function BillingSettingsPage() {
                                         size="sm"
                                         className="w-full h-8 text-xs font-medium border-dashed hover:border-solid hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all shadow-sm"
                                         onClick={() => handleUpgrade(plan.id)}
-                                        disabled={createCheckout.isPending}
+                                        disabled={createCheckout.isPending || getPortal.isPending}
                                     >
-                                        <HugeiconsIcon icon={CreditCardIcon} size={14} className="mr-2" />
-                                        {createCheckout.isPending ? 'Processing...' : 'Upgrade Plan'}
+                                        <HugeiconsIcon icon={isPaid ? Settings02Icon : CreditCardIcon} size={14} className="mr-2" />
+                                        {createCheckout.isPending || getPortal.isPending ? 'Processing...' : (isPaid ? 'Switch Plan' : 'Upgrade Plan')}
                                     </Button>
                                 ) : plan.id === currentPlan ? (
                                     <Button
