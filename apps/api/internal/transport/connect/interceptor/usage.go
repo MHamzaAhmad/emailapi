@@ -15,9 +15,10 @@ import (
 
 // UsageConfig holds configuration for the usage limit interceptor.
 type UsageConfig struct {
-	CreditCache redisrepo.CreditCacheInterface
-	PolarClient polar.Client
-	Enabled     bool
+	CreditCache    redisrepo.CreditCacheInterface
+	PolarClient    polar.Client
+	Enabled        bool
+	FreeDailyLimit int64 // Daily limit for free users (e.g., 100)
 }
 
 // usageProcedures defines which procedures count against usage limits.
@@ -76,7 +77,23 @@ func (u *usageInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 			return resp, respErr
 		}
 
-		// Free users: check credit balance before allowing
+		// Free users: check daily limit first
+		dailyUsage, err := u.cfg.CreditCache.GetDailyUsage(ctx, userID)
+		if err != nil {
+			log.Warn().Err(err).Str("user_id", userID).Msg("Failed to get daily usage, allowing request")
+			dailyUsage = 0
+		}
+
+		dailyLimit := u.cfg.FreeDailyLimit
+		if dailyLimit <= 0 {
+			dailyLimit = 100 // Default
+		}
+
+		if dailyUsage >= dailyLimit {
+			return nil, dailyLimitError(dailyUsage, dailyLimit)
+		}
+
+		// Free users: check monthly credit balance
 		consumed, err := u.cfg.CreditCache.GetConsumed(ctx, userID)
 		if err != nil {
 			log.Warn().Err(err).Str("user_id", userID).Msg("Failed to get consumed count, allowing request")
@@ -91,7 +108,7 @@ func (u *usageInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 		// Allow the email send
 		resp, respErr := next(ctx, req)
 
-		// Post-send: increment consumed and ingest event (async)
+		// Post-send: increment daily and consumed counters (async)
 		if respErr == nil && resp != nil {
 			go u.postSendFree(context.Background(), userID, 1)
 		}
@@ -162,7 +179,12 @@ func (u *usageInterceptor) postSendPaid(ctx context.Context, userID string, coun
 
 // postSendFree handles post-send actions for free users.
 func (u *usageInterceptor) postSendFree(ctx context.Context, userID string, count int64) {
-	// Increment consumed counter
+	// Increment daily usage counter
+	if err := u.cfg.CreditCache.IncrDailyUsage(ctx, userID, count); err != nil {
+		log.Warn().Err(err).Str("user_id", userID).Msg("Failed to increment daily usage")
+	}
+
+	// Increment consumed counter (for monthly balance)
 	if err := u.cfg.CreditCache.IncrConsumed(ctx, userID, count); err != nil {
 		log.Warn().Err(err).Str("user_id", userID).Msg("Failed to increment consumed count")
 	}
@@ -202,16 +224,30 @@ func (u *usageInterceptor) maybeRefreshAsync(userID string) {
 	}()
 }
 
-// creditExhaustedError creates a credit exhausted error for free users.
+// creditExhaustedError creates a credit exhausted error for free users (monthly).
 func creditExhaustedError(polarBalance, consumed int64) error {
 	err := connect.NewError(
 		connect.CodeResourceExhausted,
-		fmt.Errorf("daily email credits exhausted (%d/%d). Upgrade to a paid plan for more emails.",
+		fmt.Errorf("monthly email credits exhausted (%d/%d). Upgrade to a paid plan for more emails.",
 			consumed, polarBalance),
 	)
 	err.Meta().Set("X-Plan", "free")
 	err.Meta().Set("X-Credits-Balance", fmt.Sprintf("%d", polarBalance))
 	err.Meta().Set("X-Credits-Consumed", fmt.Sprintf("%d", consumed))
+	err.Meta().Set("X-Upgrade-URL", "https://simpleemailapi.dev/pricing")
+	return err
+}
+
+// dailyLimitError creates a daily limit exceeded error for free users.
+func dailyLimitError(usage, limit int64) error {
+	err := connect.NewError(
+		connect.CodeResourceExhausted,
+		fmt.Errorf("daily email limit exceeded (%d/%d). Limit resets at midnight UTC.",
+			usage, limit),
+	)
+	err.Meta().Set("X-Plan", "free")
+	err.Meta().Set("X-Daily-Limit", fmt.Sprintf("%d", limit))
+	err.Meta().Set("X-Daily-Usage", fmt.Sprintf("%d", usage))
 	err.Meta().Set("X-Upgrade-URL", "https://simpleemailapi.dev/pricing")
 	return err
 }

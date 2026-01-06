@@ -20,6 +20,7 @@ import (
 	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/config"
 	"github.com/emailapi/api/internal/eventstream"
+	"github.com/emailapi/api/internal/external/polar"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/external/sqs"
@@ -202,6 +203,20 @@ func main() {
 	eventConsumer := eventstream.NewConsumer(redisClient)
 	logger.Info().Msg("✓ Initialized event stream")
 
+	// Initialize Polar client (optional - for billing integration)
+	var polarClient polar.Client
+	if cfg.PolarAccessToken != "" {
+		var err error
+		polarClient, err = polar.NewClient(cfg.PolarAccessToken, cfg.PolarMeterName)
+		if err != nil {
+			logger.Warn().Err(err).Msg("Failed to create Polar client - billing features disabled")
+		} else {
+			logger.Info().Msg("✓ Initialized Polar client")
+		}
+	} else {
+		logger.Info().Msg("Polar not configured - billing features disabled")
+	}
+
 	// Create webhook sender with event stream publisher
 	webhookSender := webhook.NewSender(svixClient, eventPublisher)
 
@@ -262,6 +277,7 @@ func main() {
 		UnsubscribeBaseURL:     cfg.UnsubscribeBaseURL,
 		UnsubscribeTokenSecret: cfg.UnsubscribeTokenSecret,
 		InboundBucket:          cfg.S3InboundBucket,
+		PolarClient:            polarClient,
 		PolarStarterProductID:  cfg.PolarStarterProductID,
 		PolarGrowthProductID:   cfg.PolarGrowthProductID,
 		PolarFreeProductID:     cfg.PolarFreeProductID,

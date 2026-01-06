@@ -83,11 +83,10 @@ type Config struct {
 
 	// Polar Configuration (for payments)
 	PolarAccessToken      string `envconfig:"POLAR_ACCESS_TOKEN"`
-	PolarWebhookSecret    string `envconfig:"POLAR_WEBHOOK_SECRET"`
-	PolarEmailMeterID     string `envconfig:"POLAR_EMAIL_METER_ID"`
-	PolarFreeProductID    string `envconfig:"POLAR_FREE_PRODUCT_ID"`    // Product ID for Free plan
-	PolarStarterProductID string `envconfig:"POLAR_STARTER_PRODUCT_ID"` // Product ID for Starter plan
-	PolarGrowthProductID  string `envconfig:"POLAR_GROWTH_PRODUCT_ID"`  // Product ID for Growth plan
+	PolarMeterName        string `envconfig:"POLAR_METER_NAME" default:"emails"` // Meter event name for usage tracking
+	PolarFreeProductID    string `envconfig:"POLAR_FREE_PRODUCT_ID"`             // Product ID for Free plan
+	PolarStarterProductID string `envconfig:"POLAR_STARTER_PRODUCT_ID"`          // Product ID for Starter plan
+	PolarGrowthProductID  string `envconfig:"POLAR_GROWTH_PRODUCT_ID"`           // Product ID for Growth plan
 
 	// Usage limit checking
 	UsageLimitEnabled bool `envconfig:"USAGE_LIMIT_ENABLED" default:"true"`

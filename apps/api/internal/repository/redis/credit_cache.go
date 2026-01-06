@@ -25,6 +25,12 @@ type CreditCacheInterface interface {
 	// GetConsumed returns current consumed count for today.
 	GetConsumed(ctx context.Context, userID string) (int64, error)
 
+	// GetDailyUsage returns current daily usage count for free user rate limiting.
+	GetDailyUsage(ctx context.Context, userID string) (int64, error)
+
+	// IncrDailyUsage increments daily usage counter and sets 48h TTL.
+	IncrDailyUsage(ctx context.Context, userID string, count int64) error
+
 	// Invalidate removes all cached data for user.
 	Invalidate(ctx context.Context, userID string) error
 }
@@ -56,6 +62,11 @@ func (c *CreditCache) stateKey(userID string) string {
 // consumedKey returns Redis key for consumed counter: polar:consumed:{userID}:{YYYYMMDD}
 func (c *CreditCache) consumedKey(userID string) string {
 	return fmt.Sprintf("polar:consumed:%s:%s", userID, time.Now().UTC().Format("20060102"))
+}
+
+// dailyLimitKey returns Redis key for daily limit: daily:limit:{userID}:{YYYYMMDD}
+func (c *CreditCache) dailyLimitKey(userID string) string {
+	return fmt.Sprintf("daily:limit:%s:%s", userID, time.Now().UTC().Format("20060102"))
 }
 
 // GetState returns cached customer state (nil if cache miss).
@@ -119,6 +130,26 @@ func (c *CreditCache) Invalidate(ctx context.Context, userID string) error {
 	pipe := c.client.rdb.Pipeline()
 	pipe.Del(ctx, c.stateKey(userID))
 	pipe.Del(ctx, c.consumedKey(userID))
+	pipe.Del(ctx, c.dailyLimitKey(userID))
+	_, err := pipe.Exec(ctx)
+	return err
+}
+
+// GetDailyUsage returns current daily usage count for free user rate limiting.
+func (c *CreditCache) GetDailyUsage(ctx context.Context, userID string) (int64, error) {
+	val, err := c.client.rdb.Get(ctx, c.dailyLimitKey(userID)).Int64()
+	if err == redis.Nil {
+		return 0, nil // No usage today
+	}
+	return val, err
+}
+
+// IncrDailyUsage increments daily usage counter and sets 48h TTL.
+func (c *CreditCache) IncrDailyUsage(ctx context.Context, userID string, count int64) error {
+	key := c.dailyLimitKey(userID)
+	pipe := c.client.rdb.Pipeline()
+	pipe.IncrBy(ctx, key, count)
+	pipe.Expire(ctx, key, 48*time.Hour)
 	_, err := pipe.Exec(ctx)
 	return err
 }

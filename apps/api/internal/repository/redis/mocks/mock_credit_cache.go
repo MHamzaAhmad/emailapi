@@ -56,6 +56,21 @@ func (mr *MockCreditCacheInterfaceMockRecorder) GetConsumed(ctx, userID any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConsumed", reflect.TypeOf((*MockCreditCacheInterface)(nil).GetConsumed), ctx, userID)
 }
 
+// GetDailyUsage mocks base method.
+func (m *MockCreditCacheInterface) GetDailyUsage(ctx context.Context, userID string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDailyUsage", ctx, userID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDailyUsage indicates an expected call of GetDailyUsage.
+func (mr *MockCreditCacheInterfaceMockRecorder) GetDailyUsage(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDailyUsage", reflect.TypeOf((*MockCreditCacheInterface)(nil).GetDailyUsage), ctx, userID)
+}
+
 // GetState mocks base method.
 func (m *MockCreditCacheInterface) GetState(ctx context.Context, userID string) (*redis.CachedCustomerState, error) {
 	m.ctrl.T.Helper()
@@ -83,6 +98,20 @@ func (m *MockCreditCacheInterface) IncrConsumed(ctx context.Context, userID stri
 func (mr *MockCreditCacheInterfaceMockRecorder) IncrConsumed(ctx, userID, count any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrConsumed", reflect.TypeOf((*MockCreditCacheInterface)(nil).IncrConsumed), ctx, userID, count)
+}
+
+// IncrDailyUsage mocks base method.
+func (m *MockCreditCacheInterface) IncrDailyUsage(ctx context.Context, userID string, count int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IncrDailyUsage", ctx, userID, count)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IncrDailyUsage indicates an expected call of IncrDailyUsage.
+func (mr *MockCreditCacheInterfaceMockRecorder) IncrDailyUsage(ctx, userID, count any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrDailyUsage", reflect.TypeOf((*MockCreditCacheInterface)(nil).IncrDailyUsage), ctx, userID, count)
 }
 
 // Invalidate mocks base method.
