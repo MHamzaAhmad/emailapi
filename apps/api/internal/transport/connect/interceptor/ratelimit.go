@@ -16,7 +16,7 @@ import (
 
 // RateLimitConfig holds configuration for the rate limit interceptor.
 type RateLimitConfig struct {
-	RateLimiter          *redisrepo.RateLimiter
+	RateLimiter          RateLimiterInterface
 	RequestsPerMinute    int
 	MaxConcurrentStreams int
 	Enabled              bool

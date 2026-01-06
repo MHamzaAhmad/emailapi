@@ -10,7 +10,6 @@ import (
 	"github.com/clerk/clerk-sdk-go/v2/jwt"
 
 	"github.com/emailapi/api/internal/domain"
-	"github.com/emailapi/api/internal/service"
 )
 
 // AuthMethod indicates how the request was authenticated.
@@ -38,7 +37,7 @@ type UserLookup interface {
 
 // AuthConfig holds configuration for the auth interceptor.
 type AuthConfig struct {
-	APIKeyService  *service.APIKeyService
+	APIKeyService  APIKeyValidator
 	UserLookup     UserLookup
 	ClerkSecretKey string
 }

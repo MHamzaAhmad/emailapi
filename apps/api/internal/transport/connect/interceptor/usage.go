@@ -9,18 +9,16 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rs/zerolog/log"
 
-	"github.com/emailapi/api/internal/external/polar"
-	"github.com/emailapi/api/internal/repository/postgres"
 	redisrepo "github.com/emailapi/api/internal/repository/redis"
 )
 
 // UsageConfig holds configuration for the usage limit interceptor.
 type UsageConfig struct {
-	CreditCache    redisrepo.CreditCacheInterface
-	PolarClient    polar.Client
-	UserRepo       postgres.UserRepository // For looking up/updating user
+	CreditCache    CreditCacheInterface
+	PolarClient    PolarClientInterface
+	UserRepo       UserRepositoryInterface // For looking up/updating user
 	Enabled        bool
-	FreeDailyLimit int64  // Daily limit for free users (e.g., 100)
+	FreeDailyLimit int64
 	FreeProductID  string // Polar product ID for free plan (for re-provisioning)
 }
 

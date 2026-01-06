@@ -123,6 +123,12 @@ func TestBillingService_CreateCheckoutSession(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		checkoutURL := "https://polar.sh/checkout/abc"
+
+		// Mock GetActiveSubscriptionByExternalID (called first to check for existing subscription)
+		mockPolar.EXPECT().
+			GetActiveSubscriptionByExternalID(ctx, userID).
+			Return(nil, nil) // No existing subscription
+
 		mockPolar.EXPECT().
 			CreateCheckoutSession(ctx, gomock.Any()).
 			Return(checkoutURL, nil)
