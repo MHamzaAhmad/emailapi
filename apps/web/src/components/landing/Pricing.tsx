@@ -1,10 +1,10 @@
-import { SignInButton, SignedIn, SignedOut } from '@clerk/clerk-react'
 import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { HelpCircleIcon } from '@hugeicons/core-free-icons'
 import { usePlans } from '@/hooks'
+import { LazySignInButton, LazySignedIn, LazySignedOut } from '@/components/lazy-clerk'
 
 export function Pricing() {
     const { data: plansData, isLoading } = usePlans()
@@ -102,8 +102,8 @@ export function Pricing() {
                                 ))}
                             </ul>
 
-                            <SignedOut>
-                                <SignInButton mode="modal">
+                            <LazySignedOut>
+                                <LazySignInButton mode="modal">
                                     <Button
                                         variant={plan.id === 'starter' ? 'default' : 'outline'}
                                         size="sm"
@@ -111,9 +111,9 @@ export function Pricing() {
                                     >
                                         Get Started
                                     </Button>
-                                </SignInButton>
-                            </SignedOut>
-                            <SignedIn>
+                                </LazySignInButton>
+                            </LazySignedOut>
+                            <LazySignedIn>
                                 <Button
                                     variant={plan.id === 'starter' ? 'default' : 'outline'}
                                     size="sm"
@@ -124,7 +124,7 @@ export function Pricing() {
                                         {plan.id === 'free' ? 'Current Plan' : 'Upgrade'}
                                     </Link>
                                 </Button>
-                            </SignedIn>
+                            </LazySignedIn>
                         </div>
                     ))}
                 </div>

@@ -1,17 +1,11 @@
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
-import { SignedIn, SignedOut, SignInButton, Waitlist, UserButton } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Menu01Icon
 } from '@hugeicons/core-free-icons'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { CodeWindow } from '@/components/ui/code-window'
 import { ModeToggle } from '@/components/mode-toggle'
-import { GridOfTruth } from '@/components/landing/GridOfTruth'
-import { Pricing } from '@/components/landing/Pricing'
-import { PerformanceChart } from '@/components/landing/PerformanceChart'
-import { ComparisonSection } from '@/components/landing/ComparisonSection'
 import {
   Dialog,
   DialogContent,
@@ -23,6 +17,20 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Logo } from '@/components/logo'
+import {
+  LazySignedIn,
+  LazySignedOut,
+  LazySignInButton,
+  LazyWaitlist,
+  LazyUserButton,
+} from '@/components/lazy-clerk'
+
+// Lazy-load below-fold sections for better LCP
+const CodeWindow = lazy(() => import('@/components/ui/code-window').then(m => ({ default: m.CodeWindow })))
+const GridOfTruth = lazy(() => import('@/components/landing/GridOfTruth').then(m => ({ default: m.GridOfTruth })))
+const Pricing = lazy(() => import('@/components/landing/Pricing').then(m => ({ default: m.Pricing })))
+const PerformanceChart = lazy(() => import('@/components/landing/PerformanceChart').then(m => ({ default: m.PerformanceChart })))
+const ComparisonSection = lazy(() => import('@/components/landing/ComparisonSection').then(m => ({ default: m.ComparisonSection })))
 
 export const Route = createFileRoute('/')(
   {
@@ -33,12 +41,12 @@ export const Route = createFileRoute('/')(
 function LandingPage() {
   return (
     <>
-      <SignedIn>
+      <LazySignedIn>
         <RedirectToDashboard />
-      </SignedIn>
-      <SignedOut>
+      </LazySignedIn>
+      <LazySignedOut>
         <LandingContent />
-      </SignedOut>
+      </LazySignedOut>
     </>
   )
 }
@@ -71,22 +79,22 @@ function LandingContent() {
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-4">
             <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Documentation</a>
-            <SignedOut>
-              <SignInButton mode="modal">
+            <LazySignedOut>
+              <LazySignInButton mode="modal">
                 <Button size="sm" variant="outline" className="h-8 px-4 text-xs font-medium border-dashed border-border hover:bg-muted/50 rounded-md">
                   Login
                 </Button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <UserButton
+              </LazySignInButton>
+            </LazySignedOut>
+            <LazySignedIn>
+              <LazyUserButton
                 appearance={{
                   elements: {
                     avatarBox: "h-7 w-7 rounded-full ring-2 ring-background hover:ring-muted transition-all"
                   }
                 }}
               />
-            </SignedIn>
+            </LazySignedIn>
             <div className="h-4 w-[1px] bg-border/60 mx-1" />
             <ModeToggle />
           </div>
@@ -126,17 +134,17 @@ function LandingContent() {
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-fit border-none bg-transparent p-0 shadow-none">
-                          <Waitlist />
+                          <LazyWaitlist />
                         </DialogContent>
                       </Dialog>
 
-                      <SignedOut>
-                        <SignInButton mode="modal">
+                      <LazySignedOut>
+                        <LazySignInButton mode="modal">
                           <Button className="w-full h-9 rounded-md text-xs font-semibold justify-start">
                             Login
                           </Button>
-                        </SignInButton>
-                      </SignedOut>
+                        </LazySignInButton>
+                      </LazySignedOut>
                     </div>
                   </div>
 
@@ -171,7 +179,7 @@ function LandingContent() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-fit border-none bg-transparent p-0 shadow-none">
-                  <Waitlist />
+                  <LazyWaitlist />
                 </DialogContent>
               </Dialog>
               <Button asChild variant="outline" className="h-9 px-6 text-xs font-semibold bg-background hover:bg-muted/50 rounded-md border-dashed border-border w-full sm:w-auto">
@@ -184,26 +192,28 @@ function LandingContent() {
             {/* Centered Code Window */}
             <div className="relative mx-auto max-w-3xl px-2 sm:px-0">
               <div className="absolute -inset-10 rounded-[3rem] bg-primary/5 blur-3xl -z-10" />
-              <CodeWindow
-                className="w-full border-border/60 rounded-xl shadow-2xl"
-                tabs={[
-                  {
-                    label: "TypeScript",
-                    value: "ts",
-                    language: "typescript",
-                  },
-                  {
-                    label: "cURL",
-                    value: "curl",
-                    language: "bash",
-                  },
-                  {
-                    label: "Go",
-                    value: "go",
-                    language: "go",
-                  }
-                ]}
-              />
+              <Suspense fallback={<div className="w-full h-[320px] bg-muted/30 rounded-xl animate-pulse" />}>
+                <CodeWindow
+                  className="w-full border-border/60 rounded-xl shadow-2xl"
+                  tabs={[
+                    {
+                      label: "TypeScript",
+                      value: "ts",
+                      language: "typescript",
+                    },
+                    {
+                      label: "cURL",
+                      value: "curl",
+                      language: "bash",
+                    },
+                    {
+                      label: "Go",
+                      value: "go",
+                      language: "go",
+                    }
+                  ]}
+                />
+              </Suspense>
             </div>
           </div>
 
@@ -212,13 +222,19 @@ function LandingContent() {
         </section>
 
         {/* Symmetric Grid of Truth */}
-        <GridOfTruth />
+        <Suspense fallback={null}>
+          <GridOfTruth />
+        </Suspense>
 
         {/* Comparison Section */}
-        <ComparisonSection />
+        <Suspense fallback={null}>
+          <ComparisonSection />
+        </Suspense>
 
         {/* Pricing Section */}
-        <Pricing />
+        <Suspense fallback={null}>
+          <Pricing />
+        </Suspense>
 
         {/* Performance Chart Section */}
         <section className="py-24 px-6 bg-background border-t border-dashed border-border/40">
@@ -234,7 +250,9 @@ function LandingContent() {
                 We don't just guess. We benchmark every deploy. See how we stack up against industry standards in real-time latency tests.
               </p>
             </div>
-            <PerformanceChart />
+            <Suspense fallback={<div className="h-[300px] bg-muted/30 rounded-xl animate-pulse" />}>
+              <PerformanceChart />
+            </Suspense>
           </div>
         </section>
 
@@ -246,11 +264,11 @@ function LandingContent() {
               Join the private beta and experience the next generation of email infrastructure.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <SignInButton mode="modal">
+              <LazySignInButton mode="modal">
                 <Button className="h-9 px-8 rounded-md text-xs font-semibold w-full sm:w-auto">
                   Login to Console
                 </Button>
-              </SignInButton>
+              </LazySignInButton>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline" className="h-9 px-8 rounded-md text-xs font-semibold border-dashed border-border bg-background w-full sm:w-auto">
@@ -258,7 +276,7 @@ function LandingContent() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-fit border-none bg-transparent p-0 shadow-none">
-                  <Waitlist />
+                  <LazyWaitlist />
                 </DialogContent>
               </Dialog>
             </div>
