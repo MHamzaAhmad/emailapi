@@ -1,5 +1,14 @@
 # simpleemailapi
 
+## 0.2.0
+
+### Minor Changes
+
+- **Non-blocking Event Streams**: Moved `client.onReceive()` execution to a dedicated background worker thread (`worker_threads`).
+- Ensures the main event loop remains unblocked during high-volume email ingestion.
+- Automatic reconnection with exponential backoff.
+- Seamless background batch processing.
+
 ## 0.1.0
 
 ### Features
