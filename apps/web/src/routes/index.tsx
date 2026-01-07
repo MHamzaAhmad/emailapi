@@ -156,11 +156,11 @@ function LandingContent() {
         <section className="relative px-4 sm:px-6 pt-32 sm:pt-24 pb-16 sm:pb-20 overflow-hidden border-b border-dashed border-border/40">
           <div className="mx-auto max-w-4xl text-center">
             <h1 className="mb-6 text-4xl sm:text-5xl md:text-7xl font-bold tracking-tighter leading-[1.1] text-foreground">
-              Simple. Performant. <br /> <span className="text-muted-foreground/40 font-medium">Privacy Focused.</span>
+              The Simplest API for <br /> <span className="text-muted-foreground/40 font-medium">Inbound & Outbound Email.</span>
             </h1>
             <p className="mx-auto mb-10 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl font-medium px-4">
-              Enterprise-grade email infrastructure for modern engineering teams. <br className="hidden sm:block" />
-              Pay only for what you use. <span className="text-foreground">$0.25 per 1,000 emails</span>.
+              Stop paying per domain. Get unlimited domains and volume-only pricing at just <span className="text-foreground">$0.25 per 1,000 emails</span>.
+              We solve the complexity of email infrastructure so you can focus on building.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16 sm:mb-24 px-4 w-full">
@@ -191,55 +191,16 @@ function LandingContent() {
                     label: "TypeScript",
                     value: "ts",
                     language: "typescript",
-                    content: `import { createClient } from 'simpleemailapi-sdk'
-
-const client = createClient({ apiKey: 'sea_live_...' })
-
-// Send an email
-await client.send({
-  from: 'hello@yourapp.com',
-  to: ['user@example.com'],
-  subject: 'Welcome!',
-  body: 'Thanks for signing up.'
-})
-
-// Listen for replies
-client.onReceive({
-  onReplied: (reply) => console.log('New reply:', reply.body)
-})`
                   },
                   {
                     label: "cURL",
                     value: "curl",
                     language: "bash",
-                    content: `curl -X POST https://api.simpleemailapi.dev/v1/send \\
-  -H "Authorization: Bearer sea_live_..." \\
-  -d '{
-    "from": "updates@app.com",
-    "to": ["user@example.com"],
-    "subject": "Welcome!",
-    "body": "Thanks for signing up."
-  }'`
                   },
                   {
                     label: "Go",
                     value: "go",
                     language: "go",
-                    content: `package main
-
-import "github.com/simpleemailapi/go-sdk"
-
-func main() {
-  client := simpleemailapi.NewClient("sea_live_...")
-
-  // Send Email
-  client.Send(&simpleemailapi.Message{
-    From:    "updates@app.com",
-    To:      []string{"user@example.com"},
-    Subject: "Welcome!",
-    Body:    "Thanks for signing up.",
-  })
-}`
                   }
                 ]}
               />

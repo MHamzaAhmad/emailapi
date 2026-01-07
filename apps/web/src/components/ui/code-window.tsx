@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CodeWindowProps {
@@ -10,21 +8,11 @@ interface CodeWindowProps {
         label: string;
         value: string;
         language: "typescript" | "bash" | "go" | "json";
-        content: string;
     }[];
 }
 
 export function CodeWindow({ className, tabs }: CodeWindowProps) {
     const [activeTab, setActiveTab] = useState(tabs[0].value);
-    const [copied, setCopied] = useState(false);
-
-    const activeContent = tabs.find((t) => t.value === activeTab)?.content || "";
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(activeContent);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
 
     return (
         <TooltipProvider delayDuration={100}>
@@ -52,25 +40,13 @@ export function CodeWindow({ className, tabs }: CodeWindowProps) {
                             </button>
                         ))}
                     </div>
-
-                    <button
-                        onClick={handleCopy}
-                        className="h-6 w-6 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                        title="Copy code"
-                    >
-                        <HugeiconsIcon
-                            icon={copied ? Tick02Icon : Copy01Icon}
-                            size={12}
-                            className={copied ? "text-emerald-500" : ""}
-                        />
-                    </button>
                 </div>
 
                 {/* Code Content Area */}
                 <div className="relative bg-background/50 p-6">
                     <div className="font-mono text-xs leading-relaxed overflow-x-auto whitespace-pre">
                         <pre className="text-muted-foreground/90">
-                            <RichCodeRenderer content={activeContent} language={activeTab} />
+                            <RichCodeRenderer language={activeTab} />
                         </pre>
                     </div>
                 </div>
@@ -80,13 +56,13 @@ export function CodeWindow({ className, tabs }: CodeWindowProps) {
 }
 
 // Custom High-Fidelity Tokenizer for the Landing Page demo
-function RichCodeRenderer({ content, language }: { content: string; language: string }) {
+function RichCodeRenderer({ language }: { language: string }) {
     if (language === "ts" || language === "typescript") {
         return (
             <span className="text-foreground/80">
-                <Keyword>import</Keyword> <Punctuation>{"{"}</Punctuation> <HoverFunction name="createClient">createClient</HoverFunction> <Punctuation>{"}"}</Punctuation> <Keyword>from</Keyword> <String>'simpleemailapi-sdk'</String>
+                <Keyword>import</Keyword> <Punctuation>{"{"}</Punctuation> <HoverFunction name="createClient">createClient</HoverFunction> <Punctuation>{"}"}</Punctuation> <Keyword>from</Keyword> <String>'simpleemailapi'</String>
                 {"\n\n"}
-                <Keyword>const</Keyword> client <Operator>=</Operator> <HoverFunction name="createClient">createClient</HoverFunction><Punctuation>({"{"}</Punctuation> apiKey<Punctuation>:</Punctuation> <String>'em_...'</String> <Punctuation>{"}"})</Punctuation>
+                <Keyword>const</Keyword> client <Operator>=</Operator> <HoverFunction name="createClient">createClient</HoverFunction><Punctuation>({"{"}</Punctuation> apiKey<Punctuation>:</Punctuation> <String>'sea_live_...'</String> <Punctuation>{"}"})</Punctuation>
                 {"\n\n"}
                 <Comment>// Send an email</Comment>
                 {"\n"}
@@ -164,28 +140,6 @@ function RichCodeRenderer({ content, language }: { content: string; language: st
             </span>
         )
     }
-
-    return <SimpleCodeRenderer content={content} />;
-}
-
-// Fallback renderer for other languages (Bash, Go, etc)
-function SimpleCodeRenderer({ content }: { content: string }) {
-    const tokens = content.split(/(\s+|[(){}[\]:,="'`])/);
-    return (
-        <>
-            {tokens.map((token, i) => {
-                let color = "text-foreground/80";
-                if (["const", "import", "from", "await", "function", "return", "package", "func", "type", "struct", "if", "else", "var", "curl"].includes(token)) color = "text-primary font-bold";
-                else if (["true", "false", "null", "nil"].includes(token) || !isNaN(Number(token))) color = "text-foreground font-semibold";
-                else if (token.startsWith('"') || token.startsWith("'") || token.startsWith("`")) color = "text-foreground/90";
-                else if (token.match(/^[a-zA-Z]+\(/)) color = "text-foreground font-medium";
-                else if (token.startsWith("-") && token.length > 1) color = "text-muted-foreground/80"; // args
-                else if (token.startsWith("//")) color = "text-muted-foreground/50 italic";
-
-                return <span key={i} className={color}>{token}</span>;
-            })}
-        </>
-    )
 }
 
 // Token Components for Consistent Colors - Aligned with "Serious SaaS" Theme
