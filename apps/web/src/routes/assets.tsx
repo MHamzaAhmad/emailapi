@@ -13,7 +13,7 @@ export const Route = createFileRoute('/assets')({
     component: AssetsPage,
 })
 
-type AssetType = 'logo' | 'icon' | 'header'
+type AssetType = 'logo' | 'icon' | 'header' | 'bio'
 type PlatformPreset = 'twitter' | 'linkedin_profile' | 'linkedin_company' | 'open_graph' | 'custom'
 type LogoSymbol = 'flow' | 'exchange' | 'plane' | 'bolt' | 'blueprint'
 type HeaderStyle = 'minimal' | 'gradient' | 'developer'
@@ -46,6 +46,10 @@ function AssetsPage() {
     const [showIcon, setShowIcon] = useState(true)
 
     const svgRef = useRef<SVGSVGElement>(null)
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text)
+    }
 
     // Update dimensions when preset changes
     useEffect(() => {
@@ -168,10 +172,11 @@ function AssetsPage() {
                         <div className="space-y-3">
                             <Label>Asset Type</Label>
                             <Tabs value={assetType} onValueChange={(v) => setAssetType(v as any)} className="w-full">
-                                <TabsList className="w-full grid grid-cols-3">
+                                <TabsList className="w-full grid grid-cols-4">
                                     <TabsTrigger value="logo">Logo</TabsTrigger>
                                     <TabsTrigger value="icon">Icon</TabsTrigger>
                                     <TabsTrigger value="header">Header</TabsTrigger>
+                                    <TabsTrigger value="bio">Bio</TabsTrigger>
                                 </TabsList>
                             </Tabs>
                         </div>
@@ -304,120 +309,166 @@ function AssetsPage() {
                     />
 
                     <div className="relative z-10 shadow-2xl transition-all duration-300" style={{ maxWidth: '100%', maxHeight: '100%' }}>
-                        {/* SVG RENDERER */}
-                        <svg
-                            ref={svgRef}
-                            width={width}
-                            height={height}
-                            viewBox={`0 0 ${width} ${height}`}
-                            xmlns="http://www.w3.org/2000/svg"
-                            style={{
-                                width: assetType === 'icon' ? 300 : (width > 800 ? '100%' : width),
-                                height: 'auto',
-                                maxWidth: '100%'
-                            }}
-                        >
-                            {/* Background */}
-                            <rect width="100%" height="100%" fill={bgColor} />
+                        {assetType === 'bio' ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+                                {/* Twitter Bio Card */}
+                                <div className="bg-card border border-border/40 p-6 rounded-xl space-y-4 shadow-lg">
+                                    <div className="flex items-center justify-between">
+                                        <div className="font-bold text-lg flex items-center gap-2">
+                                            <HugeiconsIcon icon={PackageIcon} size={20} />
+                                            Twitter / X Bio
+                                        </div>
+                                        <Button size="sm" variant="outline" onClick={() => copyToClipboard("The simplest API to send & receive emails. Unlimited domains, affordable pricing. Building for developers. ⚡️")}>
+                                            Copy
+                                        </Button>
+                                    </div>
+                                    <div className="p-4 bg-muted/30 rounded-lg text-sm font-medium leading-relaxed">
+                                        The simplest API to send & receive emails. Unlimited domains, affordable pricing. Building for developers. ⚡️
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        Short, punchy, highlights key value props.
+                                    </div>
+                                </div>
 
-                            {/* Styles Backgrounds */}
-                            {assetType === 'header' && headerStyle === 'gradient' && (
-                                <g>
-                                    <defs>
-                                        <radialGradient id="glow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                                            <stop offset="0%" stopColor={fgColor} stopOpacity="0.15" />
-                                            <stop offset="100%" stopColor={fgColor} stopOpacity="0" />
-                                        </radialGradient>
-                                    </defs>
-                                    <rect width="100%" height="100%" fill="url(#glow)" />
-                                </g>
-                            )}
+                                {/* LinkedIn Bio Card */}
+                                <div className="bg-card border border-border/40 p-6 rounded-xl space-y-4 shadow-lg">
+                                    <div className="flex items-center justify-between">
+                                        <div className="font-bold text-lg flex items-center gap-2">
+                                            <HugeiconsIcon icon={PackageIcon} size={20} />
+                                            LinkedIn Bio
+                                        </div>
+                                        <Button size="sm" variant="outline" onClick={() => copyToClipboard("Stop overpaying for email APIs. SimpleEmailAPI gives you full control with unlimited domains and developer-first pricing.\n\nSend and receive emails with a simple, typed SDK. Built for modern apps.\n\n#DeveloperTools #EmailAPI #IndieHacker")}>
+                                            Copy
+                                        </Button>
+                                    </div>
+                                    <div className="p-4 bg-muted/30 rounded-lg text-sm font-medium leading-relaxed whitespace-pre-wrap">
+                                        Stop overpaying for email APIs. SimpleEmailAPI gives you full control with unlimited domains and developer-first pricing.
+                                        <br /><br />
+                                        Send and receive emails with a simple, typed SDK. Built for modern apps.
+                                        <br /><br />
+                                        #DeveloperTools #EmailAPI #IndieHacker
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        Professional story-focused format.
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            /* SVG RENDERER */
+                            <svg
+                                ref={svgRef}
+                                width={width}
+                                height={height}
+                                viewBox={`0 0 ${width} ${height}`}
+                                xmlns="http://www.w3.org/2000/svg"
+                                style={{
+                                    width: assetType === 'icon' ? 300 : (width > 800 ? '100%' : width),
+                                    height: 'auto',
+                                    maxWidth: '100%'
+                                }}
+                            >
+                                {/* Background */}
+                                <rect width="100%" height="100%" fill={bgColor} />
 
-                            {assetType === 'header' && headerStyle === 'minimal' && showGrid && (
-                                <g opacity="0.1">
-                                    <defs>
-                                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke={fgColor} strokeWidth="1" />
-                                        </pattern>
-                                    </defs>
-                                    <rect width="100%" height="100%" fill="url(#grid)" />
-                                </g>
-                            )}
+                                {/* Styles Backgrounds */}
+                                {assetType === 'header' && headerStyle === 'gradient' && (
+                                    <g>
+                                        <defs>
+                                            <radialGradient id="glow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                                                <stop offset="0%" stopColor={fgColor} stopOpacity="0.15" />
+                                                <stop offset="100%" stopColor={fgColor} stopOpacity="0" />
+                                            </radialGradient>
+                                        </defs>
+                                        <rect width="100%" height="100%" fill="url(#glow)" />
+                                    </g>
+                                )}
 
-                            {assetType === 'header' && headerStyle === 'developer' && (
-                                <g
-                                    opacity={1}
-                                    transform={`translate(${width * 0.52}, ${height * 0.5 - (250 * Math.min(width / 1500, height / 750))}) scale(${Math.min(width / 1500, height / 750)})`}
-                                >
-                                    <rect x="-20" y="-20" width="700" height="500" rx="12" fill={fgColor} opacity="0.05" />
-                                    <g transform="translate(20, 30)">
-                                        <circle cx="0" cy="0" r="6" fill="#FF5F56" />
-                                        <circle cx="20" cy="0" r="6" fill="#FFBD2E" />
-                                        <circle cx="40" cy="0" r="6" fill="#27C93F" />
+                                {assetType === 'header' && headerStyle === 'minimal' && showGrid && (
+                                    <g opacity="0.1">
+                                        <defs>
+                                            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                                <path d="M 40 0 L 0 0 0 40" fill="none" stroke={fgColor} strokeWidth="1" />
+                                            </pattern>
+                                        </defs>
+                                        <rect width="100%" height="100%" fill="url(#grid)" />
+                                    </g>
+                                )}
+
+                                {assetType === 'header' && headerStyle === 'developer' && (
+                                    <g
+                                        opacity={1}
+                                        transform={`translate(${width * 0.52}, ${height * 0.5 - (250 * Math.min(width / 1500, height / 750))}) scale(${Math.min(width / 1500, height / 750)})`}
+                                    >
+                                        <rect x="-20" y="-20" width="700" height="500" rx="12" fill={fgColor} opacity="0.05" />
+                                        <g transform="translate(20, 30)">
+                                            <circle cx="0" cy="0" r="6" fill="#FF5F56" />
+                                            <circle cx="20" cy="0" r="6" fill="#FFBD2E" />
+                                            <circle cx="40" cy="0" r="6" fill="#27C93F" />
+                                        </g>
+
+                                        <text x="0" y="80" fontFamily="Monaco, monospace" fontSize="20" fill={sh.plain} fontWeight="bold">
+                                            <tspan x="0" dy="0">&gt; npm i simpleemailapi</tspan>
+                                        </text>
+
+                                        <text x="0" y="140" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
+                                            <tspan x="0" dy="0" fill={sh.keyword}>import</tspan> {`{`} <tspan fill={sh.func}>createClient</tspan> {`}`} <tspan fill={sh.keyword}>from</tspan> <tspan fill={sh.string}>'simpleemailapi'</tspan>
+                                        </text>
+                                        <text x="0" y="180" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
+                                            <tspan x="0" dy="0" fill={sh.keyword}>const</tspan> client = <tspan fill={sh.func}>createClient</tspan>(...)
+                                        </text>
+
+                                        <text x="0" y="240" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
+                                            <tspan x="0" dy="0" fill={sh.keyword}>await</tspan> client.<tspan fill={sh.func}>send</tspan>({`{`} to: <tspan fill={sh.string}>'user@ex.com'</tspan>, body: ... {`}`})
+                                        </text>
+
+                                        <text x="0" y="300" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
+                                            client.<tspan fill={sh.func}>onReceive</tspan>({`{`}
+                                        </text>
+                                        <text x="30" y="330" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
+                                            <tspan fill={sh.func}>onReplied</tspan>: (email) ={`>`} {`{`}
+                                        </text>
+                                        <text x="60" y="360" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
+                                            console.<tspan fill={sh.func}>log</tspan>(<tspan fill={sh.string}>'New reply:'</tspan>, email)
+                                        </text>
+                                        <text x="30" y="390" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
+                                            {`}`},
+                                        </text>
+                                        <text x="0" y="420" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
+                                            {`}`})
+                                        </text>
+                                    </g>
+                                )}
+
+                                {/* Content Group - Centered */}
+                                <g transform={`translate(${assetType === 'header' && headerStyle === 'developer' ? width * 0.25 : width / 2}, ${height / 2}) scale(${assetType === 'header' && headerStyle === 'developer' ? 0.95 : 1})`}>
+                                    <g transform={`translate(0, ${showTagline && assetType === 'header' ? -25 : 0})`}>
+                                        <LogoContent
+                                            symbol={symbol}
+                                            fgColor={fgColor}
+                                            showIcon={showIcon}
+                                            showText={showText}
+                                            layout={assetType === 'icon' ? 'stacked' : 'horizontal'}
+                                            theme={theme}
+                                        />
                                     </g>
 
-                                    <text x="0" y="80" fontFamily="Monaco, monospace" fontSize="20" fill={sh.plain} fontWeight="bold">
-                                        <tspan x="0" dy="0">&gt; npm i simpleemailapi</tspan>
-                                    </text>
-
-                                    <text x="0" y="140" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
-                                        <tspan x="0" dy="0" fill={sh.keyword}>import</tspan> {`{`} <tspan fill={sh.func}>createClient</tspan> {`}`} <tspan fill={sh.keyword}>from</tspan> <tspan fill={sh.string}>'simpleemailapi'</tspan>
-                                    </text>
-                                    <text x="0" y="180" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
-                                        <tspan x="0" dy="0" fill={sh.keyword}>const</tspan> client = <tspan fill={sh.func}>createClient</tspan>(...)
-                                    </text>
-
-                                    <text x="0" y="240" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
-                                        <tspan x="0" dy="0" fill={sh.keyword}>await</tspan> client.<tspan fill={sh.func}>send</tspan>({`{`} to: <tspan fill={sh.string}>'user@ex.com'</tspan>, body: ... {`}`})
-                                    </text>
-
-                                    <text x="0" y="300" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
-                                        client.<tspan fill={sh.func}>onReceive</tspan>({`{`}
-                                    </text>
-                                    <text x="30" y="330" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
-                                        <tspan fill={sh.func}>onReplied</tspan>: (email) ={`>`} {`{`}
-                                    </text>
-                                    <text x="60" y="360" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
-                                        console.<tspan fill={sh.func}>log</tspan>(<tspan fill={sh.string}>'New reply:'</tspan>, email)
-                                    </text>
-                                    <text x="30" y="390" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
-                                        {`}`},
-                                    </text>
-                                    <text x="0" y="420" fontFamily="Monaco, monospace" fontSize="18" fill={sh.plain} style={{ whiteSpace: 'pre' }}>
-                                        {`}`})
-                                    </text>
+                                    {showTagline && assetType === 'header' && (
+                                        <text
+                                            y={60}
+                                            fill={fgColor}
+                                            opacity={0.7}
+                                            fontFamily="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+                                            fontSize={24}
+                                            fontWeight="500"
+                                            letterSpacing="-0.01em"
+                                            textAnchor="middle"
+                                        >
+                                            {tagline}
+                                        </text>
+                                    )}
                                 </g>
-                            )}
-
-                            {/* Content Group - Centered */}
-                            <g transform={`translate(${assetType === 'header' && headerStyle === 'developer' ? width * 0.25 : width / 2}, ${height / 2}) scale(${assetType === 'header' && headerStyle === 'developer' ? 0.95 : 1})`}>
-                                <g transform={`translate(0, ${showTagline && assetType === 'header' ? -25 : 0})`}>
-                                    <LogoContent
-                                        symbol={symbol}
-                                        fgColor={fgColor}
-                                        showIcon={showIcon}
-                                        showText={showText}
-                                        layout={assetType === 'icon' ? 'stacked' : 'horizontal'}
-                                        theme={theme}
-                                    />
-                                </g>
-
-                                {showTagline && assetType === 'header' && (
-                                    <text
-                                        y={60}
-                                        fill={fgColor}
-                                        opacity={0.7}
-                                        fontFamily="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-                                        fontSize={24}
-                                        fontWeight="500"
-                                        letterSpacing="-0.01em"
-                                        textAnchor="middle"
-                                    >
-                                        {tagline}
-                                    </text>
-                                )}
-                            </g>
-                        </svg>
+                            </svg>
+                        )}
                     </div>
                 </div>
             </main>
