@@ -1,13 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import { apiKeyClient } from '@/lib/connect';
 import { queryKeys } from '@/lib/queryClient';
 import type {
-    ApiKey,
+
     CreateApiKeyRequest,
     UpdateApiKeyRequest
 } from '@/generated/v1/apikey_pb';
-import { ListApiKeysResponse } from '@/generated/v1/apikey_pb';
 
 /**
  * Hook to list all API keys

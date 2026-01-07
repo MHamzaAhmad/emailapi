@@ -1,11 +1,9 @@
-import { Link } from '@tanstack/react-router'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
     PackageIcon,
     ZapIcon,
     Mail01Icon,
     Server,
-    LockKeyIcon
 } from '@hugeicons/core-free-icons'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'

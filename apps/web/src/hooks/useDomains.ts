@@ -4,7 +4,6 @@ import { queryKeys } from '@/lib/queryClient';
 import type {
     Domain,
     AddDomainRequest,
-    ListDomainsResponse,
 } from '@/types';
 
 /**

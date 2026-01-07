@@ -53,7 +53,7 @@ const colorSchemes = ['light', 'dark'];
 const MEDIA = '(prefers-color-scheme: dark)';
 const isServer = typeof window === 'undefined';
 const ThemeContext = React.createContext<UseThemeProps | undefined>(undefined);
-const defaultContext: UseThemeProps = { setTheme: (_) => {}, themes: [] };
+const defaultContext: UseThemeProps = { setTheme: (_) => { }, themes: [] };
 
 export const useTheme = () => React.useContext(ThemeContext) ?? defaultContext;
 
@@ -68,18 +68,18 @@ export const ThemeProvider = (props: ThemeProviderProps): React.ReactNode => {
 const defaultThemes = ['light', 'dark'];
 
 const Theme = ({
-                   forcedTheme,
-                   disableTransitionOnChange = false,
-                   enableSystem = true,
-                   enableColorScheme = true,
-                   storageKey = 'theme',
-                   themes = defaultThemes,
-                   defaultTheme = enableSystem ? 'system' : 'light',
-                   attribute = 'data-theme',
-                   value,
-                   children,
-                   nonce,
-               }: ThemeProviderProps) => {
+    forcedTheme,
+    disableTransitionOnChange = false,
+    enableSystem = true,
+    enableColorScheme = true,
+    storageKey = 'theme',
+    themes = defaultThemes,
+    defaultTheme = enableSystem ? 'system' : 'light',
+    attribute = 'data-theme',
+    value,
+    children,
+    nonce,
+}: ThemeProviderProps) => {
 
 
 
@@ -153,9 +153,7 @@ const Theme = ({
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
     const handleMediaQuery = React.useCallback(
-        (e: MediaQueryListEvent | MediaQueryList) => {
-            const resolved = getSystemTheme(e);
-
+        (_e: MediaQueryListEvent | MediaQueryList) => {
             if (theme === 'system' && enableSystem && !forcedTheme) {
                 applyTheme('system');
             }
@@ -229,16 +227,16 @@ const Theme = ({
 
 const ThemeScript = React.memo(
     ({
-         forcedTheme,
-         storageKey,
-         attribute,
-         enableSystem,
-         enableColorScheme,
-         defaultTheme,
-         value,
-         themes,
-         nonce,
-     }: Omit<ThemeProviderProps, 'children'> & { defaultTheme: string }) => {
+        forcedTheme,
+        storageKey,
+        attribute,
+        enableSystem,
+        enableColorScheme,
+        defaultTheme,
+        value,
+        themes,
+        nonce,
+    }: Omit<ThemeProviderProps, 'children'> & { defaultTheme: string }) => {
         const scriptArgs = JSON.stringify([
             attribute,
             storageKey,

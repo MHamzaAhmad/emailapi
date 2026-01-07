@@ -19,7 +19,6 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarGroup,
-    SidebarGroupLabel,
     SidebarGroupContent,
 } from '@/components/ui/sidebar'
 

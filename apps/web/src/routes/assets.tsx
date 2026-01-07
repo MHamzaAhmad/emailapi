@@ -476,7 +476,7 @@ function AssetsPage() {
     )
 }
 
-function LogoContent({ symbol, fgColor, showIcon, showText, layout, theme }: { symbol: LogoSymbol, fgColor: string, showIcon: boolean, showText: boolean, layout: 'horizontal' | 'stacked', theme: 'light' | 'dark' }) {
+function LogoContent({ symbol, fgColor, showIcon, showText, layout }: { symbol: LogoSymbol, fgColor: string, showIcon: boolean, showText: boolean, layout: 'horizontal' | 'stacked', theme: 'light' | 'dark' }) {
 
     // Scale factor to make things fit nicely
     const scale = layout === 'stacked' ? 4 : 2.5

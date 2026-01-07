@@ -27,13 +27,6 @@ interface MDXModule {
     }
 }
 
-// Calculate reading time based on word count
-function calculateReadingTime(content: string): string {
-    const wordsPerMinute = 200
-    const words = content.split(/\s+/).length
-    const minutes = Math.ceil(words / wordsPerMinute)
-    return `${minutes} min read`
-}
 
 // Get all blog posts metadata (sorted by date, newest first)
 export async function getAllPosts(): Promise<BlogPost[]> {

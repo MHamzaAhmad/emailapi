@@ -20,10 +20,7 @@ export function Pricing() {
         }).format(dollars)
     }
 
-    const formatLimit = (limit: bigint): string => {
-        if (limit === BigInt(-1)) return 'Unlimited'
-        return Number(limit).toLocaleString()
-    }
+
 
     if (isLoading || plans.length === 0) {
         // Fallback for SSR / loading state
