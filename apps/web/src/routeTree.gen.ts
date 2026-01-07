@@ -11,12 +11,15 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AssetsRouteImport } from './routes/assets'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AdminFlaggedRouteImport } from './routes/admin/flagged'
 import { Route as AuthedWebhooksRouteImport } from './routes/_authed/webhooks'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
@@ -35,6 +38,11 @@ const TermsRoute = TermsRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssetsRoute = AssetsRouteImport.update({
@@ -61,10 +69,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BlogRoute,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
 const AdminFlaggedRoute = AdminFlaggedRouteImport.update({
   id: '/flagged',
@@ -117,13 +135,16 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/assets': typeof AssetsRoute
+  '/blog': typeof BlogRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/webhooks': typeof AuthedWebhooksRoute
   '/admin/flagged': typeof AdminFlaggedRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/blog/': typeof BlogIndexRoute
   '/domains/$domainId': typeof AuthedDomainsDomainIdRoute
   '/settings/billing': typeof AuthedSettingsBillingRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
@@ -140,7 +161,9 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthedDashboardRoute
   '/webhooks': typeof AuthedWebhooksRoute
   '/admin/flagged': typeof AdminFlaggedRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/admin': typeof AdminIndexRoute
+  '/blog': typeof BlogIndexRoute
   '/domains/$domainId': typeof AuthedDomainsDomainIdRoute
   '/settings/billing': typeof AuthedSettingsBillingRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
@@ -154,13 +177,16 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/assets': typeof AssetsRoute
+  '/blog': typeof BlogRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/_authed/api-keys': typeof AuthedApiKeysRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/webhooks': typeof AuthedWebhooksRoute
   '/admin/flagged': typeof AdminFlaggedRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/blog/': typeof BlogIndexRoute
   '/_authed/domains/$domainId': typeof AuthedDomainsDomainIdRoute
   '/_authed/settings/billing': typeof AuthedSettingsBillingRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
@@ -174,13 +200,16 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/assets'
+    | '/blog'
     | '/privacy'
     | '/terms'
     | '/api-keys'
     | '/dashboard'
     | '/webhooks'
     | '/admin/flagged'
+    | '/blog/$slug'
     | '/admin/'
+    | '/blog/'
     | '/domains/$domainId'
     | '/settings/billing'
     | '/admin/users/$userId'
@@ -197,7 +226,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/webhooks'
     | '/admin/flagged'
+    | '/blog/$slug'
     | '/admin'
+    | '/blog'
     | '/domains/$domainId'
     | '/settings/billing'
     | '/admin/users/$userId'
@@ -210,13 +241,16 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/assets'
+    | '/blog'
     | '/privacy'
     | '/terms'
     | '/_authed/api-keys'
     | '/_authed/dashboard'
     | '/_authed/webhooks'
     | '/admin/flagged'
+    | '/blog/$slug'
     | '/admin/'
+    | '/blog/'
     | '/_authed/domains/$domainId'
     | '/_authed/settings/billing'
     | '/admin/users/$userId'
@@ -230,6 +264,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   AssetsRoute: typeof AssetsRoute
+  BlogRoute: typeof BlogRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
 }
@@ -248,6 +283,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assets': {
@@ -285,12 +327,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof BlogRoute
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/admin/flagged': {
       id: '/admin/flagged'
@@ -395,12 +451,25 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   AssetsRoute: AssetsRoute,
+  BlogRoute: BlogRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
 }

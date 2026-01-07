@@ -1,0 +1,209 @@
+---
+title: "Email Delivery Best Practices for Developers"
+description: "Learn how to maximize email deliverability with proper authentication, reputation management, and content optimization. A technical guide for developers."
+date: "2026-01-04"
+tags: ["email delivery", "email api", "deliverability"]
+slug: "email-delivery-best-practices"
+---
+
+Your email infrastructure is only as good as your deliverability rate. If emails don't reach the inbox, nothing else matters.
+
+This guide covers the technical best practices for maximizing email delivery rates.
+
+## Understanding Email Deliverability
+
+**Email deliverability** is the ability to deliver emails to recipients' inboxes. It's affected by:
+
+1. **Sender reputation** — Your IP and domain history
+2. **Authentication** — SPF, DKIM, DMARC
+3. **Content quality** — Spam triggers, formatting
+4. **Recipient engagement** — Opens, clicks, complaints
+
+Let's break down each factor.
+
+## Email Authentication: The Foundation
+
+### SPF (Sender Policy Framework)
+
+SPF tells receiving servers which IP addresses are authorized to send email for your domain.
+
+```dns
+example.com. IN TXT "v=spf1 include:_spf.simpleemailapi.dev ~all"
+```
+
+**Best practices:**
+- Keep your SPF record under 10 DNS lookups
+- Use `~all` (softfail) during testing, `-all` (hardfail) in production
+- Include all legitimate sending sources
+
+### DKIM (DomainKeys Identified Mail)
+
+DKIM adds a cryptographic signature to prove emails weren't modified in transit.
+
+```dns
+s1._domainkey.example.com. IN TXT "v=DKIM1; k=rsa; p=MIGf..."
+```
+
+**Best practices:**
+- Use 2048-bit keys (1024-bit is deprecated)
+- Rotate keys annually
+- Sign all outgoing emails
+
+### DMARC (Domain-based Message Authentication)
+
+DMARC tells receivers what to do when SPF or DKIM fails.
+
+```dns
+_dmarc.example.com. IN TXT "v=DMARC1; p=reject; rua=mailto:dmarc@example.com"
+```
+
+**Best practices:**
+- Start with `p=none` to monitor before enforcing
+- Set up aggregate reports (`rua`) to monitor issues
+- Move to `p=reject` once stable
+
+## Sender Reputation Management
+
+### IP Warming
+
+New IP addresses need to build reputation gradually. If you suddenly send 100,000 emails from a new IP, you'll get blocked.
+
+**Warming schedule example:**
+
+| Day | Emails |
+|-----|--------|
+| 1 | 100 |
+| 2 | 200 |
+| 3 | 400 |
+| 4 | 800 |
+| 5 | 1,500 |
+| ... | Double each day |
+
+When using SimpleEmailAPI, we handle IP warming automatically with our shared IP pool. For high-volume senders, we offer dedicated IPs with guided warming.
+
+### Monitor Bounce Rates
+
+**Hard bounces** (invalid addresses) hurt your reputation. Remove them immediately.
+
+**Soft bounces** (temporary issues) can be retried, but repeated soft bounces should be investigated.
+
+**Target:** Keep overall bounce rate under 2%.
+
+### Handle Spam Complaints
+
+Every spam complaint damages your reputation. Target under 0.1% complaint rate.
+
+Reduce complaints by:
+- Only emailing people who opted in
+- Making unsubscribe visible and easy
+- Sending relevant content
+
+## Content Best Practices
+
+### Avoid Spam Triggers
+
+Common spam triggers:
+- ALL CAPS SUBJECT LINES
+- Excessive punctuation!!!
+- Spammy words: "FREE", "ACT NOW", "LIMITED TIME"
+- URL shorteners (bit.ly, etc.)
+- Too many images, too little text
+
+### Use Plain Text Fallbacks
+
+Always include a plain text version alongside HTML:
+
+```typescript
+await client.send({
+  from: 'hello@yourapp.com',
+  to: ['user@example.com'],
+  subject: 'Your Weekly Summary',
+  body: htmlContent,
+  text: plainTextContent // Always include this
+})
+```
+
+### Proper HTML Structure
+
+- Include DOCTYPE declaration
+- Use table-based layouts for compatibility
+- Inline CSS styles
+- Keep total email size under 102KB
+
+## List Hygiene
+
+### Double Opt-In
+
+Require confirmation before adding to your list. This ensures:
+- Valid email addresses
+- Confirmed consent
+- Higher engagement rates
+
+### Regular Cleaning
+
+Remove inactive subscribers who haven't engaged in 6+ months. They hurt your engagement metrics and deliverability.
+
+### Sunset Policies
+
+Create automatic policies to handle unengaged users:
+1. User hasn't opened in 3 months → Send re-engagement email
+2. Still no engagement after re-engagement → Move to suppression list
+
+## Monitoring and Alerts
+
+### Key Metrics to Track
+
+| Metric | Target | Alert Threshold |
+|--------|--------|----------------|
+| Delivery rate | 98%+ | Below 95% |
+| Bounce rate | Below 2% | Above 5% |
+| Spam complaint rate | Below 0.1% | Above 0.2% |
+| Open rate | Varies | 20% drop from baseline |
+
+### Use Webhooks
+
+Set up real-time notifications for critical events:
+
+```typescript
+// Configure webhooks in your dashboard
+// Or handle events programmatically
+
+client.onReceive({
+  onBounced: (event) => {
+    // Remove from active list
+    removeFromList(event.recipientEmail)
+  },
+  onComplained: (event) => {
+    // Immediately suppress
+    addToSuppressionList(event.recipientEmail)
+  }
+})
+```
+
+## Testing Before Sending
+
+### Email Preview Tools
+
+Test your emails across different clients:
+- Desktop: Outlook, Apple Mail, Thunderbird
+- Web: Gmail, Yahoo, Outlook.com
+- Mobile: iOS Mail, Gmail app
+
+### Spam Score Testing
+
+Send to spam testing tools before launching campaigns to check your spam score.
+
+### Seed Lists
+
+Send to seed addresses at major ISPs to verify inbox placement.
+
+## Conclusion
+
+Email deliverability is technical but manageable. Focus on:
+
+1. **Authentication** — SPF, DKIM, DMARC properly configured
+2. **Reputation** — Monitor bounces and complaints
+3. **Content** — Avoid spam triggers
+4. **Hygiene** — Clean lists regularly
+
+With SimpleEmailAPI, we handle many of these concerns automatically — including authentication setup, bounce handling, and reputation monitoring. You focus on your product; we focus on getting your emails delivered.

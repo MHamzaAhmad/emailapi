@@ -1,0 +1,138 @@
+---
+title: "Resend Alternative for Indie Hackers and Startups"
+description: "Compare Resend alternatives for indie hackers. Learn why unlimited domains and pay-per-email pricing matter for your projects."
+date: "2026-01-05"
+tags: ["resend alternative", "email api", "indie hacker"]
+slug: "resend-alternative-indie-hackers"
+---
+
+Resend has gained popularity among developers for its clean API and developer experience. But for indie hackers running multiple projects, there are limitations worth considering.
+
+Let's explore what makes a great Resend alternative and which options work best for indie hackers and startups.
+
+## Why Indie Hackers Look for Resend Alternatives
+
+### Multiple Projects Problem
+
+Most email providers, including Resend, limit domains on lower-tier plans. If you're an indie hacker experimenting with multiple products, this becomes a blocker.
+
+You launch Product A with verified email delivery. Then you want to launch Product B. With per-domain limits, you have to:
+- Pay for a higher tier
+- Remove Product A's domain
+- Use hacky subdomain workarounds
+
+None of these options are ideal.
+
+### Budget Constraints
+
+Indie hackers often operate on tight budgets. Paying $30-100/month for email infrastructure eats into your runway before you've even validated the product.
+
+### Simplicity Over Features
+
+Most indie projects don't need marketing automation, audience segmentation, or campaign management. We just need to send transactional emails reliably.
+
+## What Indie Hackers Need
+
+Based on our experience and feedback from hundreds of indie hackers, here's what matters:
+
+1. **Unlimited domains** — No per-domain fees
+2. **Pay-per-email** — Only pay for what you send
+3. **Free tier** — Testing shouldn't cost money
+4. **Quick integration** — Under 10 minutes
+5. **Reliable delivery** — Emails must reach inbox
+6. **No contracts** — Cancel anytime
+
+## SimpleEmailAPI: Built for Indie Hackers
+
+I built SimpleEmailAPI because I faced the same frustrations. As an indie hacker with multiple side projects, I was tired of:
+- Paying per domain
+- Killing email for old projects to launch new ones
+- Complex pricing structures
+
+### Unlimited Domains
+
+Add as many domains as you need. Running 10 side projects? Add 10 domains. No extra cost.
+
+### True Pay-Per-Email
+
+Only pay for emails you actually send:
+- Free tier: 1,000 emails/month
+- Paid: $0.25 per 1,000 emails
+
+No minimum spend. No monthly commitment.
+
+### 10-Minute Integration
+
+```typescript
+import { createClient } from 'simpleemailapi-sdk'
+
+const client = createClient({ apiKey: 'sea_live_...' })
+
+// That's really all you need
+await client.send({
+  from: 'hello@myproject.com',
+  to: ['user@example.com'],
+  subject: 'Welcome!',
+  body: 'Thanks for signing up!'
+})
+```
+
+### Handle Inbound Emails Too
+
+Building a helpdesk? Customer support tool? Process incoming emails easily:
+
+```typescript
+client.onReceive({
+  onReplied: (email) => {
+    // Handle customer replies
+    createTicket(email.from, email.body)
+  }
+})
+```
+
+## Comparison: SimpleEmailAPI vs Resend
+
+| Feature | Resend | SimpleEmailAPI |
+|---------|--------|----------------|
+| Free tier emails | 3,000/month | 1,000/month |
+| Price per 1,000 | $0.40 | $0.25 |
+| Domains on free tier | 1 | Unlimited |
+| Inbound email support | No | Yes |
+| Email storage | Yes | No (privacy-first) |
+
+## Real Talk: When to Use Resend
+
+Resend is a great product. Choose Resend if you:
+- Only have one project
+- Prefer React Email integration
+- Need their specific feature set
+
+Choose SimpleEmailAPI if you:
+- Run multiple projects
+- Want unlimited domains
+- Care about privacy (no email storage)
+- Need inbound email processing
+- Want lower per-email costs
+
+## Migration is Easy
+
+Switching from Resend takes about 15 minutes:
+
+1. Sign up for SimpleEmailAPI
+2. Add and verify your domains
+3. Update your API calls (similar structure)
+4. Update DNS records
+
+The API is intentionally similar to make migration straightforward.
+
+## Conclusion
+
+As an indie hacker, your email infrastructure should support your workflow, not constrain it. Look for providers that:
+
+- Don't charge per domain
+- Offer pay-per-email pricing
+- Get out of your way
+
+SimpleEmailAPI was built by an indie hacker, for indie hackers. We understand the multi-project lifestyle and priced accordingly.
+
+Try the free tier with unlimited domains — no credit card required.

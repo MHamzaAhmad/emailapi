@@ -1,0 +1,153 @@
+---
+title: "Transactional vs Marketing Emails: What's the Difference?"
+description: "Understand the key differences between transactional and marketing emails, why they matter for deliverability, and how to handle each type effectively."
+date: "2026-01-07"
+tags: ["transactional email", "email delivery", "email api"]
+slug: "transactional-vs-marketing-emails"
+---
+
+Not all emails are created equal. Understanding the difference between transactional and marketing emails is crucial for maintaining high deliverability and keeping your users happy.
+
+## What Are Transactional Emails?
+
+**Transactional emails** are triggered by a user action or system event. They contain information that the recipient needs or expects. These emails have high open rates because the user is actively waiting for them.
+
+### Examples of Transactional Emails
+
+- **Password resets** — User clicked "Forgot Password"
+- **Order confirmations** — User completed a purchase
+- **Account verification** — User signed up
+- **Receipt emails** — Payment was processed
+- **Shipping notifications** — Order status changed
+- **Security alerts** — Suspicious login detected
+
+### Key Characteristics
+
+1. **Triggered by user action** — Not sent in bulk
+2. **Expected immediately** — Delays cause frustration
+3. **Critical information** — User needs this to take action
+4. **One-to-one communication** — Single recipient
+5. **No unsubscribe required** — User can't opt out of password resets
+
+## What Are Marketing Emails?
+
+**Marketing emails** are promotional messages sent to grow your business. They're typically sent to lists of subscribers who have opted in to receive updates.
+
+### Examples of Marketing Emails
+
+- Newsletters
+- Product announcements
+- Promotional offers
+- Event invitations
+- Re-engagement campaigns
+- Seasonal sales
+
+### Key Characteristics
+
+1. **Sent in bulk** — Same message to many recipients
+2. **Promotional intent** — Goal is conversion
+3. **Requires consent** — Must have opt-in
+4. **Unsubscribe required** — CAN-SPAM/GDPR compliance
+5. **Flexible timing** — Can be scheduled
+
+## Why the Distinction Matters
+
+### Deliverability Impact
+
+ISPs (Gmail, Outlook, etc.) treat these email types differently. Sending marketing emails through the same infrastructure as transactional emails can hurt your deliverability.
+
+| Aspect | Transactional | Marketing |
+|--------|--------------|-----------|
+| Expected open rate | 60-80% | 15-25% |
+| Spam complaints | Very low | Higher |
+| Reputation impact | Critical | Isolated |
+
+### Legal Requirements
+
+Transactional emails have different legal requirements than marketing emails:
+
+- **Transactional**: No unsubscribe required, can be sent without prior consent
+- **Marketing**: Must include unsubscribe link, requires explicit opt-in
+
+## Best Practices for Transactional Emails
+
+### 1. Keep Them Focused
+
+Don't add marketing content to transactional emails. A password reset email should contain exactly what's needed and nothing more.
+
+```typescript
+// Good - focused transactional email
+await client.send({
+  from: 'security@yourapp.com',
+  to: ['user@example.com'],
+  subject: 'Reset Your Password',
+  body: `Click here to reset your password: ${resetLink}
+  
+This link expires in 1 hour.`
+})
+```
+
+### 2. Send Immediately
+
+Transactional emails should be sent within seconds, not minutes. Use an email API with low latency.
+
+### 3. Use a Separate Infrastructure
+
+Keep transactional emails on a separate sending domain or IP from marketing emails. This protects your critical emails from reputation issues.
+
+### 4. Monitor Delivery Rates
+
+Track delivery, open, and bounce rates. A drop in transactional email delivery is a critical issue.
+
+## Best Practices for Marketing Emails
+
+### 1. Get Explicit Consent
+
+Always use double opt-in when possible. Never add users to marketing lists without permission.
+
+### 2. Make Unsubscribing Easy
+
+A one-click unsubscribe reduces spam complaints. Don't hide the unsubscribe link.
+
+### 3. Segment Your Lists
+
+Send relevant content to specific segments rather than blasting everyone.
+
+### 4. Respect Frequency
+
+Too many emails lead to unsubscribes and spam complaints.
+
+## Using SimpleEmailAPI for Both Types
+
+SimpleEmailAPI handles both transactional and bulk emails with the same simple interface:
+
+```typescript
+// Transactional email
+await client.send({
+  from: 'orders@yourapp.com',
+  to: ['customer@example.com'],
+  subject: 'Order #12345 Confirmed',
+  body: orderConfirmationHtml
+})
+
+// Bulk email (same API)
+await client.send({
+  from: 'newsletter@yourapp.com',
+  to: subscriberEmails,
+  subject: 'This Week's Product Updates',
+  body: newsletterHtml
+})
+```
+
+## Conclusion
+
+Understanding the difference between transactional and marketing emails helps you:
+
+- Maintain high deliverability
+- Stay legally compliant
+- Provide better user experience
+- Protect your sender reputation
+
+For transactional emails, prioritize speed and reliability. For marketing emails, focus on consent and relevance.
+
+Both types are essential for a successful product — but they require different approaches and, ideally, separate sending infrastructure.

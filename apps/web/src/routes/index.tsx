@@ -317,7 +317,9 @@ func main() {
           </div>
 
           <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Documentation</a>
+            <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Docs</a>
+            <span className="text-border/40">|</span>
+            <Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link>
             <span className="text-border/40">|</span>
             <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
             <span className="text-border/40">|</span>
