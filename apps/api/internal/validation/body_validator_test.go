@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/external/webrisk"
 	webriskMocks "github.com/emailapi/api/internal/external/webrisk/mocks"
 	redisMocks "github.com/emailapi/api/internal/repository/redis/mocks"
@@ -95,7 +96,7 @@ func TestBodyValidator_ValidateURLs(t *testing.T) {
 		ve, ok := err.(*ValidationErrors)
 		require.True(t, ok)
 		assert.Len(t, ve.Errors, 1)
-		assert.Equal(t, ErrCodeUnsafeURL, ve.Errors[0].Code)
+		assert.Equal(t, v1.ErrorCode_ERROR_CODE_UNSAFE_URL, ve.Errors[0].Code)
 	})
 
 	t.Run("cache error falls back to API check", func(t *testing.T) {

@@ -3,49 +3,14 @@ package validation
 import (
 	"fmt"
 	"strings"
+
+	"github.com/emailapi/api/internal/domain"
 )
-
-// ValidationErrorCode represents the type of validation error.
-type ValidationErrorCode string
-
-const (
-	// Syntax errors
-	ErrCodeInvalidSyntax ValidationErrorCode = "INVALID_SYNTAX"
-	ErrCodeInvalidDomain ValidationErrorCode = "INVALID_DOMAIN"
-
-	// MX record errors
-	ErrCodeNoMXRecords ValidationErrorCode = "NO_MX_RECORDS"
-
-	// Domain ownership errors
-	ErrCodeDomainNotOwned    ValidationErrorCode = "DOMAIN_NOT_OWNED"
-	ErrCodeDomainNotVerified ValidationErrorCode = "DOMAIN_NOT_VERIFIED"
-
-	// Suppression errors
-	ErrCodeEmailSuppressed ValidationErrorCode = "EMAIL_SUPPRESSED"
-
-	// Content safety errors
-	ErrCodeUnsafeURL ValidationErrorCode = "UNSAFE_URL"
-
-	// Sandbox restriction errors
-	ErrCodeSandboxRestriction ValidationErrorCode = "SANDBOX_RESTRICTION"
-)
-
-// ValidationError represents a single validation error.
-type ValidationError struct {
-	Field   string              `json:"field"`
-	Code    ValidationErrorCode `json:"code"`
-	Message string              `json:"message"`
-	// Suggestion provides a corrected value (e.g., for typo detection)
-	Suggestion string `json:"suggestion,omitempty"`
-}
-
-func (e *ValidationError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Field, e.Message)
-}
 
 // ValidationErrors holds multiple validation errors.
+// This allows collecting all validation failures before returning.
 type ValidationErrors struct {
-	Errors []*ValidationError `json:"errors"`
+	Errors []*domain.AppError `json:"errors"`
 }
 
 func (ve *ValidationErrors) Error() string {
@@ -65,79 +30,86 @@ func (ve *ValidationErrors) HasErrors() bool {
 }
 
 // Add appends a validation error.
-func (ve *ValidationErrors) Add(err *ValidationError) {
+func (ve *ValidationErrors) Add(err *domain.AppError) {
 	ve.Errors = append(ve.Errors, err)
+}
+
+// First returns the first error, or nil if empty.
+func (ve *ValidationErrors) First() *domain.AppError {
+	if len(ve.Errors) == 0 {
+		return nil
+	}
+	return ve.Errors[0]
 }
 
 // NewValidationErrors creates a new empty ValidationErrors.
 func NewValidationErrors() *ValidationErrors {
-	return &ValidationErrors{Errors: make([]*ValidationError, 0)}
+	return &ValidationErrors{Errors: make([]*domain.AppError, 0)}
 }
 
+// === Error Factory Functions ===
+// These create domain.AppError instances with appropriate codes.
+
 // InvalidSyntaxError creates a syntax validation error.
-func InvalidSyntaxError(field, email string) *ValidationError {
-	return &ValidationError{
-		Field:   field,
-		Code:    ErrCodeInvalidSyntax,
-		Message: fmt.Sprintf("'%s' is not a valid email address", email),
-	}
+func InvalidSyntaxError(field, email string) *domain.AppError {
+	return domain.ErrInvalidEmailSyntax.Clone().
+		WithField(field).
+		WithMeta("email", email)
 }
 
 // NoMXRecordsError creates an MX records validation error.
-func NoMXRecordsError(field, email, domain string) *ValidationError {
-	return &ValidationError{
-		Field:   field,
-		Code:    ErrCodeNoMXRecords,
-		Message: fmt.Sprintf("domain '%s' has no MX records - cannot receive emails", domain),
-	}
+func NoMXRecordsError(field, email, domainName string) *domain.AppError {
+	return domain.ErrNoMXRecords.Clone().
+		WithField(field).
+		WithMeta("email", email).
+		WithMeta("domain", domainName)
 }
 
 // DomainNotOwnedError creates a domain ownership error.
-func DomainNotOwnedError(field, domain string) *ValidationError {
-	return &ValidationError{
-		Field:   field,
-		Code:    ErrCodeDomainNotOwned,
-		Message: fmt.Sprintf("domain '%s' is not registered with your account", domain),
-	}
+func DomainNotOwnedError(field, domainName string) *domain.AppError {
+	return domain.ErrDomainNotOwned.Clone().
+		WithField(field).
+		WithMeta("domain", domainName)
 }
 
 // DomainNotVerifiedError creates a domain verification error.
-func DomainNotVerifiedError(field, domain string) *ValidationError {
-	return &ValidationError{
-		Field:   field,
-		Code:    ErrCodeDomainNotVerified,
-		Message: fmt.Sprintf("domain '%s' is not verified for sending emails", domain),
-	}
+func DomainNotVerifiedError(field, domainName string) *domain.AppError {
+	return domain.ErrDomainNotVerified.Clone().
+		WithField(field).
+		WithMeta("domain", domainName)
 }
 
 // InvalidDomainWithSuggestion creates a domain error with a typo suggestion.
-func InvalidDomainWithSuggestion(field, email, suggestion string) *ValidationError {
-	return &ValidationError{
-		Field:      field,
-		Code:       ErrCodeInvalidDomain,
-		Message:    fmt.Sprintf("'%s' may have a typo in the domain", email),
-		Suggestion: suggestion,
-	}
+func InvalidDomainWithSuggestion(field, email, suggestion string) *domain.AppError {
+	return domain.ErrEmailTypoDetected.Clone().
+		WithField(field).
+		WithMeta("email", email).
+		WithMeta("suggestion", suggestion)
 }
 
 // SuppressionError creates an error for suppressed email addresses.
-func SuppressionError(field string, count int) *ValidationError {
-	msg := fmt.Sprintf("%d recipient(s) are suppressed due to previous bounces or complaints", count)
+func SuppressionError(field string, count int) *domain.AppError {
+	msg := fmt.Sprintf("%d recipient(s) suppressed", count)
 	if count == 1 {
-		msg = "recipient is suppressed due to previous bounce or complaint"
+		msg = "recipient is suppressed"
 	}
-	return &ValidationError{
-		Field:   field,
-		Code:    ErrCodeEmailSuppressed,
-		Message: msg,
-	}
+	err := domain.ErrEmailSuppressed.Clone().WithField(field)
+	err.Message = msg
+	err.Metadata = map[string]string{"count": fmt.Sprintf("%d", count)}
+	return err
 }
 
 // SandboxError creates an error for sandbox domain restrictions.
-func SandboxError(field, message string) *ValidationError {
-	return &ValidationError{
-		Field:   field,
-		Code:    ErrCodeSandboxRestriction,
-		Message: message,
-	}
+func SandboxError(field, message string) *domain.AppError {
+	err := domain.ErrSandboxRestriction.Clone().WithField(field)
+	err.Message = message
+	return err
+}
+
+// UnsafeURLError creates an error for a URL flagged as unsafe.
+func UnsafeURLError(field, urlVal, threatType string) *domain.AppError {
+	return domain.ErrUnsafeURL.Clone().
+		WithField(field).
+		WithMeta("url", urlVal).
+		WithMeta("threat_type", threatType)
 }

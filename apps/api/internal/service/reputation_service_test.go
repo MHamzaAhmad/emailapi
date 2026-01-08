@@ -65,7 +65,7 @@ func TestReputationService_CheckSendPermission(t *testing.T) {
 		}, nil)
 
 		err := svc.CheckSendPermission(ctx, "user_suspended")
-		assert.Equal(t, ErrAccountSuspended, err)
+		assert.Equal(t, domain.ErrAccountSuspended, err)
 	})
 }
 

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -15,11 +14,6 @@ import (
 	"github.com/emailapi/api/internal/worker"
 )
 
-// ErrAccountSuspended is returned when a suspended user tries to send email.
-var ErrAccountSuspended = errors.New("account suspended: please contact support")
-
-// ReputationService handles user reputation business logic.
-// Implements ReputationChecker interface for use in email validation.
 // ReputationService handles user reputation business logic.
 // Implements ReputationChecker interface for use in email validation.
 type ReputationService struct {
@@ -53,7 +47,7 @@ func (s *ReputationService) CheckSendPermission(ctx context.Context, userID stri
 		status, err := s.cache.Reputation().Get(ctx, userID)
 		if err == nil && status != nil {
 			if status.IsSuspended {
-				return ErrAccountSuspended
+				return domain.ErrAccountSuspended
 			}
 			return nil // Flagged users can send (with reduced limits)
 		}
@@ -76,7 +70,7 @@ func (s *ReputationService) CheckSendPermission(ctx context.Context, userID stri
 	}
 
 	if rep.IsSuspended {
-		return ErrAccountSuspended
+		return domain.ErrAccountSuspended
 	}
 	return nil
 }

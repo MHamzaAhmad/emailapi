@@ -67,7 +67,7 @@ func TestUnsubscribeService_ProcessUnsubscribe(t *testing.T) {
 	t.Run("invalid token", func(t *testing.T) {
 		_, err := svc.ProcessUnsubscribe(ctx, "invalid-token", domain.UnsubscribeSourceLink)
 		assert.Error(t, err)
-		assert.Equal(t, ErrInvalidToken, err)
+		assert.Equal(t, domain.ErrInvalidToken, err)
 	})
 
 	t.Run("db error", func(t *testing.T) {

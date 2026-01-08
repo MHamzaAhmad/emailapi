@@ -8,6 +8,7 @@ import (
 	emailverifier "github.com/AfterShip/email-verifier"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/repository/suppression"
 )
 
@@ -160,7 +161,7 @@ func (v *EmailValidator) validateAllAddresses(ctx context.Context, userID, from 
 	var wg sync.WaitGroup
 
 	// Helper to safely add error
-	addError := func(err *ValidationError) {
+	addError := func(err *domain.AppError) {
 		mu.Lock()
 		defer mu.Unlock()
 		errors.Add(err)
@@ -213,7 +214,7 @@ func (v *EmailValidator) validateAllAddresses(ctx context.Context, userID, from 
 }
 
 // validateSender checks if the FROM email's domain is owned and verified.
-func (v *EmailValidator) validateSender(ctx context.Context, userID, from string) *ValidationError {
+func (v *EmailValidator) validateSender(ctx context.Context, userID, from string) *domain.AppError {
 	// Extract domain from email
 	domainName := extractDomain(from)
 	if domainName == "" {
@@ -285,7 +286,7 @@ func (v *EmailValidator) validateSandboxRecipients(ctx context.Context, userID, 
 }
 
 // validateRecipient validates a recipient email address with MX cache support.
-func (v *EmailValidator) validateRecipient(ctx context.Context, email, field string) *ValidationError {
+func (v *EmailValidator) validateRecipient(ctx context.Context, email, field string) *domain.AppError {
 	// First, do quick syntax check via the verifier
 	result, err := v.verifier.Verify(email)
 	if err != nil {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
@@ -183,13 +182,4 @@ func deduplicate(urls []string) []string {
 		}
 	}
 	return result
-}
-
-// UnsafeURLError creates an error for a URL flagged as unsafe.
-func UnsafeURLError(field, urlVal, threatType string) *ValidationError {
-	return &ValidationError{
-		Field:   field,
-		Code:    ErrCodeUnsafeURL,
-		Message: fmt.Sprintf("URL '%s' is flagged as %s and cannot be included in emails", urlVal, threatType),
-	}
 }

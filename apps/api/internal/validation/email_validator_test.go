@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/validation/mocks"
 )
@@ -93,7 +94,7 @@ func TestEmailValidator_ValidateSendEmail(t *testing.T) {
 		require.Error(t, err)
 		ve, ok := err.(*ValidationErrors)
 		require.True(t, ok)
-		assert.Equal(t, ErrCodeSandboxRestriction, ve.Errors[0].Code)
+		assert.Equal(t, v1.ErrorCode_ERROR_CODE_SANDBOX_RESTRICTION, ve.Errors[0].Code)
 	})
 
 	t.Run("sandbox recipient matches user email", func(t *testing.T) {
@@ -160,7 +161,7 @@ func TestEmailValidator_ValidateSendEmail(t *testing.T) {
 		require.Error(t, err)
 		ve, ok := err.(*ValidationErrors)
 		require.True(t, ok)
-		assert.Equal(t, ErrCodeDomainNotOwned, ve.Errors[0].Code)
+		assert.Equal(t, v1.ErrorCode_ERROR_CODE_DOMAIN_NOT_OWNED, ve.Errors[0].Code)
 	})
 
 	t.Run("domain not verified for sending", func(t *testing.T) {
@@ -194,7 +195,7 @@ func TestEmailValidator_ValidateSendEmail(t *testing.T) {
 		require.Error(t, err)
 		ve, ok := err.(*ValidationErrors)
 		require.True(t, ok)
-		assert.Equal(t, ErrCodeDomainNotVerified, ve.Errors[0].Code)
+		assert.Equal(t, v1.ErrorCode_ERROR_CODE_DOMAIN_NOT_VERIFIED, ve.Errors[0].Code)
 	})
 
 	t.Run("suppressed recipients", func(t *testing.T) {
@@ -234,7 +235,7 @@ func TestEmailValidator_ValidateSendEmail(t *testing.T) {
 		require.Error(t, err)
 		ve, ok := err.(*ValidationErrors)
 		require.True(t, ok)
-		assert.Equal(t, ErrCodeEmailSuppressed, ve.Errors[0].Code)
+		assert.Equal(t, v1.ErrorCode_ERROR_CODE_EMAIL_SUPPRESSED, ve.Errors[0].Code)
 	})
 }
 
@@ -243,7 +244,7 @@ func TestValidateSender(t *testing.T) {
 		v := &EmailValidator{}
 		err := v.validateSender(context.Background(), "user_1", "invalid-email")
 		require.NotNil(t, err)
-		assert.Equal(t, ErrCodeInvalidSyntax, err.Code)
+		assert.Equal(t, v1.ErrorCode_ERROR_CODE_INVALID_EMAIL_SYNTAX, err.Code)
 	})
 
 	t.Run("sandbox domain bypasses ownership check", func(t *testing.T) {

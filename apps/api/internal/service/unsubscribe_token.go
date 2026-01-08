@@ -5,17 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
-)
 
-var (
-	// ErrInvalidToken is returned when the token is malformed or signature is invalid.
-	ErrInvalidToken = errors.New("invalid unsubscribe token")
-	// ErrExpiredToken is returned when the token has expired.
-	ErrExpiredToken = errors.New("unsubscribe token has expired")
+	"github.com/emailapi/api/internal/domain"
 )
 
 const (
@@ -79,7 +73,7 @@ func (s *UnsubscribeTokenService) Decode(tokenStr string) (*UnsubscribeTokenData
 	// Split token
 	parts := strings.Split(tokenStr, ".")
 	if len(parts) != 2 {
-		return nil, ErrInvalidToken
+		return nil, domain.ErrInvalidToken
 	}
 
 	encodedPayload, encodedSignature := parts[0], parts[1]
@@ -87,30 +81,30 @@ func (s *UnsubscribeTokenService) Decode(tokenStr string) (*UnsubscribeTokenData
 	// Decode payload
 	payload, err := base64.RawURLEncoding.DecodeString(encodedPayload)
 	if err != nil {
-		return nil, ErrInvalidToken
+		return nil, domain.ErrInvalidToken
 	}
 
 	// Decode signature
 	signature, err := base64.RawURLEncoding.DecodeString(encodedSignature)
 	if err != nil {
-		return nil, ErrInvalidToken
+		return nil, domain.ErrInvalidToken
 	}
 
 	// Verify HMAC signature (constant-time comparison)
 	expectedSignature := s.computeHMAC(payload)
 	if !hmac.Equal(signature, expectedSignature) {
-		return nil, ErrInvalidToken
+		return nil, domain.ErrInvalidToken
 	}
 
 	// Unmarshal payload
 	var data UnsubscribeTokenData
 	if err := json.Unmarshal(payload, &data); err != nil {
-		return nil, ErrInvalidToken
+		return nil, domain.ErrInvalidToken
 	}
 
 	// Check expiry
 	if time.Now().Unix() > data.ExpiresAt {
-		return nil, ErrExpiredToken
+		return nil, domain.ErrExpiredToken
 	}
 
 	return &data, nil

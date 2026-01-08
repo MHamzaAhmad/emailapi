@@ -63,7 +63,7 @@ func (h *UnsubscribeHandler) handleGet(w http.ResponseWriter, r *http.Request) {
 	// Decode token to get email for display
 	tokenData, err := h.svc.TokenService().Decode(token)
 	if err != nil {
-		if err == service.ErrExpiredToken {
+		if err == domain.ErrExpiredToken {
 			h.renderError(w, "This unsubscribe link has expired. Please contact the sender directly.", http.StatusGone)
 			return
 		}
@@ -94,11 +94,11 @@ func (h *UnsubscribeHandler) handlePost(w http.ResponseWriter, r *http.Request) 
 	// Process unsubscribe
 	tokenData, err := h.svc.ProcessUnsubscribe(r.Context(), token, domain.UnsubscribeSourceLink)
 	if err != nil {
-		if err == service.ErrExpiredToken {
+		if err == domain.ErrExpiredToken {
 			h.renderError(w, "This unsubscribe link has expired.", http.StatusGone)
 			return
 		}
-		if err == service.ErrInvalidToken {
+		if err == domain.ErrInvalidToken {
 			h.renderError(w, "Invalid unsubscribe link", http.StatusBadRequest)
 			return
 		}
@@ -138,7 +138,7 @@ func (h *UnsubscribeHandler) HandleOneClick(w http.ResponseWriter, r *http.Reque
 	// Process unsubscribe (no confirmation needed for one-click)
 	_, err := h.svc.ProcessUnsubscribe(r.Context(), token, domain.UnsubscribeSourceOneClick)
 	if err != nil {
-		if err == service.ErrExpiredToken || err == service.ErrInvalidToken {
+		if err == domain.ErrExpiredToken || err == domain.ErrInvalidToken {
 			http.Error(w, "Invalid or expired token", http.StatusBadRequest)
 			return
 		}
