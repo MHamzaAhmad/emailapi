@@ -28,6 +28,11 @@ type MXCache interface {
 	SetMX(ctx context.Context, domain string, hasMX bool) error
 }
 
+// UserCache provides user lookup for sandbox validation.
+type UserCache interface {
+	GetByID(ctx context.Context, id string) (*domain.User, error)
+}
+
 // EmailValidator validates email addresses for sending.
 type EmailValidator struct {
 	verifier           *emailverifier.Verifier
@@ -36,11 +41,13 @@ type EmailValidator struct {
 	bodyValidator      *BodyValidator
 	mxCache            MXCache
 	reputationChecker  ReputationChecker
+	sandboxDomain      string
+	userCache          UserCache
 }
 
 // NewEmailValidator creates a new EmailValidator.
 // SMTP checking is disabled, as noted by the user.
-func NewEmailValidator(domainChecker DomainChecker, suppressionChecker SuppressionChecker, bodyValidator *BodyValidator, mxCache MXCache, reputationChecker ReputationChecker) *EmailValidator {
+func NewEmailValidator(domainChecker DomainChecker, suppressionChecker SuppressionChecker, bodyValidator *BodyValidator, mxCache MXCache, reputationChecker ReputationChecker, sandboxDomain string, userCache UserCache) *EmailValidator {
 	verifier := emailverifier.NewVerifier().
 		EnableDomainSuggest() // Enable typo detection
 
@@ -54,6 +61,8 @@ func NewEmailValidator(domainChecker DomainChecker, suppressionChecker Suppressi
 		bodyValidator:      bodyValidator,
 		mxCache:            mxCache,
 		reputationChecker:  reputationChecker,
+		sandboxDomain:      sandboxDomain,
+		userCache:          userCache,
 	}
 }
 
@@ -67,6 +76,12 @@ func (v *EmailValidator) ValidateSendEmail(ctx context.Context, userID, from str
 		if err := v.reputationChecker.CheckSendPermission(ctx, userID); err != nil {
 			return err
 		}
+	}
+
+	// Fast path: Sandbox domain recipient validation (Redis lookup ~1ms)
+	// This ensures sandbox users can only send to their own verified email
+	if err := v.validateSandboxRecipients(ctx, userID, from, to, cc, bcc); err != nil {
+		return err
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
@@ -227,6 +242,11 @@ func (v *EmailValidator) validateSender(ctx context.Context, userID, from string
 		return InvalidSyntaxError("from", from)
 	}
 
+	// Fast path: Sandbox domain bypasses ownership check
+	if v.sandboxDomain != "" && strings.EqualFold(domainName, v.sandboxDomain) {
+		return nil
+	}
+
 	// Check if user owns this domain
 	d, err := v.domainChecker.GetVerifiedDomainForSending(ctx, userID, domainName)
 	if err != nil {
@@ -236,6 +256,51 @@ func (v *EmailValidator) validateSender(ctx context.Context, userID, from string
 	// Check if domain is verified for sending
 	if !d.VerifiedForSending {
 		return DomainNotVerifiedError("from", domainName)
+	}
+
+	return nil
+}
+
+// validateSandboxRecipients ensures sandbox domain emails can only be sent to the user's own verified email.
+// This is a fast-path check using Redis cache (~1ms latency).
+func (v *EmailValidator) validateSandboxRecipients(ctx context.Context, userID, from string, to, cc, bcc []string) error {
+	// Skip if sandbox not configured or not using sandbox domain
+	if v.sandboxDomain == "" {
+		return nil
+	}
+
+	domainName := extractDomain(from)
+	if !strings.EqualFold(domainName, v.sandboxDomain) {
+		return nil // Not using sandbox, proceed with normal validation
+	}
+
+	// Sandbox mode: validate recipients
+	if v.userCache == nil {
+		errs := NewValidationErrors()
+		errs.Add(SandboxError("from", "sandbox validation not configured"))
+		return errs
+	}
+
+	// Get user's verified email (cached in Redis for ~1ms lookup)
+	user, err := v.userCache.GetByID(ctx, userID)
+	if err != nil || user == nil {
+		errs := NewValidationErrors()
+		errs.Add(SandboxError("from", "unable to verify account for sandbox sending"))
+		return errs
+	}
+
+	// Validate all recipients match user's email
+	allRecipients := make([]string, 0, len(to)+len(cc)+len(bcc))
+	allRecipients = append(allRecipients, to...)
+	allRecipients = append(allRecipients, cc...)
+	allRecipients = append(allRecipients, bcc...)
+
+	for _, recipient := range allRecipients {
+		if !strings.EqualFold(strings.TrimSpace(recipient), strings.TrimSpace(user.Email)) {
+			errs := NewValidationErrors()
+			errs.Add(SandboxError("to", "sandbox can only send to your verified email: "+user.Email))
+			return errs
+		}
 	}
 
 	return nil

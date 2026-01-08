@@ -25,6 +25,9 @@ const (
 
 	// Content safety errors
 	ErrCodeUnsafeURL ValidationErrorCode = "UNSAFE_URL"
+
+	// Sandbox restriction errors
+	ErrCodeSandboxRestriction ValidationErrorCode = "SANDBOX_RESTRICTION"
 )
 
 // ValidationError represents a single validation error.
@@ -127,5 +130,14 @@ func SuppressionError(field string, count int) *ValidationError {
 		Field:   field,
 		Code:    ErrCodeEmailSuppressed,
 		Message: msg,
+	}
+}
+
+// SandboxError creates an error for sandbox domain restrictions.
+func SandboxError(field, message string) *ValidationError {
+	return &ValidationError{
+		Field:   field,
+		Code:    ErrCodeSandboxRestriction,
+		Message: message,
 	}
 }

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useMemo } from 'react'
+import { useUser } from '@clerk/clerk-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
     Add01Icon,
@@ -46,6 +47,7 @@ function getStatusBadge(status: DomainStatus) {
 }
 
 function DomainsContent() {
+    const { user } = useUser()
     const [isAddOpen, setIsAddOpen] = useState(false)
     const [newDomain, setNewDomain] = useState('')
 
@@ -87,9 +89,9 @@ function DomainsContent() {
                 header: 'Domain',
                 cell: ({ row }) => (
                     <div>
-                        <div className="font-medium text-xs">{row.original.domain}</div>
+                        <div className="font-medium text-xs text-foreground">{row.original.domain}</div>
                         {row.original.summary?.message && (
-                            <div className="text-2xs text-muted-foreground line-clamp-1">
+                            <div className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
                                 {row.original.summary.message}
                             </div>
                         )}
@@ -145,12 +147,17 @@ function DomainsContent() {
         [verifyMutation, deleteMutation]
     )
 
+    const userEmail = user?.primaryEmailAddress?.emailAddress || 'your-email@example.com'
+
     return (
         <>
             {/* Header Actions */}
+            {/* Header Actions */}
             <div className="flex flex-col gap-6 mb-8 mt-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div /> {/* Spacer for left side align if needed later */}
+                    <div className="text-xs text-muted-foreground">
+                        You can use the free domain <code className="bg-muted/50 px-1.5 py-0.5 rounded font-mono text-[10px] mx-1 text-foreground">yourname@sandbox.simpleemailapi.dev</code> to test, but you can only send to your own email: <span className="font-medium text-foreground">{userEmail}</span>
+                    </div>
                     <div className="flex items-center gap-2">
                         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                             <DialogTrigger asChild>

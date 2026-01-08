@@ -282,6 +282,7 @@ func main() {
 		PolarStarterProductID:  cfg.PolarStarterProductID,
 		PolarGrowthProductID:   cfg.PolarGrowthProductID,
 		PolarFreeProductID:     cfg.PolarFreeProductID,
+		SandboxDomain:          cfg.SandboxDomain,
 	})
 
 	// Start SQS consumer goroutine if configured

@@ -91,6 +91,9 @@ type Config struct {
 
 	// Usage limit checking
 	UsageLimitEnabled bool `envconfig:"USAGE_LIMIT_ENABLED" default:"true"`
+
+	// Sandbox domain (pre-verified shared domain for new users to test without domain verification)
+	SandboxDomain string `envconfig:"SANDBOX_DOMAIN" default:"sandbox.simpleemailapi.dev"`
 }
 
 // Load reads configuration from environment variables.

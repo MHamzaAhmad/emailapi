@@ -84,6 +84,9 @@ type ServiceDeps struct {
 	PolarFreeProductID    string // Product ID for Free plan
 	PolarStarterProductID string // Product ID for Starter plan
 	PolarGrowthProductID  string // Product ID for Growth plan
+
+	// Sandbox domain (pre-verified shared domain for new users)
+	SandboxDomain string
 }
 
 // NewWithDeps creates a new Service with all dependencies.
@@ -104,12 +107,14 @@ func NewWithDeps(deps ServiceDeps) *Service {
 		bodyValidator = validation.NewBodyValidator(deps.RedisClient, deps.WebRiskClient)
 	}
 
-	// Create email validator with domain checker, suppression checker, body validator, MX cache, and reputation checker
+	// Create email validator with domain checker, suppression checker, body validator, MX cache, reputation checker, and sandbox config
 	var mxCache rediscache.MXCacheInterface
+	var userCache validation.UserCache
 	if deps.Cache != nil {
 		mxCache = deps.Cache.MX()
+		userCache = deps.Cache.User()
 	}
-	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo, bodyValidator, mxCache, svc.Reputation)
+	emailValidator := validation.NewEmailValidator(svc.Domain, deps.SuppressionRepo, bodyValidator, mxCache, svc.Reputation, deps.SandboxDomain, userCache)
 
 	// Initialize Unsubscribe service
 	var unsubscribeSvc *UnsubscribeService
