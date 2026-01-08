@@ -25,8 +25,10 @@ import {
   LazyUserButton,
 } from '@/components/lazy-clerk'
 
-// Lazy-load below-fold sections for better LCP
-const CodeWindow = lazy(() => import('@/components/ui/code-window').then(m => ({ default: m.CodeWindow })))
+// CodeWindow is in hero (LCP element) - import directly for faster paint
+import { CodeWindow } from '@/components/ui/code-window'
+
+// Lazy-load below-fold sections
 const GridOfTruth = lazy(() => import('@/components/landing/GridOfTruth').then(m => ({ default: m.GridOfTruth })))
 const Pricing = lazy(() => import('@/components/landing/Pricing').then(m => ({ default: m.Pricing })))
 const PerformanceChart = lazy(() => import('@/components/landing/PerformanceChart').then(m => ({ default: m.PerformanceChart })))
@@ -35,6 +37,10 @@ const ComparisonSection = lazy(() => import('@/components/landing/ComparisonSect
 export const Route = createFileRoute('/')(
   {
     component: LandingPage,
+    // Cache at CDN for 1 hour, stale-while-revalidate for 1 day
+    headers: () => ({
+      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+    }),
   }
 )
 
@@ -192,28 +198,26 @@ function LandingContent() {
             {/* Centered Code Window */}
             <div className="relative mx-auto max-w-3xl px-2 sm:px-0">
               <div className="absolute -inset-10 rounded-[3rem] bg-primary/5 blur-3xl -z-10" />
-              <Suspense fallback={<div className="w-full h-[320px] bg-muted/30 rounded-xl animate-pulse" />}>
-                <CodeWindow
-                  className="w-full border-border/60 rounded-xl shadow-2xl"
-                  tabs={[
-                    {
-                      label: "TypeScript",
-                      value: "ts",
-                      language: "typescript",
-                    },
-                    {
-                      label: "cURL",
-                      value: "curl",
-                      language: "bash",
-                    },
-                    {
-                      label: "Go",
-                      value: "go",
-                      language: "go",
-                    }
-                  ]}
-                />
-              </Suspense>
+              <CodeWindow
+                className="w-full border-border/60 rounded-xl shadow-2xl"
+                tabs={[
+                  {
+                    label: "TypeScript",
+                    value: "ts",
+                    language: "typescript",
+                  },
+                  {
+                    label: "cURL",
+                    value: "curl",
+                    language: "bash",
+                  },
+                  {
+                    label: "Go",
+                    value: "go",
+                    language: "go",
+                  }
+                ]}
+              />
             </div>
           </div>
 

@@ -5,6 +5,7 @@ import { AdminShell } from '@/components/admin-shell'
 import { UserRole } from '@/generated/v1/user_pb'
 
 export const Route = createFileRoute('/admin')({
+    ssr: false, // Admin requires auth, skip SSR
     component: AdminLayout,
 })
 

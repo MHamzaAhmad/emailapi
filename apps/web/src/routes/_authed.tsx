@@ -4,6 +4,7 @@ import { Shell } from '@/components/shell'
 import { SuspensionBanner } from '@/components/suspension-banner'
 
 export const Route = createFileRoute('/_authed')({
+    ssr: false, // Dashboard requires auth, skip SSR to not block landing page prerender
     component: AuthedLayout,
 })
 
