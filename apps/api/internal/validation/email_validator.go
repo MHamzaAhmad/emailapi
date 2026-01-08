@@ -8,30 +8,8 @@ import (
 	emailverifier "github.com/AfterShip/email-verifier"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/repository/suppression"
 )
-
-// DomainChecker is an interface for checking domain ownership.
-type DomainChecker interface {
-	GetVerifiedDomainForSending(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error)
-}
-
-// SuppressionChecker checks if emails are suppressed.
-type SuppressionChecker interface {
-	CheckBatch(ctx context.Context, hashes []string) ([]string, error)
-}
-
-// MXCache caches MX record lookup results.
-type MXCache interface {
-	HasMX(ctx context.Context, domain string) (*bool, error)
-	SetMX(ctx context.Context, domain string, hasMX bool) error
-}
-
-// UserCache provides user lookup for sandbox validation.
-type UserCache interface {
-	GetByID(ctx context.Context, id string) (*domain.User, error)
-}
 
 // EmailValidator validates email addresses for sending.
 type EmailValidator struct {

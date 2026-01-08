@@ -18,6 +18,7 @@ type CacheAggregator struct {
 	pendingAttachment *PendingAttachmentCache
 	credit            *CreditCache
 	usage             *UsageCache
+	webRisk           *WebRiskCache
 }
 
 // NewCacheAggregator creates a new CacheAggregator with all caches.
@@ -32,6 +33,7 @@ func NewCacheAggregator(client *Client) *CacheAggregator {
 		pendingAttachment: NewPendingAttachmentCache(client),
 		credit:            NewCreditCache(client),
 		usage:             NewUsageCache(client),
+		webRisk:           NewWebRiskCache(client),
 	}
 }
 
@@ -78,4 +80,9 @@ func (c *CacheAggregator) Credit() CreditCacheInterface {
 // Usage returns the usage cache for rate limiting and quotas.
 func (c *CacheAggregator) Usage() UsageCacheInterface {
 	return c.usage
+}
+
+// WebRisk returns the Web Risk cache for URL threat checking.
+func (c *CacheAggregator) WebRisk() WebRiskCacheInterface {
+	return c.webRisk
 }

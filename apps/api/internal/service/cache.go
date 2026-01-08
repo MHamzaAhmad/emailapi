@@ -18,4 +18,5 @@ type Cache interface {
 	PendingAttachment() rediscache.PendingAttachmentCacheInterface
 	Credit() rediscache.CreditCacheInterface
 	Usage() rediscache.UsageCacheInterface
+	WebRisk() rediscache.WebRiskCacheInterface
 }

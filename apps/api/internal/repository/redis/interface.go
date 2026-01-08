@@ -1,6 +1,6 @@
 package redis
 
-//go:generate mockgen -destination=mocks/mock_cache.go -package=mocks github.com/emailapi/api/internal/repository/redis DomainCacheInterface,APIKeyCacheInterface,UserCacheInterface,MXCacheInterface,ReputationCacheInterface,UnsubscribeCacheInterface,PendingAttachmentCacheInterface
+//go:generate mockgen -destination=mocks/mock_cache.go -package=mocks github.com/emailapi/api/internal/repository/redis DomainCacheInterface,APIKeyCacheInterface,UserCacheInterface,MXCacheInterface,ReputationCacheInterface,UnsubscribeCacheInterface,PendingAttachmentCacheInterface,WebRiskCacheInterface
 
 import (
 	"context"
@@ -86,6 +86,13 @@ type PendingAttachmentCacheInterface interface {
 	MarkAttachmentScanned(ctx context.Context, s3Key string) (*PendingAttachmentData, bool, error)
 }
 
+// WebRiskCacheInterface defines the interface for Web Risk URL threat checking.
+type WebRiskCacheInterface interface {
+	// CheckURLPrefixes checks if URL hash prefixes are potentially malicious.
+	// Returns true for each prefix that needs verification via Web Risk API.
+	CheckURLPrefixes(ctx context.Context, hashPrefixes []string) ([]bool, error)
+}
+
 // Ensure concrete types implement interfaces
 var _ DomainCacheInterface = (*DomainCache)(nil)
 var _ APIKeyCacheInterface = (*APIKeyCache)(nil)
@@ -93,3 +100,4 @@ var _ UserCacheInterface = (*UserCache)(nil)
 var _ ReputationCacheInterface = (*ReputationCache)(nil)
 var _ UnsubscribeCacheInterface = (*UnsubscribeCache)(nil)
 var _ PendingAttachmentCacheInterface = (*PendingAttachmentCache)(nil)
+var _ WebRiskCacheInterface = (*WebRiskCache)(nil)

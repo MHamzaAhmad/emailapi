@@ -12,30 +12,25 @@ import (
 	"golang.org/x/net/html"
 
 	"github.com/emailapi/api/internal/external/webrisk"
-	"github.com/emailapi/api/internal/repository/redis"
-)
-
-const (
-	// bloomFilterKey is the Redis key for the Web Risk hash prefix Bloom filter.
-	bloomFilterKey = "webrisk:bloom"
+	rediscache "github.com/emailapi/api/internal/repository/redis"
 )
 
 // BodyValidator validates email body content for unsafe URLs.
 type BodyValidator struct {
-	redis   *redis.Client
-	webrisk webrisk.Client
+	webRiskCache rediscache.WebRiskCacheInterface
+	webrisk      webrisk.Client
 }
 
 // NewBodyValidator creates a new BodyValidator.
-func NewBodyValidator(redisClient *redis.Client, webriskClient webrisk.Client) *BodyValidator {
+func NewBodyValidator(webRiskCache rediscache.WebRiskCacheInterface, webriskClient webrisk.Client) *BodyValidator {
 	return &BodyValidator{
-		redis:   redisClient,
-		webrisk: webriskClient,
+		webRiskCache: webRiskCache,
+		webrisk:      webriskClient,
 	}
 }
 
 // ValidateURLs extracts URLs from body/html and checks them for threats.
-// Uses a two-tier approach: fast Bloom filter check, then Web Risk API verification.
+// Uses a two-tier approach: fast cache check, then Web Risk API verification.
 func (v *BodyValidator) ValidateURLs(ctx context.Context, body, htmlContent string) error {
 	// Extract all URLs from content
 	urls := v.extractURLs(body, htmlContent)
@@ -46,21 +41,21 @@ func (v *BodyValidator) ValidateURLs(ctx context.Context, body, htmlContent stri
 	// Deduplicate URLs
 	uniqueURLs := deduplicate(urls)
 
-	// Compute hash prefixes for Bloom filter check
+	// Compute hash prefixes for cache check
 	hashPrefixes := make([]string, len(uniqueURLs))
 	for i, u := range uniqueURLs {
 		hashPrefixes[i] = computeHashPrefix(u)
 	}
 
-	// Fast path: check Bloom filter
-	matches, err := v.redis.BFMExists(ctx, bloomFilterKey, hashPrefixes...)
+	// Fast path: check cache for potential threats
+	matches, err := v.webRiskCache.CheckURLPrefixes(ctx, hashPrefixes)
 	if err != nil {
-		// On Bloom filter error, fall back to checking all URLs with API
+		// On cache error, fall back to checking all URLs with API
 		// This is a safe fallback but slower
 		return v.verifyWithAPI(ctx, uniqueURLs)
 	}
 
-	// Collect URLs that matched Bloom filter (potential threats)
+	// Collect URLs that matched cache (potential threats)
 	var suspiciousURLs []string
 	for i, matched := range matches {
 		if matched {
@@ -68,7 +63,7 @@ func (v *BodyValidator) ValidateURLs(ctx context.Context, body, htmlContent stri
 		}
 	}
 
-	// If no Bloom filter matches, URLs are safe
+	// If no cache matches, URLs are safe
 	if len(suspiciousURLs) == 0 {
 		return nil
 	}

@@ -165,3 +165,17 @@ func (mr *MockCacheMockRecorder) User() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockCache)(nil).User))
 }
+
+// WebRisk mocks base method.
+func (m *MockCache) WebRisk() redis.WebRiskCacheInterface {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WebRisk")
+	ret0, _ := ret[0].(redis.WebRiskCacheInterface)
+	return ret0
+}
+
+// WebRisk indicates an expected call of WebRisk.
+func (mr *MockCacheMockRecorder) WebRisk() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WebRisk", reflect.TypeOf((*MockCache)(nil).WebRisk))
+}

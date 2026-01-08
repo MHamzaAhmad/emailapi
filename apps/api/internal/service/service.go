@@ -103,8 +103,8 @@ func NewWithDeps(deps ServiceDeps) *Service {
 
 	// Create body validator for URL safety checking (optional if Web Risk not configured)
 	var bodyValidator *validation.BodyValidator
-	if deps.WebRiskClient != nil && deps.RedisClient != nil {
-		bodyValidator = validation.NewBodyValidator(deps.RedisClient, deps.WebRiskClient)
+	if deps.WebRiskClient != nil && deps.Cache != nil {
+		bodyValidator = validation.NewBodyValidator(deps.Cache.WebRisk(), deps.WebRiskClient)
 	}
 
 	// Create email validator with domain checker, suppression checker, body validator, MX cache, reputation checker, and sandbox config
