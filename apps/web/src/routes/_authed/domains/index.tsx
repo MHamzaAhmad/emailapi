@@ -163,7 +163,7 @@ function DomainsContent() {
                                 <DialogHeader>
                                     <DialogTitle>Add Domain</DialogTitle>
                                     <DialogDescription>
-                                        Enter your root domain without subdomains.
+                                        Enter your root domain or a subdomain.
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-3">
