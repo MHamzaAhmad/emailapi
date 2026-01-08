@@ -21,10 +21,6 @@ const ClerkUserButton = lazy(() =>
     import('@clerk/clerk-react').then(m => ({ default: m.UserButton }))
 )
 
-const ClerkWaitlist = lazy(() =>
-    import('@clerk/clerk-react').then(m => ({ default: m.Waitlist }))
-)
-
 // Wrapper components with Suspense
 
 type SignInButtonProps = ComponentProps<typeof ClerkSignInButton>
@@ -59,15 +55,6 @@ export function LazyUserButton(props: UserButtonProps) {
     return (
         <Suspense fallback={<div className="h-7 w-7 rounded-full bg-muted animate-pulse" />}>
             <ClerkUserButton {...props} />
-        </Suspense>
-    )
-}
-
-type WaitlistProps = ComponentProps<typeof ClerkWaitlist>
-export function LazyWaitlist(props: WaitlistProps) {
-    return (
-        <Suspense fallback={<div className="h-[400px] w-[350px] bg-muted animate-pulse rounded-lg" />}>
-            <ClerkWaitlist {...props} />
         </Suspense>
     )
 }

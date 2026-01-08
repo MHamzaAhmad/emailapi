@@ -7,11 +7,6 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/mode-toggle'
 import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
   Sheet,
   SheetContent,
   SheetTrigger,
@@ -21,7 +16,6 @@ import {
   LazySignedIn,
   LazySignedOut,
   LazySignInButton,
-  LazyWaitlist,
   LazyUserButton,
 } from '@/components/lazy-clerk'
 
@@ -80,6 +74,7 @@ function LandingContent() {
               <Logo className="h-3.5 w-3.5" />
             </div>
             <span className="text-sm">SimpleEmailAPI</span>
+            <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 rounded border border-primary/20">Beta</span>
           </div>
 
           {/* Desktop Nav */}
@@ -120,6 +115,7 @@ function LandingContent() {
                       <Logo className="h-3.5 w-3.5" />
                     </div>
                     <span className="text-sm">SimpleEmailAPI</span>
+                    <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 rounded border border-primary/20">Beta</span>
                   </div>
 
                   <div className="flex flex-col gap-4">
@@ -133,16 +129,11 @@ function LandingContent() {
                     </a>
 
                     <div className="flex flex-col gap-3 pt-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button className="w-full h-9 rounded-md text-xs font-semibold justify-start" variant="outline">
-                            Join Waitlist
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-fit border-none bg-transparent p-0 shadow-none">
-                          <LazyWaitlist />
-                        </DialogContent>
-                      </Dialog>
+                      <LazySignInButton mode="modal">
+                        <Button className="w-full h-9 rounded-md text-xs font-semibold justify-start">
+                          Get Started Free
+                        </Button>
+                      </LazySignInButton>
 
                       <LazySignedOut>
                         <LazySignInButton mode="modal">
@@ -178,16 +169,11 @@ function LandingContent() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16 sm:mb-24 px-4 w-full">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="h-9 px-6 text-xs font-semibold shadow-sm rounded-md w-full sm:w-auto">
-                    Join Waitlist
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-fit border-none bg-transparent p-0 shadow-none">
-                  <LazyWaitlist />
-                </DialogContent>
-              </Dialog>
+              <LazySignInButton mode="modal">
+                <Button className="h-9 px-6 text-xs font-semibold shadow-sm rounded-md w-full sm:w-auto">
+                  Get Started Free
+                </Button>
+              </LazySignInButton>
               <Button asChild variant="outline" className="h-9 px-6 text-xs font-semibold bg-background hover:bg-muted/50 rounded-md border-dashed border-border w-full sm:w-auto">
                 <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer">
                   API Documentation
@@ -265,24 +251,19 @@ function LandingContent() {
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter mb-6 text-foreground">Build with integrity.</h2>
             <p className="text-muted-foreground mb-10 text-base font-medium">
-              Join the private beta and experience the next generation of email infrastructure.
+              The simplest API for sending and receiving emails. No complexity, just email.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <LazySignInButton mode="modal">
                 <Button className="h-9 px-8 rounded-md text-xs font-semibold w-full sm:w-auto">
-                  Login to Console
+                  Get Started Free
                 </Button>
               </LazySignInButton>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="h-9 px-8 rounded-md text-xs font-semibold border-dashed border-border bg-background w-full sm:w-auto">
-                    Join Waitlist
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-fit border-none bg-transparent p-0 shadow-none">
-                  <LazyWaitlist />
-                </DialogContent>
-              </Dialog>
+              <Button asChild variant="outline" className="h-9 px-8 rounded-md text-xs font-semibold border-dashed border-border bg-background w-full sm:w-auto">
+                <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer">
+                  View Documentation
+                </a>
+              </Button>
             </div>
           </div>
         </section>
@@ -299,18 +280,18 @@ function LandingContent() {
             <span className="text-xs">SimpleEmailAPI</span>
           </div>
 
-          <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Docs</a>
-            <span className="text-border/40">|</span>
-            <Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link>
-            <span className="text-border/40">|</span>
-            <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-            <span className="text-border/40">|</span>
-            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-            <span className="text-border/40">|</span>
-            <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
-            <span className="text-border/40">|</span>
-            <p>&copy; {new Date().getFullYear()} SimpleEmailAPI</p>
+            <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Docs</a>
+              <span className="text-border/40">|</span>
+              <Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link>
+              <span className="text-border/40">|</span>
+              <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+              <span className="text-border/40">|</span>
+              <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+              <span className="text-border/40">|</span>
+              <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
+              <span className="text-border/40">|</span>
+              <p>&copy; {new Date().getFullYear()} SimpleEmailAPI</p>
           </div>
 
           <div className="flex gap-2 items-center px-3 py-1 rounded-md border border-dashed border-border/60 bg-secondary/30">
