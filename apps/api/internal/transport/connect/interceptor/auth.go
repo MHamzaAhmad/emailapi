@@ -2,14 +2,13 @@ package interceptor
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/clerk/clerk-sdk-go/v2/jwt"
 
 	"github.com/emailapi/api/internal/domain"
+	transporterrors "github.com/emailapi/api/internal/transport/errors"
 )
 
 // AuthMethod indicates how the request was authenticated.
@@ -82,7 +81,7 @@ func checkAPIKeyScopes(apiKey *domain.APIKey, procedure string) error {
 
 	for _, required := range scopes {
 		if !apiKey.HasScope(required) {
-			return fmt.Errorf("API key missing required scope: %s", required)
+			return domain.ErrInsufficientScope.Clone().WithMeta("required_scope", string(required))
 		}
 	}
 	return nil
@@ -149,17 +148,17 @@ func (a *authInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 		// Extract authorization header
 		authHeader := req.Header().Get("Authorization")
 		if authHeader == "" {
-			return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("missing authorization header"))
+			return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 		}
 
 		// Extract token from "Bearer <token>"
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid authorization header format"))
+			return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 		}
 
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		if token == "" {
-			return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("empty authorization token"))
+			return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 		}
 
 		// Authenticate and get user context
@@ -200,17 +199,17 @@ func (a *authInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc
 		// Extract authorization header
 		authHeader := conn.RequestHeader().Get("Authorization")
 		if authHeader == "" {
-			return connect.NewError(connect.CodeUnauthenticated, errors.New("missing authorization header"))
+			return transporterrors.ToConnectError(domain.ErrUnauthenticated)
 		}
 
 		// Extract token from "Bearer <token>"
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			return connect.NewError(connect.CodeUnauthenticated, errors.New("invalid authorization header format"))
+			return transporterrors.ToConnectError(domain.ErrUnauthenticated)
 		}
 
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		if token == "" {
-			return connect.NewError(connect.CodeUnauthenticated, errors.New("empty authorization token"))
+			return transporterrors.ToConnectError(domain.ErrUnauthenticated)
 		}
 
 		// Authenticate and get user context
@@ -231,18 +230,18 @@ func authenticateToken(ctx context.Context, cfg AuthConfig, procedure, token str
 	if isAPIKey {
 		// Check if this endpoint allows API key auth
 		if !apiKeyAllowedProcedures[procedure] {
-			return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("this endpoint requires Clerk authentication, API keys not allowed"))
+			return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 		}
 
 		// Validate API key
 		user, apiKey, err := cfg.APIKeyService.ValidateAndGetUser(ctx, token)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid API key"))
+			return nil, transporterrors.ToConnectError(domain.ErrInvalidAPIKey)
 		}
 
 		// Check API key scopes
 		if err := checkAPIKeyScopes(apiKey, procedure); err != nil {
-			return nil, connect.NewError(connect.CodePermissionDenied, err)
+			return nil, transporterrors.ToConnectError(err)
 		}
 
 		// Add auth info to context
@@ -266,7 +265,7 @@ func authenticateToken(ctx context.Context, cfg AuthConfig, procedure, token str
 			if apiKeyErr == nil {
 				// Check API key scopes
 				if scopeErr := checkAPIKeyScopes(apiKey, procedure); scopeErr != nil {
-					return nil, connect.NewError(connect.CodePermissionDenied, scopeErr)
+					return nil, transporterrors.ToConnectError(scopeErr)
 				}
 				ctx = context.WithValue(ctx, ContextKeyUserID, user.ID)
 				ctx = context.WithValue(ctx, ContextKeyAuthMethod, AuthMethodAPIKey)
@@ -275,19 +274,19 @@ func authenticateToken(ctx context.Context, cfg AuthConfig, procedure, token str
 				return ctx, nil
 			}
 		}
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid Clerk token"))
+		return nil, transporterrors.ToConnectError(domain.ErrClerkTokenInvalid)
 	}
 
 	// Extract Clerk user ID (subject claim)
 	clerkUserID := claims.Subject
 	if clerkUserID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("missing subject in Clerk token"))
+		return nil, transporterrors.ToConnectError(domain.ErrClerkTokenInvalid)
 	}
 
 	// Look up internal user by Clerk external_id
 	userID, err := cfg.UserLookup.GetByExternalID(ctx, clerkUserID)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not found for Clerk ID"))
+		return nil, transporterrors.ToConnectError(domain.ErrUserNotFound)
 	}
 
 	// Add auth info to context

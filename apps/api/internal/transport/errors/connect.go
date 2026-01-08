@@ -1,4 +1,7 @@
-package connect
+// Package errors provides error conversion utilities for the transport layer.
+// This package is designed to be imported by both handlers and interceptors
+// without causing import cycles.
+package errors
 
 import (
 	"errors"
@@ -69,7 +72,7 @@ func mapToGRPCCode(code v1.ErrorCode) connect.Code {
 }
 
 // HandleError is a convenience wrapper for handler functions.
-// Use at the end of handlers: return nil, connect.HandleError(err)
+// Use at the end of handlers: return nil, errutil.HandleError(err)
 func HandleError(err error) error {
 	if err == nil {
 		return nil
