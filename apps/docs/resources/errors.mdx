@@ -1,0 +1,78 @@
+---
+title: 'Errors'
+description: 'Understand and troubleshoot common API errors.'
+icon: 'triangle-exclamation'
+---
+
+We use standard HTTP response codes to indicate the success or failure of an API request. In addition to the HTTP status code, our API returns a detailed JSON response using the [Connect RPC](https://connectrpc.com/) format.
+
+## Error Structure
+
+All API errors return a standard JSON structure containing a `code`, `message`, and a `details` array. The `details` array often contains an `ErrorDetail` object with specific application error codes and metadata.
+
+```json
+{
+  "code": "invalid_argument",
+  "message": "validation failed",
+  "details": [
+    {
+      "@type": "type.googleapis.com/v1.ErrorDetail",
+      "code": "ERROR_CODE_INVALID_EMAIL_SYNTAX",
+      "message": "invalid email syntax",
+      "field": "to[0]",
+      "metadata": {
+        "suggestion": "user@example.com"
+      }
+    }
+  ]
+}
+```
+
+## Error Codes
+
+We categorize errors into specific ranges to help you identify the type of issue.
+
+| Range | Category | Description |
+| :--- | :--- | :--- |
+| `1xx` | **Authentication** | Issues with your API key or credentials. |
+| `2xx` | **Authorization** | Permissions issues (e.g., account suspended). |
+| `3xx` | **Validation** | Invalid input, missing fields, or unsafe content. |
+| `4xx` | **Resources** | Resource not found or conflict (already exists). |
+| `5xx` | **Domain** | Domain verification or DNS issues. |
+| `6xx` | **Rate Limits** | Exceeded daily quotas or concurrent limits. |
+| `7xx` | **Attachments** | File too large or unsafe content type. |
+| `8xx` | **Tokens** | Invalid or expired webhook/unsubscribe tokens. |
+| `9xx` | **Internal** | Server-side errors or upstream provider issues. |
+
+### Common Error Codes
+
+Below is a non-exhaustive list of common codes you might encounter:
+
+#### Authentication & Authorization
+- `ERROR_CODE_INVALID_API_KEY` (101): The provided API key is invalid.
+- `ERROR_CODE_ACCOUNT_SUSPENDED` (202): Your account has been suspended. Contact support.
+
+#### Validation
+- `ERROR_CODE_INVALID_EMAIL_SYNTAX` (302): The email address is malformed.
+- `ERROR_CODE_NO_MX_RECORDS` (303): The recipient domain does not have valid MX records.
+- `ERROR_CODE_UNSAFE_URL` (305): The email body contains a URL flagged as unsafe.
+
+#### Resources
+- `ERROR_CODE_DOMAIN_NOT_FOUND` (401): The specified domain does not exist in your account.
+- `ERROR_CODE_DOMAIN_ALREADY_EXISTS` (411): You have already added this domain.
+
+#### Rate Limiting
+- `ERROR_CODE_DAILY_LIMIT_EXCEEDED` (601): You have reached your daily sending limit.
+- `ERROR_CODE_MAX_CONCURRENT_STREAMS` (603): Too many open connections.
+
+## Handling Errors
+
+### 1. Check the `code`
+The top-level `code` (e.g., `invalid_argument`, `unauthenticated`) gives you the broad category of the error.
+
+### 2. Inspect `details`
+Parse the `details` array to find the `ErrorDetail` object. The internal `code` (e.g., `ERROR_CODE_NO_MX_RECORDS`) and `metadata` give specific actionable information.
+
+### 3. Automatic Retries
+- **Safe to Retry:** `429` (Rate Limit) and `5xx` (Internal Error) with exponential backoff.
+- **Do Not Retry:** `400` (Bad Request), `401` (Unauthorized), and `404` (Not Found) without fixing the underlying issue.

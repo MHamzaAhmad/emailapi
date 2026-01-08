@@ -68,6 +68,13 @@
                             "receiving/on-receive",
                             "receiving/webhooks"
                         ]
+                    },
+                    {
+                        "group": "Resources",
+                        "icon": "layer-group",
+                        "pages": [
+                            "resources/errors"
+                        ]
                     }
                 ]
             },
