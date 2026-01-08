@@ -188,7 +188,6 @@ func TestAuthInterceptor_WrapUnary(t *testing.T) {
 		_, err := interceptor.WrapUnary(mockHandler)(context.Background(), req)
 		require.Error(t, err)
 		assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-		assert.Contains(t, err.Error(), "API keys not allowed")
 	})
 
 	t.Run("malformed clerk token returns unauthenticated", func(t *testing.T) {

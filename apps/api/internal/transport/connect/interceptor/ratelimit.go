@@ -11,7 +11,9 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rs/zerolog/log"
 
+	"github.com/emailapi/api/internal/domain"
 	redisrepo "github.com/emailapi/api/internal/repository/redis"
+	transporterrors "github.com/emailapi/api/internal/transport/errors"
 )
 
 // RateLimitConfig holds configuration for the rate limit interceptor.
@@ -146,9 +148,9 @@ func (r *rateLimitInterceptor) WrapStreamingHandler(next connect.StreamingHandle
 			if err != nil {
 				log.Warn().Err(err).Str("user_id", userID).Msg("Stream limit check failed, allowing stream")
 			} else if !allowed {
-				return connect.NewError(
-					connect.CodeResourceExhausted,
-					fmt.Errorf("too many concurrent streams (max: %d)", r.cfg.MaxConcurrentStreams),
+				return transporterrors.ToConnectError(
+					domain.ErrMaxConcurrentStreams.Clone().
+						WithMeta("max_streams", fmt.Sprintf("%d", r.cfg.MaxConcurrentStreams)),
 				)
 			}
 
@@ -184,18 +186,20 @@ func rateLimitError(result *redisrepo.RateLimitResult, limit int) error {
 		retryAfter = 1
 	}
 
-	err := connect.NewError(
-		connect.CodeResourceExhausted,
-		errors.New("rate limit exceeded"),
-	)
+	err := domain.ErrRateLimited.Clone().
+		WithMeta("limit", strconv.Itoa(limit)).
+		WithMeta("remaining", "0").
+		WithMeta("reset_at", strconv.FormatInt(result.ResetAt.Unix(), 10)).
+		WithMeta("retry_after", strconv.Itoa(int(retryAfter)))
 
-	// Add details for client retry logic
-	err.Meta().Set("RateLimit-Limit", strconv.Itoa(limit))
-	err.Meta().Set("RateLimit-Remaining", "0")
-	err.Meta().Set("RateLimit-Reset", strconv.FormatInt(result.ResetAt.Unix(), 10))
-	err.Meta().Set("Retry-After", strconv.Itoa(int(retryAfter)))
+	connectErr := transporterrors.ToConnectError(err)
+	// Add headers for compatibility
+	connectErr.Meta().Set("RateLimit-Limit", strconv.Itoa(limit))
+	connectErr.Meta().Set("RateLimit-Remaining", "0")
+	connectErr.Meta().Set("RateLimit-Reset", strconv.FormatInt(result.ResetAt.Unix(), 10))
+	connectErr.Meta().Set("Retry-After", strconv.Itoa(int(retryAfter)))
 
-	return err
+	return connectErr
 }
 
 // IsRateLimitError checks if an error is a rate limit error.

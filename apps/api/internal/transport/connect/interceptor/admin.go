@@ -8,6 +8,7 @@ import (
 	"connectrpc.com/connect"
 
 	"github.com/emailapi/api/internal/domain"
+	transporterrors "github.com/emailapi/api/internal/transport/errors"
 )
 
 // UserRoleLookup interface for looking up user roles.
@@ -86,16 +87,16 @@ func (a *adminInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFun
 func (a *adminInterceptor) verifyAdminRole(ctx context.Context) error {
 	userID := GetUserID(ctx)
 	if userID == "" {
-		return connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	user, err := a.cfg.UserLookup.GetByID(ctx, userID)
 	if err != nil {
-		return connect.NewError(connect.CodeInternal, errors.New("failed to lookup user"))
+		return transporterrors.ToConnectError(domain.ErrInternal.Clone().WithCause(err))
 	}
 
 	if user.Role != domain.UserRoleAdmin {
-		return connect.NewError(connect.CodePermissionDenied, errors.New("admin access required"))
+		return transporterrors.ToConnectError(domain.ErrAdminRequired)
 	}
 
 	return nil

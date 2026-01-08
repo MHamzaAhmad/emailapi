@@ -9,7 +9,9 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rs/zerolog/log"
 
+	"github.com/emailapi/api/internal/domain"
 	redisrepo "github.com/emailapi/api/internal/repository/redis"
+	transporterrors "github.com/emailapi/api/internal/transport/errors"
 )
 
 // UsageConfig holds configuration for the usage limit interceptor.
@@ -301,30 +303,36 @@ func (u *usageInterceptor) maybeRefreshAsync(userID string) {
 
 // creditExhaustedError creates a credit exhausted error for free users (monthly).
 func creditExhaustedError(polarBalance, consumed int64) error {
-	err := connect.NewError(
-		connect.CodeResourceExhausted,
-		fmt.Errorf("monthly email credits exhausted (%d/%d). Upgrade to a paid plan for more emails.",
-			consumed, polarBalance),
-	)
-	err.Meta().Set("X-Plan", "free")
-	err.Meta().Set("X-Credits-Balance", fmt.Sprintf("%d", polarBalance))
-	err.Meta().Set("X-Credits-Consumed", fmt.Sprintf("%d", consumed))
-	err.Meta().Set("X-Upgrade-URL", "https://simpleemailapi.dev/pricing")
-	return err
+	err := domain.ErrCreditsExhausted.Clone().
+		WithMeta("plan", "free").
+		WithMeta("credits_balance", fmt.Sprintf("%d", polarBalance)).
+		WithMeta("credits_consumed", fmt.Sprintf("%d", consumed)).
+		WithMeta("upgrade_url", "https://simpleemailapi.dev/pricing")
+
+	connectErr := transporterrors.ToConnectError(err)
+	// Add headers for compatibility
+	connectErr.Meta().Set("X-Plan", "free")
+	connectErr.Meta().Set("X-Credits-Balance", fmt.Sprintf("%d", polarBalance))
+	connectErr.Meta().Set("X-Credits-Consumed", fmt.Sprintf("%d", consumed))
+	connectErr.Meta().Set("X-Upgrade-URL", "https://simpleemailapi.dev/pricing")
+	return connectErr
 }
 
 // dailyLimitError creates a daily limit exceeded error for free users.
 func dailyLimitError(usage, limit int64) error {
-	err := connect.NewError(
-		connect.CodeResourceExhausted,
-		fmt.Errorf("daily email limit exceeded (%d/%d). Limit resets at midnight UTC.",
-			usage, limit),
-	)
-	err.Meta().Set("X-Plan", "free")
-	err.Meta().Set("X-Daily-Limit", fmt.Sprintf("%d", limit))
-	err.Meta().Set("X-Daily-Usage", fmt.Sprintf("%d", usage))
-	err.Meta().Set("X-Upgrade-URL", "https://simpleemailapi.dev/pricing")
-	return err
+	err := domain.ErrDailyLimitExceeded.Clone().
+		WithMeta("plan", "free").
+		WithMeta("daily_limit", fmt.Sprintf("%d", limit)).
+		WithMeta("daily_usage", fmt.Sprintf("%d", usage)).
+		WithMeta("upgrade_url", "https://simpleemailapi.dev/pricing")
+
+	connectErr := transporterrors.ToConnectError(err)
+	// Add headers for compatibility
+	connectErr.Meta().Set("X-Plan", "free")
+	connectErr.Meta().Set("X-Daily-Limit", fmt.Sprintf("%d", limit))
+	connectErr.Meta().Set("X-Daily-Usage", fmt.Sprintf("%d", usage))
+	connectErr.Meta().Set("X-Upgrade-URL", "https://simpleemailapi.dev/pricing")
+	return connectErr
 }
 
 // WrapStreamingClient implements connect.Interceptor (no-op for server).

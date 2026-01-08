@@ -189,7 +189,7 @@ func TestUsageInterceptor_WrapUnary(t *testing.T) {
 		_, err := interceptor.WrapUnary(nil)(ctx, req)
 		require.Error(t, err)
 		assert.Equal(t, connect.CodeResourceExhausted, connect.CodeOf(err))
-		assert.Contains(t, err.Error(), "daily email limit exceeded")
+		assert.Contains(t, err.Error(), "daily limit exceeded")
 	})
 
 	t.Run("free user credits exhausted blocked", func(t *testing.T) {
@@ -225,7 +225,7 @@ func TestUsageInterceptor_WrapUnary(t *testing.T) {
 		_, err := interceptor.WrapUnary(nil)(ctx, req)
 		require.Error(t, err)
 		assert.Equal(t, connect.CodeResourceExhausted, connect.CodeOf(err))
-		assert.Contains(t, err.Error(), "monthly email credits exhausted")
+		assert.Contains(t, err.Error(), "monthly credits exhausted")
 	})
 
 	t.Run("cache miss fetches from polar", func(t *testing.T) {
