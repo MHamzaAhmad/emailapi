@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 
@@ -30,14 +29,14 @@ func (s *UserService) Create(ctx context.Context, req *domain.CreateUserRequest)
 	// Check if user already exists by email
 	existing, _ := s.store.Users().GetByEmail(ctx, req.Email)
 	if existing != nil {
-		return nil, fmt.Errorf("user with email already exists")
+		return nil, domain.ErrAlreadyExists.Clone().WithMeta("field", "email")
 	}
 
 	// Check if user exists by external_id (Clerk ID)
 	if req.ExternalID != nil && *req.ExternalID != "" {
 		existingExt, _ := s.store.Users().GetByExternalID(ctx, *req.ExternalID)
 		if existingExt != nil {
-			return nil, fmt.Errorf("user with external_id already exists")
+			return nil, domain.ErrAlreadyExists.Clone().WithMeta("field", "external_id")
 		}
 	}
 
@@ -57,7 +56,7 @@ func (s *UserService) Create(ctx context.Context, req *domain.CreateUserRequest)
 	}
 
 	if err := s.store.Users().Create(ctx, user); err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "create_user")
 	}
 
 	return user, nil
@@ -102,7 +101,7 @@ func (s *UserService) GetByExternalID(ctx context.Context, externalID string) (s
 func (s *UserService) Update(ctx context.Context, id string, req *domain.UpdateUserRequest) (*domain.User, error) {
 	user, err := s.store.Users().GetByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("user not found: %w", err)
+		return nil, domain.ErrUserNotFound.Clone().WithCause(err)
 	}
 
 	if req.Email != nil {
@@ -122,7 +121,7 @@ func (s *UserService) Update(ctx context.Context, id string, req *domain.UpdateU
 	}
 
 	if err := s.store.Users().Update(ctx, user); err != nil {
-		return nil, fmt.Errorf("failed to update user: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "update_user")
 	}
 
 	return user, nil

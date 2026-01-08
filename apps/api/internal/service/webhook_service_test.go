@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	"github.com/emailapi/api/internal/domain"
 	svixMocks "github.com/emailapi/api/internal/external/svix/mocks"
 )
 
@@ -49,7 +50,10 @@ func TestWebhookService_GetAppPortalAccess(t *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, url)
 		assert.Empty(t, token)
-		assert.Contains(t, err.Error(), "failed to ensure svix app")
+		appErr, ok := domain.IsAppError(err)
+		assert.True(t, ok)
+		assert.Equal(t, domain.ErrInternal.Code, appErr.Code)
+		assert.Equal(t, "ensure_svix_app", appErr.Metadata["operation"])
 	})
 
 	t.Run("get portal access error", func(t *testing.T) {
@@ -65,6 +69,9 @@ func TestWebhookService_GetAppPortalAccess(t *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, url)
 		assert.Empty(t, token)
-		assert.Contains(t, err.Error(), "failed to get app portal access")
+		appErr, ok := domain.IsAppError(err)
+		assert.True(t, ok)
+		assert.Equal(t, domain.ErrInternal.Code, appErr.Code)
+		assert.Equal(t, "get_app_portal_access", appErr.Metadata["operation"])
 	})
 }

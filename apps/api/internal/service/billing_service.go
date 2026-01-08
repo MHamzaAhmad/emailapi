@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/rs/zerolog/log"
 
@@ -43,7 +42,7 @@ func (s *BillingService) CreatePolarCustomer(ctx context.Context, userID string)
 
 	user, err := s.store.Users().GetByID(ctx, userID)
 	if err != nil {
-		return fmt.Errorf("user not found: %w", err)
+		return domain.ErrUserNotFound.Clone().WithCause(err)
 	}
 
 	// Already has Polar customer
@@ -54,12 +53,12 @@ func (s *BillingService) CreatePolarCustomer(ctx context.Context, userID string)
 	// Create customer
 	customerID, err := s.polarClient.CreateCustomer(ctx, userID, user.Email, user.Name)
 	if err != nil {
-		return fmt.Errorf("failed to create Polar customer: %w", err)
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "create_polar_customer")
 	}
 
 	// Save customer ID
 	if err := s.store.Users().UpdatePolarCustomerID(ctx, userID, customerID); err != nil {
-		return fmt.Errorf("failed to save Polar customer ID: %w", err)
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "save_polar_customer_id")
 	}
 
 	log.Info().Str("user_id", userID).Str("polar_customer_id", customerID).Msg("Created Polar customer")
@@ -95,7 +94,7 @@ func (s *BillingService) handleSubscriptionChange(ctx context.Context, event *Po
 		// Fallback to looking up by Polar customer_id if external_id is missing
 		user, err := s.store.Users().GetByPolarCustomerID(ctx, event.Data.CustomerID)
 		if err != nil {
-			return fmt.Errorf("user not found for Polar customer %s: %w", event.Data.CustomerID, err)
+			return domain.ErrUserNotFound.Clone().WithCause(err).WithMeta("polar_customer_id", event.Data.CustomerID)
 		}
 		userID = user.ID
 	}
@@ -133,13 +132,13 @@ func (s *BillingService) GetPlans() []domain.PlanInfo {
 // Returns error if user has a paid subscription (should use portal instead).
 func (s *BillingService) CreateCheckoutSession(ctx context.Context, userID, planID, successURL string) (string, error) {
 	if s.polarClient == nil {
-		return "", fmt.Errorf("polar not configured")
+		return "", domain.ErrInternal.Clone().WithMeta("config", "polar_missing")
 	}
 
 	// Map plan ID to product ID
 	productID, ok := domain.GetProductIDFromPlanID(planID)
 	if !ok {
-		return "", fmt.Errorf("invalid plan: %s", planID)
+		return "", domain.ErrInvalidArgument.Clone().WithMeta("field", "plan_id").WithMeta("value", planID)
 	}
 
 	// Check current subscription to determine checkout strategy
@@ -159,7 +158,7 @@ func (s *BillingService) CreateCheckoutSession(ctx context.Context, userID, plan
 		// User has an active subscription
 		if sub.Amount > 0 {
 			// Paid subscription - user should use customer portal to change plans
-			return "", fmt.Errorf("already on a paid plan. Use the customer portal to change or cancel your subscription")
+			return "", domain.ErrAlreadyExists.Clone().WithMeta("resource", "paid_subscription")
 		}
 		// Free subscription - pass subscription_id for upgrade
 		checkoutParams.SubscriptionID = sub.ID
@@ -176,16 +175,16 @@ func (s *BillingService) CreateCheckoutSession(ctx context.Context, userID, plan
 // GetCustomerPortalUrl returns the customer portal URL for subscription management.
 func (s *BillingService) GetCustomerPortalUrl(ctx context.Context, userID string) (string, error) {
 	if s.polarClient == nil {
-		return "", fmt.Errorf("polar not configured")
+		return "", domain.ErrInternal.Clone().WithMeta("config", "polar_missing")
 	}
 
 	user, err := s.store.Users().GetByID(ctx, userID)
 	if err != nil {
-		return "", fmt.Errorf("user not found: %w", err)
+		return "", domain.ErrUserNotFound.Clone().WithCause(err)
 	}
 
 	if user.PolarCustomerID == nil || *user.PolarCustomerID == "" {
-		return "", fmt.Errorf("user has no Polar customer ID")
+		return "", domain.ErrInternal.Clone().WithMeta("reason", "missing_customer_id")
 	}
 
 	portalURL, err := s.polarClient.CreateCustomerPortal(ctx, *user.PolarCustomerID)
@@ -235,7 +234,7 @@ func (s *BillingService) GetSubscriptionInfo(ctx context.Context, userID string)
 
 	user, err := s.store.Users().GetByID(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("user not found: %w", err)
+		return nil, domain.ErrUserNotFound.Clone().WithCause(err)
 	}
 	if user.PolarCustomerID != nil {
 		info.PolarCustomerID = *user.PolarCustomerID

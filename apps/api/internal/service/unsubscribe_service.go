@@ -69,7 +69,7 @@ func (s *UnsubscribeService) ProcessUnsubscribe(ctx context.Context, tokenStr st
 
 	// Write to DB first (source of truth)
 	if err := s.repo.Add(ctx, entry); err != nil {
-		return nil, fmt.Errorf("failed to add unsubscribe: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "add_unsubscribe")
 	}
 
 	// Update cache (best-effort, don't fail if cache fails)
@@ -136,7 +136,7 @@ func (s *UnsubscribeService) CheckBatch(ctx context.Context, userID string, emai
 	if len(hashes) > 0 {
 		dbHashes, err := s.repo.CheckBatch(ctx, userID, hashes)
 		if err != nil {
-			return nil, fmt.Errorf("failed to check unsubscribes: %w", err)
+			return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "check_unsubscribes")
 		}
 
 		// Populate cache for DB hits
@@ -158,7 +158,7 @@ func (s *UnsubscribeService) Resubscribe(ctx context.Context, userID, email stri
 
 	// Remove from DB
 	if err := s.repo.Delete(ctx, userID, emailHash); err != nil {
-		return fmt.Errorf("failed to delete unsubscribe: %w", err)
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "delete_unsubscribe")
 	}
 
 	// Remove from cache
@@ -180,7 +180,7 @@ func (s *UnsubscribeService) SyncCache(ctx context.Context) error {
 
 	entries, err := s.repo.ListAll(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to list unsubscribes: %w", err)
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "list_unsubscribes")
 	}
 
 	// Group by user for batch operations

@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/external/svix"
 )
 
@@ -23,13 +23,13 @@ func (s *WebhookService) GetAppPortalAccess(ctx context.Context, userID string) 
 	// Ensure app exists for this user
 	userName := "User " + userID
 	if err := s.svixClient.EnsureApp(ctx, userID, userName); err != nil {
-		return "", "", fmt.Errorf("failed to ensure svix app: %w", err)
+		return "", "", domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "ensure_svix_app")
 	}
 
 	// Get the app portal access URL
 	url, token, err = s.svixClient.GetAppPortalAccess(ctx, userID)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to get app portal access: %w", err)
+		return "", "", domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "get_app_portal_access")
 	}
 
 	return url, token, nil

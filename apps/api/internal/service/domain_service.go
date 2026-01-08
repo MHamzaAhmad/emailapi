@@ -101,19 +101,19 @@ func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*do
 	// Validate domain name
 	domainName = strings.TrimSpace(strings.ToLower(domainName))
 	if domainName == "" {
-		return nil, fmt.Errorf("domain name is required")
+		return nil, domain.ErrInvalidArgument.Clone().WithMeta("field", "domain")
 	}
 
 	// Check if domain already exists
 	existing, _ := s.store.Domains().GetByDomainName(ctx, userID, domainName)
 	if existing != nil {
-		return nil, fmt.Errorf("domain %s already exists", domainName)
+		return nil, domain.ErrDomainAlreadyExists.Clone().WithMeta("domain", domainName)
 	}
 
 	// Create identity in SES
 	result, err := s.ses.CreateEmailIdentity(ctx, domainName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create email identity: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "create_email_identity")
 	}
 
 	// Auto-configure MAIL FROM domain
@@ -153,7 +153,7 @@ func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*do
 	if err := s.store.Domains().Create(ctx, d); err != nil {
 		// Try to clean up the SES identity if DB storage fails
 		_ = s.ses.DeleteEmailIdentity(ctx, domainName)
-		return nil, fmt.Errorf("failed to store domain: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "store_domain")
 	}
 
 	// Invalidate user's domain list cache
@@ -183,11 +183,11 @@ func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*doma
 
 	d, err := s.store.Domains().GetByID(ctx, domainID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get domain: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "get_domain")
 	}
 
 	if d.UserID != userID {
-		return nil, fmt.Errorf("domain not found")
+		return nil, domain.ErrDomainNotFound
 	}
 
 	// Auto-refresh if stale and cooldown allows
@@ -249,13 +249,13 @@ func (s *DomainService) List(ctx context.Context, userID string, page, pageSize 
 
 	domains, err := s.store.Domains().GetByUserID(ctx, userID, pageSize, offset)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to list domains: %w", err)
+		return nil, 0, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "list_domains")
 	}
 
 	// Get total count for pagination
 	total, err := s.store.Domains().CountByUserID(ctx, userID)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to count domains: %w", err)
+		return nil, 0, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "count_domains")
 	}
 
 	// Cache for first page requests
@@ -290,7 +290,7 @@ func (s *DomainService) GetVerifiedDomainForSending(ctx context.Context, userID,
 	// Cache miss: query database
 	d, err := s.store.Domains().GetByDomainName(ctx, userID, domainName)
 	if err != nil {
-		return nil, fmt.Errorf("domain not found: %w", err)
+		return nil, domain.ErrDomainNotFound.Clone().WithCause(err)
 	}
 
 	// Populate cache for next lookup
@@ -305,21 +305,21 @@ func (s *DomainService) GetVerifiedDomainForSending(ctx context.Context, userID,
 func (s *DomainService) Delete(ctx context.Context, userID, domainID string) error {
 	d, err := s.store.Domains().GetByID(ctx, domainID)
 	if err != nil {
-		return fmt.Errorf("failed to get domain: %w", err)
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "get_domain")
 	}
 
 	if d.UserID != userID {
-		return fmt.Errorf("domain not found")
+		return domain.ErrDomainNotFound
 	}
 
 	// Delete from SES
 	if err := s.ses.DeleteEmailIdentity(ctx, d.Domain); err != nil {
-		return fmt.Errorf("failed to delete email identity: %w", err)
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "delete_email_identity")
 	}
 
 	// Delete from database
 	if err := s.store.Domains().Delete(ctx, domainID); err != nil {
-		return fmt.Errorf("failed to delete domain: %w", err)
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "delete_domain")
 	}
 
 	// Invalidate cache (including fast-path sending cache)
@@ -340,11 +340,11 @@ func (s *DomainService) Delete(ctx context.Context, userID, domainID string) err
 func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*domain.VerifyResult, error) {
 	d, err := s.store.Domains().GetByID(ctx, domainID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get domain: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "get_domain")
 	}
 
 	if d.UserID != userID {
-		return nil, fmt.Errorf("domain not found")
+		return nil, domain.ErrDomainNotFound
 	}
 
 	// Check cooldown to prevent SES rate limiting
@@ -361,7 +361,7 @@ func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*d
 	// Refresh from SES
 	d, err = s.refreshFromSES(ctx, d)
 	if err != nil {
-		return nil, fmt.Errorf("failed to refresh from SES: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "refresh_from_ses")
 	}
 
 	// Build domain with records (without summary yet)
@@ -382,7 +382,7 @@ func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*d
 
 	// Save updated status
 	if err := s.store.Domains().Update(ctx, d); err != nil {
-		return nil, fmt.Errorf("failed to update domain: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "update_domain")
 	}
 
 	// Invalidate cache to ensure fresh data on next read
@@ -410,7 +410,7 @@ func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*d
 func (s *DomainService) refreshFromSES(ctx context.Context, d *domain.SendingDomain) (*domain.SendingDomain, error) {
 	result, err := s.ses.GetEmailIdentity(ctx, d.Domain)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get email identity: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "get_email_identity")
 	}
 
 	now := time.Now()
@@ -424,7 +424,7 @@ func (s *DomainService) refreshFromSES(ctx context.Context, d *domain.SendingDom
 	d.LastCheckedAt = &now
 
 	if err := s.store.Domains().Update(ctx, d); err != nil {
-		return nil, fmt.Errorf("failed to update domain: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "update_domain")
 	}
 
 	return d, nil

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emailapi/api/internal/domain"
 )
@@ -34,12 +33,12 @@ func (s *AdminService) ListUsers(ctx context.Context, limit, offset int) ([]*dom
 
 	users, err := s.store.Users().ListWithReputation(ctx, limit, offset)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to list users: %w", err)
+		return nil, 0, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "list_users")
 	}
 
 	total, err := s.store.Users().Count(ctx)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to count users: %w", err)
+		return nil, 0, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "count_users")
 	}
 
 	return users, total, nil
@@ -54,7 +53,7 @@ func (s *AdminService) ListFlaggedUsers(ctx context.Context, limit, offset int) 
 func (s *AdminService) GetUserDetails(ctx context.Context, userID string) (*domain.UserWithReputation, error) {
 	result, err := s.store.Users().GetWithReputation(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("user not found: %w", err)
+		return nil, domain.ErrUserNotFound.Clone().WithCause(err)
 	}
 	return result, nil
 }
@@ -64,7 +63,7 @@ func (s *AdminService) SuspendUser(ctx context.Context, userID, adminID, reason 
 	// Verify target user exists
 	_, err := s.user.GetByID(ctx, userID)
 	if err != nil {
-		return fmt.Errorf("user not found: %w", err)
+		return domain.ErrUserNotFound.Clone().WithCause(err)
 	}
 
 	return s.reputation.SuspendUser(ctx, userID, adminID, reason)
@@ -75,7 +74,7 @@ func (s *AdminService) UnsuspendUser(ctx context.Context, userID, adminID string
 	// Verify target user exists
 	_, err := s.user.GetByID(ctx, userID)
 	if err != nil {
-		return fmt.Errorf("user not found: %w", err)
+		return domain.ErrUserNotFound.Clone().WithCause(err)
 	}
 
 	return s.reputation.UnsuspendUser(ctx, userID, adminID)

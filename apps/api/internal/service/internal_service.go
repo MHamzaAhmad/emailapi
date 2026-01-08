@@ -94,20 +94,20 @@ func (s *InternalService) HandleClerkWebhook(ctx context.Context, payload []byte
 	wh, err := svix.NewWebhook(s.clerkWebhookSecret)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create Svix webhook verifier")
-		return false, "", fmt.Errorf("webhook verification setup failed: %w", err)
+		return false, "", domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "setup_webhook_verifier")
 	}
 
 	err = wh.Verify(payload, headers)
 	if err != nil {
 		log.Warn().Err(err).Msg("Clerk webhook signature verification failed")
-		return false, "", fmt.Errorf("webhook signature verification failed: %w", err)
+		return false, "", domain.ErrPermissionDenied.Clone().WithCause(err).WithMeta("reason", "invalid_signature")
 	}
 
 	// Parse the webhook event (payload is verified, use original)
 	var event ClerkWebhookPayload
 	if err := json.Unmarshal(payload, &event); err != nil {
 		log.Error().Err(err).Msg("Failed to parse Clerk webhook payload")
-		return false, "", fmt.Errorf("failed to parse webhook payload: %w", err)
+		return false, "", domain.ErrInvalidArgument.Clone().WithCause(err).WithMeta("reason", "invalid_payload")
 	}
 
 	log.Info().Str("type", event.Type).Msg("Processing Clerk webhook event")
@@ -133,7 +133,7 @@ func (s *InternalService) handleUserCreated(ctx context.Context, data json.RawMe
 	var userData ClerkUserCreatedData
 	if err := json.Unmarshal(data, &userData); err != nil {
 		log.Error().Err(err).Msg("Failed to parse Clerk user data")
-		return false, "", fmt.Errorf("failed to parse user data: %w", err)
+		return false, "", domain.ErrInvalidArgument.Clone().WithCause(err).WithMeta("reason", "invalid_user_data")
 	}
 
 	// Find primary email address
@@ -150,7 +150,7 @@ func (s *InternalService) handleUserCreated(ctx context.Context, data json.RawMe
 
 	if primaryEmail == "" {
 		log.Warn().Str("clerk_user_id", userData.ID).Msg("Clerk user has no email address")
-		return false, "", fmt.Errorf("user has no email address")
+		return false, "", domain.ErrInvalidArgument.Clone().WithMeta("reason", "missing_email")
 	}
 
 	// Construct user name
@@ -171,7 +171,7 @@ func (s *InternalService) handleUserCreated(ctx context.Context, data json.RawMe
 	user, err := s.userService.Create(ctx, createReq)
 	if err != nil {
 		log.Error().Err(err).Str("clerk_user_id", userData.ID).Str("email", primaryEmail).Msg("Failed to create user from Clerk webhook")
-		return false, "", fmt.Errorf("failed to create user: %w", err)
+		return false, "", domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "create_user_from_webhook")
 	}
 
 	log.Info().
@@ -234,26 +234,26 @@ func (s *InternalService) HandlePolarWebhook(ctx context.Context, payload []byte
 	wh, err := standardwebhooks.NewWebhook(encodedSecret)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create Standard Webhooks verifier for Polar")
-		return false, "", fmt.Errorf("webhook verification setup failed: %w", err)
+		return false, "", domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "setup_webhook_verifier_polar")
 	}
 
 	err = wh.Verify(payload, headers)
 	if err != nil {
 		log.Warn().Err(err).Msg("Polar webhook signature verification failed")
-		return false, "", fmt.Errorf("webhook signature verification failed: %w", err)
+		return false, "", domain.ErrPermissionDenied.Clone().WithCause(err).WithMeta("reason", "invalid_signature_polar")
 	}
 
 	// Parse the webhook event
 	var event PolarWebhookEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		log.Error().Err(err).Msg("Failed to parse Polar webhook payload")
-		return false, "", fmt.Errorf("failed to parse webhook payload: %w", err)
+		return false, "", domain.ErrInvalidArgument.Clone().WithCause(err).WithMeta("reason", "invalid_payload_polar")
 	}
 
 	log.Info().Str("type", event.Type).Msg("Processing Polar webhook event")
 
 	if s.billingService == nil {
-		return false, "", fmt.Errorf("billing service not configured")
+		return false, "", domain.ErrInternal.Clone().WithMeta("config", "billing_service_missing")
 	}
 
 	// Delegate to BillingService

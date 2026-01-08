@@ -12,6 +12,7 @@ import (
 
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/autoresponse"
+	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/webhook"
 )
@@ -61,13 +62,13 @@ func (s *InboundEmailService) ProcessRawEmail(ctx context.Context, bucket, key s
 	// Download email from S3
 	rawEmail, err := s.s3Factory.Bucket(s3.BucketInbound).Download(ctx, key)
 	if err != nil {
-		return fmt.Errorf("failed to download email from S3: %w", err)
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "download_email_s3")
 	}
 
 	// Parse email and check for virus/spam
 	inboundEmail, virusVerdict, spamVerdict, err := s.parseEmailWithVerdicts(rawEmail)
 	if err != nil {
-		return fmt.Errorf("failed to parse email: %w", err)
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "parse_email")
 	}
 
 	// Check virus verdict (SES adds X-SES-Virus-Verdict header)
@@ -207,7 +208,7 @@ func (s *InboundEmailService) processInboundEmail(ctx context.Context, inboundEm
 func (s *InboundEmailService) parseEmailWithVerdicts(rawEmail []byte) (*InboundEmail, string, string, error) {
 	parsed, err := email.NewEmailFromReader(bytes.NewReader(rawEmail))
 	if err != nil {
-		return nil, "", "", fmt.Errorf("failed to parse email: %w", err)
+		return nil, "", "", domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "parse_email")
 	}
 
 	// Extract SES verdict headers

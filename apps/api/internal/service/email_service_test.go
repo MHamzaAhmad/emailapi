@@ -12,6 +12,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	emailapi "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/internal/domain"
 	sesMocks "github.com/emailapi/api/internal/external/ses/mocks"
 	tinybirdMocks "github.com/emailapi/api/internal/repository/tinybird/mocks"
 	serviceMocks "github.com/emailapi/api/internal/service/mocks"
@@ -142,6 +143,9 @@ func TestEmailService_SendEmail(t *testing.T) {
 
 		_, err := svc.SendEmail(ctx, req)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "validation failed")
+		appErr, ok := domain.IsAppError(err)
+		assert.True(t, ok)
+		assert.Equal(t, domain.ErrInvalidArgument.Code, appErr.Code)
+		assert.Equal(t, "validation_failed", appErr.Metadata["context"])
 	})
 }

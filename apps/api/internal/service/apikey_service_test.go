@@ -117,7 +117,7 @@ func TestAPIKeyService_ValidateAndGetUser(t *testing.T) {
 	t.Run("invalid format", func(t *testing.T) {
 		_, _, err := svc.ValidateAndGetUser(ctx, "invalid-key")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid API key format")
+		assert.Contains(t, err.Error(), "invalid API key")
 	})
 
 	t.Run("cache hit success", func(t *testing.T) {

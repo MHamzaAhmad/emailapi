@@ -52,7 +52,7 @@ func (s *UnsubscribeTokenService) Encode(data *UnsubscribeTokenData) (string, er
 	// Marshal to JSON (compact)
 	payload, err := json.Marshal(data)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal token data: %w", err)
+		return "", domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "marshal_token_data")
 	}
 
 	// Base64url encode payload

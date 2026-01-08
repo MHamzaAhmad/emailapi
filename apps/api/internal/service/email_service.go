@@ -14,6 +14,7 @@ import (
 	"github.com/riverqueue/river"
 
 	emailapi "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/eventstream"
 	"github.com/emailapi/api/internal/external/ses"
 	"github.com/emailapi/api/internal/validation"
@@ -65,7 +66,7 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 	// Get user ID from context (set by auth interceptor)
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok || userID == "" {
-		return nil, fmt.Errorf("user_id not found in context")
+		return nil, domain.ErrInternal.Clone().WithMeta("reason", "missing_user_context")
 	}
 
 	// Check for dry-run mode (set by handler from X-Dry-Run header)
@@ -74,7 +75,13 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 	// Validate all email addresses and body content in parallel
 	if s.validator != nil {
 		if err := s.validator.ValidateSendEmail(ctx, userID, req.From, req.To, req.Cc, req.Bcc, req.Body, req.Html); err != nil {
-			return nil, fmt.Errorf("validation failed: %w", err)
+			// Validator already returns domain.AppError, but we might wrap it or just return it.
+			// Ideally we return it directly, but to preserve "validation failed" context without losing type,
+			// we can rely on ToConnectError's unwrapping.
+			// However, replacing fmt.Errorf("validation failed: %w") with domain.ErrInvalidArgument might be cleaner if we trust the validator.
+			// Let's wrap it in InvalidArgument if it's not already.
+			// But for 100% replacement of fmt.Errorf:
+			return nil, domain.ErrInvalidArgument.Clone().WithCause(err).WithMeta("context", "validation_failed")
 		}
 	}
 
@@ -174,7 +181,7 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 	if err != nil {
 		// Log failure
 		s.logActivity(ctx, userID, emailID, "failed", err.Error(), req)
-		return nil, fmt.Errorf("send failed: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "send_to_ses")
 	}
 
 	// Write routing entry for reply tracking (async - don't block response)
@@ -250,7 +257,7 @@ func (s *EmailService) queueWithAttachments(ctx context.Context, emailID, userID
 	_, err := s.queue.Insert(ctx, args, nil)
 	if err != nil {
 		s.logActivity(ctx, userID, emailID, "failed", fmt.Sprintf("Failed to enqueue: %v", err), req)
-		return nil, fmt.Errorf("failed to enqueue attachment job: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "enqueue_attachment_job")
 	}
 
 	return &emailapi.SendEmailResponse{
@@ -287,7 +294,7 @@ func (s *EmailService) queueForSend(ctx context.Context, emailID, userID string,
 	_, err := s.queue.Insert(ctx, args, nil)
 	if err != nil {
 		s.logActivity(ctx, userID, emailID, "failed", fmt.Sprintf("Failed to enqueue: %v", err), req)
-		return nil, fmt.Errorf("failed to enqueue send job: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "enqueue_send_job")
 	}
 
 	return &emailapi.SendEmailResponse{
@@ -304,7 +311,7 @@ func (s *EmailService) queueScheduled(ctx context.Context, emailID, userID strin
 
 	// Validate scheduled time is in the future
 	if scheduledTime.Before(time.Now()) {
-		return nil, fmt.Errorf("scheduled_at must be in the future")
+		return nil, domain.ErrInvalidArgument.Clone().WithMeta("field", "scheduled_at").WithMeta("reason", "must_be_future")
 	}
 
 	args := worker.SendEmailArgs{
@@ -335,7 +342,7 @@ func (s *EmailService) queueScheduled(ctx context.Context, emailID, userID strin
 	})
 	if err != nil {
 		s.logActivity(ctx, userID, emailID, "failed", fmt.Sprintf("Failed to schedule: %v", err), req)
-		return nil, fmt.Errorf("failed to schedule email: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "schedule_email")
 	}
 
 	return &emailapi.SendEmailResponse{
@@ -459,7 +466,7 @@ func (s *EmailService) StreamEvents(ctx context.Context, userID, apiKeyID string
 	}
 
 	if s.eventConsumer == nil {
-		return nil, fmt.Errorf("event streaming not configured")
+		return nil, domain.ErrInternal.Clone().WithMeta("feature", "event_streaming")
 	}
 	return s.eventConsumer.Subscribe(ctx, userID, apiKeyID, eventTypes, batchSize)
 }
@@ -474,7 +481,7 @@ func (s *EmailService) AckEvents(ctx context.Context, userID string, eventIDs []
 	}
 
 	if s.eventConsumer == nil {
-		return 0, fmt.Errorf("event streaming not configured")
+		return 0, domain.ErrInternal.Clone().WithMeta("feature", "event_streaming")
 	}
 	return s.eventConsumer.Ack(ctx, userID, eventIDs)
 }

@@ -43,7 +43,7 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 	// Validate user exists
 	_, err := s.store.Users().GetByID(ctx, userID)
 	if err != nil {
-		return nil, "", fmt.Errorf("user not found: %w", err)
+		return nil, "", domain.ErrUserNotFound.Clone().WithCause(err)
 	}
 
 	// Set default scopes if not specified
@@ -54,13 +54,13 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 
 	// Validate scopes
 	if !domain.ValidateScopes(scopes) {
-		return nil, "", fmt.Errorf("invalid scopes provided")
+		return nil, "", domain.ErrInvalidArgument.Clone().WithMeta("field", "scopes")
 	}
 
 	// Generate API key with ep_ prefix format
 	rawKey, err := s.generateRawKey()
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to generate API key: %w", err)
+		return nil, "", domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "generate_api_key")
 	}
 
 	// Hash the key for storage
@@ -72,7 +72,7 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 	// Generate unique ID (non-UUID, alphanumeric)
 	id, err := s.generateKeyID()
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to generate key ID: %w", err)
+		return nil, "", domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "generate_key_id")
 	}
 
 	apiKey := &domain.APIKey{
@@ -87,7 +87,7 @@ func (s *APIKeyService) Create(ctx context.Context, userID string, req *domain.C
 	}
 
 	if err := s.store.APIKeys().Create(ctx, apiKey); err != nil {
-		return nil, "", fmt.Errorf("failed to create API key: %w", err)
+		return nil, "", domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "create_api_key")
 	}
 
 	// Invalidate user's API keys list cache
@@ -116,12 +116,12 @@ func (s *APIKeyService) GetByID(ctx context.Context, userID, keyID string) (*dom
 
 	apiKey, err := s.store.APIKeys().GetByID(ctx, keyID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get API key: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "get_api_key")
 	}
 
 	// Authorization check
 	if apiKey.UserID != userID {
-		return nil, fmt.Errorf("API key not found")
+		return nil, domain.ErrAPIKeyNotFound
 	}
 
 	// Cache the result
@@ -173,7 +173,7 @@ func (s *APIKeyService) List(ctx context.Context, userID string, page, pageSize 
 	// Get total count for pagination
 	total, err := s.store.APIKeys().CountByUserID(ctx, userID)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to count API keys: %w", err)
+		return nil, 0, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "count_api_keys")
 	}
 
 	// Cache the result for first page
@@ -196,7 +196,7 @@ func (s *APIKeyService) Update(ctx context.Context, userID, keyID string, req *d
 	}
 	if len(req.Scopes) > 0 {
 		if !domain.ValidateScopes(req.Scopes) {
-			return nil, fmt.Errorf("invalid scopes provided")
+			return nil, domain.ErrInvalidArgument.Clone().WithMeta("field", "scopes")
 		}
 		apiKey.Scopes = req.Scopes
 	}
@@ -208,7 +208,7 @@ func (s *APIKeyService) Update(ctx context.Context, userID, keyID string, req *d
 	}
 
 	if err := s.store.APIKeys().Update(ctx, apiKey); err != nil {
-		return nil, fmt.Errorf("failed to update API key: %w", err)
+		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "update_api_key")
 	}
 
 	// Invalidate cache
@@ -274,7 +274,7 @@ func (s *APIKeyService) Revoke(ctx context.Context, userID, keyID string) (*doma
 func (s *APIKeyService) ValidateAndGetUser(ctx context.Context, rawKey string) (*domain.User, *domain.APIKey, error) {
 	//  Step 1: Validate checksum (instant rejection for invalid keys)
 	if !s.validateChecksum(rawKey) {
-		return nil, nil, fmt.Errorf("invalid API key format or checksum")
+		return nil, nil, domain.ErrInvalidAPIKey
 	}
 
 	// Step 2: Hash the key for lookups
@@ -285,20 +285,20 @@ func (s *APIKeyService) ValidateAndGetUser(ctx context.Context, rawKey string) (
 		if cachedKey, _ := s.cache.APIKey().GetByKeyHash(ctx, keyHash); cachedKey != nil {
 			// Verify key is still active and not expired
 			if !cachedKey.IsActive {
-				return nil, nil, fmt.Errorf("API key is inactive")
+				return nil, nil, domain.ErrInvalidAPIKey
 			}
 			if cachedKey.IsExpired() {
-				return nil, nil, fmt.Errorf("API key has expired")
+				return nil, nil, domain.ErrExpiredAPIKey
 			}
 
 			// Get user (this should also be cached)
 			user, err := s.store.Users().GetByID(ctx, cachedKey.UserID)
 			if err != nil {
-				return nil, nil, fmt.Errorf("user not found")
+				return nil, nil, domain.ErrUserNotFound
 			}
 
 			if !user.IsActive {
-				return nil, nil, fmt.Errorf("user is inactive")
+				return nil, nil, domain.ErrUserNotFound
 			}
 
 			// Async update last used (fire and forget)
@@ -313,17 +313,17 @@ func (s *APIKeyService) ValidateAndGetUser(ctx context.Context, rawKey string) (
 	// Step 4: Cache miss - look up in DB by hash
 	apiKey, err := s.store.APIKeys().GetByHash(ctx, keyHash)
 	if err != nil {
-		return nil, nil, fmt.Errorf("invalid API key")
+		return nil, nil, domain.ErrInvalidAPIKey
 	}
 
 	// Check if key is active
 	if !apiKey.IsActive {
-		return nil, nil, fmt.Errorf("API key is inactive")
+		return nil, nil, domain.ErrInvalidAPIKey
 	}
 
 	// Check if key is expired
 	if apiKey.IsExpired() {
-		return nil, nil, fmt.Errorf("API key has expired")
+		return nil, nil, domain.ErrExpiredAPIKey
 	}
 
 	// Cache the validated key for next time
@@ -339,11 +339,11 @@ func (s *APIKeyService) ValidateAndGetUser(ctx context.Context, rawKey string) (
 	// Get  the user
 	user, err := s.store.Users().GetByID(ctx, apiKey.UserID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("user not found")
+		return nil, nil, domain.ErrUserNotFound
 	}
 
 	if !user.IsActive {
-		return nil, nil, fmt.Errorf("user is inactive")
+		return nil, nil, domain.ErrUserNotFound
 	}
 
 	return user, apiKey, nil

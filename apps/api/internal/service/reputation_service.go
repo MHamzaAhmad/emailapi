@@ -229,11 +229,11 @@ func (s *ReputationService) ListFlaggedUsers(ctx context.Context, limit, offset 
 func (s *ReputationService) SuspendUser(ctx context.Context, userID, suspendedBy, reason string) error {
 	// Ensure reputation record exists
 	if err := s.store.Reputation().EnsureExists(ctx, userID); err != nil {
-		return fmt.Errorf("failed to ensure reputation record: %w", err)
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "ensure_reputation")
 	}
 
 	if err := s.store.Reputation().Suspend(ctx, userID, suspendedBy, reason); err != nil {
-		return fmt.Errorf("failed to suspend user: %w", err)
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "suspend_user")
 	}
 
 	// Invalidate cache to immediately block sends
@@ -250,7 +250,7 @@ func (s *ReputationService) SuspendUser(ctx context.Context, userID, suspendedBy
 // UnsuspendUser removes suspension from a user account.
 func (s *ReputationService) UnsuspendUser(ctx context.Context, userID, unsuspendedBy string) error {
 	if err := s.store.Reputation().Unsuspend(ctx, userID); err != nil {
-		return fmt.Errorf("failed to unsuspend user: %w", err)
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "unsuspend_user")
 	}
 
 	// Invalidate cache to allow sends

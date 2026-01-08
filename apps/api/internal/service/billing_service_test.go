@@ -109,13 +109,19 @@ func TestBillingService_CreateCheckoutSession(t *testing.T) {
 		svcNoPolar := NewBillingService(nil, nil, nil, nil)
 		_, err := svcNoPolar.CreateCheckoutSession(ctx, userID, "starter", successURL)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "polar not configured")
+		appErr, ok := domain.IsAppError(err)
+		assert.True(t, ok)
+		assert.Equal(t, domain.ErrInternal.Code, appErr.Code)
+		assert.Equal(t, "polar_missing", appErr.Metadata["config"])
 	})
 
 	t.Run("invalid plan", func(t *testing.T) {
 		_, err := svc.CreateCheckoutSession(ctx, userID, "invalid", successURL)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid plan")
+		appErr, ok := domain.IsAppError(err)
+		assert.True(t, ok)
+		assert.Equal(t, domain.ErrInvalidArgument.Code, appErr.Code)
+		assert.Equal(t, "plan_id", appErr.Metadata["field"])
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -155,7 +161,10 @@ func TestBillingService_GetCustomerPortalUrl(t *testing.T) {
 		svcNoPolar := NewBillingService(nil, nil, nil, nil)
 		_, err := svcNoPolar.GetCustomerPortalUrl(ctx, userID)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "polar not configured")
+		appErr, ok := domain.IsAppError(err)
+		assert.True(t, ok)
+		assert.Equal(t, domain.ErrInternal.Code, appErr.Code)
+		assert.Equal(t, "polar_missing", appErr.Metadata["config"])
 	})
 
 	t.Run("user not found", func(t *testing.T) {
@@ -169,7 +178,10 @@ func TestBillingService_GetCustomerPortalUrl(t *testing.T) {
 		mockUserRepo.EXPECT().GetByID(ctx, userID).Return(user, nil)
 		_, err := svc.GetCustomerPortalUrl(ctx, userID)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "no Polar customer ID")
+		appErr, ok := domain.IsAppError(err)
+		assert.True(t, ok)
+		assert.Equal(t, domain.ErrInternal.Code, appErr.Code)
+		assert.Equal(t, "missing_customer_id", appErr.Metadata["reason"])
 	})
 
 	t.Run("success", func(t *testing.T) {
