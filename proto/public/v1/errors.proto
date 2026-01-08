@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "github.com/emailapi/api/gen/v1";
+
+// ErrorCode defines all possible API error codes.
+// Ranges: 1xx=auth, 2xx=authz, 3xx=validation, 4xx=resources,
+//         5xx=domain, 6xx=rate/usage, 7xx=attachments, 8xx=tokens, 9xx=internal
+enum ErrorCode {
+  ERROR_CODE_UNSPECIFIED = 0;
+  
+  // ═══ Authentication (1xx) ═══
+  ERROR_CODE_UNAUTHENTICATED = 100;
+  ERROR_CODE_INVALID_API_KEY = 101;
+  ERROR_CODE_EXPIRED_API_KEY = 102;
+  ERROR_CODE_INSUFFICIENT_SCOPE = 103;    // Missing required scope
+  ERROR_CODE_CLERK_TOKEN_INVALID = 104;
+  
+  // ═══ Authorization (2xx) ═══
+  ERROR_CODE_PERMISSION_DENIED = 200;
+  ERROR_CODE_ADMIN_REQUIRED = 201;
+  ERROR_CODE_ACCOUNT_SUSPENDED = 202;     // Reputation-based
+  
+  // ═══ Validation (3xx) ═══
+  ERROR_CODE_INVALID_ARGUMENT = 300;
+  ERROR_CODE_MISSING_REQUIRED_FIELD = 301;
+  ERROR_CODE_INVALID_EMAIL_SYNTAX = 302;  // Syntax error
+  ERROR_CODE_NO_MX_RECORDS = 303;         // Domain can't receive
+  ERROR_CODE_EMAIL_TYPO_DETECTED = 304;   // Has suggestion
+  ERROR_CODE_UNSAFE_URL = 305;            // Malware/phishing
+  ERROR_CODE_EMAIL_SUPPRESSED = 306;      // On suppression list
+  ERROR_CODE_SANDBOX_RESTRICTION = 307;   // Sandbox recipients
+  
+  // ═══ Resource Not Found (4xx) ═══
+  ERROR_CODE_NOT_FOUND = 400;
+  ERROR_CODE_DOMAIN_NOT_FOUND = 401;
+  ERROR_CODE_API_KEY_NOT_FOUND = 402;
+  ERROR_CODE_USER_NOT_FOUND = 403;
+  ERROR_CODE_ALREADY_EXISTS = 410;
+  ERROR_CODE_DOMAIN_ALREADY_EXISTS = 411;
+  
+  // ═══ Domain Verification (5xx) ═══
+  ERROR_CODE_DOMAIN_NOT_OWNED = 500;      // Not registered
+  ERROR_CODE_DOMAIN_NOT_VERIFIED = 501;   // Not verified for sending
+  ERROR_CODE_DOMAIN_DNS_MISMATCH = 502;
+  ERROR_CODE_DOMAIN_VERIFY_COOLDOWN = 503; // 30s rate limit
+  
+  // ═══ Rate Limiting & Usage (6xx) ═══
+  ERROR_CODE_RATE_LIMITED = 600;
+  ERROR_CODE_DAILY_LIMIT_EXCEEDED = 601;
+  ERROR_CODE_MONTHLY_CREDITS_EXHAUSTED = 602;
+  ERROR_CODE_MAX_CONCURRENT_STREAMS = 603;
+  
+  // ═══ Attachment Errors (7xx) ═══
+  ERROR_CODE_ATTACHMENT_TOO_LARGE = 700;
+  ERROR_CODE_TOTAL_SIZE_EXCEEDED = 701;
+  ERROR_CODE_ATTACHMENT_THREAT_FOUND = 702;
+  ERROR_CODE_UNSUPPORTED_CONTENT_TYPE = 703;
+  
+  // ═══ Token Errors (8xx) ═══
+  ERROR_CODE_INVALID_TOKEN = 800;
+  ERROR_CODE_EXPIRED_TOKEN = 801;
+  ERROR_CODE_WEBHOOK_SECRET_INVALID = 810;
+  
+  // ═══ Internal Errors (9xx) ═══
+  ERROR_CODE_INTERNAL = 900;
+  ERROR_CODE_UPSTREAM_PROVIDER_ERROR = 901;
+  ERROR_CODE_SERVICE_UNAVAILABLE = 902;
+}
+
+// ErrorDetail provides structured error information.
+// Embedded in Connect RPC error details for rich error context.
+message ErrorDetail {
+  // The specific error code.
+  ErrorCode code = 1;
+  
+  // Human-readable error message.
+  string message = 2;
+  
+  // The field that caused the error (for validation errors).
+  string field = 3;
+  
+  // Additional key-value context (e.g., limits, upgrade URLs).
+  map<string, string> metadata = 4;
+}

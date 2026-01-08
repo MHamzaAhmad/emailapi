@@ -1186,6 +1186,101 @@
         ],
         "description": "Represents the current status of an email delivery."
       },
+      "v1.ErrorCode": {
+        "type": "string",
+        "title": "ErrorCode",
+        "enum": [
+          "ERROR_CODE_UNSPECIFIED",
+          "ERROR_CODE_UNAUTHENTICATED",
+          "ERROR_CODE_INVALID_API_KEY",
+          "ERROR_CODE_EXPIRED_API_KEY",
+          "ERROR_CODE_INSUFFICIENT_SCOPE",
+          "ERROR_CODE_CLERK_TOKEN_INVALID",
+          "ERROR_CODE_PERMISSION_DENIED",
+          "ERROR_CODE_ADMIN_REQUIRED",
+          "ERROR_CODE_ACCOUNT_SUSPENDED",
+          "ERROR_CODE_INVALID_ARGUMENT",
+          "ERROR_CODE_MISSING_REQUIRED_FIELD",
+          "ERROR_CODE_INVALID_EMAIL_SYNTAX",
+          "ERROR_CODE_NO_MX_RECORDS",
+          "ERROR_CODE_EMAIL_TYPO_DETECTED",
+          "ERROR_CODE_UNSAFE_URL",
+          "ERROR_CODE_EMAIL_SUPPRESSED",
+          "ERROR_CODE_SANDBOX_RESTRICTION",
+          "ERROR_CODE_NOT_FOUND",
+          "ERROR_CODE_DOMAIN_NOT_FOUND",
+          "ERROR_CODE_API_KEY_NOT_FOUND",
+          "ERROR_CODE_USER_NOT_FOUND",
+          "ERROR_CODE_ALREADY_EXISTS",
+          "ERROR_CODE_DOMAIN_ALREADY_EXISTS",
+          "ERROR_CODE_DOMAIN_NOT_OWNED",
+          "ERROR_CODE_DOMAIN_NOT_VERIFIED",
+          "ERROR_CODE_DOMAIN_DNS_MISMATCH",
+          "ERROR_CODE_DOMAIN_VERIFY_COOLDOWN",
+          "ERROR_CODE_RATE_LIMITED",
+          "ERROR_CODE_DAILY_LIMIT_EXCEEDED",
+          "ERROR_CODE_MONTHLY_CREDITS_EXHAUSTED",
+          "ERROR_CODE_MAX_CONCURRENT_STREAMS",
+          "ERROR_CODE_ATTACHMENT_TOO_LARGE",
+          "ERROR_CODE_TOTAL_SIZE_EXCEEDED",
+          "ERROR_CODE_ATTACHMENT_THREAT_FOUND",
+          "ERROR_CODE_UNSUPPORTED_CONTENT_TYPE",
+          "ERROR_CODE_INVALID_TOKEN",
+          "ERROR_CODE_EXPIRED_TOKEN",
+          "ERROR_CODE_WEBHOOK_SECRET_INVALID",
+          "ERROR_CODE_INTERNAL",
+          "ERROR_CODE_UPSTREAM_PROVIDER_ERROR",
+          "ERROR_CODE_SERVICE_UNAVAILABLE"
+        ],
+        "description": "ErrorCode defines all possible API error codes.\n Ranges: 1xx=auth, 2xx=authz, 3xx=validation, 4xx=resources,\n         5xx=domain, 6xx=rate/usage, 7xx=attachments, 8xx=tokens, 9xx=internal"
+      },
+      "v1.ErrorDetail": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "title": "code",
+            "description": "The specific error code.",
+            "$ref": "#/components/schemas/v1.ErrorCode"
+          },
+          "message": {
+            "type": "string",
+            "title": "message",
+            "description": "Human-readable error message."
+          },
+          "field": {
+            "type": "string",
+            "title": "field",
+            "description": "The field that caused the error (for validation errors)."
+          },
+          "metadata": {
+            "type": "object",
+            "title": "metadata",
+            "additionalProperties": {
+              "type": "string",
+              "title": "value"
+            },
+            "description": "Additional key-value context (e.g., limits, upgrade URLs)."
+          }
+        },
+        "title": "ErrorDetail",
+        "additionalProperties": false,
+        "description": "ErrorDetail provides structured error information.\n Embedded in Connect RPC error details for rich error context."
+      },
+      "v1.ErrorDetail.MetadataEntry": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "key"
+          },
+          "value": {
+            "type": "string",
+            "title": "value"
+          }
+        },
+        "title": "MetadataEntry",
+        "additionalProperties": false
+      },
       "v1.Event": {
         "type": "object",
         "allOf": [

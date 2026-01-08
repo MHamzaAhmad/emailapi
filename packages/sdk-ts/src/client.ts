@@ -61,6 +61,9 @@ export * from './gen/v1/email_pb'
 export * from './gen/v1/domain_pb'
 export * from './gen/v1/events_pb'
 
+// Error handling utilities
+export { ErrorCode, SimpleEmailError, parseError, isSimpleEmailError } from './errors'
+
 /**
  * Configuration options for creating an Email API client.
  */
