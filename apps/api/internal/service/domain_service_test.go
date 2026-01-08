@@ -261,7 +261,7 @@ func TestDomainService_Verify_Cooldown(t *testing.T) {
 	})
 }
 
-func TestDomainService_Verify_CacheInvalidation(t *testing.T) {
+func TestDomainService_Verify_CachesBehavior(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -281,7 +281,7 @@ func TestDomainService_Verify_CacheInvalidation(t *testing.T) {
 	domainID := "dom_1"
 	domainName := "example.com"
 
-	t.Run("invalidates cache after verify", func(t *testing.T) {
+	t.Run("caches verified domain details after verify", func(t *testing.T) {
 		oldCheck := time.Now().Add(-35 * time.Second)
 		storedDomain := &domain.SendingDomain{
 			ID:            domainID,
@@ -321,9 +321,14 @@ func TestDomainService_Verify_CacheInvalidation(t *testing.T) {
 				return &dns.ValidationResult{Records: records, CheckedAt: time.Now()}
 			})
 
-		// Key assertion: cache is invalidated after verify
+		// Key assertion: domain details are cached after verify
 		mockDomainCache.EXPECT().
-			InvalidateAll(ctx, domainID, userID).
+			SetDetailsByID(ctx, gomock.Any()).
+			Return(nil)
+
+		// User's domain list is invalidated to force refresh on List()
+		mockDomainCache.EXPECT().
+			InvalidateByUserID(ctx, userID).
 			Return(nil)
 
 		result, err := svc.Verify(ctx, userID, domainID)
@@ -571,5 +576,353 @@ func TestDomainService_Verify_Unauthorized(t *testing.T) {
 		_, err := svc.Verify(ctx, "user_1", "dom_1")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not found")
+	})
+}
+
+// TestDomainService_Get_AutoValidation tests that Get() performs DNS validation when data is stale.
+func TestDomainService_Get_AutoValidation(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := serviceMocks.NewMockStore(ctrl)
+	mockCache := serviceMocks.NewMockCache(ctrl)
+	mockSES := sesMocks.NewMockClient(ctrl)
+	mockDNS := dnsMocks.NewMockValidatorInterface(ctrl)
+	mockDomainRepo := repoMocks.NewMockDomainRepository(ctrl)
+	mockDomainCache := redisMocks.NewMockDomainCacheInterface(ctrl)
+
+	mockStore.EXPECT().Domains().Return(mockDomainRepo).AnyTimes()
+	mockCache.EXPECT().Domain().Return(mockDomainCache).AnyTimes()
+
+	svc := NewDomainService(mockStore, mockSES, mockDNS, mockCache, nil, nil, "us-east-1", "config-set")
+	ctx := context.Background()
+	userID := "user_1"
+	domainID := "dom_1"
+	domainName := "example.com"
+
+	t.Run("auto-validates DNS when stale and cooldown allows", func(t *testing.T) {
+		// Stale domain (last checked 6 minutes ago, beyond 5 min threshold)
+		oldCheck := time.Now().Add(-6 * time.Minute)
+		storedDomain := &domain.SendingDomain{
+			ID:            domainID,
+			UserID:        userID,
+			Domain:        domainName,
+			DkimTokens:    []string{"token1"},
+			LastCheckedAt: &oldCheck,
+		}
+
+		// Cache miss
+		mockDomainCache.EXPECT().
+			GetDetailsByID(ctx, domainID).
+			Return(nil, nil)
+
+		mockDomainRepo.EXPECT().
+			GetByID(ctx, domainID).
+			Return(storedDomain, nil)
+
+		// Expect SES refresh
+		mockSES.EXPECT().
+			GetEmailIdentity(ctx, domainName).
+			Return(&ses.IdentityResult{
+				VerifiedForSendingStatus: true,
+				DkimStatus:               "SUCCESS",
+				DkimTokens:               []string{"token1"},
+			}, nil)
+
+		// Expect first Update from refreshFromSES
+		mockDomainRepo.EXPECT().
+			Update(ctx, gomock.Any()).
+			Return(nil).Times(2) // Once for SES refresh, once for DNS validation
+
+		// Expect DNS validation
+		mockDNS.EXPECT().
+			ValidateRecords(ctx, gomock.Any()).
+			DoAndReturn(func(_ context.Context, expected []dns.ExpectedRecord) *dns.ValidationResult {
+				records := make(map[string]dns.RecordResult)
+				for _, exp := range expected {
+					records[exp.Key()] = dns.RecordResult{
+						ExpectedRecord:  exp,
+						Status:          dns.RecordStatusFound,
+						DiscoveredValue: exp.Value,
+					}
+				}
+				return &dns.ValidationResult{Records: records, CheckedAt: time.Now()}
+			})
+
+		// Expect cache set after validation
+		mockDomainCache.EXPECT().
+			SetDetailsByID(ctx, gomock.Any()).
+			Return(nil)
+
+		result, err := svc.Get(ctx, userID, domainID)
+		require.NoError(t, err)
+
+		// Key assertions: records should show Found status, not Pending
+		for _, dkim := range result.Records.DkimRecords {
+			assert.Equal(t, domain.RecordStatusFound, dkim.Status, "DKIM should be validated as found")
+		}
+		assert.True(t, result.Summary.CanSend, "should be able to send after auto-validation")
+	})
+
+	t.Run("returns cached details when not stale", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockStore := serviceMocks.NewMockStore(ctrl)
+		mockCache := serviceMocks.NewMockCache(ctrl)
+		mockDomainCache := redisMocks.NewMockDomainCacheInterface(ctrl)
+
+		mockCache.EXPECT().Domain().Return(mockDomainCache).AnyTimes()
+
+		svc := NewDomainService(mockStore, nil, nil, mockCache, nil, nil, "us-east-1", "config-set")
+
+		// Fresh cached domain (last checked 1 minute ago)
+		recentCheck := time.Now().Add(-1 * time.Minute)
+		cachedDetails := &domain.DomainWithDetails{
+			SendingDomain: &domain.SendingDomain{
+				ID:            domainID,
+				UserID:        userID,
+				Domain:        domainName,
+				LastCheckedAt: &recentCheck,
+			},
+			Summary: &domain.DomainSummary{CanSend: true},
+			Records: &domain.DomainRecords{
+				DkimRecords: []domain.DnsRecord{{Status: domain.RecordStatusFound}},
+			},
+		}
+
+		// Should hit cache and return immediately
+		mockDomainCache.EXPECT().
+			GetDetailsByID(ctx, domainID).
+			Return(cachedDetails, nil)
+
+		result, err := svc.Get(ctx, userID, domainID)
+		require.NoError(t, err)
+		assert.Equal(t, cachedDetails, result, "should return cached details directly")
+	})
+
+	t.Run("respects rate limit even when stale", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockStore := serviceMocks.NewMockStore(ctrl)
+		mockCache := serviceMocks.NewMockCache(ctrl)
+		mockDomainRepo := repoMocks.NewMockDomainRepository(ctrl)
+		mockDomainCache := redisMocks.NewMockDomainCacheInterface(ctrl)
+
+		mockStore.EXPECT().Domains().Return(mockDomainRepo).AnyTimes()
+		mockCache.EXPECT().Domain().Return(mockDomainCache).AnyTimes()
+
+		svc := NewDomainService(mockStore, nil, nil, mockCache, nil, nil, "us-east-1", "config-set")
+
+		// Stale but recently checked (within cooldown)
+		recentCheck := time.Now().Add(-10 * time.Second) // 10s ago, within 30s cooldown
+		storedDomain := &domain.SendingDomain{
+			ID:            domainID,
+			UserID:        userID,
+			Domain:        domainName,
+			DkimTokens:    []string{"token1"},
+			LastCheckedAt: &recentCheck,
+			CreatedAt:     time.Now().Add(-1 * time.Hour), // Created long ago so isStale returns true
+		}
+
+		mockDomainCache.EXPECT().
+			GetDetailsByID(ctx, domainID).
+			Return(nil, nil)
+
+		mockDomainRepo.EXPECT().
+			GetByID(ctx, domainID).
+			Return(storedDomain, nil)
+
+		// No SES or DNS calls expected due to cooldown
+		// Just cache the built details
+		mockDomainCache.EXPECT().
+			SetDetailsByID(ctx, gomock.Any()).
+			Return(nil)
+
+		result, err := svc.Get(ctx, userID, domainID)
+		require.NoError(t, err)
+
+		// Records should be pending since we didn't validate
+		for _, dkim := range result.Records.DkimRecords {
+			assert.Equal(t, domain.RecordStatusPending, dkim.Status, "records should be pending when cooldown blocks validation")
+		}
+	})
+}
+
+// TestDomainService_List_UsesCachedDetails tests that List() uses cached DomainWithDetails.
+func TestDomainService_List_UsesCachedDetails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := serviceMocks.NewMockStore(ctrl)
+	mockCache := serviceMocks.NewMockCache(ctrl)
+	mockDomainRepo := repoMocks.NewMockDomainRepository(ctrl)
+	mockDomainCache := redisMocks.NewMockDomainCacheInterface(ctrl)
+
+	mockStore.EXPECT().Domains().Return(mockDomainRepo).AnyTimes()
+	mockCache.EXPECT().Domain().Return(mockDomainCache).AnyTimes()
+
+	svc := NewDomainService(mockStore, nil, nil, mockCache, nil, nil, "us-east-1", "config-set")
+	ctx := context.Background()
+	userID := "user_1"
+
+	t.Run("returns cached details with validated record statuses", func(t *testing.T) {
+		storedDomains := []*domain.SendingDomain{
+			{
+				ID:         "dom_1",
+				UserID:     userID,
+				Domain:     "example.com",
+				DkimTokens: []string{"token1"},
+			},
+			{
+				ID:         "dom_2",
+				UserID:     userID,
+				Domain:     "example.org",
+				DkimTokens: []string{"token2"},
+			},
+		}
+
+		cachedDetails := &domain.DomainWithDetails{
+			SendingDomain: storedDomains[0],
+			Summary:       &domain.DomainSummary{CanSend: true, RecordsConfigured: 3},
+			Records: &domain.DomainRecords{
+				DkimRecords: []domain.DnsRecord{{Status: domain.RecordStatusFound}},
+			},
+		}
+
+		mockDomainRepo.EXPECT().
+			GetByUserID(ctx, userID, 25, 0).
+			Return(storedDomains, nil)
+
+		mockDomainRepo.EXPECT().
+			CountByUserID(ctx, userID).
+			Return(2, nil)
+
+		// First domain has cached details (from previous Verify)
+		mockDomainCache.EXPECT().
+			GetDetailsByID(ctx, "dom_1").
+			Return(cachedDetails, nil)
+
+		// Second domain has no cache (returns nil)
+		mockDomainCache.EXPECT().
+			GetDetailsByID(ctx, "dom_2").
+			Return(nil, nil)
+
+		results, total, err := svc.List(ctx, userID, 1, 25)
+		require.NoError(t, err)
+		assert.Equal(t, 2, total)
+		assert.Equal(t, 2, len(results))
+
+		// First domain should have cached (validated) status
+		assert.Equal(t, domain.RecordStatusFound, results[0].Records.DkimRecords[0].Status,
+			"cached domain should preserve validated status")
+
+		// Second domain should have pending status (built from scratch)
+		assert.Equal(t, domain.RecordStatusPending, results[1].Records.DkimRecords[0].Status,
+			"non-cached domain should have pending status")
+	})
+}
+
+// TestDomainService_VerifyThenGet_PreservesRecordStatuses tests the full workflow.
+func TestDomainService_VerifyThenGet_PreservesRecordStatuses(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// This test verifies the core fix: after Verify(), Get() should return validated statuses
+
+	mockStore := serviceMocks.NewMockStore(ctrl)
+	mockCache := serviceMocks.NewMockCache(ctrl)
+	mockSES := sesMocks.NewMockClient(ctrl)
+	mockDNS := dnsMocks.NewMockValidatorInterface(ctrl)
+	mockDomainRepo := repoMocks.NewMockDomainRepository(ctrl)
+	mockDomainCache := redisMocks.NewMockDomainCacheInterface(ctrl)
+
+	mockStore.EXPECT().Domains().Return(mockDomainRepo).AnyTimes()
+	mockCache.EXPECT().Domain().Return(mockDomainCache).AnyTimes()
+
+	svc := NewDomainService(mockStore, mockSES, mockDNS, mockCache, nil, nil, "us-east-1", "config-set")
+	ctx := context.Background()
+	userID := "user_1"
+	domainID := "dom_1"
+	domainName := "example.com"
+
+	t.Run("Get returns validated statuses after Verify", func(t *testing.T) {
+		oldCheck := time.Now().Add(-35 * time.Second)
+		storedDomain := &domain.SendingDomain{
+			ID:            domainID,
+			UserID:        userID,
+			Domain:        domainName,
+			DkimTokens:    []string{"token1"},
+			LastCheckedAt: &oldCheck,
+		}
+
+		// --- Verify call ---
+		mockDomainRepo.EXPECT().
+			GetByID(ctx, domainID).
+			Return(storedDomain, nil)
+
+		mockSES.EXPECT().
+			GetEmailIdentity(ctx, domainName).
+			Return(&ses.IdentityResult{
+				VerifiedForSendingStatus: true,
+				DkimStatus:               "SUCCESS",
+				DkimTokens:               []string{"token1"},
+			}, nil)
+
+		mockDomainRepo.EXPECT().
+			Update(ctx, gomock.Any()).
+			Return(nil).Times(2)
+
+		mockDNS.EXPECT().
+			ValidateRecords(ctx, gomock.Any()).
+			DoAndReturn(func(_ context.Context, expected []dns.ExpectedRecord) *dns.ValidationResult {
+				records := make(map[string]dns.RecordResult)
+				for _, exp := range expected {
+					records[exp.Key()] = dns.RecordResult{
+						ExpectedRecord:  exp,
+						Status:          dns.RecordStatusFound,
+						DiscoveredValue: exp.Value,
+					}
+				}
+				return &dns.ValidationResult{Records: records, CheckedAt: time.Now()}
+			})
+
+		// Verify caches the details
+		var cachedByVerify *domain.DomainWithDetails
+		mockDomainCache.EXPECT().
+			SetDetailsByID(ctx, gomock.Any()).
+			DoAndReturn(func(_ context.Context, d *domain.DomainWithDetails) error {
+				cachedByVerify = d
+				return nil
+			})
+
+		mockDomainCache.EXPECT().
+			InvalidateByUserID(ctx, userID).
+			Return(nil)
+
+		verifyResult, err := svc.Verify(ctx, userID, domainID)
+		require.NoError(t, err)
+		assert.True(t, verifyResult.WasRefreshed)
+
+		// Verify the cached details have validated statuses
+		require.NotNil(t, cachedByVerify)
+		for _, dkim := range cachedByVerify.Records.DkimRecords {
+			assert.Equal(t, domain.RecordStatusFound, dkim.Status)
+		}
+
+		// --- Get call should return cached details ---
+		mockDomainCache.EXPECT().
+			GetDetailsByID(ctx, domainID).
+			Return(cachedByVerify, nil)
+
+		getResult, err := svc.Get(ctx, userID, domainID)
+		require.NoError(t, err)
+
+		// Key assertion: Get() returns the validated statuses from cache
+		for _, dkim := range getResult.Records.DkimRecords {
+			assert.Equal(t, domain.RecordStatusFound, dkim.Status,
+				"Get() should return validated status from cache after Verify()")
+		}
 	})
 }

@@ -72,6 +72,21 @@ func (mr *MockDomainCacheInterfaceMockRecorder) GetByUserID(ctx, userID any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserID", reflect.TypeOf((*MockDomainCacheInterface)(nil).GetByUserID), ctx, userID)
 }
 
+// GetDetailsByID mocks base method.
+func (m *MockDomainCacheInterface) GetDetailsByID(ctx context.Context, id string) (*domain.DomainWithDetails, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDetailsByID", ctx, id)
+	ret0, _ := ret[0].(*domain.DomainWithDetails)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDetailsByID indicates an expected call of GetDetailsByID.
+func (mr *MockDomainCacheInterfaceMockRecorder) GetDetailsByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDetailsByID", reflect.TypeOf((*MockDomainCacheInterface)(nil).GetDetailsByID), ctx, id)
+}
+
 // GetSendingStatus mocks base method.
 func (m *MockDomainCacheInterface) GetSendingStatus(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error) {
 	m.ctrl.T.Helper()
@@ -169,6 +184,20 @@ func (m *MockDomainCacheInterface) SetByUserID(ctx context.Context, userID strin
 func (mr *MockDomainCacheInterfaceMockRecorder) SetByUserID(ctx, userID, domains any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetByUserID", reflect.TypeOf((*MockDomainCacheInterface)(nil).SetByUserID), ctx, userID, domains)
+}
+
+// SetDetailsByID mocks base method.
+func (m *MockDomainCacheInterface) SetDetailsByID(ctx context.Context, d *domain.DomainWithDetails) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetDetailsByID", ctx, d)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetDetailsByID indicates an expected call of SetDetailsByID.
+func (mr *MockDomainCacheInterfaceMockRecorder) SetDetailsByID(ctx, d any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDetailsByID", reflect.TypeOf((*MockDomainCacheInterface)(nil).SetDetailsByID), ctx, d)
 }
 
 // SetSendingStatus mocks base method.

@@ -99,31 +99,33 @@ func DefaultConfig() ValidatorConfig {
 	}
 }
 
-// Validator handles DNS record validation with consensus-based lookups.
+// Validator handles DNS record validation using DoH (DNS over HTTPS).
+// DoH is more reliable than raw UDP queries as it uses HTTP/HTTPS.
 type Validator struct {
-	config ValidatorConfig
+	config    ValidatorConfig
+	dohClient *DoHClient
 }
 
 // Ensure Validator implements ValidatorInterface
 var _ ValidatorInterface = (*Validator)(nil)
 
-// NewValidator creates a new DNS validator with default configuration.
+// NewValidator creates a new DNS validator with DoH-based lookups.
 func NewValidator() *Validator {
 	return NewValidatorWithConfig(DefaultConfig())
 }
 
 // NewValidatorWithConfig creates a new DNS validator with custom configuration.
 func NewValidatorWithConfig(config ValidatorConfig) *Validator {
-	if len(config.Resolvers) == 0 {
-		config.Resolvers = DefaultResolvers
-	}
 	if config.Timeout == 0 {
 		config.Timeout = DefaultTimeout
 	}
 	if config.ConsensusThreshold == 0 {
 		config.ConsensusThreshold = ConsensusThreshold
 	}
-	return &Validator{config: config}
+	return &Validator{
+		config:    config,
+		dohClient: NewDoHClient(),
+	}
 }
 
 // ValidateRecords checks multiple DNS records in parallel.
@@ -152,50 +154,46 @@ func (v *Validator) ValidateRecords(ctx context.Context, expected []ExpectedReco
 	return result
 }
 
-// resolverResult holds the result from a single resolver query.
-type resolverResult struct {
-	resolver string
-	value    string
-	found    bool
-	err      error
-}
-
-// checkRecordWithConsensus verifies a DNS record using multiple resolvers.
-// It requires a majority of resolvers to agree for a "found" status.
+// checkRecordWithConsensus verifies a DNS record using DoH providers.
+// Uses a simplified consensus: if ANY provider finds the record with correct value → FOUND.
 func (v *Validator) checkRecordWithConsensus(ctx context.Context, expected ExpectedRecord) RecordResult {
 	result := RecordResult{
 		ExpectedRecord: expected,
-		Status:         RecordStatusMissing,
+		Status:         RecordStatusPending,
 	}
 
-	// Query all resolvers in parallel
-	results := v.queryAllResolvers(ctx, expected)
+	// Query DoH providers in parallel
+	recordType := RecordTypeFromString(expected.Type)
+	dohResults := v.dohClient.QueryAll(ctx, expected.Name, recordType)
 
-	// Analyze results for consensus
-	foundCount := 0
-	mismatchCount := 0
-	missingCount := 0
+	// Analyze results
+	var foundMatching, foundMismatch, notFound, errors int
 	var discoveredValues []string
 
-	for _, r := range results {
-		if r.err != nil {
-			// Treat errors as missing (resolver failure)
-			missingCount++
+	for _, r := range dohResults {
+		if r.Error != nil {
+			errors++
 			continue
 		}
 
-		if !r.found || r.value == "" {
-			missingCount++
+		if !r.Found || len(r.Values) == 0 {
+			notFound++
 			continue
 		}
 
-		// Record was found, check if value matches
-		if v.valuesMatch(expected.Type, expected.Value, r.value) {
-			foundCount++
-			discoveredValues = append(discoveredValues, r.value)
+		// Check if any value matches expected
+		valueMatched := false
+		for _, val := range r.Values {
+			discoveredValues = append(discoveredValues, val)
+			if v.valuesMatch(expected.Type, expected.Value, val) {
+				valueMatched = true
+			}
+		}
+
+		if valueMatched {
+			foundMatching++
 		} else {
-			mismatchCount++
-			discoveredValues = append(discoveredValues, r.value)
+			foundMismatch++
 		}
 	}
 
@@ -204,63 +202,55 @@ func (v *Validator) checkRecordWithConsensus(ctx context.Context, expected Expec
 		result.DiscoveredValue = getMostCommon(discoveredValues)
 	}
 
-	// Calculate consensus
-	totalResponses := foundCount + mismatchCount + missingCount
-	if totalResponses == 0 {
-		result.Status = RecordStatusMissing
-		result.Error = "all DNS resolvers failed"
-		return result
-	}
-
-	threshold := int(float64(len(v.config.Resolvers)) * v.config.ConsensusThreshold)
-	if threshold < 1 {
-		threshold = 1
-	}
+	totalProviders := len(dohResults)
+	successfulResponses := foundMatching + foundMismatch + notFound
 
 	log.Debug().
 		Str("record", expected.Name).
 		Str("type", expected.Type).
-		Int("found", foundCount).
-		Int("mismatch", mismatchCount).
-		Int("missing", missingCount).
-		Int("threshold", threshold).
-		Msg("DNS consensus check")
+		Int("foundMatching", foundMatching).
+		Int("foundMismatch", foundMismatch).
+		Int("notFound", notFound).
+		Int("errors", errors).
+		Int("providers", totalProviders).
+		Msg("DoH DNS check")
 
-	// Determine status based on consensus
-	if foundCount >= threshold {
+	// Simplified consensus logic for DoH:
+	// - If ANY provider finds the record with correct value → FOUND
+	// - If providers find record but wrong value → MISMATCH
+	// - If ALL successful providers say not found → MISSING
+	// - If all providers failed → PENDING (try again later)
+
+	if successfulResponses == 0 {
+		// All providers failed - report as pending, not missing
+		result.Status = RecordStatusPending
+		result.Error = "all DNS providers failed"
+		return result
+	}
+
+	if foundMatching > 0 {
+		// At least one provider found the record with correct value
 		result.Status = RecordStatusFound
-	} else if mismatchCount >= threshold {
+	} else if foundMismatch > 0 {
+		// Providers found record but with wrong value
 		result.Status = RecordStatusMismatch
-	} else if missingCount >= threshold {
-		result.Status = RecordStatusMissing
 	} else {
-		// No clear consensus - be conservative and report missing
-		// This handles cases where results are split
+		// All successful providers report not found
 		result.Status = RecordStatusMissing
-		result.Error = "no consensus among DNS resolvers"
 	}
 
 	return result
 }
 
-// queryAllResolvers queries all configured resolvers in parallel with retries.
-func (v *Validator) queryAllResolvers(ctx context.Context, expected ExpectedRecord) []resolverResult {
-	results := make([]resolverResult, len(v.config.Resolvers))
-	var wg sync.WaitGroup
-
-	for i, resolver := range v.config.Resolvers {
-		wg.Add(1)
-		go func(idx int, resolver string) {
-			defer wg.Done()
-			results[idx] = v.queryWithRetry(ctx, resolver, expected)
-		}(i, resolver)
-	}
-
-	wg.Wait()
-	return results
+// Legacy UDP types - kept for test compatibility
+type resolverResult struct {
+	resolver string
+	value    string
+	found    bool
+	err      error
 }
 
-// queryWithRetry queries a single resolver with exponential backoff retry.
+// queryWithRetry is legacy - not used with DoH
 func (v *Validator) queryWithRetry(ctx context.Context, resolver string, expected ExpectedRecord) resolverResult {
 	result := resolverResult{resolver: resolver}
 

@@ -25,6 +25,7 @@ func NewDomainCache(client *Client, ttl time.Duration) *DomainCache {
 
 // Key patterns - centralized in one place
 func keyDomain(id string) string            { return "domain:" + id }
+func keyDomainDetails(id string) string     { return "domain:details:" + id }
 func keyDomainsByUser(userID string) string { return "domains:user:" + userID }
 
 // GetByID retrieves a cached domain by ID.
@@ -50,6 +51,33 @@ func (c *DomainCache) SetByID(ctx context.Context, d *domain.SendingDomain) erro
 		return err
 	}
 	return c.client.Set(ctx, keyDomain(d.ID), string(data), c.ttl)
+}
+
+// GetDetailsByID retrieves cached domain with full details (including DNS record statuses).
+// This is set after Verify() to preserve validated record statuses for subsequent Get()/List() calls.
+// Returns nil, nil if not found in cache.
+func (c *DomainCache) GetDetailsByID(ctx context.Context, id string) (*domain.DomainWithDetails, error) {
+	data, err := c.client.Get(ctx, keyDomainDetails(id))
+	if err != nil {
+		return nil, nil // Cache miss
+	}
+
+	var d domain.DomainWithDetails
+	if err := json.Unmarshal([]byte(data), &d); err != nil {
+		return nil, nil // Invalid cache data, treat as miss
+	}
+
+	return &d, nil
+}
+
+// SetDetailsByID caches domain with full details (including DNS record statuses).
+// Call this after Verify() to preserve validated record statuses for subsequent Get()/List() calls.
+func (c *DomainCache) SetDetailsByID(ctx context.Context, d *domain.DomainWithDetails) error {
+	data, err := json.Marshal(d)
+	if err != nil {
+		return err
+	}
+	return c.client.Set(ctx, keyDomainDetails(d.ID), string(data), c.ttl)
 }
 
 // GetByUserID retrieves cached domains list for a user.
@@ -79,7 +107,7 @@ func (c *DomainCache) SetByUserID(ctx context.Context, userID string, domains []
 
 // InvalidateByID removes a domain from cache by ID.
 func (c *DomainCache) InvalidateByID(ctx context.Context, id string) error {
-	return c.client.Del(ctx, keyDomain(id))
+	return c.client.Del(ctx, keyDomain(id), keyDomainDetails(id))
 }
 
 // InvalidateByUserID removes the domains list cache for a user.
@@ -87,10 +115,10 @@ func (c *DomainCache) InvalidateByUserID(ctx context.Context, userID string) err
 	return c.client.Del(ctx, keyDomainsByUser(userID))
 }
 
-// InvalidateAll removes both domain and user list cache.
+// InvalidateAll removes domain, domain details, and user list cache.
 // Use on Create/Update/Delete operations.
 func (c *DomainCache) InvalidateAll(ctx context.Context, id, userID string) error {
-	return c.client.Del(ctx, keyDomain(id), keyDomainsByUser(userID))
+	return c.client.Del(ctx, keyDomain(id), keyDomainDetails(id), keyDomainsByUser(userID))
 }
 
 // Fast-path key for sending validation lookups

@@ -195,7 +195,7 @@ func TestValidator_valuesMatch(t *testing.T) {
 func TestDefaultConfig(t *testing.T) {
 	config := DefaultConfig()
 
-	assert.Len(t, config.Resolvers, 6, "should have 6 default resolvers")
+	// DoH-based validator doesn't use resolvers list anymore
 	assert.Equal(t, DefaultTimeout, config.Timeout)
 	assert.Equal(t, DefaultRetries, config.Retries)
 	assert.Equal(t, DefaultRetryDelay, config.RetryDelay)
@@ -209,14 +209,14 @@ func TestNewValidatorWithConfig(t *testing.T) {
 		}
 		v := NewValidatorWithConfig(config)
 
-		assert.Len(t, v.config.Resolvers, 6, "should use default resolvers")
+		// DoH client should be initialized
+		assert.NotNil(t, v.dohClient, "should have DoH client")
 		assert.Equal(t, DefaultTimeout, v.config.Timeout)
 		assert.Equal(t, ConsensusThreshold, v.config.ConsensusThreshold)
 	})
 
 	t.Run("uses provided values", func(t *testing.T) {
 		config := ValidatorConfig{
-			Resolvers:          []string{"1.2.3.4:53"},
 			Timeout:            5 * time.Second,
 			Retries:            5,
 			RetryDelay:         200 * time.Millisecond,
@@ -224,7 +224,8 @@ func TestNewValidatorWithConfig(t *testing.T) {
 		}
 		v := NewValidatorWithConfig(config)
 
-		assert.Equal(t, []string{"1.2.3.4:53"}, v.config.Resolvers)
+		// DoH client should be initialized
+		assert.NotNil(t, v.dohClient, "should have DoH client")
 		assert.Equal(t, 5*time.Second, v.config.Timeout)
 		assert.Equal(t, 5, v.config.Retries)
 		assert.Equal(t, 200*time.Millisecond, v.config.RetryDelay)
@@ -260,17 +261,10 @@ func TestValidationResult_KeyBasedMapping(t *testing.T) {
 
 func TestValidator_ValidateRecords_ReturnsKeyedResults(t *testing.T) {
 	// This test verifies the structure of ValidateRecords output
-	// It doesn't actually hit DNS - we just verify the result structure
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	// Use a validator with very short timeout and no retries to fail fast
-	v := NewValidatorWithConfig(ValidatorConfig{
-		Resolvers:          []string{"192.0.2.1:53"}, // TEST-NET-1, won't resolve
-		Timeout:            10 * time.Millisecond,
-		Retries:            0,
-		ConsensusThreshold: 0.5,
-	})
+	v := NewValidator()
 
 	expected := []ExpectedRecord{
 		{Type: "CNAME", Name: "test1.example.com", Value: "test.value"},
@@ -289,9 +283,9 @@ func TestValidator_ValidateRecords_ReturnsKeyedResults(t *testing.T) {
 	assert.True(t, exists1, "should have key for CNAME record")
 	assert.True(t, exists2, "should have key for TXT record")
 
-	// Results will be missing since we can't reach the resolver
+	// Results will be missing/pending since these are non-existent test domains
 	for _, rec := range result.Records {
-		assert.Equal(t, RecordStatusMissing, rec.Status)
+		assert.Contains(t, []RecordStatus{RecordStatusMissing, RecordStatusPending}, rec.Status)
 	}
 }
 

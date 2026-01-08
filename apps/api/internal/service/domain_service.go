@@ -170,13 +170,17 @@ func (s *DomainService) Add(ctx context.Context, userID, domainName string) (*do
 }
 
 // Get retrieves a domain by ID with authorization check.
-// Auto-refreshes if data is stale (>5 min).
+// Auto-validates DNS if data is stale (>5 min) and cooldown allows.
 func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*domain.DomainWithDetails, error) {
-	// Try cache first
+	// Try cache first - prefer full details (includes validated record statuses)
 	if s.cache != nil {
-		if cached, _ := s.cache.Domain().GetByID(ctx, domainID); cached != nil {
+		if cached, _ := s.cache.Domain().GetDetailsByID(ctx, domainID); cached != nil {
 			if cached.UserID == userID {
-				return s.buildDomainWithDetails(cached), nil
+				// Check if cached data is stale
+				if !s.isStale(cached.SendingDomain) {
+					return cached, nil
+				}
+				// Cache is stale, fall through to refresh
 			}
 		}
 	}
@@ -190,26 +194,53 @@ func (s *DomainService) Get(ctx context.Context, userID, domainID string) (*doma
 		return nil, domain.ErrDomainNotFound
 	}
 
-	// Auto-refresh if stale and cooldown allows
+	// Auto-validate DNS if stale and cooldown allows
 	if s.isStale(d) {
 		if canVerify, _ := s.canVerify(d); canVerify {
+			// Refresh from SES first
 			refreshed, err := s.refreshFromSES(ctx, d)
 			if err == nil {
 				d = refreshed
 			}
+
+			// Build records and perform DNS validation (like Verify does)
+			records := s.buildDomainRecords(d)
+			details := &domain.DomainWithDetails{
+				SendingDomain: d,
+				Records:       records,
+			}
+			s.validateDNS(ctx, details)
+			details.Summary = s.buildSummary(d, records)
+			s.updateStatusFromRecords(d, details)
+
+			// Save updated status to DB
+			if err := s.store.Domains().Update(ctx, d); err != nil {
+				// Log but don't fail - we can still return the details
+				log.Warn().Err(err).Str("domain_id", domainID).Msg("failed to save auto-validated domain status")
+			}
+
+			// Cache the validated details
+			if s.cache != nil {
+				_ = s.cache.Domain().SetDetailsByID(ctx, details)
+			}
+
+			return details, nil
 		}
 	}
 
-	// Cache the result
+	// Not stale or can't verify yet - build details without DNS validation
+	details := s.buildDomainWithDetails(d)
+
+	// Cache the result for next lookup
 	if s.cache != nil {
-		_ = s.cache.Domain().SetByID(ctx, d)
+		_ = s.cache.Domain().SetDetailsByID(ctx, details)
 	}
 
-	return s.buildDomainWithDetails(d), nil
+	return details, nil
 }
 
 // List retrieves all domains for a user with pagination.
-// Uses cache for unpaginated requests (page <= 1, pageSize >= 100) for performance.
+// Checks individual domain details cache to preserve validated record statuses.
 func (s *DomainService) List(ctx context.Context, userID string, page, pageSize int) ([]*domain.DomainWithDetails, int, error) {
 	// Default pagination if not specified
 	if page <= 0 {
@@ -217,32 +248,6 @@ func (s *DomainService) List(ctx context.Context, userID string, page, pageSize 
 	}
 	if pageSize <= 0 {
 		pageSize = 25 // Reasonable default
-	}
-
-	// Use cache for "list all" requests (first page with large page size)
-	// This optimizes the common case of loading domains in UI
-	useCache := page == 1 && pageSize >= 25
-
-	if useCache && s.cache != nil {
-		if cached, _ := s.cache.Domain().GetByUserID(ctx, userID); cached != nil {
-			// Return cached results (limited to pageSize for consistency)
-			limit := len(cached)
-			if pageSize < limit {
-				limit = pageSize
-			}
-
-			result := make([]*domain.DomainWithDetails, limit)
-			var wg sync.WaitGroup
-			for i := 0; i < limit; i++ {
-				wg.Add(1)
-				go func(idx int, dom *domain.SendingDomain) {
-					defer wg.Done()
-					result[idx] = s.buildDomainWithDetails(dom)
-				}(i, cached[i])
-			}
-			wg.Wait()
-			return result, len(cached), nil
-		}
 	}
 
 	offset := (page - 1) * pageSize
@@ -258,17 +263,21 @@ func (s *DomainService) List(ctx context.Context, userID string, page, pageSize 
 		return nil, 0, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "count_domains")
 	}
 
-	// Cache for first page requests
-	if useCache && s.cache != nil && page == 1 {
-		_ = s.cache.Domain().SetByUserID(ctx, userID, domains)
-	}
-
+	// Build results, preferring cached details (preserves DNS record statuses from Verify)
 	result := make([]*domain.DomainWithDetails, len(domains))
 	var wg sync.WaitGroup
 	for i, d := range domains {
 		wg.Add(1)
 		go func(idx int, dom *domain.SendingDomain) {
 			defer wg.Done()
+			// Try to get cached details first (includes validated DNS record statuses)
+			if s.cache != nil {
+				if cached, _ := s.cache.Domain().GetDetailsByID(ctx, dom.ID); cached != nil {
+					result[idx] = cached
+					return
+				}
+			}
+			// No cache hit - build from scratch (records will be pending)
 			result[idx] = s.buildDomainWithDetails(dom)
 		}(i, d)
 	}
@@ -385,9 +394,12 @@ func (s *DomainService) Verify(ctx context.Context, userID, domainID string) (*d
 		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "update_domain")
 	}
 
-	// Invalidate cache to ensure fresh data on next read
+	// Cache the verified domain with DNS record statuses for subsequent Get/List calls
+	// Instead of invalidating, we cache the full details so Get() returns validated statuses
 	if s.cache != nil {
-		_ = s.cache.Domain().InvalidateAll(ctx, domainID, userID)
+		_ = s.cache.Domain().SetDetailsByID(ctx, details)
+		// Also invalidate the user's domain list to force refresh on next List() call
+		_ = s.cache.Domain().InvalidateByUserID(ctx, userID)
 	}
 
 	// Log verification activity

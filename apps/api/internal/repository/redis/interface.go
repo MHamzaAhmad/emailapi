@@ -18,6 +18,11 @@ type DomainCacheInterface interface {
 	InvalidateByUserID(ctx context.Context, userID string) error
 	InvalidateAll(ctx context.Context, id, userID string) error
 
+	// DomainWithDetails cache - preserves DNS record validation results
+	// These are set after Verify() and used by Get()/List() to return validated statuses
+	GetDetailsByID(ctx context.Context, id string) (*domain.DomainWithDetails, error)
+	SetDetailsByID(ctx context.Context, d *domain.DomainWithDetails) error
+
 	// Fast-path methods for sending validation (high-frequency, low-latency)
 	GetSendingStatus(ctx context.Context, userID, domainName string) (*domain.SendingDomain, error)
 	SetSendingStatus(ctx context.Context, d *domain.SendingDomain) error
