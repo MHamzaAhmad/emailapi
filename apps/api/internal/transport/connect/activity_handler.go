@@ -2,7 +2,6 @@ package connect
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"connectrpc.com/connect"
@@ -10,8 +9,10 @@ import (
 
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/gen/v1/v1connect"
+	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/service"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
+	transporterrors "github.com/emailapi/api/internal/transport/errors"
 )
 
 // ActivityHandler implements the Connect ActivityServiceHandler.
@@ -32,7 +33,7 @@ func (h *ActivityHandler) ListActivityLogs(
 ) (*connect.Response[v1.ListActivityLogsResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	// Build filters from request
@@ -53,7 +54,7 @@ func (h *ActivityHandler) ListActivityLogs(
 	// Call service
 	logs, totalCount, err := h.svc.List(ctx, userID, filters, int(req.Msg.PageSize), int(req.Msg.Offset))
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	// Convert to proto

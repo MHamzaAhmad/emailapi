@@ -2,7 +2,6 @@ package connect
 
 import (
 	"context"
-	"errors"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -12,6 +11,7 @@ import (
 	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/service"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
+	transporterrors "github.com/emailapi/api/internal/transport/errors"
 )
 
 // DomainHandler implements the Connect DomainServiceHandler.
@@ -32,12 +32,12 @@ func (h *DomainHandler) AddDomain(
 ) (*connect.Response[v1.AddDomainResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	details, err := h.svc.Add(ctx, userID, req.Msg.Domain)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	return connect.NewResponse(&v1.AddDomainResponse{
@@ -53,12 +53,12 @@ func (h *DomainHandler) GetDomain(
 ) (*connect.Response[v1.GetDomainResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	details, err := h.svc.Get(ctx, userID, req.Msg.Id)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("domain not found or access denied"))
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	return connect.NewResponse(&v1.GetDomainResponse{
@@ -73,7 +73,7 @@ func (h *DomainHandler) ListDomains(
 ) (*connect.Response[v1.ListDomainsResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	// Extract pagination params from request
@@ -82,7 +82,7 @@ func (h *DomainHandler) ListDomains(
 
 	domains, total, err := h.svc.List(ctx, userID, page, pageSize)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	protoDomains := make([]*v1.Domain, len(domains))
@@ -103,11 +103,11 @@ func (h *DomainHandler) DeleteDomain(
 ) (*connect.Response[v1.DeleteDomainResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	if err := h.svc.Delete(ctx, userID, req.Msg.Id); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	return connect.NewResponse(&v1.DeleteDomainResponse{
@@ -122,12 +122,12 @@ func (h *DomainHandler) VerifyDomain(
 ) (*connect.Response[v1.VerifyDomainResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	result, err := h.svc.Verify(ctx, userID, req.Msg.Id)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	resp := &v1.VerifyDomainResponse{

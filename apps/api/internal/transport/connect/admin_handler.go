@@ -2,15 +2,18 @@ package connect
 
 import (
 	"context"
-	"errors"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/gen/v1/v1connect"
+	"github.com/emailapi/api/internal/domain"
+
 	"github.com/emailapi/api/internal/service"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
+	transporterrors "github.com/emailapi/api/internal/transport/errors"
+
 )
 
 // AdminHandler implements the Connect AdminServiceHandler.
@@ -37,7 +40,7 @@ func (h *AdminHandler) ListUsers(
 
 	users, total, err := h.svc.ListUsers(ctx, limit, offset)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	protoUsers := make([]*v1.AdminUser, len(users))
@@ -74,7 +77,7 @@ func (h *AdminHandler) ListFlaggedUsers(
 
 	users, total, err := h.svc.ListFlaggedUsers(ctx, limit, offset)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	protoUsers := make([]*v1.FlaggedUser, len(users))
@@ -110,12 +113,12 @@ func (h *AdminHandler) GetUserDetails(
 	req *connect.Request[v1.GetUserDetailsRequest],
 ) (*connect.Response[v1.UserDetails], error) {
 	if req.Msg.UserId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("user_id is required"))
+		return nil, transporterrors.ToConnectError(domain.ErrInvalidArgument.Clone().WithMeta("field", "user_id is required"))
 	}
 
 	user, err := h.svc.GetUserDetails(ctx, req.Msg.UserId)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	details := &v1.UserDetails{
@@ -154,19 +157,19 @@ func (h *AdminHandler) SuspendUser(
 	req *connect.Request[v1.SuspendUserRequest],
 ) (*connect.Response[v1.SuspendUserResponse], error) {
 	if req.Msg.UserId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("user_id is required"))
+		return nil, transporterrors.ToConnectError(domain.ErrInvalidArgument.Clone().WithMeta("field", "user_id is required"))
 	}
 	if req.Msg.Reason == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("reason is required"))
+		return nil, transporterrors.ToConnectError(domain.ErrInvalidArgument.Clone().WithMeta("field", "reason is required"))
 	}
 
 	adminID := interceptor.GetUserID(ctx)
 	if adminID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("admin not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrAdminRequired)
 	}
 
 	if err := h.svc.SuspendUser(ctx, req.Msg.UserId, adminID, req.Msg.Reason); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	return connect.NewResponse(&v1.SuspendUserResponse{
@@ -180,16 +183,16 @@ func (h *AdminHandler) UnsuspendUser(
 	req *connect.Request[v1.UnsuspendUserRequest],
 ) (*connect.Response[v1.UnsuspendUserResponse], error) {
 	if req.Msg.UserId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("user_id is required"))
+		return nil, transporterrors.ToConnectError(domain.ErrInvalidArgument.Clone().WithMeta("field", "user_id is required"))
 	}
 
 	adminID := interceptor.GetUserID(ctx)
 	if adminID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("admin not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrAdminRequired)
 	}
 
 	if err := h.svc.UnsuspendUser(ctx, req.Msg.UserId, adminID); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	return connect.NewResponse(&v1.UnsuspendUserResponse{

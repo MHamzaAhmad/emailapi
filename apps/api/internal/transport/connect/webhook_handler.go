@@ -2,14 +2,17 @@ package connect
 
 import (
 	"context"
-	"errors"
 
 	"connectrpc.com/connect"
 
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/gen/v1/v1connect"
+	"github.com/emailapi/api/internal/domain"
+
 	"github.com/emailapi/api/internal/service"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
+	transporterrors "github.com/emailapi/api/internal/transport/errors"
+
 )
 
 // WebhookHandler implements the Connect WebhookServiceHandler.
@@ -30,12 +33,12 @@ func (h *WebhookHandler) GetAppPortalAccess(
 ) (*connect.Response[v1.GetAppPortalAccessResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	url, token, err := h.svc.GetAppPortalAccess(ctx, userID)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	return connect.NewResponse(&v1.GetAppPortalAccessResponse{

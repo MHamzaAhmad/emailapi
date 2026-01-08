@@ -2,7 +2,6 @@ package connect
 
 import (
 	"context"
-	"errors"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -10,8 +9,11 @@ import (
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/domain"
+
 	"github.com/emailapi/api/internal/service"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
+	transporterrors "github.com/emailapi/api/internal/transport/errors"
+
 )
 
 // UserHandler implements the Connect UserServiceHandler.
@@ -39,7 +41,7 @@ func (h *UserHandler) CreateUser(
 
 	user, err := h.svc.Create(ctx, domainReq)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	return connect.NewResponse(&v1.CreateUserResponse{
@@ -55,12 +57,12 @@ func (h *UserHandler) GetCurrentUser(
 ) (*connect.Response[v1.User], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	user, err := h.svc.GetByID(ctx, userID)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+		return nil, transporterrors.ToConnectError(domain.ErrUserNotFound)
 	}
 
 	return connect.NewResponse(toProtoUser(user)), nil
@@ -73,12 +75,12 @@ func (h *UserHandler) UpdateUser(
 ) (*connect.Response[v1.User], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	// Only allow users to update their own profile
 	if req.Msg.Id != userID {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("cannot update another user"))
+		return nil, transporterrors.ToConnectError(domain.ErrPermissionDenied)
 	}
 
 	domainReq := &domain.UpdateUserRequest{}
@@ -98,7 +100,7 @@ func (h *UserHandler) UpdateUser(
 
 	user, err := h.svc.Update(ctx, req.Msg.Id, domainReq)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	return connect.NewResponse(toProtoUser(user)), nil
@@ -111,7 +113,7 @@ func (h *UserHandler) ListUsers(
 ) (*connect.Response[v1.ListUsersResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	limit := int(req.Msg.PageSize)
@@ -122,7 +124,7 @@ func (h *UserHandler) ListUsers(
 
 	users, err := h.svc.List(ctx, limit, offset)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	protoUsers := make([]*v1.User, len(users))
@@ -143,7 +145,7 @@ func (h *UserHandler) GetSuspensionStatus(
 ) (*connect.Response[v1.SuspensionStatus], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	// Get reputation status

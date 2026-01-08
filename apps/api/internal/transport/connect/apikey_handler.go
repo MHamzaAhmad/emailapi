@@ -2,7 +2,6 @@ package connect
 
 import (
 	"context"
-	"errors"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -10,8 +9,11 @@ import (
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/gen/v1/v1connect"
 	"github.com/emailapi/api/internal/domain"
+
 	"github.com/emailapi/api/internal/service"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
+	transporterrors "github.com/emailapi/api/internal/transport/errors"
+
 )
 
 // ApiKeyHandler implements the Connect ApiKeyServiceHandler.
@@ -32,7 +34,7 @@ func (h *ApiKeyHandler) CreateApiKey(
 ) (*connect.Response[v1.CreateApiKeyResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	domainReq := &domain.CreateAPIKeyRequest{
@@ -46,7 +48,7 @@ func (h *ApiKeyHandler) CreateApiKey(
 
 	apiKey, rawKey, err := h.svc.Create(ctx, userID, domainReq)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	return connect.NewResponse(&v1.CreateApiKeyResponse{
@@ -63,12 +65,12 @@ func (h *ApiKeyHandler) GetApiKey(
 ) (*connect.Response[v1.ApiKey], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	apiKey, err := h.svc.GetByID(ctx, userID, req.Msg.Id)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("API key not found"))
+		return nil, transporterrors.ToConnectError(domain.ErrAPIKeyNotFound)
 	}
 
 	return connect.NewResponse(toProtoApiKey(apiKey)), nil
@@ -81,7 +83,7 @@ func (h *ApiKeyHandler) ListApiKeys(
 ) (*connect.Response[v1.ListApiKeysResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	// Extract pagination params from request
@@ -90,7 +92,7 @@ func (h *ApiKeyHandler) ListApiKeys(
 
 	apiKeys, total, err := h.svc.List(ctx, userID, page, pageSize)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	protoKeys := make([]*v1.ApiKey, len(apiKeys))
@@ -111,7 +113,7 @@ func (h *ApiKeyHandler) UpdateApiKey(
 ) (*connect.Response[v1.ApiKey], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	domainReq := &domain.UpdateAPIKeyRequest{}
@@ -132,7 +134,7 @@ func (h *ApiKeyHandler) UpdateApiKey(
 
 	apiKey, err := h.svc.Update(ctx, userID, req.Msg.Id, domainReq)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	return connect.NewResponse(toProtoApiKey(apiKey)), nil
@@ -145,11 +147,11 @@ func (h *ApiKeyHandler) DeleteApiKey(
 ) (*connect.Response[v1.DeleteApiKeyResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	if err := h.svc.Delete(ctx, userID, req.Msg.Id); err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("API key not found"))
+		return nil, transporterrors.ToConnectError(domain.ErrAPIKeyNotFound)
 	}
 
 	return connect.NewResponse(&v1.DeleteApiKeyResponse{}), nil
@@ -162,12 +164,12 @@ func (h *ApiKeyHandler) RevokeApiKey(
 ) (*connect.Response[v1.ApiKey], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	apiKey, err := h.svc.Revoke(ctx, userID, req.Msg.Id)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("API key not found"))
+		return nil, transporterrors.ToConnectError(domain.ErrAPIKeyNotFound)
 	}
 
 	return connect.NewResponse(toProtoApiKey(apiKey)), nil

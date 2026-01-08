@@ -2,7 +2,6 @@ package connect
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"connectrpc.com/connect"
@@ -10,8 +9,10 @@ import (
 
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/gen/v1/v1connect"
+	"github.com/emailapi/api/internal/domain"
 	"github.com/emailapi/api/internal/service"
 	"github.com/emailapi/api/internal/transport/connect/interceptor"
+	transporterrors "github.com/emailapi/api/internal/transport/errors"
 )
 
 // EmailHandler implements the Connect EmailServiceHandler.
@@ -32,7 +33,7 @@ func (h *EmailHandler) SendEmail(
 ) (*connect.Response[v1.SendEmailResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	// Add user_id to context for service layer (backwards compatibility)
@@ -40,7 +41,7 @@ func (h *EmailHandler) SendEmail(
 
 	result, err := h.svc.SendEmail(ctx, req.Msg)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	return connect.NewResponse(result), nil
@@ -57,12 +58,12 @@ func (h *EmailHandler) StreamEvents(
 ) error {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	apiKeyID := interceptor.GetAPIKeyID(ctx)
 	if apiKeyID == "" {
-		return connect.NewError(connect.CodeUnauthenticated, errors.New("api key not found"))
+		return transporterrors.ToConnectError(domain.ErrInvalidAPIKey)
 	}
 
 	batchSize := req.Msg.BatchSize
@@ -75,7 +76,7 @@ func (h *EmailHandler) StreamEvents(
 
 	events, err := h.svc.StreamEvents(ctx, userID, apiKeyID, req.Msg.EventTypes, batchSize)
 	if err != nil {
-		return connect.NewError(connect.CodeInternal, err)
+		return transporterrors.ToConnectError(err)
 	}
 
 	// Heartbeat ticker - sends keepalive every 25 seconds (before 31s WriteTimeout)
@@ -119,7 +120,7 @@ func (h *EmailHandler) AckEvents(
 ) (*connect.Response[v1.AckEventsResponse], error) {
 	userID := interceptor.GetUserID(ctx)
 	if userID == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not authenticated"))
+		return nil, transporterrors.ToConnectError(domain.ErrUnauthenticated)
 	}
 
 	if len(req.Msg.EventIds) == 0 {
@@ -128,7 +129,7 @@ func (h *EmailHandler) AckEvents(
 
 	acked, err := h.svc.AckEvents(ctx, userID, req.Msg.EventIds)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, transporterrors.ToConnectError(err)
 	}
 
 	return connect.NewResponse(&v1.AckEventsResponse{
