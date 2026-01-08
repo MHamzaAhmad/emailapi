@@ -21,6 +21,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -98,7 +99,7 @@ export function DataTable<TData, TValue>({
                             <TableRow key={headerGroup.id} className="hover:bg-transparent border-b border-border/60">
                                 {headerGroup.headers.map((header) => {
                                     return (
-                                        <TableHead key={header.id} className="h-10 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                        <TableHead key={header.id} className={cn("h-10 text-xs font-semibold text-muted-foreground uppercase tracking-wider", (header.column.columnDef.meta as any)?.className)}>
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
@@ -126,7 +127,7 @@ export function DataTable<TData, TValue>({
                                     className="hover:bg-muted/30 border-b border-border/40 transition-colors"
                                 >
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id} className="py-3 text-sm">
+                                        <TableCell key={cell.id} className={cn("py-3 text-sm", (cell.column.columnDef.meta as any)?.className)}>
                                             {flexRender(
                                                 cell.column.columnDef.cell,
                                                 cell.getContext()

@@ -155,6 +155,9 @@ function APIKeysContent() {
                         </span>
                     </div>
                 ),
+                meta: {
+                    className: "hidden md:table-cell"
+                }
             },
             {
                 accessorKey: 'scopes',
@@ -182,6 +185,9 @@ function APIKeysContent() {
                         {row.original.createdAt ? formatDate(new Date(Number(row.original.createdAt.seconds) * 1000)) : '-'}
                     </div>
                 ),
+                meta: {
+                    className: "hidden md:table-cell"
+                }
             },
             {
                 accessorKey: 'lastUsedAt',
@@ -191,6 +197,9 @@ function APIKeysContent() {
                         {row.original.lastUsedAt ? formatDate(new Date(Number(row.original.lastUsedAt.seconds) * 1000)) : 'Never'}
                     </div>
                 ),
+                meta: {
+                    className: "hidden md:table-cell"
+                }
             },
             {
                 id: 'actions',

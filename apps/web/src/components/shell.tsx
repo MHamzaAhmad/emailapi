@@ -9,8 +9,15 @@ import {
     Key01Icon,
     WebhookIcon,
     Book02Icon,
-    Settings02Icon
+    Settings02Icon,
+    Menu02Icon,
 } from '@hugeicons/core-free-icons'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/mode-toggle'
 
@@ -36,6 +43,32 @@ export function Shell({ children }: ShellProps) {
             {/* Top Navigation Bar - Ultra Minimal */}
             <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
                 <div className="mx-auto flex h-14 max-w-7xl items-center px-4 md:px-6 gap-4">
+                    {/* Mobile Navigation Group */}
+                    <div className="flex items-center gap-4 md:hidden mr-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 -ml-2 text-muted-foreground hover:text-foreground">
+                                    <HugeiconsIcon icon={Menu02Icon} size={20} />
+                                    <span className="sr-only">Toggle menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-[200px] ml-2">
+                                {mainNav.map((item) => (
+                                    <DropdownMenuItem key={item.href} asChild>
+                                        <Link
+                                            to={item.href}
+                                            className="w-full cursor-pointer flex items-center gap-2"
+                                        >
+                                            <HugeiconsIcon icon={item.icon} size={16} />
+                                            <span>{item.title}</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <div className="h-4 w-[1px] bg-border" />
+                    </div>
+
                     <Link to="/" className="flex items-center gap-2 font-bold tracking-tight text-foreground/90 hover:text-foreground transition-colors mr-6">
                         <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
                             <Logo className="h-3.5 w-3.5" />
@@ -43,7 +76,7 @@ export function Shell({ children }: ShellProps) {
                         <span className="hidden md:inline-block text-sm">SimpleEmailAPI</span>
                     </Link>
 
-                    <nav className="flex items-center gap-1">
+                    <nav className="hidden md:flex items-center gap-1">
                         {mainNav.map((item) => {
                             const isActive = currentPath === item.href || (item.href !== '/dashboard' && currentPath.startsWith(item.href))
                             return (
@@ -63,6 +96,8 @@ export function Shell({ children }: ShellProps) {
                             )
                         })}
                     </nav>
+
+
 
                     <div className="flex-1" />
 

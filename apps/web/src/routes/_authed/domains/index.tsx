@@ -104,6 +104,9 @@ function DomainsContent() {
                 cell: ({ row }) => (
                     <div className="text-xs text-muted-foreground">{row.original.region}</div>
                 ),
+                meta: {
+                    className: "hidden md:table-cell"
+                }
             },
             {
                 accessorKey: 'status',
@@ -155,8 +158,8 @@ function DomainsContent() {
             {/* Header Actions */}
             <div className="flex flex-col gap-6 mb-8 mt-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="text-xs text-muted-foreground">
-                        You can use the free domain <code className="bg-muted/50 px-1.5 py-0.5 rounded font-mono text-[10px] mx-1 text-foreground">yourname@sandbox.simpleemailapi.dev</code> to test, but you can only send to your own email: <span className="font-medium text-foreground">{userEmail}</span>
+                    <div className="text-xs text-muted-foreground/90 leading-relaxed max-w-2xl">
+                        You can use the free domain <code className="bg-muted/50 px-1.5 py-0.5 rounded font-mono text-[10px] mx-1 text-foreground break-all">yourname@sandbox.simpleemailapi.dev</code> to test, but you can only send to your own email: <span className="font-medium text-foreground whitespace-nowrap">{userEmail}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>

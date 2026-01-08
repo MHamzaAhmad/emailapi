@@ -53,6 +53,9 @@ const columns: ColumnDef<ActivityLog>[] = [
         accessorKey: "entityId",
         header: "Entity ID",
         cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">{row.getValue("entityId")}</span>,
+        meta: {
+            className: "hidden md:table-cell"
+        }
     },
     {
         accessorKey: "action",
@@ -89,6 +92,9 @@ const columns: ColumnDef<ActivityLog>[] = [
         accessorKey: "details",
         header: "Details",
         cell: ({ row }) => <span className="text-xs text-muted-foreground truncate max-w-[200px] block" title={row.getValue("details")}>{row.getValue("details")}</span>,
+        meta: {
+            className: "hidden md:table-cell"
+        }
     },
 ]
 
