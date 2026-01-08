@@ -250,35 +250,6 @@ type resolverResult struct {
 	err      error
 }
 
-// queryWithRetry is legacy - not used with DoH
-func (v *Validator) queryWithRetry(ctx context.Context, resolver string, expected ExpectedRecord) resolverResult {
-	result := resolverResult{resolver: resolver}
-
-	for attempt := 0; attempt <= v.config.Retries; attempt++ {
-		if attempt > 0 {
-			// Exponential backoff: 100ms, 200ms, 400ms, ...
-			delay := v.config.RetryDelay * time.Duration(1<<(attempt-1))
-			select {
-			case <-ctx.Done():
-				result.err = ctx.Err()
-				return result
-			case <-time.After(delay):
-			}
-		}
-
-		value, found, err := v.querySingleResolver(ctx, resolver, expected)
-		if err == nil {
-			result.value = value
-			result.found = found
-			return result
-		}
-
-		result.err = err
-		// Continue to retry on error
-	}
-
-	return result
-}
 
 // querySingleResolver performs a single DNS query to a specific resolver.
 func (v *Validator) querySingleResolver(ctx context.Context, resolver string, expected ExpectedRecord) (string, bool, error) {
