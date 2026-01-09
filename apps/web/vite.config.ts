@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite'
-import { robots } from 'vite-plugin-robots'
 import { devtools } from '@tanstack/devtools-vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
@@ -19,7 +18,6 @@ const config = defineConfig({
     'process.env': {},
   },
   plugins: [
-    robots({}),
     devtools(),
     // this is the plugin that enables path aliases
     viteTsConfigPaths({

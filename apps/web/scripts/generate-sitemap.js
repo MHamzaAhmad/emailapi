@@ -75,4 +75,50 @@ ${allRoutes
     });
 }
 
+function generateRobots() {
+    console.log('Generating robots.txt...');
+
+    // Default to production for build, unless strictly specified otherwise
+    // But usually we build for production. 
+    // If we want to support dev vs prod robots, we can check env.
+    const isProduction = process.env.NODE_ENV === 'production' || process.argv.includes('--production');
+
+    // Hardcoded content based on what we had
+    const productionContent = `User-agent: *
+Allow: /
+Sitemap: https://simpleemailapi.dev/sitemap.xml
+`;
+
+    const developmentContent = `User-agent: *
+Disallow: /
+`;
+
+    // Access process.env.VITE_USER_NODE_ENV or just NODE_ENV. 
+    // In post-build script, we might assume production if running "vite build".
+    // Let's assume production content for now as this is a build script.
+    // Or we can check if it's a preview build. 
+    // For Vercel deployments, it's production.
+    const robotsContent = productionContent;
+
+    const outDirs = [
+        join(workspaceRoot, '.output/public'),
+        join(workspaceRoot, 'dist/client')
+    ];
+
+    outDirs.forEach((dir) => {
+        try {
+            if (!existsSync(dir)) {
+                mkdirSync(dir, { recursive: true });
+            }
+
+            writeFileSync(join(dir, 'robots.txt'), robotsContent);
+            console.log(`✓ robots.txt generated at ${dir}/robots.txt`);
+        } catch (e) {
+            console.warn(`Failed to write robots.txt to ${dir}`, e);
+        }
+    });
+
+}
+
 generateSitemap();
+generateRobots();
