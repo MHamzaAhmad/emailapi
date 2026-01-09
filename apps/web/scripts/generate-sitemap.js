@@ -54,9 +54,10 @@ ${allRoutes
 
     // Define output directories
     // We want to write to .output/public (for Vercel/Nitro) and maybe dist/client just in case
+    // For Vercel deployments, also write to .vercel/output/static which is where static files are served from
     const outDirs = [
-        join(workspaceRoot, '.output/public'),
-        join(workspaceRoot, 'dist/client')
+        join(workspaceRoot, 'dist/client'),
+        join(workspaceRoot, '.vercel/output/static')
     ];
 
     outDirs.forEach((dir) => {
@@ -101,8 +102,8 @@ Disallow: /
     const robotsContent = productionContent;
 
     const outDirs = [
-        join(workspaceRoot, '.output/public'),
-        join(workspaceRoot, 'dist/client')
+        join(workspaceRoot, 'dist/client'),
+        join(workspaceRoot, '.vercel/output/static')
     ];
 
     outDirs.forEach((dir) => {
