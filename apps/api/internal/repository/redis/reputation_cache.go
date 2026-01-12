@@ -9,10 +9,23 @@ import (
 
 // UserReputationStatus represents cached reputation status for fast lookups.
 type UserReputationStatus struct {
-	IsFlagged   bool    `json:"is_flagged"`
-	IsSuspended bool    `json:"is_suspended"`
-	Score       float64 `json:"score"`
-	UpdatedAt   int64   `json:"updated_at"` // Unix timestamp
+	IsFlagged       bool    `json:"is_flagged"`
+	IsSuspended     bool    `json:"is_suspended"`      // Deprecated: use IsHardSuspended
+	IsSoftSuspended bool    `json:"is_soft_suspended"` // Reduced limits, can still send
+	IsHardSuspended bool    `json:"is_hard_suspended"` // Blocked completely
+	Score           float64 `json:"score"`
+	UpdatedAt       int64   `json:"updated_at"` // Unix timestamp
+}
+
+// GetSuspensionType returns "hard", "soft", or "none".
+func (s *UserReputationStatus) GetSuspensionType() string {
+	if s.IsHardSuspended || s.IsSuspended {
+		return "hard"
+	}
+	if s.IsSoftSuspended || s.IsFlagged {
+		return "soft"
+	}
+	return "none"
 }
 
 // ReputationCache provides high-performance caching for user reputation status.
@@ -90,9 +103,24 @@ func (c *ReputationCache) Delete(ctx context.Context, userID string) error {
 
 // SetSuspended is a convenience method to quickly mark a user as suspended in cache.
 // This is useful for immediate blocking after auto-suspension.
+// Deprecated: Use SetHardSuspended or SetSoftSuspended instead.
 func (c *ReputationCache) SetSuspended(ctx context.Context, userID string) error {
+	return c.SetHardSuspended(ctx, userID)
+}
+
+// SetHardSuspended marks user as hard suspended (blocked from sending).
+func (c *ReputationCache) SetHardSuspended(ctx context.Context, userID string) error {
 	return c.Set(ctx, userID, &UserReputationStatus{
-		IsSuspended: true,
-		IsFlagged:   true,
+		IsHardSuspended: true,
+		IsSuspended:     true, // Backward compat
+		IsFlagged:       true,
+	})
+}
+
+// SetSoftSuspended marks user as soft suspended (reduced limits).
+func (c *ReputationCache) SetSoftSuspended(ctx context.Context, userID string) error {
+	return c.Set(ctx, userID, &UserReputationStatus{
+		IsSoftSuspended: true,
+		IsFlagged:       true,
 	})
 }

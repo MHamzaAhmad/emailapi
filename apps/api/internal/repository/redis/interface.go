@@ -68,7 +68,9 @@ type UserCacheInterface interface {
 type ReputationCacheInterface interface {
 	Get(ctx context.Context, userID string) (*UserReputationStatus, error)
 	Set(ctx context.Context, userID string, status *UserReputationStatus) error
-	SetSuspended(ctx context.Context, userID string) error
+	SetSuspended(ctx context.Context, userID string) error     // Deprecated: use SetHardSuspended
+	SetHardSuspended(ctx context.Context, userID string) error // Block all sends
+	SetSoftSuspended(ctx context.Context, userID string) error // Reduced limits
 	Delete(ctx context.Context, userID string) error
 }
 

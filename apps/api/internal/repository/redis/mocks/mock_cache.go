@@ -711,6 +711,34 @@ func (mr *MockReputationCacheInterfaceMockRecorder) Set(ctx, userID, status any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockReputationCacheInterface)(nil).Set), ctx, userID, status)
 }
 
+// SetHardSuspended mocks base method.
+func (m *MockReputationCacheInterface) SetHardSuspended(ctx context.Context, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetHardSuspended", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetHardSuspended indicates an expected call of SetHardSuspended.
+func (mr *MockReputationCacheInterfaceMockRecorder) SetHardSuspended(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetHardSuspended", reflect.TypeOf((*MockReputationCacheInterface)(nil).SetHardSuspended), ctx, userID)
+}
+
+// SetSoftSuspended mocks base method.
+func (m *MockReputationCacheInterface) SetSoftSuspended(ctx context.Context, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetSoftSuspended", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetSoftSuspended indicates an expected call of SetSoftSuspended.
+func (mr *MockReputationCacheInterfaceMockRecorder) SetSoftSuspended(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSoftSuspended", reflect.TypeOf((*MockReputationCacheInterface)(nil).SetSoftSuspended), ctx, userID)
+}
+
 // SetSuspended mocks base method.
 func (m *MockReputationCacheInterface) SetSuspended(ctx context.Context, userID string) error {
 	m.ctrl.T.Helper()
