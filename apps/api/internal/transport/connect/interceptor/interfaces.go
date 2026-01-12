@@ -1,6 +1,6 @@
 package interceptor
 
-//go:generate mockgen -destination=mocks/mock_interceptor.go -package=mocks github.com/emailapi/api/internal/transport/connect/interceptor APIKeyValidator,RateLimiterInterface,CreditCacheInterface,PolarClientInterface,UserRepositoryInterface,UserLookup,UserRoleLookup
+//go:generate mockgen -destination=mocks/mock_interceptor.go -package=mocks github.com/emailapi/api/internal/transport/connect/interceptor APIKeyValidator,RateLimiterInterface,CreditCacheInterface,PolarClientInterface,UserRepositoryInterface,UserLookup,UserRoleLookup,ReputationCacheInterface
 
 import (
 	"context"
@@ -25,6 +25,9 @@ type RateLimiterInterface interface {
 
 // CreditCacheInterface - reuse from redis package
 type CreditCacheInterface = redisrepo.CreditCacheInterface
+
+// ReputationCacheInterface - reuse from redis package
+type ReputationCacheInterface = redisrepo.ReputationCacheInterface
 
 // PolarClientInterface - reuse from polar package
 type PolarClientInterface = polar.Client

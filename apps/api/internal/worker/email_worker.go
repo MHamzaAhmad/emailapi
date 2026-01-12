@@ -20,8 +20,10 @@ import (
 	"github.com/riverqueue/river"
 
 	v1 "github.com/emailapi/api/gen/v1"
+	"github.com/emailapi/api/internal/external/polar"
 	"github.com/emailapi/api/internal/external/s3"
 	"github.com/emailapi/api/internal/external/ses"
+	redisrepo "github.com/emailapi/api/internal/repository/redis"
 	tbrepo "github.com/emailapi/api/internal/repository/tinybird"
 	"github.com/emailapi/api/internal/webhook"
 )
@@ -70,6 +72,9 @@ type EmailWorker struct {
 	s3Factory     s3.FactoryInterface
 	tbRepo        tbrepo.EmailRepositoryInterface
 	webhookSender webhook.Sender
+	// Usage tracking
+	creditCache redisrepo.CreditCacheInterface
+	polarClient polar.Client
 }
 
 // NewEmailWorker creates a new EmailWorker.
@@ -78,12 +83,16 @@ func NewEmailWorker(
 	s3Factory s3.FactoryInterface,
 	tbRepo tbrepo.EmailRepositoryInterface,
 	webhookSender webhook.Sender,
+	creditCache redisrepo.CreditCacheInterface,
+	polarClient polar.Client,
 ) *EmailWorker {
 	return &EmailWorker{
 		sesClient:     sesClient,
 		s3Factory:     s3Factory,
 		tbRepo:        tbRepo,
 		webhookSender: webhookSender,
+		creditCache:   creditCache,
+		polarClient:   polarClient,
 	}
 }
 
@@ -155,6 +164,9 @@ func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) e
 
 	// Log success
 	w.logActivity(ctx, args, "sent", fmt.Sprintf("Message ID: %s", messageID))
+
+	// Track usage after successful send
+	w.trackUsage(ctx, args.UserID, 1)
 
 	// Send webhook notification
 	w.sendWebhook(ctx, args, messageID)
@@ -290,6 +302,27 @@ func (w *EmailWorker) sendWebhook(ctx context.Context, args SendEmailArgs, messa
 	w.webhookSender.SendEmailSent(ctx, args.UserID, event)
 }
 
+// trackUsage increments usage counters and ingests billing event after successful send.
+func (w *EmailWorker) trackUsage(ctx context.Context, userID string, count int64) {
+	// Increment daily usage counter (for limit checking)
+	if w.creditCache != nil {
+		if err := w.creditCache.IncrDailyUsage(ctx, userID, count); err != nil {
+			fmt.Printf("Warning: failed to increment daily usage for %s: %v\n", userID, err)
+		}
+		// Increment consumed counter (for monthly tracking)
+		if err := w.creditCache.IncrConsumed(ctx, userID, count); err != nil {
+			fmt.Printf("Warning: failed to increment consumed for %s: %v\n", userID, err)
+		}
+	}
+
+	// Ingest event to Polar for billing
+	if w.polarClient != nil {
+		if err := w.polarClient.IngestEmailEvent(ctx, userID, count); err != nil {
+			fmt.Printf("Warning: failed to ingest Polar event for %s: %v\n", userID, err)
+		}
+	}
+}
+
 // sendSplitEmails splits a multi-recipient email into individual sends.
 // Each recipient gets their own unique unsubscribe link.
 // NOTE: Each individual email counts as a separate send.
@@ -350,6 +383,7 @@ func (w *EmailWorker) sendSplitEmails(ctx context.Context, args *SendEmailArgs) 
 
 		// Log and webhook for each individual send
 		w.logActivity(ctx, individualArgs, "sent", fmt.Sprintf("Message ID: %s (split %d/%d)", messageID, i+1, len(allRecipients)))
+		w.trackUsage(ctx, args.UserID, 1) // Each split counts as 1
 		w.sendWebhook(ctx, individualArgs, messageID)
 
 		// Insert routing entry

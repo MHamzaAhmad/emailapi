@@ -40,16 +40,18 @@ func NewReputationService(
 
 // CheckSendPermission checks if a user is allowed to send emails.
 // Uses Redis cache for O(1) lookups in the hot path.
-// Returns ErrAccountSuspended if user is suspended.
+// Returns ErrAccountSuspended if user is hard suspended.
 func (s *ReputationService) CheckSendPermission(ctx context.Context, userID string) error {
 	// 1. Try Redis cache first (fast path)
 	if s.cache != nil {
 		status, err := s.cache.Reputation().Get(ctx, userID)
 		if err == nil && status != nil {
-			if status.IsSuspended {
+			// Hard suspended = blocked completely
+			if status.IsHardSuspended || status.IsSuspended {
 				return domain.ErrAccountSuspended
 			}
-			return nil // Flagged users can send (with reduced limits)
+			// Soft suspended = can send but with reduced limits
+			return nil
 		}
 	}
 
@@ -63,9 +65,11 @@ func (s *ReputationService) CheckSendPermission(ctx context.Context, userID stri
 	// 3. Update cache for future lookups
 	if s.cache != nil {
 		s.cache.Reputation().Set(ctx, userID, &rediscache.UserReputationStatus{
-			IsFlagged:   rep.IsFlagged,
-			IsSuspended: rep.IsSuspended,
-			Score:       rep.SuspensionScore,
+			IsFlagged:       rep.IsFlagged,
+			IsSuspended:     rep.IsSuspended,
+			IsHardSuspended: rep.IsSuspended, // Legacy IsSuspended = hard
+			IsSoftSuspended: rep.IsFlagged && !rep.IsSuspended,
+			Score:           rep.SuspensionScore,
 		})
 	}
 
@@ -76,14 +80,19 @@ func (s *ReputationService) CheckSendPermission(ctx context.Context, userID stri
 }
 
 // GetEffectiveRateLimit returns the effective rate limit for a user.
-// Flagged users get reduced limits (10% of normal).
+// Soft suspended/flagged users get reduced limits (10% of normal).
 func (s *ReputationService) GetEffectiveRateLimit(ctx context.Context, userID string, baseLimit int) int {
 	// Check cache first
 	if s.cache != nil {
 		status, err := s.cache.Reputation().Get(ctx, userID)
 		if err == nil && status != nil {
-			if status.IsFlagged {
-				return baseLimit / 10 // 10% of normal limit
+			// Soft suspended or flagged = 10% limit
+			if status.IsSoftSuspended || status.IsFlagged {
+				reduced := baseLimit / 10
+				if reduced < 1 {
+					reduced = 1
+				}
+				return reduced
 			}
 			return baseLimit
 		}
@@ -96,9 +105,36 @@ func (s *ReputationService) GetEffectiveRateLimit(ctx context.Context, userID st
 	}
 
 	if rep.IsFlagged {
-		return baseLimit / 10 // 10% of normal limit
+		reduced := baseLimit / 10
+		if reduced < 1 {
+			reduced = 1
+		}
+		return reduced
 	}
 	return baseLimit
+}
+
+// GetSuspensionStatus returns detailed suspension status for a user.
+// Used by the limit engine for comprehensive checking.
+func (s *ReputationService) GetSuspensionStatus(ctx context.Context, userID string) (isHardSuspended, isSoftSuspended bool, err error) {
+	// Check cache first
+	if s.cache != nil {
+		status, cacheErr := s.cache.Reputation().Get(ctx, userID)
+		if cacheErr == nil && status != nil {
+			return status.IsHardSuspended || status.IsSuspended,
+				status.IsSoftSuspended || status.IsFlagged,
+				nil
+		}
+	}
+
+	// Cache miss: check database
+	rep, dbErr := s.store.Reputation().Get(ctx, userID)
+	if dbErr != nil {
+		// No record = not suspended
+		return false, false, nil
+	}
+
+	return rep.IsSuspended, rep.IsFlagged && !rep.IsSuspended, nil
 }
 
 // InvalidateCache removes the cached reputation status for a user.
@@ -225,8 +261,14 @@ func (s *ReputationService) ListFlaggedUsers(ctx context.Context, limit, offset 
 	return s.store.Reputation().ListFlagged(ctx, limit, offset)
 }
 
-// SuspendUser manually suspends a user account.
+// SuspendUser manually suspends a user account (hard suspension).
+// Deprecated: Use HardSuspendUser or SoftSuspendUser instead.
 func (s *ReputationService) SuspendUser(ctx context.Context, userID, suspendedBy, reason string) error {
+	return s.HardSuspendUser(ctx, userID, suspendedBy, reason)
+}
+
+// HardSuspendUser blocks a user from sending any emails.
+func (s *ReputationService) HardSuspendUser(ctx context.Context, userID, suspendedBy, reason string) error {
 	// Ensure reputation record exists
 	if err := s.store.Reputation().EnsureExists(ctx, userID); err != nil {
 		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "ensure_reputation")
@@ -236,13 +278,49 @@ func (s *ReputationService) SuspendUser(ctx context.Context, userID, suspendedBy
 		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "suspend_user")
 	}
 
-	// Invalidate cache to immediately block sends
-	s.InvalidateCache(ctx, userID)
+	// Update cache to immediately block sends
+	if s.cache != nil {
+		s.cache.Reputation().SetHardSuspended(ctx, userID)
+	}
 
 	// Log activity
 	if s.analytics != nil {
-		s.analytics.Activity().Log(ctx, userID, "reputation", userID, "suspended", "success",
-			fmt.Sprintf("Account suspended by %s: %s", suspendedBy, reason), nil)
+		s.analytics.Activity().Log(ctx, userID, "reputation", userID, "hard_suspended", "success",
+			fmt.Sprintf("Account hard suspended by %s: %s", suspendedBy, reason), nil)
+	}
+	return nil
+}
+
+// SoftSuspendUser puts a user on restricted mode (reduced limits but can still send).
+func (s *ReputationService) SoftSuspendUser(ctx context.Context, userID, suspendedBy, reason string) error {
+	// Ensure reputation record exists
+	if err := s.store.Reputation().EnsureExists(ctx, userID); err != nil {
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "ensure_reputation")
+	}
+
+	// Get current stats to preserve them
+	rep, err := s.store.Reputation().Get(ctx, userID)
+	if err != nil {
+		// No existing record, create minimal one
+		rep = &domain.UserReputation{UserID: userID}
+	}
+
+	// Update to flagged state (soft suspension)
+	rep.IsFlagged = true
+	rep.FlaggedReason = reason
+	if err := s.store.Reputation().UpdateStats(ctx, userID, rep); err != nil {
+		return domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "soft_suspend_user")
+	}
+
+	// Update cache with soft suspension
+	if s.cache != nil {
+		s.cache.Reputation().SetSoftSuspended(ctx, userID)
+	}
+
+	// Log activity
+	if s.analytics != nil {
+		s.analytics.Activity().Log(ctx, userID, "reputation", userID, "soft_suspended", "success",
+			fmt.Sprintf("Account soft suspended by %s: %s", suspendedBy, reason), nil)
 	}
 	return nil
 }

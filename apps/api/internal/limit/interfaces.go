@@ -2,48 +2,21 @@ package limit
 
 import (
 	"context"
-	"time"
+
+	redisrepo "github.com/emailapi/api/internal/repository/redis"
 )
 
-// RateLimiterInterface for rate limit checking.
-type RateLimiterInterface interface {
-	Check(ctx context.Context, key string, limit int, window time.Duration) (*RateLimitResult, error)
-}
-
-// RateLimitResult from the rate limiter.
-type RateLimitResult struct {
-	Allowed   bool
-	Remaining int
-	ResetAt   time.Time
-}
-
 // ReputationCacheInterface for suspension/flag checking.
+// Uses the redis cache interface directly.
 type ReputationCacheInterface interface {
-	Get(ctx context.Context, userID string) (*ReputationStatus, error)
+	Get(ctx context.Context, userID string) (*redisrepo.UserReputationStatus, error)
 }
 
-// ReputationStatus represents cached reputation state.
-type ReputationStatus struct {
-	IsSoftSuspended bool
-	IsHardSuspended bool
-	IsFlagged       bool // Deprecated: use IsSoftSuspended
-	Score           float64
-}
-
-// UsageCacheInterface for usage tracking.
-type UsageCacheInterface interface {
-	GetDailyUsage(ctx context.Context, userID string) (int64, error)
-	IncrementDailyUsage(ctx context.Context, userID string, count int64) error
-}
-
-// CreditCacheInterface for Polar credit state.
+// CreditCacheInterface for Polar credit state and daily usage.
 type CreditCacheInterface interface {
-	GetState(ctx context.Context, userID string) (*CreditState, error)
+	GetState(ctx context.Context, userID string) (*redisrepo.CachedCustomerState, error)
+	GetDailyUsage(ctx context.Context, userID string) (int64, error)
 }
 
-// CreditState represents Polar credit state.
-type CreditState struct {
-	IsPaid       bool
-	PlanType     string
-	PolarBalance int64 // Monthly credit balance from Polar
-}
+// SoftSuspendLimit is the daily email limit for soft suspended users (any plan).
+const SoftSuspendLimit int64 = 10

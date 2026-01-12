@@ -18,7 +18,7 @@ func NewSuspensionChecker(repCache ReputationCacheInterface) *SuspensionChecker 
 func (c *SuspensionChecker) Name() string { return "suspension" }
 
 // Check verifies user is not hard suspended.
-// Soft suspension is handled by other checkers reducing limits.
+// Soft suspension triggers reduced daily limit (handled by DailyQuotaChecker).
 func (c *SuspensionChecker) Check(ctx context.Context, userID string) (*CheckResult, error) {
 	if c.repCache == nil {
 		return Allowed(), nil
@@ -35,21 +35,20 @@ func (c *SuspensionChecker) Check(ctx context.Context, userID string) (*CheckRes
 	}
 
 	// Hard suspended = blocked completely
-	if status.IsHardSuspended {
+	if status.IsHardSuspended || status.IsSuspended {
 		return Blocked(ReasonHardSuspended, PrioritySuspension).
 			WithMeta("suspension_type", "hard"), nil
 	}
 
-	// Soft suspended = allowed but with reduced limits
-	// The reduction is handled by other checkers using IsSoftSuspended
-	if status.IsSoftSuspended {
+	// Soft suspended = allowed but daily limit enforced (10/day)
+	if status.IsSoftSuspended || status.IsFlagged {
 		return Allowed().WithMeta("suspension_type", "soft"), nil
 	}
 
 	return Allowed(), nil
 }
 
-// IsSoftSuspended is a helper to check soft suspension status.
+// IsSoftSuspended checks if user is soft suspended.
 func (c *SuspensionChecker) IsSoftSuspended(ctx context.Context, userID string) bool {
 	if c.repCache == nil {
 		return false
@@ -58,5 +57,5 @@ func (c *SuspensionChecker) IsSoftSuspended(ctx context.Context, userID string) 
 	if err != nil || status == nil {
 		return false
 	}
-	return status.IsSoftSuspended
+	return status.IsSoftSuspended || status.IsFlagged
 }

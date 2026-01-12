@@ -6,21 +6,20 @@ import (
 )
 
 // DailyQuotaChecker checks daily email limits.
-// Free users: 100/day (10 if soft suspended)
-// Paid users: unlimited
+// Free users: 100/day
+// Soft suspended (any plan): 10/day
+// Paid users (not soft suspended): unlimited
 type DailyQuotaChecker struct {
-	usageCache  UsageCacheInterface
-	repCache    ReputationCacheInterface
 	creditCache CreditCacheInterface
+	repCache    ReputationCacheInterface
 	freeLimit   int64 // Default: 100
 }
 
 // DailyQuotaConfig for the daily quota checker.
 type DailyQuotaConfig struct {
-	UsageCache  UsageCacheInterface
-	RepCache    ReputationCacheInterface
 	CreditCache CreditCacheInterface
-	FreeLimit   int64 // e.g., 100
+	RepCache    ReputationCacheInterface
+	FreeLimit   int64 // Default: 100
 }
 
 // NewDailyQuotaChecker creates a new daily quota checker.
@@ -30,9 +29,8 @@ func NewDailyQuotaChecker(cfg DailyQuotaConfig) *DailyQuotaChecker {
 		limit = 100 // Default
 	}
 	return &DailyQuotaChecker{
-		usageCache:  cfg.UsageCache,
-		repCache:    cfg.RepCache,
 		creditCache: cfg.CreditCache,
+		repCache:    cfg.RepCache,
 		freeLimit:   limit,
 	}
 }
@@ -42,34 +40,43 @@ func (c *DailyQuotaChecker) Name() string { return "daily_quota" }
 
 // Check verifies user is within daily limit.
 func (c *DailyQuotaChecker) Check(ctx context.Context, userID string) (*CheckResult, error) {
+	// Check soft suspension first
+	isSoftSuspended := c.isSoftSuspended(ctx, userID)
+
 	// Get plan status
 	isPaid := c.isPaidUser(ctx, userID)
 
-	// Paid users have no daily limit
-	if isPaid {
+	// Determine daily limit
+	var dailyLimit int64
+	if isSoftSuspended {
+		// Soft suspended = 10 emails/day for ANY plan
+		dailyLimit = SoftSuspendLimit
+	} else if isPaid {
+		// Paid users (not soft suspended) = unlimited
 		return Allowed().WithMeta("daily_limit", "-1"), nil
+	} else {
+		// Free users = configured limit (default 100)
+		dailyLimit = c.freeLimit
 	}
 
-	// Get effective limit (10% for soft suspended)
-	effectiveLimit := c.getEffectiveLimit(ctx, userID)
-
 	// Get current usage
-	usage, err := c.usageCache.GetDailyUsage(ctx, userID)
+	usage, err := c.creditCache.GetDailyUsage(ctx, userID)
 	if err != nil {
 		// Fail open on cache error
 		return Allowed(), nil
 	}
 
-	if usage >= effectiveLimit {
+	if usage >= dailyLimit {
 		return Blocked(ReasonDailyExceeded, PriorityDailyQuota).
-			WithMeta("daily_limit", fmt.Sprintf("%d", effectiveLimit)).
-			WithMeta("daily_usage", fmt.Sprintf("%d", usage)), nil
+			WithMeta("daily_limit", fmt.Sprintf("%d", dailyLimit)).
+			WithMeta("daily_usage", fmt.Sprintf("%d", usage)).
+			WithMeta("soft_suspended", fmt.Sprintf("%t", isSoftSuspended)), nil
 	}
 
-	remaining := effectiveLimit - usage
+	remaining := dailyLimit - usage
 	return Allowed().
 		WithMeta("daily_remaining", fmt.Sprintf("%d", remaining)).
-		WithMeta("daily_limit", fmt.Sprintf("%d", effectiveLimit)), nil
+		WithMeta("daily_limit", fmt.Sprintf("%d", dailyLimit)), nil
 }
 
 // isPaidUser checks if user has paid plan.
@@ -84,25 +91,14 @@ func (c *DailyQuotaChecker) isPaidUser(ctx context.Context, userID string) bool 
 	return state.IsPaid
 }
 
-// getEffectiveLimit returns daily limit, reduced for soft suspended.
-func (c *DailyQuotaChecker) getEffectiveLimit(ctx context.Context, userID string) int64 {
+// isSoftSuspended checks if user is soft suspended.
+func (c *DailyQuotaChecker) isSoftSuspended(ctx context.Context, userID string) bool {
 	if c.repCache == nil {
-		return c.freeLimit
+		return false
 	}
-
 	status, err := c.repCache.Get(ctx, userID)
 	if err != nil || status == nil {
-		return c.freeLimit
+		return false
 	}
-
-	// Soft suspended users get 10% of limit
-	if status.IsSoftSuspended {
-		reduced := c.freeLimit / 10
-		if reduced < 1 {
-			reduced = 1
-		}
-		return reduced
-	}
-
-	return c.freeLimit
+	return status.IsSoftSuspended || status.IsFlagged
 }

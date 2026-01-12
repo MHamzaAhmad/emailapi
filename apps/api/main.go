@@ -26,6 +26,7 @@ import (
 	"github.com/emailapi/api/internal/external/sqs"
 	"github.com/emailapi/api/internal/external/svix"
 	"github.com/emailapi/api/internal/external/webrisk"
+	"github.com/emailapi/api/internal/limit"
 	"github.com/emailapi/api/internal/repository/postgres"
 	redisrepo "github.com/emailapi/api/internal/repository/redis"
 	"github.com/emailapi/api/internal/repository/suppression"
@@ -222,7 +223,7 @@ func main() {
 
 	// Create and register workers
 	workers := river.NewWorkers()
-	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, analyticsAggregator.Email(), webhookSender)
+	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, analyticsAggregator.Email(), webhookSender, cacheAggregator.Credit(), polarClient)
 	river.AddWorker(workers, emailWorker)
 	logger.Info().Msg("✓ Registered River workers")
 
@@ -337,13 +338,13 @@ func main() {
 			MaxConcurrentStreams: cfg.MaxConcurrentStreams,
 			Enabled:              cfg.RateLimitEnabled,
 		}),
-		interceptor.NewUsageInterceptor(interceptor.UsageConfig{
-			CreditCache:    cacheAggregator.Credit(),
-			PolarClient:    polarClient,
-			UserRepo:       store.Users(),
-			Enabled:        cfg.UsageLimitEnabled,
-			FreeDailyLimit: 100,
-			FreeProductID:  cfg.PolarFreeProductID,
+		interceptor.NewLimitInterceptor(interceptor.LimitConfig{
+			Engine: limit.NewEmailEngine(limit.EmailConfig{
+				ReputationCache: cacheAggregator.Reputation(),
+				CreditCache:     cacheAggregator.Credit(),
+				FreeDailyLimit:  100,
+			}),
+			Enabled: cfg.UsageLimitEnabled,
 		}),
 	)
 
