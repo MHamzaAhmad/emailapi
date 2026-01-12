@@ -74,7 +74,11 @@ export function Pricing() {
                                     <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
                                         <span className="text-foreground/60 mt-0.5">—</span>
                                         <div className="flex items-center gap-1.5 flex-1">
-                                            <span>{feature.name}</span>
+                                            {feature.name.includes("Unlimited domains") ? (
+                                                <span className="font-bold text-primary">{feature.name}</span>
+                                            ) : (
+                                                <span>{feature.name}</span>
+                                            )}
                                             {feature.tooltip && (
                                                 <Tooltip>
                                                     <TooltipTrigger className="cursor-help flex items-center">

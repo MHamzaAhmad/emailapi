@@ -140,6 +140,38 @@ function RichCodeRenderer({ language }: { language: string }) {
             </span>
         )
     }
+
+    if (language === "json") {
+        return (
+            <span className="text-foreground/80">
+                <Punctuation>{"{"}</Punctuation>
+                {"\n"}
+                {"  "}<String>"id"</String><Punctuation>:</Punctuation> <String>"evt_29f8a7..."</String><Punctuation>,</Punctuation>
+                {"\n"}
+                {"  "}<String>"type"</String><Punctuation>:</Punctuation> <String>"email.replied"</String><Punctuation>,</Punctuation>
+                {"\n"}
+                {"  "}<String>"timestamp"</String><Punctuation>:</Punctuation> <String>"2024-03-20T10:00:00Z"</String><Punctuation>,</Punctuation>
+                {"\n"}
+                {"  "}<String>"payload"</String><Punctuation>:</Punctuation> <Punctuation>{"{"}</Punctuation>
+                {"\n"}
+                {"    "}<String>"from"</String><Punctuation>:</Punctuation> <String>"user@gmail.com"</String><Punctuation>,</Punctuation>
+                {"\n"}
+                {"    "}<String>"to"</String><Punctuation>:</Punctuation> <Punctuation>[</Punctuation><String>"support@yourdomain.com"</String><Punctuation>]</Punctuation><Punctuation>,</Punctuation>
+                {"\n"}
+                {"    "}<String>"subject"</String><Punctuation>:</Punctuation> <String>"Re: Welcome to our App"</String><Punctuation>,</Punctuation>
+                {"\n"}
+                {"    "}<String>"body"</String><Punctuation>:</Punctuation> <String>"Thanks for the email! I have a question..."</String><Punctuation>,</Punctuation>
+                {"\n"}
+                {"    "}<String>"in_reply_to"</String><Punctuation>:</Punctuation> <String>"msg_original_123"</String><Punctuation>,</Punctuation>
+                {"\n"}
+                {"    "}<String>"thread_id"</String><Punctuation>:</Punctuation> <String>"thread_abc_123"</String>
+                {"\n"}
+                {"  "}<Punctuation>{"}"}</Punctuation>
+                {"\n"}
+                <Punctuation>{"}"}</Punctuation>
+            </span>
+        )
+    }
 }
 
 // Token Components for Consistent Colors - Aligned with "Serious SaaS" Theme

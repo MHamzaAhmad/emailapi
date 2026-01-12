@@ -23,10 +23,10 @@ import {
 import { CodeWindow } from '@/components/ui/code-window'
 
 // Lazy-load below-fold sections
-const GridOfTruth = lazy(() => import('@/components/landing/GridOfTruth').then(m => ({ default: m.GridOfTruth })))
+const DomainCalculator = lazy(() => import('@/components/landing/DomainCalculator').then(m => ({ default: m.DomainCalculator })))
+const InboundFeature = lazy(() => import('@/components/landing/InboundFeature').then(m => ({ default: m.InboundFeature })))
 const Pricing = lazy(() => import('@/components/landing/Pricing').then(m => ({ default: m.Pricing })))
 const PerformanceChart = lazy(() => import('@/components/landing/PerformanceChart').then(m => ({ default: m.PerformanceChart })))
-const ComparisonSection = lazy(() => import('@/components/landing/ComparisonSection').then(m => ({ default: m.ComparisonSection })))
 
 export const Route = createFileRoute('/')(
   {
@@ -161,22 +161,23 @@ function LandingContent() {
         <section className="relative px-4 sm:px-6 pt-32 sm:pt-24 pb-16 sm:pb-20 overflow-hidden border-b border-dashed border-border/40">
           <div className="mx-auto max-w-4xl text-center">
             <h1 className="mb-6 text-4xl sm:text-5xl md:text-7xl font-bold tracking-tighter leading-[1.1] text-foreground">
-              The Simplest API for <br /> <span className="text-muted-foreground/40 font-medium">Inbound & Outbound Email.</span>
+              The Email API for <br /> <span className="text-muted-foreground/40 font-medium">Indie Hackers.</span>
             </h1>
             <p className="mx-auto mb-10 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl font-medium px-4">
-              Stop paying per domain. Get unlimited domains and volume-only pricing at just <span className="text-foreground">$0.25 per 1,000 emails</span>.
-              We solve the complexity of email infrastructure so you can focus on building.
+              <span className="text-foreground font-bold">Unlimited domains.</span> Pay only for what you send.
+              <br />
+              Just <span className="text-foreground">$0.25 per 1,000 emails</span>. No monthly fees for side projects.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16 sm:mb-24 px-4 w-full">
               <LazySignInButton mode="modal">
                 <Button className="h-9 px-6 text-xs font-semibold shadow-sm rounded-md w-full sm:w-auto">
-                  Get Started Free
+                  Start Building for Free
                 </Button>
               </LazySignInButton>
               <Button asChild variant="outline" className="h-9 px-6 text-xs font-semibold bg-background hover:bg-muted/50 rounded-md border-dashed border-border w-full sm:w-auto">
                 <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer">
-                  API Documentation
+                  Read the Docs
                 </a>
               </Button>
             </div>
@@ -211,14 +212,14 @@ function LandingContent() {
           <div className="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
         </section>
 
-        {/* Symmetric Grid of Truth */}
+        {/* The Hook: Domain Tax Comparison */}
         <Suspense fallback={null}>
-          <GridOfTruth />
+          <DomainCalculator />
         </Suspense>
 
-        {/* Comparison Section */}
+        {/* The Enabler: Inbound Feature */}
         <Suspense fallback={null}>
-          <ComparisonSection />
+          <InboundFeature />
         </Suspense>
 
         {/* Pricing Section */}
@@ -280,18 +281,18 @@ function LandingContent() {
             <span className="text-xs">SimpleEmailAPI</span>
           </div>
 
-            <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Docs</a>
-              <span className="text-border/40">|</span>
-              <Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link>
-              <span className="text-border/40">|</span>
-              <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-              <span className="text-border/40">|</span>
-              <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-              <span className="text-border/40">|</span>
-              <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
-              <span className="text-border/40">|</span>
-              <p>&copy; {new Date().getFullYear()} SimpleEmailAPI</p>
+          <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <a href="https://docs.simpleemailapi.dev" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Docs</a>
+            <span className="text-border/40">|</span>
+            <Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link>
+            <span className="text-border/40">|</span>
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <span className="text-border/40">|</span>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <span className="text-border/40">|</span>
+            <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
+            <span className="text-border/40">|</span>
+            <p>&copy; {new Date().getFullYear()} SimpleEmailAPI</p>
           </div>
 
           <div className="flex gap-2 items-center px-3 py-1 rounded-md border border-dashed border-border/60 bg-secondary/30">
