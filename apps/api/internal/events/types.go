@@ -5,13 +5,14 @@ type EventType string
 
 const (
 	// SES sending events (from Configuration Set)
-	EventTypeBounce    EventType = "Bounce"
-	EventTypeComplaint EventType = "Complaint"
-	EventTypeDelivery  EventType = "Delivery"
-	EventTypeSend      EventType = "Send"
-	EventTypeReject    EventType = "Reject"
-	EventTypeOpen      EventType = "Open"
-	EventTypeClick     EventType = "Click"
+	EventTypeBounce        EventType = "Bounce"
+	EventTypeComplaint     EventType = "Complaint"
+	EventTypeDelivery      EventType = "Delivery"
+	EventTypeDeliveryDelay EventType = "DeliveryDelay"
+	EventTypeSend          EventType = "Send"
+	EventTypeReject        EventType = "Reject"
+	EventTypeOpen          EventType = "Open"
+	EventTypeClick         EventType = "Click"
 
 	// Inbound email events (from Receipt Rules)
 	EventTypeReceived EventType = "Received"
@@ -32,11 +33,13 @@ type EventEnvelope struct {
 
 // SESEvent is the common structure for SES sending events.
 type SESEvent struct {
-	EventType string     `json:"eventType"`
-	Mail      MailInfo   `json:"mail"`
-	Bounce    *Bounce    `json:"bounce,omitempty"`
-	Complaint *Complaint `json:"complaint,omitempty"`
-	Delivery  *Delivery  `json:"delivery,omitempty"`
+	EventType     string         `json:"eventType"`
+	Mail          MailInfo       `json:"mail"`
+	Bounce        *Bounce        `json:"bounce,omitempty"`
+	Complaint     *Complaint     `json:"complaint,omitempty"`
+	Delivery      *Delivery      `json:"delivery,omitempty"`
+	DeliveryDelay *DeliveryDelay `json:"deliveryDelay,omitempty"`
+	Send          *Send          `json:"send,omitempty"`
 }
 
 // MailInfo contains information about the sent email.
@@ -106,6 +109,26 @@ type Delivery struct {
 	Recipients           []string `json:"recipients"`
 	SmtpResponse         string   `json:"smtpResponse"`
 	ReportingMTA         string   `json:"reportingMTA"`
+}
+
+// DeliveryDelay contains delivery delay-specific information.
+type DeliveryDelay struct {
+	Timestamp         string             `json:"timestamp"`
+	DelayType         string             `json:"delayType"`
+	ExpirationTime    string             `json:"expirationTime"`
+	DelayedRecipients []DelayedRecipient `json:"delayedRecipients"`
+}
+
+// DelayedRecipient contains information about a delayed recipient.
+type DelayedRecipient struct {
+	EmailAddress   string `json:"emailAddress"`
+	Status         string `json:"status"`
+	DiagnosticCode string `json:"diagnosticCode"`
+}
+
+// Send contains send-specific information.
+type Send struct {
+	Timestamp string `json:"timestamp"`
 }
 
 // S3EventDetail is the EventBridge detail for S3 object events.

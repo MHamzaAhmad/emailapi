@@ -67,6 +67,8 @@ func NewSQSEventService(deps SQSEventServiceDeps) *SQSEventService {
 	router.RegisterHandler(events.EventTypeBounce, handlers.NewBounceHandler(handlerDeps))
 	router.RegisterHandler(events.EventTypeComplaint, handlers.NewComplaintHandler(handlerDeps))
 	router.RegisterHandler(events.EventTypeDelivery, handlers.NewDeliveryHandler(handlerDeps))
+	router.RegisterHandler(events.EventTypeSend, handlers.NewSendHandler(handlerDeps))
+	router.RegisterHandler(events.EventTypeDeliveryDelay, handlers.NewDeliveryDelayHandler(handlerDeps))
 
 	// Register inbound email handler if processor and bucket are configured
 	if deps.InboundProcessor != nil && deps.InboundBucket != "" {

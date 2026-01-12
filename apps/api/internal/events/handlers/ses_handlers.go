@@ -251,3 +251,76 @@ func (h *DeliveryHandler) Handle(ctx context.Context, event *events.SESEvent) er
 
 	return nil
 }
+
+// SendHandler processes send events.
+type SendHandler struct {
+	deps *Dependencies
+}
+
+// NewSendHandler creates a new send handler.
+func NewSendHandler(deps *Dependencies) *SendHandler {
+	return &SendHandler{deps: deps}
+}
+
+// Handle processes a send event.
+func (h *SendHandler) Handle(ctx context.Context, event *events.SESEvent) error {
+	messageID := event.Mail.MessageId
+
+	routing, err := h.deps.Analytics.Email().LookupRouting(ctx, messageID)
+	if err != nil {
+		return nil // No routing found, skip
+	}
+
+	// Log activity
+	h.deps.Analytics.Activity().Log(ctx, routing.UserID, "email", routing.EmailID, "sent", "success",
+		fmt.Sprintf("Email sent to %v", event.Mail.Destination),
+		map[string]interface{}{
+			"message_id": messageID,
+			"recipients": event.Mail.Destination,
+			"timestamp":  event.Mail.Timestamp,
+		})
+
+	return nil
+}
+
+// DeliveryDelayHandler processes delivery delay events.
+type DeliveryDelayHandler struct {
+	deps *Dependencies
+}
+
+// NewDeliveryDelayHandler creates a new delivery delay handler.
+func NewDeliveryDelayHandler(deps *Dependencies) *DeliveryDelayHandler {
+	return &DeliveryDelayHandler{deps: deps}
+}
+
+// Handle processes a delivery delay event.
+func (h *DeliveryDelayHandler) Handle(ctx context.Context, event *events.SESEvent) error {
+	if event.DeliveryDelay == nil {
+		return fmt.Errorf("delivery delay event missing delivery delay data")
+	}
+
+	messageID := event.Mail.MessageId
+
+	routing, err := h.deps.Analytics.Email().LookupRouting(ctx, messageID)
+	if err != nil {
+		return nil // No routing found, skip
+	}
+
+	// Extract recipients from delayed recipients
+	recipients := make([]string, len(event.DeliveryDelay.DelayedRecipients))
+	for i, r := range event.DeliveryDelay.DelayedRecipients {
+		recipients[i] = r.EmailAddress
+	}
+
+	// Log activity
+	h.deps.Analytics.Activity().Log(ctx, routing.UserID, "email", routing.EmailID, "delayed", "warning",
+		fmt.Sprintf("Delivery delayed: %s", event.DeliveryDelay.DelayType),
+		map[string]interface{}{
+			"message_id":      messageID,
+			"delay_type":      event.DeliveryDelay.DelayType,
+			"expiration_time": event.DeliveryDelay.ExpirationTime,
+			"recipients":      recipients,
+		})
+
+	return nil
+}
