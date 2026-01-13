@@ -9,42 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AssetsRouteImport } from './routes/assets'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AboutRouteImport } from './routes/about'
+import { Route as PublicRouteImport } from './routes/_public'
 import { Route as AuthedRouteImport } from './routes/_authed'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
+import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as AdminFlaggedRouteImport } from './routes/admin/flagged'
+import { Route as PublicTermsRouteImport } from './routes/_public/terms'
+import { Route as PublicPrivacyRouteImport } from './routes/_public/privacy'
+import { Route as PublicBlogRouteImport } from './routes/_public/blog'
+import { Route as PublicAboutRouteImport } from './routes/_public/about'
 import { Route as AuthedWebhooksRouteImport } from './routes/_authed/webhooks'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedApiKeysRouteImport } from './routes/_authed/api-keys'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
+import { Route as PublicBlogIndexRouteImport } from './routes/_public/blog/index'
 import { Route as AuthedDomainsIndexRouteImport } from './routes/_authed/domains/index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$userId'
+import { Route as PublicBlogSlugRouteImport } from './routes/_public/blog/$slug'
 import { Route as AuthedSettingsBillingRouteImport } from './routes/_authed/settings/billing'
 import { Route as AuthedDomainsDomainIdRouteImport } from './routes/_authed/domains/$domainId'
 
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogRoute = BlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AssetsRoute = AssetsRouteImport.update({
   id: '/assets',
   path: '/assets',
@@ -55,39 +41,48 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const PublicRoute = PublicRouteImport.update({
+  id: '/_public',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogIndexRoute = BlogIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => BlogRoute,
-} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => BlogRoute,
+const PublicIndexRoute = PublicIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PublicRoute,
 } as any)
 const AdminFlaggedRoute = AdminFlaggedRouteImport.update({
   id: '/flagged',
   path: '/flagged',
   getParentRoute: () => AdminRoute,
+} as any)
+const PublicTermsRoute = PublicTermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicPrivacyRoute = PublicPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicBlogRoute = PublicBlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicAboutRoute = PublicAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => PublicRoute,
 } as any)
 const AuthedWebhooksRoute = AuthedWebhooksRouteImport.update({
   id: '/webhooks',
@@ -109,6 +104,11 @@ const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
   path: '/users/',
   getParentRoute: () => AdminRoute,
 } as any)
+const PublicBlogIndexRoute = PublicBlogIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PublicBlogRoute,
+} as any)
 const AuthedDomainsIndexRoute = AuthedDomainsIndexRouteImport.update({
   id: '/domains/',
   path: '/domains/',
@@ -118,6 +118,11 @@ const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   id: '/users/$userId',
   path: '/users/$userId',
   getParentRoute: () => AdminRoute,
+} as any)
+const PublicBlogSlugRoute = PublicBlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => PublicBlogRoute,
 } as any)
 const AuthedSettingsBillingRoute = AuthedSettingsBillingRouteImport.update({
   id: '/settings/billing',
@@ -131,167 +136,144 @@ const AuthedDomainsDomainIdRoute = AuthedDomainsDomainIdRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/assets': typeof AssetsRoute
-  '/blog': typeof BlogRouteWithChildren
-  '/privacy': typeof PrivacyRoute
-  '/terms': typeof TermsRoute
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/webhooks': typeof AuthedWebhooksRoute
+  '/about': typeof PublicAboutRoute
+  '/blog': typeof PublicBlogRouteWithChildren
+  '/privacy': typeof PublicPrivacyRoute
+  '/terms': typeof PublicTermsRoute
   '/admin/flagged': typeof AdminFlaggedRoute
-  '/blog/$slug': typeof BlogSlugRoute
+  '/': typeof PublicIndexRoute
   '/admin/': typeof AdminIndexRoute
-  '/blog/': typeof BlogIndexRoute
   '/domains/$domainId': typeof AuthedDomainsDomainIdRoute
   '/settings/billing': typeof AuthedSettingsBillingRoute
+  '/blog/$slug': typeof PublicBlogSlugRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/domains': typeof AuthedDomainsIndexRoute
+  '/blog/': typeof PublicBlogIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/assets': typeof AssetsRoute
-  '/privacy': typeof PrivacyRoute
-  '/terms': typeof TermsRoute
   '/api-keys': typeof AuthedApiKeysRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/webhooks': typeof AuthedWebhooksRoute
+  '/about': typeof PublicAboutRoute
+  '/privacy': typeof PublicPrivacyRoute
+  '/terms': typeof PublicTermsRoute
   '/admin/flagged': typeof AdminFlaggedRoute
-  '/blog/$slug': typeof BlogSlugRoute
+  '/': typeof PublicIndexRoute
   '/admin': typeof AdminIndexRoute
-  '/blog': typeof BlogIndexRoute
   '/domains/$domainId': typeof AuthedDomainsDomainIdRoute
   '/settings/billing': typeof AuthedSettingsBillingRoute
+  '/blog/$slug': typeof PublicBlogSlugRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/domains': typeof AuthedDomainsIndexRoute
+  '/blog': typeof PublicBlogIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
-  '/about': typeof AboutRoute
+  '/_public': typeof PublicRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
   '/assets': typeof AssetsRoute
-  '/blog': typeof BlogRouteWithChildren
-  '/privacy': typeof PrivacyRoute
-  '/terms': typeof TermsRoute
   '/_authed/api-keys': typeof AuthedApiKeysRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/webhooks': typeof AuthedWebhooksRoute
+  '/_public/about': typeof PublicAboutRoute
+  '/_public/blog': typeof PublicBlogRouteWithChildren
+  '/_public/privacy': typeof PublicPrivacyRoute
+  '/_public/terms': typeof PublicTermsRoute
   '/admin/flagged': typeof AdminFlaggedRoute
-  '/blog/$slug': typeof BlogSlugRoute
+  '/_public/': typeof PublicIndexRoute
   '/admin/': typeof AdminIndexRoute
-  '/blog/': typeof BlogIndexRoute
   '/_authed/domains/$domainId': typeof AuthedDomainsDomainIdRoute
   '/_authed/settings/billing': typeof AuthedSettingsBillingRoute
+  '/_public/blog/$slug': typeof PublicBlogSlugRoute
   '/admin/users/$userId': typeof AdminUsersUserIdRoute
   '/_authed/domains/': typeof AuthedDomainsIndexRoute
+  '/_public/blog/': typeof PublicBlogIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/about'
     | '/admin'
     | '/assets'
-    | '/blog'
-    | '/privacy'
-    | '/terms'
     | '/api-keys'
     | '/dashboard'
     | '/webhooks'
+    | '/about'
+    | '/blog'
+    | '/privacy'
+    | '/terms'
     | '/admin/flagged'
-    | '/blog/$slug'
+    | '/'
     | '/admin/'
-    | '/blog/'
     | '/domains/$domainId'
     | '/settings/billing'
+    | '/blog/$slug'
     | '/admin/users/$userId'
     | '/domains'
+    | '/blog/'
     | '/admin/users'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/about'
     | '/assets'
-    | '/privacy'
-    | '/terms'
     | '/api-keys'
     | '/dashboard'
     | '/webhooks'
+    | '/about'
+    | '/privacy'
+    | '/terms'
     | '/admin/flagged'
-    | '/blog/$slug'
+    | '/'
     | '/admin'
-    | '/blog'
     | '/domains/$domainId'
     | '/settings/billing'
+    | '/blog/$slug'
     | '/admin/users/$userId'
     | '/domains'
+    | '/blog'
     | '/admin/users'
   id:
     | '__root__'
-    | '/'
     | '/_authed'
-    | '/about'
+    | '/_public'
     | '/admin'
     | '/assets'
-    | '/blog'
-    | '/privacy'
-    | '/terms'
     | '/_authed/api-keys'
     | '/_authed/dashboard'
     | '/_authed/webhooks'
+    | '/_public/about'
+    | '/_public/blog'
+    | '/_public/privacy'
+    | '/_public/terms'
     | '/admin/flagged'
-    | '/blog/$slug'
+    | '/_public/'
     | '/admin/'
-    | '/blog/'
     | '/_authed/domains/$domainId'
     | '/_authed/settings/billing'
+    | '/_public/blog/$slug'
     | '/admin/users/$userId'
     | '/_authed/domains/'
+    | '/_public/blog/'
     | '/admin/users/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
-  AboutRoute: typeof AboutRoute
+  PublicRoute: typeof PublicRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
   AssetsRoute: typeof AssetsRoute
-  BlogRoute: typeof BlogRouteWithChildren
-  PrivacyRoute: typeof PrivacyRoute
-  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/assets': {
       id: '/assets'
       path: '/assets'
@@ -306,11 +288,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/_public': {
+      id: '/_public'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof PublicRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -320,20 +302,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog/': {
-      id: '/blog/'
-      path: '/'
-      fullPath: '/blog/'
-      preLoaderRoute: typeof BlogIndexRouteImport
-      parentRoute: typeof BlogRoute
-    }
     '/admin/': {
       id: '/admin/'
       path: '/'
@@ -341,12 +309,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/blog/$slug': {
-      id: '/blog/$slug'
-      path: '/$slug'
-      fullPath: '/blog/$slug'
-      preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof BlogRoute
+    '/_public/': {
+      id: '/_public/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof PublicRoute
     }
     '/admin/flagged': {
       id: '/admin/flagged'
@@ -354,6 +322,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/flagged'
       preLoaderRoute: typeof AdminFlaggedRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/_public/terms': {
+      id: '/_public/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof PublicTermsRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/privacy': {
+      id: '/_public/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PublicPrivacyRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/blog': {
+      id: '/_public/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof PublicBlogRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/about': {
+      id: '/_public/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof PublicAboutRouteImport
+      parentRoute: typeof PublicRoute
     }
     '/_authed/webhooks': {
       id: '/_authed/webhooks'
@@ -383,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_public/blog/': {
+      id: '/_public/blog/'
+      path: '/'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof PublicBlogIndexRouteImport
+      parentRoute: typeof PublicBlogRoute
+    }
     '/_authed/domains/': {
       id: '/_authed/domains/'
       path: '/domains'
@@ -396,6 +399,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/users/$userId'
       preLoaderRoute: typeof AdminUsersUserIdRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/_public/blog/$slug': {
+      id: '/_public/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof PublicBlogSlugRouteImport
+      parentRoute: typeof PublicBlogRoute
     }
     '/_authed/settings/billing': {
       id: '/_authed/settings/billing'
@@ -435,6 +445,39 @@ const AuthedRouteChildren: AuthedRouteChildren = {
 const AuthedRouteWithChildren =
   AuthedRoute._addFileChildren(AuthedRouteChildren)
 
+interface PublicBlogRouteChildren {
+  PublicBlogSlugRoute: typeof PublicBlogSlugRoute
+  PublicBlogIndexRoute: typeof PublicBlogIndexRoute
+}
+
+const PublicBlogRouteChildren: PublicBlogRouteChildren = {
+  PublicBlogSlugRoute: PublicBlogSlugRoute,
+  PublicBlogIndexRoute: PublicBlogIndexRoute,
+}
+
+const PublicBlogRouteWithChildren = PublicBlogRoute._addFileChildren(
+  PublicBlogRouteChildren,
+)
+
+interface PublicRouteChildren {
+  PublicAboutRoute: typeof PublicAboutRoute
+  PublicBlogRoute: typeof PublicBlogRouteWithChildren
+  PublicPrivacyRoute: typeof PublicPrivacyRoute
+  PublicTermsRoute: typeof PublicTermsRoute
+  PublicIndexRoute: typeof PublicIndexRoute
+}
+
+const PublicRouteChildren: PublicRouteChildren = {
+  PublicAboutRoute: PublicAboutRoute,
+  PublicBlogRoute: PublicBlogRouteWithChildren,
+  PublicPrivacyRoute: PublicPrivacyRoute,
+  PublicTermsRoute: PublicTermsRoute,
+  PublicIndexRoute: PublicIndexRoute,
+}
+
+const PublicRouteWithChildren =
+  PublicRoute._addFileChildren(PublicRouteChildren)
+
 interface AdminRouteChildren {
   AdminFlaggedRoute: typeof AdminFlaggedRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -451,27 +494,11 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface BlogRouteChildren {
-  BlogSlugRoute: typeof BlogSlugRoute
-  BlogIndexRoute: typeof BlogIndexRoute
-}
-
-const BlogRouteChildren: BlogRouteChildren = {
-  BlogSlugRoute: BlogSlugRoute,
-  BlogIndexRoute: BlogIndexRoute,
-}
-
-const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
-  AboutRoute: AboutRoute,
+  PublicRoute: PublicRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
   AssetsRoute: AssetsRoute,
-  BlogRoute: BlogRouteWithChildren,
-  PrivacyRoute: PrivacyRoute,
-  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

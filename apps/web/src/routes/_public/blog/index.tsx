@@ -4,7 +4,7 @@ import { getAllPosts, formatDate, type BlogPost } from '@/lib/blogUtils'
 import { CalendarIcon, TagIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 
-export const Route = createFileRoute('/blog/')({
+export const Route = createFileRoute('/_public/blog/')({
     loader: async () => {
         const posts = await getAllPosts()
         return { posts }

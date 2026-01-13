@@ -4,7 +4,7 @@ import { mdxComponents } from '@/components/mdx-components'
 import { CalendarIcon, ArrowLeftIcon, TagIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 
-export const Route = createFileRoute('/blog/$slug')({
+export const Route = createFileRoute('/_public/blog/$slug')({
     loader: async ({ params }: { params: { slug: string } }) => {
         const post = await getPostBySlug(params.slug)
         if (!post) {
