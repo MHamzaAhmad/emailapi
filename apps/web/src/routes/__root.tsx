@@ -29,14 +29,14 @@ export const Route = createRootRoute({
       // Open Graph
       { property: 'og:title', content: 'SimpleEmailAPI' },
       { property: 'og:description', content: 'The simplest API to send and receive emails.' },
-      { property: 'og:image', content: '/ogimage.png' },
+      { property: 'og:image', content: 'https://simpleemailapi.dev/ogimage.png' },
       { property: 'og:type', content: 'website' },
 
       // Twitter
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: 'SimpleEmailAPI' },
       { name: 'twitter:description', content: 'The simplest API to send and receive emails.' },
-      { name: 'twitter:image', content: '/ogimage.png' },
+      { name: 'twitter:image', content: 'https://simpleemailapi.dev/ogimage.png' },
     ],
     links: [
       // Preconnect to critical origins (~300ms LCP savings)
