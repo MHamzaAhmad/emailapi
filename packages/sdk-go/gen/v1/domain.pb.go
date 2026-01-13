@@ -22,21 +22,20 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// DomainStatus represents the overall status of a domain.
-// Use in code: if (domain.status === DomainStatus.READY)
+// DomainStatus tracks the verification lifecycle.
 type DomainStatus int32
 
 const (
 	DomainStatus_DOMAIN_STATUS_UNSPECIFIED DomainStatus = 0
-	// Just added, waiting for DNS configuration
+	// Domain added, waiting for DNS records.
 	DomainStatus_DOMAIN_STATUS_PENDING DomainStatus = 1
-	// DNS check in progress
+	// Verification in progress.
 	DomainStatus_DOMAIN_STATUS_VERIFYING DomainStatus = 2
-	// Ready to send emails!
+	// Verified and ready to send!
 	DomainStatus_DOMAIN_STATUS_READY DomainStatus = 3
-	// Works but missing optional records (SPF, DMARC, MAIL FROM)
+	// Functional, but some optional records (like custom MAIL FROM) are missing.
 	DomainStatus_DOMAIN_STATUS_DEGRADED DomainStatus = 4
-	// Cannot send, action required
+	// Verification failed. Check your DNS records.
 	DomainStatus_DOMAIN_STATUS_FAILED DomainStatus = 5
 )
 
@@ -87,19 +86,18 @@ func (DomainStatus) EnumDescriptor() ([]byte, []int) {
 	return file_v1_domain_proto_rawDescGZIP(), []int{0}
 }
 
-// RecordStatus represents the status of a single DNS record.
-// Use in code: if (record.status === RecordStatus.FOUND)
+// Status of a single DNS record.
 type RecordStatus int32
 
 const (
 	RecordStatus_RECORD_STATUS_UNSPECIFIED RecordStatus = 0
-	// Not configured yet
+	// We haven't checked this yet.
 	RecordStatus_RECORD_STATUS_PENDING RecordStatus = 1
-	// Found in DNS with correct value ✓
+	// Valid and found.
 	RecordStatus_RECORD_STATUS_FOUND RecordStatus = 2
-	// Found but wrong value
+	// Found, but the value doesn't match what we expected.
 	RecordStatus_RECORD_STATUS_MISMATCH RecordStatus = 3
-	// Not found in DNS
+	// Not found in DNS.
 	RecordStatus_RECORD_STATUS_MISSING RecordStatus = 4
 )
 
@@ -148,16 +146,22 @@ func (RecordStatus) EnumDescriptor() ([]byte, []int) {
 	return file_v1_domain_proto_rawDescGZIP(), []int{1}
 }
 
-// RecordType identifies the purpose of a DNS record.
+// Types of DNS records we require.
 type RecordType int32
 
 const (
-	RecordType_RECORD_TYPE_UNSPECIFIED   RecordType = 0
-	RecordType_RECORD_TYPE_DKIM          RecordType = 1
-	RecordType_RECORD_TYPE_SPF           RecordType = 2
-	RecordType_RECORD_TYPE_DMARC         RecordType = 3
-	RecordType_RECORD_TYPE_MX_INBOUND    RecordType = 4
-	RecordType_RECORD_TYPE_MAIL_FROM_MX  RecordType = 5
+	RecordType_RECORD_TYPE_UNSPECIFIED RecordType = 0
+	// DKIM (DomainKeys Identified Mail) - signs your emails.
+	RecordType_RECORD_TYPE_DKIM RecordType = 1
+	// SPF (Sender Policy Framework) - authorizes us to send for you.
+	RecordType_RECORD_TYPE_SPF RecordType = 2
+	// DMARC - tells receivers what to do with unauthenticated mail.
+	RecordType_RECORD_TYPE_DMARC RecordType = 3
+	// MX record for receiving inbound emails (if enabled).
+	RecordType_RECORD_TYPE_MX_INBOUND RecordType = 4
+	// MX record for custom MAIL FROM domain (improves deliverability).
+	RecordType_RECORD_TYPE_MAIL_FROM_MX RecordType = 5
+	// SPF record for custom MAIL FROM domain.
 	RecordType_RECORD_TYPE_MAIL_FROM_SPF RecordType = 6
 )
 
@@ -210,19 +214,22 @@ func (RecordType) EnumDescriptor() ([]byte, []int) {
 	return file_v1_domain_proto_rawDescGZIP(), []int{2}
 }
 
-// Domain represents a sending domain with all its configuration.
+// A sending domain.
 type Domain struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Domain        string                 `protobuf:"bytes,2,opt,name=domain,proto3" json:"domain,omitempty"`
-	Status        DomainStatus           `protobuf:"varint,3,opt,name=status,proto3,enum=v1.DomainStatus" json:"status,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// The domain name (e.g. "example.com").
+	Domain string `protobuf:"bytes,2,opt,name=domain,proto3" json:"domain,omitempty"`
+	// Overall verification status.
+	Status DomainStatus `protobuf:"varint,3,opt,name=status,proto3,enum=v1.DomainStatus" json:"status,omitempty"`
+	// AWS Region (e.g. "us-east-1").
 	Region        string                 `protobuf:"bytes,4,opt,name=region,proto3" json:"region,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	LastCheckedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_checked_at,json=lastCheckedAt,proto3" json:"last_checked_at,omitempty"`
-	// Human-readable summary for lazy users
+	// Simple summary of what's needed next.
 	Summary *DomainSummary `protobuf:"bytes,8,opt,name=summary,proto3" json:"summary,omitempty"`
-	// All DNS records needed
+	// Detailed DNS records list.
 	Records       *DomainRecords `protobuf:"bytes,9,opt,name=records,proto3" json:"records,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -321,20 +328,21 @@ func (x *Domain) GetRecords() *DomainRecords {
 	return nil
 }
 
-// DomainSummary provides human-readable status for lazy users.
+// Human-readable status summary.
 type DomainSummary struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// e.g., "Add 3 DNS records to start sending" or "Ready to send emails!"
+	// A friendly message like "Add 3 DNS records to start sending".
 	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	// What the user should do next: CONFIGURE_DNS, WAIT, NONE
-	NextAction string `protobuf:"bytes,2,opt,name=next_action,json=nextAction,proto3" json:"next_action,omitempty"`
-	// Quick stats
-	RecordsPending    int32 `protobuf:"varint,3,opt,name=records_pending,json=recordsPending,proto3" json:"records_pending,omitempty"`
-	RecordsConfigured int32 `protobuf:"varint,4,opt,name=records_configured,json=recordsConfigured,proto3" json:"records_configured,omitempty"`
-	CanSend           bool  `protobuf:"varint,5,opt,name=can_send,json=canSend,proto3" json:"can_send,omitempty"`
-	CanReceive        bool  `protobuf:"varint,6,opt,name=can_receive,json=canReceive,proto3" json:"can_receive,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// Next logical step: "CONFIGURE_DNS", "WAIT" (for receiver cache), or "NONE" (done).
+	NextAction        string `protobuf:"bytes,2,opt,name=next_action,json=nextAction,proto3" json:"next_action,omitempty"`
+	RecordsPending    int32  `protobuf:"varint,3,opt,name=records_pending,json=recordsPending,proto3" json:"records_pending,omitempty"`
+	RecordsConfigured int32  `protobuf:"varint,4,opt,name=records_configured,json=recordsConfigured,proto3" json:"records_configured,omitempty"`
+	// If true, you can start sending emails (even if not fully optimized).
+	CanSend bool `protobuf:"varint,5,opt,name=can_send,json=canSend,proto3" json:"can_send,omitempty"`
+	// If true, you can receive inbound emails.
+	CanReceive    bool `protobuf:"varint,6,opt,name=can_receive,json=canReceive,proto3" json:"can_receive,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DomainSummary) Reset() {
@@ -409,14 +417,19 @@ func (x *DomainSummary) GetCanReceive() bool {
 	return false
 }
 
-// DomainRecords contains all DNS records needed for email.
+// DNS configuration.
 type DomainRecords struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	DkimRecords     []*DnsRecord           `protobuf:"bytes,1,rep,name=dkim_records,json=dkimRecords,proto3" json:"dkim_records,omitempty"`
-	SpfRecord       *DnsRecord             `protobuf:"bytes,2,opt,name=spf_record,json=spfRecord,proto3" json:"spf_record,omitempty"`
-	DmarcRecord     *DnsRecord             `protobuf:"bytes,3,opt,name=dmarc_record,json=dmarcRecord,proto3" json:"dmarc_record,omitempty"`
-	MxRecords       []*DnsRecord           `protobuf:"bytes,4,rep,name=mx_records,json=mxRecords,proto3" json:"mx_records,omitempty"`
-	MailFromRecords []*DnsRecord           `protobuf:"bytes,5,rep,name=mail_from_records,json=mailFromRecords,proto3" json:"mail_from_records,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// DKIM keys (usually CNAMES).
+	DkimRecords []*DnsRecord `protobuf:"bytes,1,rep,name=dkim_records,json=dkimRecords,proto3" json:"dkim_records,omitempty"`
+	// SPF record (TXT).
+	SpfRecord *DnsRecord `protobuf:"bytes,2,opt,name=spf_record,json=spfRecord,proto3" json:"spf_record,omitempty"`
+	// DMARC record (TXT).
+	DmarcRecord *DnsRecord `protobuf:"bytes,3,opt,name=dmarc_record,json=dmarcRecord,proto3" json:"dmarc_record,omitempty"`
+	// Inbound MX records.
+	MxRecords []*DnsRecord `protobuf:"bytes,4,rep,name=mx_records,json=mxRecords,proto3" json:"mx_records,omitempty"`
+	// Custom MAIL FROM records.
+	MailFromRecords []*DnsRecord `protobuf:"bytes,5,rep,name=mail_from_records,json=mailFromRecords,proto3" json:"mail_from_records,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -486,26 +499,26 @@ func (x *DomainRecords) GetMailFromRecords() []*DnsRecord {
 	return nil
 }
 
-// DnsRecord represents a single DNS record to configure.
+// A single DNS record.
 type DnsRecord struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// DNS record type: CNAME, TXT, MX
+	// Record type: "CNAME", "TXT", or "MX".
 	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	// Full record name (e.g., "abc._domainkey.example.com")
+	// Hostname to set (e.g. "email._domainkey").
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	// Record value to set
+	// Value to set (e.g. "k=rsa; ...").
 	Value string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
-	// Priority (MX records only)
+	// Priority (only for MX records).
 	Priority int32 `protobuf:"varint,4,opt,name=priority,proto3" json:"priority,omitempty"`
-	// Purpose of this record
+	// What this record is for.
 	RecordType RecordType `protobuf:"varint,5,opt,name=record_type,json=recordType,proto3,enum=v1.RecordType" json:"record_type,omitempty"`
-	// Current status
+	// Verification status.
 	Status RecordStatus `protobuf:"varint,6,opt,name=status,proto3,enum=v1.RecordStatus" json:"status,omitempty"`
-	// Short name for DNS providers that want just the subdomain (e.g., "abc._domainkey")
+	// Shortened hostname (e.g. "email._domainkey" instead of full FQDN) for easier copy-pasting.
 	NameShort string `protobuf:"bytes,7,opt,name=name_short,json=nameShort,proto3" json:"name_short,omitempty"`
-	// What we found in DNS (after verification)
+	// The value we actually found in your DNS (useful for debugging).
 	DiscoveredValue string `protobuf:"bytes,8,opt,name=discovered_value,json=discoveredValue,proto3" json:"discovered_value,omitempty"`
-	// Human-readable instructions
+	// User-friendly instructions, e.g. "Add this TXT record to verify ownership".
 	Instructions  string `protobuf:"bytes,9,opt,name=instructions,proto3" json:"instructions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -605,9 +618,8 @@ func (x *DnsRecord) GetInstructions() string {
 }
 
 type AddDomainRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Domain name to add (e.g., "example.com")
-	Domain        string `protobuf:"bytes,1,opt,name=domain,proto3" json:"domain,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Domain        string                 `protobuf:"bytes,1,opt,name=domain,proto3" json:"domain,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -791,6 +803,8 @@ func (x *GetDomainResponse) GetDomain() *Domain {
 
 type ListDomainsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Page          int32                  `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -825,9 +839,24 @@ func (*ListDomainsRequest) Descriptor() ([]byte, []int) {
 	return file_v1_domain_proto_rawDescGZIP(), []int{8}
 }
 
+func (x *ListDomainsRequest) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListDomainsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
 type ListDomainsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Data          []*Domain              `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
+	Total         int32                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -867,6 +896,13 @@ func (x *ListDomainsResponse) GetData() []*Domain {
 		return x.Data
 	}
 	return nil
+}
+
+func (x *ListDomainsResponse) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
 }
 
 type DeleteDomainRequest struct {
@@ -1004,9 +1040,9 @@ func (x *VerifyDomainRequest) GetId() string {
 type VerifyDomainResponse struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Domain *Domain                `protobuf:"bytes,1,opt,name=domain,proto3" json:"domain,omitempty"`
-	// True if we actually checked (false if rate-limited)
+	// Whether we actually performed a fresh DNS lookup.
 	WasRefreshed bool `protobuf:"varint,2,opt,name=was_refreshed,json=wasRefreshed,proto3" json:"was_refreshed,omitempty"`
-	// When next check is allowed (if rate-limited)
+	// When you can retry if rate limited.
 	NextRetryAt   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=next_retry_at,json=nextRetryAt,proto3" json:"next_retry_at,omitempty"`
 	Message       string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1127,11 +1163,14 @@ const file_v1_domain_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"7\n" +
 	"\x11GetDomainResponse\x12\"\n" +
 	"\x06domain\x18\x01 \x01(\v2\n" +
-	".v1.DomainR\x06domain\"\x14\n" +
-	"\x12ListDomainsRequest\"5\n" +
+	".v1.DomainR\x06domain\"E\n" +
+	"\x12ListDomainsRequest\x12\x12\n" +
+	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\"K\n" +
 	"\x13ListDomainsResponse\x12\x1e\n" +
 	"\x04data\x18\x01 \x03(\v2\n" +
-	".v1.DomainR\x04data\"%\n" +
+	".v1.DomainR\x04data\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\"%\n" +
 	"\x13DeleteDomainRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"0\n" +
 	"\x14DeleteDomainResponse\x12\x18\n" +
@@ -1171,8 +1210,8 @@ const file_v1_domain_proto_rawDesc = "" +
 	"\tGetDomain\x12\x14.v1.GetDomainRequest\x1a\x15.v1.GetDomainResponse\"\x00\x12@\n" +
 	"\vListDomains\x12\x16.v1.ListDomainsRequest\x1a\x17.v1.ListDomainsResponse\"\x00\x12C\n" +
 	"\fDeleteDomain\x12\x17.v1.DeleteDomainRequest\x1a\x18.v1.DeleteDomainResponse\"\x00\x12C\n" +
-	"\fVerifyDomain\x12\x17.v1.VerifyDomainRequest\x1a\x18.v1.VerifyDomainResponse\"\x00B]\n" +
-	"\x06com.v1B\vDomainProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
+	"\fVerifyDomain\x12\x17.v1.VerifyDomainRequest\x1a\x18.v1.VerifyDomainResponse\"\x00B`\n" +
+	"\x06com.v1B\vDomainProtoP\x01Z!github.com/emailapi/sdk-go/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (
 	file_v1_domain_proto_rawDescOnce sync.Once

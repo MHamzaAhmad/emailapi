@@ -22,15 +22,19 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// EmailStatus represents the current processing status.
+// Represents the current status of an email delivery.
 type EmailStatus int32
 
 const (
 	EmailStatus_EMAIL_STATUS_UNSPECIFIED EmailStatus = 0
-	EmailStatus_EMAIL_STATUS_QUEUED      EmailStatus = 1
-	EmailStatus_EMAIL_STATUS_PROCESSING  EmailStatus = 2
-	EmailStatus_EMAIL_STATUS_SENT        EmailStatus = 3
-	EmailStatus_EMAIL_STATUS_FAILED      EmailStatus = 4
+	// The email is queued for background processing.
+	EmailStatus_EMAIL_STATUS_QUEUED EmailStatus = 1
+	// The email is currently being processed.
+	EmailStatus_EMAIL_STATUS_PROCESSING EmailStatus = 2
+	// The email was successfully sent to the upstream provider.
+	EmailStatus_EMAIL_STATUS_SENT EmailStatus = 3
+	// The email failed to send.
+	EmailStatus_EMAIL_STATUS_FAILED EmailStatus = 4
 )
 
 // Enum value maps for EmailStatus.
@@ -78,39 +82,36 @@ func (EmailStatus) EnumDescriptor() ([]byte, []int) {
 	return file_v1_email_proto_rawDescGZIP(), []int{0}
 }
 
-// SendEmailRequest is the payload for sending an email.
+// Request to send an email.
 type SendEmailRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Sender email address (must be from a verified domain).
+	// Verified sender email address (e.g., "notifications@yourdomain.com").
 	From string `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
-	// List of primary recipient email addresses.
+	// Primary recipients.
 	To []string `protobuf:"bytes,2,rep,name=to,proto3" json:"to,omitempty"`
-	// List of CC recipient email addresses.
+	// Carbon copy recipients.
 	Cc []string `protobuf:"bytes,3,rep,name=cc,proto3" json:"cc,omitempty"`
-	// List of BCC recipient email addresses.
+	// Blind carbon copy recipients.
 	Bcc []string `protobuf:"bytes,4,rep,name=bcc,proto3" json:"bcc,omitempty"`
 	// Email subject line.
 	Subject string `protobuf:"bytes,5,opt,name=subject,proto3" json:"subject,omitempty"`
-	// Plain text content of the email.
+	// Plain text content. Always recommended for better deliverability.
 	Body string `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`
-	// HTML content of the email.
+	// HTML content.
 	Html string `protobuf:"bytes,7,opt,name=html,proto3" json:"html,omitempty"`
-	// Custom key-value metadata (returned in webhooks).
+	// Custom metadata to track this email. These values are returned in webhooks and events.
 	Metadata map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Optional timestamp to schedule the email for future delivery (UTC).
-	// If set, the email will be sent at this time instead of immediately.
-	// Uses UTC timezone - clients should convert local time to UTC before sending.
+	// Schedule this email for a future time (UTC).
 	ScheduledAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=scheduled_at,json=scheduledAt,proto3" json:"scheduled_at,omitempty"`
-	// List of attachments.
+	// File attachments.
 	Attachments []*Attachment `protobuf:"bytes,10,rep,name=attachments,proto3" json:"attachments,omitempty"`
-	// Message-ID of the email being replied to (for threading).
+	// Message-ID of the email to reply to. Setting this automatically handles
+	// threading headers (In-Reply-To, References).
 	InReplyTo string `protobuf:"bytes,11,opt,name=in_reply_to,json=inReplyTo,proto3" json:"in_reply_to,omitempty"`
-	// Full list of message IDs in the thread (for proper threading).
-	// Should include in_reply_to and all previous message IDs.
+	// Explicit threading references. Usually not needed if `in_reply_to` is set.
 	References []string `protobuf:"bytes,12,rep,name=references,proto3" json:"references,omitempty"`
-	// If true, queue for async processing (we handle retries).
-	// If false, send synchronously and return message_id immediately.
-	// Note: Emails with attachments are always processed async.
+	// Set to `true` to return immediately and send the email in the background.
+	// Recommended for bulk sending or when attachments are large.
 	Async         bool `protobuf:"varint,13,opt,name=async,proto3" json:"async,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -237,14 +238,14 @@ func (x *SendEmailRequest) GetAsync() bool {
 	return false
 }
 
-// Attachment represents a file to be attached to the email.
+// A file attachment.
 type Attachment struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Filename of the attachment.
+	// Name of the file (e.g., "invoice.pdf").
 	Filename string `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
-	// MIME type of the attachment (e.g., application/pdf).
+	// MIME type (e.g., "application/pdf").
 	ContentType string `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
-	// Content source - either a URL to download from or base64-encoded content.
+	// The content of the file.
 	//
 	// Types that are valid to be assigned to Source:
 	//
@@ -329,12 +330,12 @@ type isAttachment_Source interface {
 }
 
 type Attachment_Url struct {
-	// URL to download the attachment from.
+	// Publicly accessible URL to download the file from.
 	Url string `protobuf:"bytes,3,opt,name=url,proto3,oneof"`
 }
 
 type Attachment_Base64Content struct {
-	// Base64-encoded content of the attachment.
+	// Base64-encoded file content.
 	Base64Content string `protobuf:"bytes,4,opt,name=base64_content,json=base64Content,proto3,oneof"`
 }
 
@@ -342,16 +343,16 @@ func (*Attachment_Url) isAttachment_Source() {}
 
 func (*Attachment_Base64Content) isAttachment_Source() {}
 
-// SendEmailResponse contains the result of a send request.
+// Response after sending an email.
 type SendEmailResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Unique identifier for tracking this email.
+	// Unique system ID for this email. Use this to track events.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Current status of the email.
+	// Current status.
 	Status EmailStatus `protobuf:"varint,2,opt,name=status,proto3,enum=v1.EmailStatus" json:"status,omitempty"`
-	// SES Message-ID (only present if sync send succeeded).
+	// Upstream Message-ID (if available immediately).
 	MessageId string `protobuf:"bytes,3,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
-	// Human-readable status message.
+	// Human-readable description of the status.
 	StatusMessage string `protobuf:"bytes,4,opt,name=status_message,json=statusMessage,proto3" json:"status_message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -415,17 +416,14 @@ func (x *SendEmailResponse) GetStatusMessage() string {
 	return ""
 }
 
-// StreamEventsRequest is the request for streaming events.
+// Request to stream events.
+// Server uses API key from auth context to track acknowledgment state.
 type StreamEventsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Cursor position to start from (event ID).
-	// Empty string means start from latest events.
-	// Use "0" to start from the beginning of the stream.
-	Cursor string `protobuf:"bytes,1,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	// Optional: Filter by event types.
-	EventTypes []EventType `protobuf:"varint,2,rep,packed,name=event_types,json=eventTypes,proto3,enum=v1.EventType" json:"event_types,omitempty"`
-	// Number of events to batch (1-100, default: 10).
-	BatchSize     int32 `protobuf:"varint,3,opt,name=batch_size,json=batchSize,proto3" json:"batch_size,omitempty"`
+	// Filter by specific event types.
+	EventTypes []EventType `protobuf:"varint,1,rep,packed,name=event_types,json=eventTypes,proto3,enum=v1.EventType" json:"event_types,omitempty"`
+	// Internal batch size hints.
+	BatchSize     int32 `protobuf:"varint,2,opt,name=batch_size,json=batchSize,proto3" json:"batch_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -460,13 +458,6 @@ func (*StreamEventsRequest) Descriptor() ([]byte, []int) {
 	return file_v1_email_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *StreamEventsRequest) GetCursor() string {
-	if x != nil {
-		return x.Cursor
-	}
-	return ""
-}
-
 func (x *StreamEventsRequest) GetEventTypes() []EventType {
 	if x != nil {
 		return x.EventTypes
@@ -477,6 +468,98 @@ func (x *StreamEventsRequest) GetEventTypes() []EventType {
 func (x *StreamEventsRequest) GetBatchSize() int32 {
 	if x != nil {
 		return x.BatchSize
+	}
+	return 0
+}
+
+// Request to acknowledge events as processed.
+type AckEventsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Event IDs to acknowledge as processed.
+	EventIds      []string `protobuf:"bytes,1,rep,name=event_ids,json=eventIds,proto3" json:"event_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AckEventsRequest) Reset() {
+	*x = AckEventsRequest{}
+	mi := &file_v1_email_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AckEventsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AckEventsRequest) ProtoMessage() {}
+
+func (x *AckEventsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_email_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AckEventsRequest.ProtoReflect.Descriptor instead.
+func (*AckEventsRequest) Descriptor() ([]byte, []int) {
+	return file_v1_email_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *AckEventsRequest) GetEventIds() []string {
+	if x != nil {
+		return x.EventIds
+	}
+	return nil
+}
+
+// Response after acknowledging events.
+type AckEventsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Number of events successfully acknowledged.
+	AckedCount    int32 `protobuf:"varint,1,opt,name=acked_count,json=ackedCount,proto3" json:"acked_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AckEventsResponse) Reset() {
+	*x = AckEventsResponse{}
+	mi := &file_v1_email_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AckEventsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AckEventsResponse) ProtoMessage() {}
+
+func (x *AckEventsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_email_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AckEventsResponse.ProtoReflect.Descriptor instead.
+func (*AckEventsResponse) Descriptor() ([]byte, []int) {
+	return file_v1_email_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *AckEventsResponse) GetAckedCount() int32 {
+	if x != nil {
+		return x.AckedCount
 	}
 	return 0
 }
@@ -518,24 +601,29 @@ const file_v1_email_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\x0e2\x0f.v1.EmailStatusR\x06status\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x03 \x01(\tR\tmessageId\x12%\n" +
-	"\x0estatus_message\x18\x04 \x01(\tR\rstatusMessage\"|\n" +
-	"\x13StreamEventsRequest\x12\x16\n" +
-	"\x06cursor\x18\x01 \x01(\tR\x06cursor\x12.\n" +
-	"\vevent_types\x18\x02 \x03(\x0e2\r.v1.EventTypeR\n" +
+	"\x0estatus_message\x18\x04 \x01(\tR\rstatusMessage\"d\n" +
+	"\x13StreamEventsRequest\x12.\n" +
+	"\vevent_types\x18\x01 \x03(\x0e2\r.v1.EventTypeR\n" +
 	"eventTypes\x12\x1d\n" +
 	"\n" +
-	"batch_size\x18\x03 \x01(\x05R\tbatchSize*\x91\x01\n" +
+	"batch_size\x18\x02 \x01(\x05R\tbatchSize\"/\n" +
+	"\x10AckEventsRequest\x12\x1b\n" +
+	"\tevent_ids\x18\x01 \x03(\tR\beventIds\"4\n" +
+	"\x11AckEventsResponse\x12\x1f\n" +
+	"\vacked_count\x18\x01 \x01(\x05R\n" +
+	"ackedCount*\x91\x01\n" +
 	"\vEmailStatus\x12\x1c\n" +
 	"\x18EMAIL_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13EMAIL_STATUS_QUEUED\x10\x01\x12\x1b\n" +
 	"\x17EMAIL_STATUS_PROCESSING\x10\x02\x12\x15\n" +
 	"\x11EMAIL_STATUS_SENT\x10\x03\x12\x17\n" +
-	"\x13EMAIL_STATUS_FAILED\x10\x042\x82\x01\n" +
+	"\x13EMAIL_STATUS_FAILED\x10\x042\xbe\x01\n" +
 	"\fEmailService\x12:\n" +
 	"\tSendEmail\x12\x14.v1.SendEmailRequest\x1a\x15.v1.SendEmailResponse\"\x00\x126\n" +
-	"\fStreamEvents\x12\x17.v1.StreamEventsRequest\x1a\t.v1.Event\"\x000\x01B\\\n" +
+	"\fStreamEvents\x12\x17.v1.StreamEventsRequest\x1a\t.v1.Event\"\x000\x01\x12:\n" +
+	"\tAckEvents\x12\x14.v1.AckEventsRequest\x1a\x15.v1.AckEventsResponse\"\x00B_\n" +
 	"\x06com.v1B\n" +
-	"EmailProtoP\x01Z\x1egithub.com/emailapi/api/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
+	"EmailProtoP\x01Z!github.com/emailapi/sdk-go/gen/v1\xa2\x02\x03VXX\xaa\x02\x02V1\xca\x02\x02V1\xe2\x02\x0eV1\\GPBMetadata\xea\x02\x02V1b\x06proto3"
 
 var (
 	file_v1_email_proto_rawDescOnce sync.Once
@@ -550,33 +638,37 @@ func file_v1_email_proto_rawDescGZIP() []byte {
 }
 
 var file_v1_email_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_v1_email_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_v1_email_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_v1_email_proto_goTypes = []any{
 	(EmailStatus)(0),              // 0: v1.EmailStatus
 	(*SendEmailRequest)(nil),      // 1: v1.SendEmailRequest
 	(*Attachment)(nil),            // 2: v1.Attachment
 	(*SendEmailResponse)(nil),     // 3: v1.SendEmailResponse
 	(*StreamEventsRequest)(nil),   // 4: v1.StreamEventsRequest
-	nil,                           // 5: v1.SendEmailRequest.MetadataEntry
-	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
-	(EventType)(0),                // 7: v1.EventType
-	(*Event)(nil),                 // 8: v1.Event
+	(*AckEventsRequest)(nil),      // 5: v1.AckEventsRequest
+	(*AckEventsResponse)(nil),     // 6: v1.AckEventsResponse
+	nil,                           // 7: v1.SendEmailRequest.MetadataEntry
+	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
+	(EventType)(0),                // 9: v1.EventType
+	(*Event)(nil),                 // 10: v1.Event
 }
 var file_v1_email_proto_depIdxs = []int32{
-	5, // 0: v1.SendEmailRequest.metadata:type_name -> v1.SendEmailRequest.MetadataEntry
-	6, // 1: v1.SendEmailRequest.scheduled_at:type_name -> google.protobuf.Timestamp
-	2, // 2: v1.SendEmailRequest.attachments:type_name -> v1.Attachment
-	0, // 3: v1.SendEmailResponse.status:type_name -> v1.EmailStatus
-	7, // 4: v1.StreamEventsRequest.event_types:type_name -> v1.EventType
-	1, // 5: v1.EmailService.SendEmail:input_type -> v1.SendEmailRequest
-	4, // 6: v1.EmailService.StreamEvents:input_type -> v1.StreamEventsRequest
-	3, // 7: v1.EmailService.SendEmail:output_type -> v1.SendEmailResponse
-	8, // 8: v1.EmailService.StreamEvents:output_type -> v1.Event
-	7, // [7:9] is the sub-list for method output_type
-	5, // [5:7] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	7,  // 0: v1.SendEmailRequest.metadata:type_name -> v1.SendEmailRequest.MetadataEntry
+	8,  // 1: v1.SendEmailRequest.scheduled_at:type_name -> google.protobuf.Timestamp
+	2,  // 2: v1.SendEmailRequest.attachments:type_name -> v1.Attachment
+	0,  // 3: v1.SendEmailResponse.status:type_name -> v1.EmailStatus
+	9,  // 4: v1.StreamEventsRequest.event_types:type_name -> v1.EventType
+	1,  // 5: v1.EmailService.SendEmail:input_type -> v1.SendEmailRequest
+	4,  // 6: v1.EmailService.StreamEvents:input_type -> v1.StreamEventsRequest
+	5,  // 7: v1.EmailService.AckEvents:input_type -> v1.AckEventsRequest
+	3,  // 8: v1.EmailService.SendEmail:output_type -> v1.SendEmailResponse
+	10, // 9: v1.EmailService.StreamEvents:output_type -> v1.Event
+	6,  // 10: v1.EmailService.AckEvents:output_type -> v1.AckEventsResponse
+	8,  // [8:11] is the sub-list for method output_type
+	5,  // [5:8] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_v1_email_proto_init() }
@@ -595,7 +687,7 @@ func file_v1_email_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_email_proto_rawDesc), len(file_v1_email_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

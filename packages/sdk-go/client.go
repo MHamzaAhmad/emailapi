@@ -1,4 +1,42 @@
-// Package emailapi provides a Go SDK for the Email API using native gRPC/Connect.
+// Package emailapi provides a Go SDK for SimpleEmailAPI.
+//
+// This SDK provides type-safe access to the SimpleEmailAPI service
+// using Connect RPC for HTTP/2 communication.
+//
+// # Quick Start
+//
+//	client := emailapi.NewClient("em_...")
+//
+//	// Send an email
+//	resp, err := client.Send(ctx, &emailapi.SendEmailRequest{
+//	    From:    "hello@yourdomain.com",
+//	    To:      []string{"user@example.com"},
+//	    Subject: "Hello!",
+//	    Body:    "World",
+//	})
+//
+// # Error Handling
+//
+//	resp, err := client.Send(ctx, req)
+//	if err != nil {
+//	    if e := emailapi.ParseError(err); e != nil {
+//	        if e.Is(emailapi.ErrCodeDomainNotVerified) {
+//	            // Handle unverified domain
+//	        }
+//	    }
+//	}
+//
+// # Event Streaming
+//
+//	cancel := client.OnReceive(ctx, emailapi.EventHandlers{
+//	    OnDelivered: func(e *v1.EmailDeliveredEvent) {
+//	        log.Println("Delivered to:", e.Recipients)
+//	    },
+//	    OnBounced: func(e *v1.EmailBouncedEvent) {
+//	        log.Println("Bounced:", e.BounceType)
+//	    },
+//	})
+//	defer cancel()
 package emailapi
 
 import (
@@ -7,76 +45,74 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/emailapi/sdk-go/gen/v1/emailapiv1connect"
+	v1 "github.com/emailapi/sdk-go/gen/v1"
+	"github.com/emailapi/sdk-go/gen/v1/v1connect"
 )
 
 const (
-	defaultBaseURL = "https://api.emailapi.dev"
+	// DefaultBaseURL is the default API endpoint.
+	DefaultBaseURL = "https://api.simpleemailapi.dev"
 )
 
-// Client is the Email API client.
+// Client is the SimpleEmailAPI client.
 type Client struct {
-	Emails   emailapiv1connect.EmailServiceClient
-	Domains  emailapiv1connect.DomainServiceClient
-	Users    emailapiv1connect.UserServiceClient
-	Webhooks emailapiv1connect.WebhookServiceClient
+	// Emails provides access to email operations.
+	Emails v1connect.EmailServiceClient
+
+	// Domains provides access to domain management operations.
+	Domains v1connect.DomainServiceClient
+
+	// Internal state
+	apiKey  string
+	baseURL string
+	http    connect.HTTPClient
 }
 
 // ClientOption configures the client.
-type ClientOption func(*clientConfig)
-
-type clientConfig struct {
-	baseURL    string
-	httpClient connect.HTTPClient
-}
+type ClientOption func(*Client)
 
 // WithBaseURL sets a custom base URL.
 func WithBaseURL(url string) ClientOption {
-	return func(c *clientConfig) {
+	return func(c *Client) {
 		c.baseURL = url
 	}
 }
 
 // WithHTTPClient sets a custom HTTP client.
 func WithHTTPClient(client connect.HTTPClient) ClientOption {
-	return func(c *clientConfig) {
-		c.httpClient = client
+	return func(c *Client) {
+		c.http = client
 	}
 }
 
-// NewClient creates a new Email API client.
+// NewClient creates a new SimpleEmailAPI client.
 //
 // Example:
 //
-//	import (
-//		emailapi "github.com/emailapi/sdk-go"
-//		emailapiv1 "github.com/emailapi/sdk-go/gen/v1"
-//		"connectrpc.com/connect"
-//	)
-//
 //	client := emailapi.NewClient("em_...")
 //
-//	resp, err := client.Emails.SendEmail(ctx, connect.NewRequest(&emailapiv1.SendEmailRequest{
-//		From:    "sender@example.com",
-//		To:      []string{"recipient@example.com"},
-//		Subject: "Hello",
-//		Body:    "World",
-//	}))
+//	resp, err := client.Send(ctx, &v1.SendEmailRequest{
+//	    From:    "sender@example.com",
+//	    To:      []string{"recipient@example.com"},
+//	    Subject: "Hello",
+//	    Body:    "World",
+//	})
 func NewClient(apiKey string, opts ...ClientOption) *Client {
-	cfg := &clientConfig{
-		baseURL:    defaultBaseURL,
-		httpClient: http.DefaultClient,
+	c := &Client{
+		apiKey:  apiKey,
+		baseURL: DefaultBaseURL,
+		http:    http.DefaultClient,
 	}
 
 	for _, opt := range opts {
-		opt(cfg)
+		opt(c)
 	}
 
 	// Create auth interceptor
 	authInterceptor := connect.UnaryInterceptorFunc(
 		func(next connect.UnaryFunc) connect.UnaryFunc {
 			return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-				req.Header().Set("Authorization", "Bearer "+apiKey)
+				req.Header().Set("Authorization", "Bearer "+c.apiKey)
 				return next(ctx, req)
 			}
 		},
@@ -86,10 +122,26 @@ func NewClient(apiKey string, opts ...ClientOption) *Client {
 		connect.WithInterceptors(authInterceptor),
 	}
 
-	return &Client{
-		Emails:   emailapiv1connect.NewEmailServiceClient(cfg.httpClient, cfg.baseURL, clientOpts...),
-		Domains:  emailapiv1connect.NewDomainServiceClient(cfg.httpClient, cfg.baseURL, clientOpts...),
-		Users:    emailapiv1connect.NewUserServiceClient(cfg.httpClient, cfg.baseURL, clientOpts...),
-		Webhooks: emailapiv1connect.NewWebhookServiceClient(cfg.httpClient, cfg.baseURL, clientOpts...),
-	}
+	c.Emails = v1connect.NewEmailServiceClient(c.http, c.baseURL, clientOpts...)
+	c.Domains = v1connect.NewDomainServiceClient(c.http, c.baseURL, clientOpts...)
+
+	return c
+}
+
+// Send sends an email. This is a convenience wrapper around Emails.SendEmail.
+//
+// Example:
+//
+//	resp, err := client.Send(ctx, &v1.SendEmailRequest{
+//	    From:    "hello@example.com",
+//	    To:      []string{"user@example.com"},
+//	    Subject: "Hello!",
+//	    Body:    "World",
+//	})
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	fmt.Println("Email ID:", resp.Msg.Id)
+func (c *Client) Send(ctx context.Context, req *v1.SendEmailRequest) (*connect.Response[v1.SendEmailResponse], error) {
+	return c.Emails.SendEmail(ctx, connect.NewRequest(req))
 }

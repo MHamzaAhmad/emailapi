@@ -8,7 +8,7 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	v1 "github.com/emailapi/api/gen/v1"
+	v1 "github.com/emailapi/sdk-go/gen/v1"
 	http "net/http"
 	strings "strings"
 )
@@ -50,19 +50,15 @@ const (
 
 // DomainServiceClient is a client for the v1.DomainService service.
 type DomainServiceClient interface {
-	// AddDomain registers a new sending domain.
-	// Returns everything you need: domain info, DNS records, and next steps.
-	// MAIL FROM (mail.yourdomain.com) is auto-configured.
+	// Register a new domain.
 	AddDomain(context.Context, *connect.Request[v1.AddDomainRequest]) (*connect.Response[v1.AddDomainResponse], error)
-	// GetDomain retrieves a domain with its configuration and status.
-	// Automatically refreshes from SES if data is stale (>5 min).
+	// Get domain details and DNS status.
 	GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.GetDomainResponse], error)
-	// ListDomains retrieves all domains with their status.
+	// List all domains.
 	ListDomains(context.Context, *connect.Request[v1.ListDomainsRequest]) (*connect.Response[v1.ListDomainsResponse], error)
-	// DeleteDomain removes a domain from your account.
+	// Remove a domain.
 	DeleteDomain(context.Context, *connect.Request[v1.DeleteDomainRequest]) (*connect.Response[v1.DeleteDomainResponse], error)
-	// VerifyDomain forces a fresh check of DNS records and SES status.
-	// Rate-limited to 30s between calls. Use after configuring DNS.
+	// Trigger DNS verification.
 	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error)
 }
 
@@ -146,19 +142,15 @@ func (c *domainServiceClient) VerifyDomain(ctx context.Context, req *connect.Req
 
 // DomainServiceHandler is an implementation of the v1.DomainService service.
 type DomainServiceHandler interface {
-	// AddDomain registers a new sending domain.
-	// Returns everything you need: domain info, DNS records, and next steps.
-	// MAIL FROM (mail.yourdomain.com) is auto-configured.
+	// Register a new domain.
 	AddDomain(context.Context, *connect.Request[v1.AddDomainRequest]) (*connect.Response[v1.AddDomainResponse], error)
-	// GetDomain retrieves a domain with its configuration and status.
-	// Automatically refreshes from SES if data is stale (>5 min).
+	// Get domain details and DNS status.
 	GetDomain(context.Context, *connect.Request[v1.GetDomainRequest]) (*connect.Response[v1.GetDomainResponse], error)
-	// ListDomains retrieves all domains with their status.
+	// List all domains.
 	ListDomains(context.Context, *connect.Request[v1.ListDomainsRequest]) (*connect.Response[v1.ListDomainsResponse], error)
-	// DeleteDomain removes a domain from your account.
+	// Remove a domain.
 	DeleteDomain(context.Context, *connect.Request[v1.DeleteDomainRequest]) (*connect.Response[v1.DeleteDomainResponse], error)
-	// VerifyDomain forces a fresh check of DNS records and SES status.
-	// Rate-limited to 30s between calls. Use after configuring DNS.
+	// Trigger DNS verification.
 	VerifyDomain(context.Context, *connect.Request[v1.VerifyDomainRequest]) (*connect.Response[v1.VerifyDomainResponse], error)
 }
 

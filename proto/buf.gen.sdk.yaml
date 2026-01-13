@@ -1,4 +1,10 @@
 version: v2
+managed:
+  enabled: true
+  override:
+    # Override go_package for SDK to point to local module
+    - file_option: go_package_prefix
+      value: github.com/emailapi/sdk-go/gen
 
 plugins:
   # TypeScript protobuf messages for SDK (Connect v2)
@@ -9,5 +15,15 @@ plugins:
       - import_extension=none
     include_imports: true
 
+  # Go protobuf messages for SDK
+  - remote: buf.build/protocolbuffers/go
+    out: ../packages/sdk-go/gen
+    opt: paths=source_relative
+
+  # Connect RPC clients for Go SDK
+  - remote: buf.build/connectrpc/go
+    out: ../packages/sdk-go/gen
+    opt: paths=source_relative
+
 inputs:
-  - directory: public
+  - directory: public/v1
