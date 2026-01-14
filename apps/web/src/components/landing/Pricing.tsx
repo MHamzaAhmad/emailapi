@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { HelpCircleIcon } from '@hugeicons/core-free-icons'
 import { usePlans } from '@/hooks'
@@ -80,23 +80,9 @@ export function Pricing() {
                                                 <span>{feature.name}</span>
                                             )}
                                             {feature.tooltip && (
-                                                <Tooltip>
-                                                    <TooltipTrigger className="cursor-help flex items-center">
-                                                        <HugeiconsIcon icon={HelpCircleIcon} size={14} className="text-muted-foreground/60 hover:text-foreground transition-colors" />
-                                                    </TooltipTrigger>
-                                                    <TooltipContent className="max-w-[220px] text-[10px] leading-tight bg-popover text-popover-foreground border border-border shadow-md p-2">
-                                                        {feature.tooltip.split('\n\n').map((part, i) => (
-                                                            <div key={i} className={i > 0 ? "mt-2" : ""}>
-                                                                {part.split(/(\*\*.*?\*\*)/).map((segment, j) => {
-                                                                    if (segment.startsWith('**') && segment.endsWith('**')) {
-                                                                        return <span key={j} className="font-semibold">{segment.slice(2, -2)}</span>
-                                                                    }
-                                                                    return segment
-                                                                })}
-                                                            </div>
-                                                        ))}
-                                                    </TooltipContent>
-                                                </Tooltip>
+                                                <InfoTooltip content={feature.tooltip}>
+                                                    <HugeiconsIcon icon={HelpCircleIcon} size={14} className="text-muted-foreground/60 hover:text-foreground transition-colors" />
+                                                </InfoTooltip>
                                             )}
                                         </div>
                                     </li>

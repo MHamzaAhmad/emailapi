@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/queryClient'
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { HelpCircleIcon, Tick02Icon, Settings02Icon, CreditCardIcon } from '@hugeicons/core-free-icons'
 import { usePlans, useCurrentSubscription, useCreateCheckoutSession, useGetCustomerPortalUrl } from '@/hooks'
@@ -164,23 +164,9 @@ function BillingSettingsPage() {
                                             <div className="flex items-center gap-1.5 flex-1 leading-snug">
                                                 <span>{feature.name}</span>
                                                 {feature.tooltip && (
-                                                    <Tooltip>
-                                                        <TooltipTrigger className="cursor-help flex items-center opacity-50 hover:opacity-100 transition-opacity">
-                                                            <HugeiconsIcon icon={HelpCircleIcon} size={12} />
-                                                        </TooltipTrigger>
-                                                        <TooltipContent className="max-w-[220px] text-[10px] leading-tight p-3">
-                                                            {feature.tooltip.split('\n\n').map((part, i) => (
-                                                                <div key={i} className={i > 0 ? "mt-2" : ""}>
-                                                                    {part.split(/(\*\*.*?\*\*)/).map((segment, j) => {
-                                                                        if (segment.startsWith('**') && segment.endsWith('**')) {
-                                                                            return <span key={j} className="font-semibold text-foreground">{segment.slice(2, -2)}</span>
-                                                                        }
-                                                                        return segment
-                                                                    })}
-                                                                </div>
-                                                            ))}
-                                                        </TooltipContent>
-                                                    </Tooltip>
+                                                    <InfoTooltip content={feature.tooltip}>
+                                                        <HugeiconsIcon icon={HelpCircleIcon} size={12} />
+                                                    </InfoTooltip>
                                                 )}
                                             </div>
                                         </li>
