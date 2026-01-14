@@ -94,9 +94,22 @@ func (v *EmailValidator) ValidateSendEmail(ctx context.Context, userID, from str
 			return nil
 		}
 
-		// Hash all emails for lookup
-		hashes := make([]string, len(allRecipients))
-		for i, email := range allRecipients {
+		// Filter out SES simulator addresses (they should never be in suppression list)
+		// This allows testing with simulator addresses even if they were previously bounced
+		filteredRecipients := make([]string, 0, len(allRecipients))
+		for _, email := range allRecipients {
+			if !isSESSimulatorAddress(email) {
+				filteredRecipients = append(filteredRecipients, email)
+			}
+		}
+
+		if len(filteredRecipients) == 0 {
+			return nil // All recipients are simulator addresses, skip suppression check
+		}
+
+		// Hash filtered emails for lookup
+		hashes := make([]string, len(filteredRecipients))
+		for i, email := range filteredRecipients {
 			hashes[i] = suppression.HashEmail(email)
 		}
 
@@ -287,6 +300,13 @@ func (v *EmailValidator) validateSandboxRecipients(ctx context.Context, userID, 
 
 // validateRecipient validates a recipient email address with MX cache support.
 func (v *EmailValidator) validateRecipient(ctx context.Context, email, field string) *domain.AppError {
+	// Fast path: AWS SES simulator addresses bypass all validation
+	// These are special AWS addresses for testing: success@, bounce@, complaint@simulator.amazonses.com
+	// https://docs.aws.amazon.com/ses/latest/dg/send-an-email-from-console.html#send-email-simulator
+	if isSESSimulatorAddress(email) {
+		return nil
+	}
+
 	// First, do quick syntax check via the verifier
 	result, err := v.verifier.Verify(email)
 	if err != nil {
@@ -336,6 +356,13 @@ func (v *EmailValidator) validateRecipient(ctx context.Context, email, field str
 	// Note: Free provider check is informational only, not blocking
 
 	return nil
+}
+
+// isSESSimulatorAddress checks if an email is an AWS SES simulator address.
+// These special addresses are used for testing and should bypass all validation.
+func isSESSimulatorAddress(email string) bool {
+	email = strings.ToLower(strings.TrimSpace(email))
+	return strings.HasSuffix(email, "@simulator.amazonses.com")
 }
 
 // extractDomain extracts the domain part from an email address.

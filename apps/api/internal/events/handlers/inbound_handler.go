@@ -28,8 +28,6 @@ func (h *InboundEmailHandler) HandleS3Event(ctx context.Context, bucket, key str
 		return fmt.Errorf("no processor configured for inbound emails")
 	}
 
-	fmt.Printf("Processing inbound email: s3://%s/%s\n", bucket, key)
-
 	// Delegate to the processor service which handles:
 	// - Downloading from S3
 	// - Parsing email headers (including X-SES-Virus-Verdict)

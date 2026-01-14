@@ -163,9 +163,19 @@ func (w *ReputationWorker) Work(ctx context.Context, job *river.Job[EvaluateRepu
 			})
 	}
 
-	// 10. Invalidate cache to reflect new status
+	// 10. Update cache with new flagged/soft suspended status
+	// This ensures the flagged status is immediately reflected in send permission checks
 	if w.cache != nil {
-		w.cache.Delete(ctx, userID)
+		if shouldFlag && !shouldAutoSuspend {
+			// Soft suspension (flagged but not hard suspended)
+			// Set cache so daily quota checker applies 10/day limit
+			w.cache.SetSoftSuspended(ctx, userID)
+		} else if !shouldFlag {
+			// User is clean now (possibly unflagged after time passes)
+			// Delete cache so next request loads fresh status from DB
+			w.cache.Delete(ctx, userID)
+		}
+		// Note: Hard suspension already sets cache at line 150, so no action needed here
 	}
 
 	return nil

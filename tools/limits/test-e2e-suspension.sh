@@ -2,7 +2,7 @@
 
 # =============================================================================
 # E2E Suspension Flow Test
-# Usage: ./test-e2e-suspension.sh
+# Usage: ./test-e2e-suspension.sh [--dry-run] [--yes]
 #
 # Simulates realistic user behavior leading to auto-suspension:
 # 
@@ -12,8 +12,12 @@
 # 4. Send more bounces (triggers hard suspension)
 # 5. Verify complete block
 #
-# This is a REAL test - it sends actual emails and modifies reputation!
-# Use with a test account or reset afterwards.
+# SAFETY:
+#   - ONLY uses SES simulator addresses (@simulator.amazonses.com)
+#   - Respects SES rate limits (1 req/s delay between sends)
+#   - Optional dry-run mode for testing without reputation impact
+#
+# WARNING: Without --dry-run, this sends REAL emails and modifies reputation!
 # =============================================================================
 
 set -e
@@ -28,9 +32,24 @@ RED='\033[0;31m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# SES Simulator addresses
+# Parse arguments
+DRY_RUN=""
+SKIP_CONFIRM=""
+for arg in "$@"; do
+    case $arg in
+        --dry-run)
+            DRY_RUN="true"
+            ;;
+        --yes)
+            SKIP_CONFIRM="true"
+            ;;
+    esac
+done
+
+# MANDATORY: Only simulator addresses (defense in depth)
 BOUNCE_EMAIL="bounce@simulator.amazonses.com"
 SUCCESS_EMAIL="success@simulator.amazonses.com"
+COMPLAINT_EMAIL="complaint@simulator.amazonses.com"
 
 # Load config
 if [[ -f "$SCRIPT_DIR/.env" ]]; then
@@ -38,6 +57,7 @@ if [[ -f "$SCRIPT_DIR/.env" ]]; then
 fi
 
 API_HOST="${API_HOST:-localhost:8080}"
+SES_RATE_LIMIT="${SES_RATE_LIMIT:-1}"
 
 if [[ -z "$API_KEY" || -z "$FROM_EMAIL" ]]; then
     echo -e "${RED}ERROR: Missing required environment variables${NC}"
@@ -47,18 +67,32 @@ fi
 
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo -e "${BLUE}  E2E Suspension Flow Test${NC}"
+if [[ -n "$DRY_RUN" ]]; then
+    echo -e "${YELLOW}  Mode: DRY-RUN (no reputation impact)${NC}"
+fi
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
 echo -e "${YELLOW}Configuration:${NC}"
 echo "  Host: $API_HOST"
 echo "  From: $FROM_EMAIL"
 echo ""
-echo -e "${RED}⚠️  WARNING: This test sends real emails and modifies reputation!${NC}"
-echo -e "${RED}   Make sure you're using a test account.${NC}"
+echo -e "${GREEN}✓${NC} Safe recipients: simulator addresses only"
+echo -e "${GREEN}✓${NC} SES rate limit: $SES_RATE_LIMIT req/s"
 echo ""
-read -p "Press Enter to continue, or Ctrl+C to cancel..."
+
+if [[ -z "$DRY_RUN" ]]; then
+    echo -e "${RED}⚠️  WARNING: This test sends real emails and modifies reputation!${NC}"
+    echo -e "${RED}   Make sure you're using a test account.${NC}"
+    echo ""
+    if [[ -z "$SKIP_CONFIRM" ]]; then
+        read -p "Press Enter to continue, or Ctrl+C to cancel..."
+    fi
+fi
 
 HEADERS=(-H "Authorization: Bearer $API_KEY" -H "Content-Type: application/json")
+if [[ -n "$DRY_RUN" ]]; then
+    HEADERS+=(-H "X-Dry-Run: true")
+fi
 
 # Helper to send email and return status
 send_email() {
@@ -79,6 +113,9 @@ send_email() {
     BODY=$(echo "$RESPONSE" | sed '$d')
     
     echo "$HTTP_CODE|$BODY"
+    
+    # Respect SES rate limits (delay after each send)
+    sleep $(awk "BEGIN {print 1/$SES_RATE_LIMIT}")
 }
 
 # Helper to check user status
@@ -126,14 +163,16 @@ echo -e "${BLUE}Waiting for events to process (5s)...${NC}"
 sleep 5
 
 echo ""
-echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}═══════════================================================================"
 echo -e "${CYAN}PHASE 2: Triggering bounces (soft suspension threshold)${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
 echo -e "${YELLOW}Sending to bounce address to trigger reputation events...${NC}"
+echo -e "${CYAN}Threshold: 10 hard bounces → Soft suspension (10/day limit)${NC}"
 echo ""
 
-for i in {1..3}; do
+# Send 10 bounces to trigger soft suspension
+for i in {1..10}; do
     RESULT=$(send_email "$BOUNCE_EMAIL" "Bounce Test $i")
     HTTP_CODE=$(echo "$RESULT" | cut -d'|' -f1)
     
@@ -144,31 +183,58 @@ for i in {1..3}; do
         BODY=$(echo "$RESULT" | cut -d'|' -f2-)
         echo "    $BODY"
     fi
-    sleep 1
 done
 
 echo ""
-echo -e "${BLUE}Waiting for bounce events to process (10s)...${NC}"
+echo -e "${BLUE}Waiting for bounce events to process (15s)...${NC}"
 echo -e "${YELLOW}(SNS → SQS → ReputationWorker)${NC}"
-sleep 10
+sleep 15
 
 echo ""
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${CYAN}PHASE 3: Testing after bounces${NC}"
+echo -e "${CYAN}PHASE 3: Testing soft suspension (10/day limit)${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
 
 # Try to send and see if soft limits apply
-echo -e "${YELLOW}Testing send capability...${NC}"
-RESULT=$(send_email "$SUCCESS_EMAIL" "Post-Bounce Test")
-HTTP_CODE=$(echo "$RESULT" | cut -d'|' -f1)
-BODY=$(echo "$RESULT" | cut -d'|' -f2-)
+echo -e "${YELLOW}Testing if soft suspension is active...${NC}"
+echo -e "${CYAN}Expected: Limited to 10 emails/day${NC}"
+echo ""
+
+SUCCESS_COUNT=0
+LIMITED_COUNT=0
+
+# Try to send 15 emails (should hit 10/day limit)
+for i in $(seq 1 15); do
+    RESULT=$(send_email "$SUCCESS_EMAIL" "Post-Bounce Test $i")
+    HTTP_CODE=$(echo "$RESULT" | cut -d'|' -f1)
+    BODY=$(echo "$RESULT" | cut -d'|' -f2-)
+    
+    if [[ "$HTTP_CODE" == "200" ]]; then
+        ((SUCCESS_COUNT++))
+    elif echo "$BODY" | grep -qi "daily"; then
+        ((LIMITED_COUNT++))
+        if [[ $LIMITED_COUNT -eq 1 ]]; then
+            echo ""
+            echo -e "  ${YELLOW}First limit hit at $SUCCESS_COUNT emails:${NC}"
+            echo "  $BODY" | jq -r '.message // .' 2>/dev/null || echo "  $BODY"
+        fi
+        # Stop after hitting limit 3 times
+        [[ $LIMITED_COUNT -ge 3 ]] && break
+    fi
+    
+    echo -ne "\r  Sent: $SUCCESS_COUNT | Limited: $LIMITED_COUNT"
+done
 
 echo ""
-echo -e "  HTTP: $HTTP_CODE"
-if [[ "$HTTP_CODE" == "200" ]]; then
-    echo -e "  ${GREEN}✓${NC} Still allowed to send"
-    echo -e "  ${YELLOW}Note: May have reduced daily limit if soft suspended${NC}"
+echo ""
+
+if [[ $SUCCESS_COUNT -ge 8 && $SUCCESS_COUNT -le 12 && $LIMITED_COUNT -gt 0 ]]; then
+    echo -e "  ${GREEN}✓ PASS${NC} - Soft suspension is working (~10/day limit)"
+    echo -e "  ${CYAN}Sent $SUCCESS_COUNT emails before hitting limit${NC}"
+elif [[ "$HTTP_CODE" == "200" ]]; then
+    echo -e "  ${YELLOW}⚠${NC} Still allowed to send"
+    echo -e "  ${YELLOW}Note: May need more time for reputation processing${NC}"
 elif echo "$BODY" | grep -qi "daily"; then
     echo -e "  ${YELLOW}⚠${NC} Daily limit applied (soft suspension may be active)"
     echo "  $BODY" | jq -r '.message // .' 2>/dev/null || echo "  $BODY"
@@ -182,8 +248,11 @@ echo -e "${BLUE}═════════════════════�
 echo -e "${CYAN}PHASE 4: More bounces (hard suspension threshold)${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
+echo -e "${CYAN}Threshold: 20 total hard bounces → Hard suspension (full block)${NC}"
+echo -e "${YELLOW}Sending 10 more bounces (10 already sent = 20 total)...${NC}"
+echo ""
 
-for i in {4..7}; do
+for i in {11..20}; do
     RESULT=$(send_email "$BOUNCE_EMAIL" "Bounce Test $i")
     HTTP_CODE=$(echo "$RESULT" | cut -d'|' -f1)
     
@@ -198,17 +267,18 @@ for i in {4..7}; do
             echo -e "  ${RED}✗${NC} Send failed: $HTTP_CODE"
         fi
     fi
-    sleep 1
 done
 
 echo ""
-echo -e "${BLUE}Waiting for events to process (10s)...${NC}"
-sleep 10
+echo -e "${BLUE}Waiting for events to process (15s)...${NC}"
+sleep 15
 
 echo ""
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${CYAN}PHASE 5: Final check - should be blocked${NC}"
+echo -e "${CYAN}PHASE 5: Final check - Hard suspension test${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+echo ""
+echo -e "${CYAN}Expected: Account should be hard suspended (20 total hard bounces)${NC}"
 echo ""
 
 RESULT=$(send_email "$SUCCESS_EMAIL" "Final Check")
@@ -218,10 +288,11 @@ BODY=$(echo "$RESULT" | cut -d'|' -f2-)
 echo -e "  HTTP: $HTTP_CODE"
 
 if echo "$BODY" | grep -qi "suspend"; then
-    echo -e "  ${GREEN}✓${NC} Account is suspended - blocking works!"
+    echo -e "  ${GREEN}✓ PASS${NC} - Account is hard suspended - blocking works!"
     echo "  $BODY" | jq . 2>/dev/null || echo "  $BODY"
 elif [[ "$HTTP_CODE" == "200" ]]; then
-    echo -e "  ${YELLOW}⚠${NC} Still able to send - suspension threshold may not be reached"
+    echo -e "  ${YELLOW}⚠ INCONCLUSIVE${NC} - Still able to send"
+    echo -e "  ${YELLOW}Note: Reputation worker may need more time to process all bounces${NC}"
 else
     echo "  Response: $BODY"
 fi
@@ -229,6 +300,11 @@ fi
 echo ""
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo -e "${YELLOW}Test Complete${NC}"
+echo ""
+echo -e "${CYAN}Summary:${NC}"
+echo "  • Sent 20 bounce emails (hard suspension threshold)"
+echo "  • Soft suspension triggers at 10 bounces → 10/day limit"
+echo "  • Hard suspension triggers at 20 bounces → Full block"
 echo ""
 echo "To reset user reputation for further testing:"
 echo ""

@@ -1,29 +1,22 @@
 #!/bin/bash
 
 # =============================================================================
-# Full E2E Limit System Test
-# Usage: ./test-full-e2e.sh
+# Limits Testing (Dry-Run Mode)
+# Usage: ./test-limits-dry-run.sh [--scenario=rate|daily|monthly|all]
 #
-# Comprehensive test covering all limit scenarios:
+# Tests all limit scenarios in dry-run mode (no real SES sends).
+# Uses ONLY simulator addresses for safety - if dry-run fails, still safe.
 #
-# SCENARIO A: Rate Limiting
-#   - Burst 120 requests in quick succession
-#   - Expect 429 after ~100 requests
+# SCENARIOS:
+#   rate    - Rate limiting (burst 120 requests → 429 errors)
+#   daily   - Daily limits (exhaust quota → limit errors)
+#   monthly - Monthly limits (exhaust quota → limit errors)
+#   all     - Run all scenarios (default)
 #
-# SCENARIO B: Daily Limits (Free User)
-#   - Send emails until daily limit (100)
-#   - Verify limit error and retry-after
-#
-# SCENARIO C: Soft Suspension Flow
-#   - Trigger bounces to get flagged
-#   - Verify reduced limit (10/day) applies
-#
-# SCENARIO D: Hard Suspension Flow
-#   - Trigger enough bounces for hard suspend
-#   - Verify complete block
-#
-# Use --dry-run to skip actual SES sends
-# Use --scenario=X to run specific scenario (A, B, C, D)
+# SAFETY: 
+#   - Uses X-Dry-Run header (no real SES API calls)
+#   - ONLY sends to success@simulator.amazonses.com (defense in depth)
+#   - Respects SES rate limits (adds delays)
 # =============================================================================
 
 set -e
@@ -39,14 +32,10 @@ CYAN='\033[0;36m'
 MAGENTA='\033[0;35m'
 NC='\033[0m'
 
-DRY_RUN=""
+# Parse arguments
 SCENARIO="all"
-
 for arg in "$@"; do
     case $arg in
-        --dry-run)
-            DRY_RUN="true"
-            ;;
         --scenario=*)
             SCENARIO="${arg#*=}"
             ;;
@@ -59,18 +48,23 @@ if [[ -f "$SCRIPT_DIR/.env" ]]; then
 fi
 
 API_HOST="${API_HOST:-localhost:8080}"
+SES_RATE_LIMIT="${SES_RATE_LIMIT:-1}"  # Requests per second
+REQUEST_DELAY=$(awk "BEGIN {print 1/$SES_RATE_LIMIT}")
+
+# MANDATORY: Only simulator addresses
 SUCCESS_EMAIL="success@simulator.amazonses.com"
-BOUNCE_EMAIL="bounce@simulator.amazonses.com"
 
 if [[ -z "$API_KEY" || -z "$FROM_EMAIL" ]]; then
     echo -e "${RED}ERROR: Configure API_KEY and FROM_EMAIL in .env${NC}"
     exit 1
 fi
 
-HEADERS=(-H "Authorization: Bearer $API_KEY" -H "Content-Type: application/json")
-if [[ -n "$DRY_RUN" ]]; then
-    HEADERS+=(-H "X-Dry-Run: true")
-fi
+# Force dry-run mode
+HEADERS=(
+    -H "Authorization: Bearer $API_KEY"
+    -H "Content-Type: application/json"
+    -H "X-Dry-Run: true"
+)
 
 print_header() {
     echo ""
@@ -81,42 +75,47 @@ print_header() {
 }
 
 send_email() {
-    local TO=$1
-    local SUBJECT=$2
+    local SUBJECT=$1
     
     RESPONSE=$(curl -s -w "\n%{http_code}" \
         -X POST "http://$API_HOST/v1.EmailService/SendEmail" \
         "${HEADERS[@]}" \
         -d "{
             \"from\": \"$FROM_EMAIL\",
-            \"to\": [\"$TO\"],
+            \"to\": [\"$SUCCESS_EMAIL\"],
             \"subject\": \"$SUBJECT\",
-            \"body\": \"Test\"
+            \"body\": \"Dry-run test\"
         }")
     
     echo "$(echo "$RESPONSE" | tail -1)|$(echo "$RESPONSE" | sed '$d')"
 }
 
 # =============================================================================
-# SCENARIO A: Rate Limiting
+# SCENARIO: Rate Limiting
 # =============================================================================
 scenario_rate_limit() {
-    print_header "SCENARIO A: Rate Limiting"
+    print_header "SCENARIO: Rate Limiting"
     
     echo -e "${YELLOW}Sending 120 rapid requests to trigger rate limit...${NC}"
+    echo -e "${CYAN}Using dry-run mode + simulator address${NC}"
     echo ""
     
     local SUCCESS=0
     local RATE_LIMITED=0
+    local FIRST_RATE_LIMIT_MSG=""
     
     for i in $(seq 1 120); do
-        RESULT=$(send_email "$SUCCESS_EMAIL" "Rate Test $i")
+        RESULT=$(send_email "Rate Test $i")
         HTTP_CODE=$(echo "$RESULT" | cut -d'|' -f1)
+        BODY=$(echo "$RESULT" | cut -d'|' -f2-)
         
         if [[ "$HTTP_CODE" == "200" ]]; then
             ((SUCCESS++))
         elif [[ "$HTTP_CODE" == "429" ]]; then
             ((RATE_LIMITED++))
+            if [[ -z "$FIRST_RATE_LIMIT_MSG" ]]; then
+                FIRST_RATE_LIMIT_MSG="$BODY"
+            fi
         fi
         
         echo -ne "\r  Sent: $SUCCESS | Rate Limited: $RATE_LIMITED"
@@ -127,32 +126,42 @@ scenario_rate_limit() {
     
     if [[ $RATE_LIMITED -gt 0 ]]; then
         echo -e "  ${GREEN}✓ PASS${NC} - Rate limiting triggered after $SUCCESS requests"
+        if [[ -n "$FIRST_RATE_LIMIT_MSG" ]]; then
+            echo ""
+            echo -e "  ${YELLOW}First 429 response:${NC}"
+            echo "  $FIRST_RATE_LIMIT_MSG" | jq -r '.message // .' 2>/dev/null || echo "  $FIRST_RATE_LIMIT_MSG"
+        fi
     else
-        echo -e "  ${RED}✗ FAIL${NC} - No rate limiting detected"
+        echo -e "  ${RED}✗ FAIL${NC} - No rate limiting detected (expected 429s after ~100 requests)"
     fi
 }
 
 # =============================================================================
-# SCENARIO B: Daily Limits
+# SCENARIO: Daily Limits
 # =============================================================================
 scenario_daily_limit() {
-    print_header "SCENARIO B: Daily Limits"
+    print_header "SCENARIO: Daily Limits"
     
     echo -e "${YELLOW}Sending until daily limit is hit...${NC}"
+    echo -e "${CYAN}Using dry-run mode + simulator address${NC}"
     echo ""
     
     local SUCCESS=0
     local LIMITED=0
+    local FIRST_LIMIT_MSG=""
     
     for i in $(seq 1 120); do
-        RESULT=$(send_email "$SUCCESS_EMAIL" "Daily Test $i")
+        RESULT=$(send_email "Daily Test $i")
         HTTP_CODE=$(echo "$RESULT" | cut -d'|' -f1)
         BODY=$(echo "$RESULT" | cut -d'|' -f2-)
         
         if [[ "$HTTP_CODE" == "200" ]]; then
             ((SUCCESS++))
-        elif echo "$BODY" | grep -qiE "daily|limit"; then
+        elif echo "$BODY" | grep -qiE "daily|limit|quota"; then
             ((LIMITED++))
+            if [[ -z "$FIRST_LIMIT_MSG" ]]; then
+                FIRST_LIMIT_MSG="$BODY"
+            fi
             [[ $LIMITED -ge 3 ]] && break
         fi
         
@@ -165,44 +174,45 @@ scenario_daily_limit() {
     
     if [[ $LIMITED -gt 0 ]]; then
         echo -e "  ${GREEN}✓ PASS${NC} - Daily limit hit after $SUCCESS emails"
+        if [[ -n "$FIRST_LIMIT_MSG" ]]; then
+            echo ""
+            echo -e "  ${YELLOW}Limit response:${NC}"
+            echo "  $FIRST_LIMIT_MSG" | jq . 2>/dev/null || echo "  $FIRST_LIMIT_MSG"
+        fi
     else
-        echo -e "  ${YELLOW}⚠ SKIP${NC} - User may be on paid plan (unlimited)"
+        echo -e "  ${YELLOW}⚠ SKIP${NC} - User may be on paid plan (unlimited) or limit not configured"
     fi
 }
 
 # =============================================================================
-# SCENARIO C: Soft Suspension
+# SCENARIO: Monthly Limits
 # =============================================================================
-scenario_soft_suspend() {
-    print_header "SCENARIO C: Soft Suspension"
+scenario_monthly_limit() {
+    print_header "SCENARIO: Monthly Limits"
     
-    echo -e "${YELLOW}Step 1: Triggering bounces for soft suspension...${NC}"
-    
-    for i in {1..3}; do
-        RESULT=$(send_email "$BOUNCE_EMAIL" "Bounce $i")
-        HTTP_CODE=$(echo "$RESULT" | cut -d'|' -f1)
-        echo "  Bounce email $i: $HTTP_CODE"
-        sleep 1
-    done
-    
+    echo -e "${YELLOW}Testing monthly limit enforcement...${NC}"
+    echo -e "${CYAN}Using dry-run mode + simulator address${NC}"
     echo ""
-    echo -e "${YELLOW}Waiting for reputation processing (10s)...${NC}"
-    sleep 10
-    
-    echo ""
-    echo -e "${YELLOW}Step 2: Testing if soft limit (10/day) applies...${NC}"
     
     local SUCCESS=0
     local LIMITED=0
+    local FIRST_LIMIT_MSG=""
     
-    for i in $(seq 1 15); do
-        RESULT=$(send_email "$SUCCESS_EMAIL" "Soft Test $i")
+    # Send fewer requests for monthly (would take too long to exhaust)
+    # This tests that monthly limit tracking exists
+    for i in $(seq 1 20); do
+        RESULT=$(send_email "Monthly Test $i")
         HTTP_CODE=$(echo "$RESULT" | cut -d'|' -f1)
+        BODY=$(echo "$RESULT" | cut -d'|' -f2-)
         
         if [[ "$HTTP_CODE" == "200" ]]; then
             ((SUCCESS++))
-        else
+        elif echo "$BODY" | grep -qiE "monthly|limit"; then
             ((LIMITED++))
+            if [[ -z "$FIRST_LIMIT_MSG" ]]; then
+                FIRST_LIMIT_MSG="$BODY"
+            fi
+            break
         fi
         
         echo -ne "\r  Sent: $SUCCESS | Limited: $LIMITED"
@@ -212,88 +222,50 @@ scenario_soft_suspend() {
     echo ""
     echo ""
     
-    if [[ $SUCCESS -le 12 && $LIMITED -gt 0 ]]; then
-        echo -e "  ${GREEN}✓ PASS${NC} - Soft limit (~10/day) is working"
-    else
-        echo -e "  ${YELLOW}⚠ INCONCLUSIVE${NC} - May need more bounces for soft suspend"
-    fi
-}
-
-# =============================================================================
-# SCENARIO D: Hard Suspension
-# =============================================================================
-scenario_hard_suspend() {
-    print_header "SCENARIO D: Hard Suspension"
-    
-    echo -e "${YELLOW}Step 1: Triggering many bounces for hard suspension...${NC}"
-    
-    for i in {1..10}; do
-        RESULT=$(send_email "$BOUNCE_EMAIL" "Hard Bounce $i")
-        HTTP_CODE=$(echo "$RESULT" | cut -d'|' -f1)
-        
-        if [[ "$HTTP_CODE" == "200" ]]; then
-            echo "  Bounce email $i: sent"
-        else
-            echo "  Bounce email $i: blocked (may already be suspended)"
-            break
+    if [[ $LIMITED -gt 0 ]]; then
+        echo -e "  ${GREEN}✓ PASS${NC} - Monthly limit is enforced"
+        if [[ -n "$FIRST_LIMIT_MSG" ]]; then
+            echo ""
+            echo -e "  ${YELLOW}Limit response:${NC}"
+            echo "  $FIRST_LIMIT_MSG" | jq . 2>/dev/null || echo "  $FIRST_LIMIT_MSG"
         fi
-        sleep 1
-    done
-    
-    echo ""
-    echo -e "${YELLOW}Waiting for reputation processing (10s)...${NC}"
-    sleep 10
-    
-    echo ""
-    echo -e "${YELLOW}Step 2: Testing if hard block applies...${NC}"
-    
-    RESULT=$(send_email "$SUCCESS_EMAIL" "Block Test")
-    HTTP_CODE=$(echo "$RESULT" | cut -d'|' -f1)
-    BODY=$(echo "$RESULT" | cut -d'|' -f2-)
-    
-    if echo "$BODY" | grep -qi "suspend"; then
-        echo -e "  ${GREEN}✓ PASS${NC} - Hard suspension is blocking sends"
-    elif [[ "$HTTP_CODE" == "200" ]]; then
-        echo -e "  ${YELLOW}⚠ INCONCLUSIVE${NC} - Still able to send (threshold may be higher)"
     else
-        echo -e "  ${YELLOW}?${NC} Response: $BODY"
+        echo -e "  ${YELLOW}ℹ INFO${NC} - Monthly limit not hit in $SUCCESS test requests"
+        echo -e "    (Monthly limits typically much higher than daily)"
     fi
 }
 
 # Main
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}  Full E2E Limit System Test${NC}"
-if [[ -n "$DRY_RUN" ]]; then
-    echo -e "${YELLOW}  Mode: DRY-RUN${NC}"
-fi
+echo -e "${BLUE}  Limits Testing (Dry-Run Mode)${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+echo ""
+echo -e "${GREEN}✓${NC} Dry-run mode: ON (X-Dry-Run header)"
+echo -e "${GREEN}✓${NC} Safe recipient: $SUCCESS_EMAIL"
+echo -e "${GREEN}✓${NC} SES rate limit: $SES_RATE_LIMIT req/s"
 echo ""
 echo "  Host: $API_HOST"
 echo "  Scenario: $SCENARIO"
 echo ""
 
 case $SCENARIO in
-    A|a|rate)
+    rate)
         scenario_rate_limit
         ;;
-    B|b|daily)
+    daily)
         scenario_daily_limit
         ;;
-    C|c|soft)
-        scenario_soft_suspend
-        ;;
-    D|d|hard)
-        scenario_hard_suspend
+    monthly)
+        scenario_monthly_limit
         ;;
     all)
         scenario_rate_limit
         scenario_daily_limit
-        scenario_soft_suspend
-        scenario_hard_suspend
+        scenario_monthly_limit
         ;;
     *)
-        echo "Unknown scenario: $SCENARIO"
-        echo "Use: --scenario=A|B|C|D|all"
+        echo -e "${RED}Unknown scenario: $SCENARIO${NC}"
+        echo "Use: --scenario=rate|daily|monthly|all"
         exit 1
         ;;
 esac
@@ -301,4 +273,7 @@ esac
 echo ""
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo -e "${CYAN}Test Complete${NC}"
+echo ""
+echo -e "${YELLOW}Note:${NC} All tests ran in dry-run mode - no real emails sent"
+echo -e "${YELLOW}Note:${NC} All recipients were simulator addresses for safety"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
