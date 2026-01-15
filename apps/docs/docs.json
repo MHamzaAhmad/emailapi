@@ -51,13 +51,26 @@
                         ]
                     },
                     {
-                        "group": "Sending",
-                        "icon": "paper-plane",
+                        "group": "SDKs",
+                        "icon": "code",
                         "pages": [
                             "sending/typescript-sdk",
+                            "sending/go-sdk"
+                        ]
+                    },
+                    {
+                        "group": "Protocol Clients",
+                        "icon": "plug",
+                        "pages": [
                             "sending/connect-rpc",
-                            "sending/curl",
                             "sending/grpc",
+                            "sending/curl"
+                        ]
+                    },
+                    {
+                        "group": "Compliance",
+                        "icon": "shield-check",
+                        "pages": [
                             "sending/unsubscribe"
                         ]
                     },

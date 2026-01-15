@@ -49,6 +49,32 @@ This guide will get you sending emails in minutes using our TypeScript SDK or yo
     });
     ```
 
+    ```go Go
+    package main
+
+    import (
+        "context"
+        "log"
+
+        emailapi "github.com/emailapi/sdk-go"
+        v1 "github.com/emailapi/sdk-go/gen/v1"
+    )
+
+    func main() {
+        client := emailapi.NewClient("sea_live_...")
+
+        _, err := client.Send(context.Background(), &v1.SendEmailRequest{
+            From:    "onboarding@yourdomain.com",
+            To:      []string{"you@example.com"},
+            Subject: "Hello from Simple Email API",
+            Body:    "It works!",
+        })
+        if err != nil {
+            log.Fatal(err)
+        }
+    }
+    ```
+
     ```typescript Connect
     import { createClient } from "@connectrpc/connect";
     import { createConnectTransport } from "@connectrpc/connect-node";
@@ -120,6 +146,27 @@ This guide will get you sending emails in minutes using our TypeScript SDK or yo
       onError: (err) => console.error(err)
     });
     ```
+
+    ```go Go SDK (OnReceive)
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+
+    client.OnReceive(ctx, emailapi.EventHandlers{
+        OnDelivered: func(e *v1.EmailDeliveredEvent) {
+            log.Println("Delivered to:", e.Recipients)
+        },
+        OnReplied: func(e *v1.EmailRepliedEvent) {
+            log.Println("Reply from:", e.From)
+        },
+        OnBounced: func(e *v1.EmailBouncedEvent) {
+            log.Println("Bounced:", e.BounceType)
+        },
+        OnError: func(err error) {
+            log.Println("Error:", err)
+        },
+    })
+    ```
+
 
     ```typescript Connect (Stream)
     import { createClient } from "@connectrpc/connect";

@@ -5,45 +5,93 @@ description: Use the auto-generated client from the Buf Schema Registry.
 
 # Connect RPC
 
-To ship your generated code for the repository `buf.build/simpleemailapi/public`, you don't need to manually publish anything to NPM. You use the **Buf Schema Registry (BSR)** to generate and serve these packages for you.
+Use the Buf Schema Registry (BSR) to install auto-generated, type-safe clients for your language.
 
-## Setup
+<Info>
+  **Supported Languages**: TypeScript/JavaScript, Python, Go, Swift, Kotlin, Dart  
+  **Best For**: Advanced users who want direct access to the RPC protocol with full type safety
+</Info>
 
-### 1. Configure your environment
+<CardGroup cols={2}>
+  <Card title="Buf Registry" icon="cube" href="https://buf.build/simpleemailapi/public/docs">
+    Browse the schema and generated SDKs
+  </Card>
+  <Card title="Connect RPC Docs" icon="book" href="https://connectrpc.com/docs/introduction">
+    Learn about Connect RPC protocol
+  </Card>
+</CardGroup>
 
-Tell NPM to look at the Buf Registry for any package starting with `@buf`. Run this command once:
-
-```bash
-npm config set @buf:registry https://buf.build/gen/npm/v1
-```
-
-### 2. Install generated SDKs
-
-Install the Protobuf messages and Connect service definitions:
+## Installation
 
 <CodeGroup>
-```bash npm
-npm install @buf/simpleemailapi_public.bufbuild_es @buf/simpleemailapi_public.connectrpc_es
+```bash TypeScript/JavaScript
+# Configure npm to use Buf registry
+npm config set @buf:registry https://buf.build/gen/npm/v1
+
+# Install generated SDK + runtime
+npm install @buf/simpleemailapi_public.bufbuild_es \
+            @buf/simpleemailapi_public.connectrpc_es \
+            @connectrpc/connect @connectrpc/connect-web @bufbuild/protobuf
 ```
-```bash pnpm
-pnpm add @buf/simpleemailapi_public.bufbuild_es @buf/simpleemailapi_public.connectrpc_es
+
+```bash Python
+pip install grpcio grpcio-tools
+
+# Generate from BSR
+buf generate buf.build/simpleemailapi/public --template buf.gen.yaml
+```
+
+```bash Go
+go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
+
+# Add to your go.mod
+go get buf.build/gen/go/simpleemailapi/public/connectrpc/go
+go get buf.build/gen/go/simpleemailapi/public/protocolbuffers/go
+```
+
+```bash Swift
+# Add to Package.swift dependencies
+.package(url: "https://github.com/connectrpc/connect-swift", from: "1.0.0"),
+.package(url: "https://github.com/apple/swift-protobuf", from: "1.28.0"),
+
+# Generate from BSR
+buf generate buf.build/simpleemailapi/public --template buf.gen.yaml
+```
+
+```bash Kotlin
+// Add to build.gradle.kts dependencies
+implementation("com.connectrpc:connect-kotlin:0.7.1")
+implementation("com.connectrpc:connect-kotlin-okhttp:0.7.1")
+implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+// Generate from BSR
+buf generate buf.build/simpleemailapi/public --template buf.gen.yaml
+```
+
+```bash Dart
+# Install protoc plugin for Dart
+dart pub global activate protoc_plugin
+export PATH="$PATH:$HOME/.pub-cache/bin"
+
+# Add to pubspec.yaml
+# dependencies:
+#   grpc: ^4.0.1
+#   protobuf: ^3.1.0
+
+# Install dependencies
+dart pub get
+
+# Generate from BSR
+buf generate buf.build/simpleemailapi/public --template buf.gen.yaml
 ```
 </CodeGroup>
 
-You also need the runtime libraries:
+## Usage Examples
 
-```bash
-npm install @connectrpc/connect @connectrpc/connect-web @bufbuild/protobuf
-```
-
-### 3. Usage
-
-Since the file is located at `v1/email.proto`, the BSR generates the service definition in a file named `email_connect`.
-
-```typescript
+<CodeGroup>
+```typescript TypeScript
 import { createClient } from "@connectrpc/connect";
-import { createConnectTransport } from "@connectrpc/connect-node"; // or connect-web
-// Import from the BSR package
+import { createConnectTransport } from "@connectrpc/connect-node";
 import { EmailService } from "@buf/simpleemailapi_public.connectrpc_es/v1/email_connect";
 
 const transport = createConnectTransport({
@@ -64,13 +112,187 @@ const res = await client.sendEmail({
   to: ["user@example.com"],
   subject: "Hello!",
   body: "This is a test email.",
-  async: true,
 });
 
 console.log(res.messageId);
 ```
 
-## Key Mapping
+```python Python
+import grpc
+from v1 import email_pb2, email_pb2_grpc
+
+channel = grpc.secure_channel(
+    "api.simpleemailapi.dev:443", 
+    grpc.ssl_channel_credentials()
+)
+stub = email_pb2_grpc.EmailServiceStub(channel)
+
+metadata = [("authorization", "Bearer sea_live_...")]
+
+response = stub.SendEmail(
+    email_pb2.SendEmailRequest(
+        from_="hello@yourdomain.com",
+        to=["user@example.com"],
+        subject="Hello!",
+        body="This is a test email.",
+    ),
+    metadata=metadata,
+)
+
+print(f"Message ID: {response.message_id}")
+```
+
+```go Go
+package main
+
+import (
+    "context"
+    "log"
+    "net/http"
+
+    "connectrpc.com/connect"
+    emailv1 "buf.build/gen/go/simpleemailapi/public/protocolbuffers/go/v1"
+    "buf.build/gen/go/simpleemailapi/public/connectrpc/go/v1/v1connect"
+)
+
+func main() {
+    client := v1connect.NewEmailServiceClient(
+        http.DefaultClient,
+        "https://api.simpleemailapi.dev",
+        connect.WithInterceptors(authInterceptor("sea_live_...")),
+    )
+
+    res, err := client.SendEmail(context.Background(), 
+        connect.NewRequest(&emailv1.SendEmailRequest{
+            From:    "hello@yourdomain.com",
+            To:      []string{"user@example.com"},
+            Subject: "Hello!",
+            Body:    "This is a test email.",
+        }))
+    if err != nil {
+        log.Fatal(err)
+    }
+    log.Println("Message ID:", res.Msg.MessageId)
+}
+
+func authInterceptor(token string) connect.UnaryInterceptorFunc {
+    return func(next connect.UnaryFunc) connect.UnaryFunc {
+        return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+            req.Header().Set("Authorization", "Bearer "+token)
+            return next(ctx, req)
+        }
+    }
+}
+```
+
+```swift Swift
+import Connect
+import Foundation
+
+// Create protocol client with auth interceptor
+let client = ProtocolClient(
+    httpClient: URLSessionHTTPClient(),
+    config: ProtocolClientConfig(
+        host: "https://api.simpleemailapi.dev",
+        networkProtocol: .connect,
+        interceptors: [{ AuthInterceptor(token: "sea_live_...") }]
+    )
+)
+
+let emailClient = V1_EmailServiceClient(client: client)
+
+let request = V1_SendEmailRequest.with {
+    $0.from = "hello@yourdomain.com"
+    $0.to = ["user@example.com"]
+    $0.subject = "Hello!"
+    $0.body = "This is a test email."
+}
+
+let response = await emailClient.sendEmail(request: request, headers: [:])
+if let messageId = response.message?.messageId {
+    print("Message ID: \(messageId)")
+}
+```
+
+```kotlin Kotlin
+import com.connectrpc.ProtocolClientConfig
+import com.connectrpc.impl.ProtocolClient
+import com.connectrpc.okhttp.ConnectOkHttpClient
+import com.connectrpc.protocols.NetworkProtocol
+import okhttp3.OkHttpClient
+import v1.EmailServiceClient
+import v1.Email.SendEmailRequest
+
+val okHttpClient = OkHttpClient.Builder()
+    .addInterceptor { chain ->
+        chain.proceed(
+            chain.request().newBuilder()
+                .addHeader("Authorization", "Bearer sea_live_...")
+                .build()
+        )
+    }
+    .build()
+
+val client = ProtocolClient(
+    httpClient = ConnectOkHttpClient(okHttpClient),
+    config = ProtocolClientConfig(
+        host = "https://api.simpleemailapi.dev",
+        networkProtocol = NetworkProtocol.CONNECT,
+    )
+)
+
+val emailClient = EmailServiceClient(client)
+
+val request = SendEmailRequest.newBuilder()
+    .setFrom("hello@yourdomain.com")
+    .addTo("user@example.com")
+    .setSubject("Hello!")
+    .setBody("This is a test email.")
+    .build()
+
+val response = emailClient.sendEmail(request)
+response.success { result ->
+    println("Message ID: ${result.message.messageId}")
+}
+```
+
+```dart Dart
+import 'package:grpc/grpc.dart';
+import 'generated/v1/email.pbgrpc.dart';
+
+Future<void> main() async {
+  final channel = ClientChannel(
+    'api.simpleemailapi.dev',
+    port: 443,
+    options: ChannelOptions(
+      credentials: ChannelCredentials.secure(),
+    ),
+  );
+
+  final stub = EmailServiceClient(
+    channel,
+    options: CallOptions(
+      metadata: {'authorization': 'Bearer sea_live_...'},
+    ),
+  );
+
+  try {
+    final request = SendEmailRequest()
+      ..from = 'hello@yourdomain.com'
+      ..to.add('user@example.com')
+      ..subject = 'Hello!'
+      ..body = 'This is a test email.';
+
+    final response = await stub.sendEmail(request);
+    print('Message ID: ${response.messageId}');
+  } finally {
+    await channel.shutdown();
+  }
+}
+```
+</CodeGroup>
+
+## Key Mapping (TypeScript)
 
 | Source | Package Name | Import Path |
 | --- | --- | --- |
@@ -81,3 +303,5 @@ console.log(res.messageId);
 **File Extensions**: If you are using **ES Modules** (modern Node.js or Vite), you may need to add the `.js` extension to your imports even in TypeScript:
 `import { EmailService } from "@buf/.../v1/email_connect.js";`
 </Note>
+
+

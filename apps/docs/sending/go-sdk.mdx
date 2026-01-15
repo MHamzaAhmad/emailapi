@@ -1,0 +1,225 @@
+---
+title: Go SDK
+description: Send emails using the official type-safe Go SDK.
+---
+
+# Go SDK
+
+The `simpleemailapi-go` package provides a fully typed, high-performance SDK for Go applications with real-time event streaming.
+
+<Info>
+  **Language**: Go 1.21+  
+  **Transport**: HTTP/2 via Connect RPC
+</Info>
+
+## Installation
+
+```bash
+go get github.com/emailapi/sdk-go
+```
+
+## Usage
+
+Initialize the client with your API key and use the `client.Send` method.
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+
+    emailapi "github.com/emailapi/sdk-go"
+    v1 "github.com/emailapi/sdk-go/gen/v1"
+)
+
+func main() {
+    client := emailapi.NewClient("sea_live_...")
+
+    resp, err := client.Send(context.Background(), &v1.SendEmailRequest{
+        From:    "hello@yourdomain.com",
+        To:      []string{"user@example.com"},
+        Subject: "Hello!",
+        Body:    "Thanks for signing up.",
+        Html:    "<p>Thanks for signing up.</p>",
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println("Email ID:", resp.Msg.Id)
+}
+```
+
+<Note>
+  The `From` address must belong to a domain you have [verified](/domains/introduction).
+</Note>
+
+## Client Configuration
+
+The `NewClient` function accepts optional configuration:
+
+```go
+// Default usage
+client := emailapi.NewClient("sea_live_...")
+
+// With custom options
+client := emailapi.NewClient("sea_live_...",
+    emailapi.WithBaseURL("https://custom-endpoint.com"),
+    emailapi.WithHTTPClient(customHTTPClient),
+)
+```
+
+<ResponseField name="apiKey" type="string" required>
+  Your API Key, starting with `sea_live_`.
+</ResponseField>
+
+<ResponseField name="WithBaseURL" type="ClientOption">
+  Sets a custom API endpoint. Defaults to `https://api.simpleemailapi.dev`.
+</ResponseField>
+
+<ResponseField name="WithHTTPClient" type="ClientOption">
+  Uses a custom `http.Client` for requests.
+</ResponseField>
+
+## SendEmailRequest Fields
+
+<ParamField body="From" type="string" required>
+  Sender email address. Must be from a verified domain.
+</ParamField>
+
+<ParamField body="To" type="[]string" required>
+  List of primary recipient email addresses.
+</ParamField>
+
+<ParamField body="Subject" type="string" required>
+  Email subject line.
+</ParamField>
+
+<ParamField body="Body" type="string">
+  Plain text content of the email.
+</ParamField>
+
+<ParamField body="Html" type="string">
+  HTML content of the email.
+</ParamField>
+
+<ParamField body="Cc" type="[]string">
+  List of CC recipient email addresses.
+</ParamField>
+
+<ParamField body="Bcc" type="[]string">
+  List of BCC recipient email addresses.
+</ParamField>
+
+<ParamField body="Attachments" type="[]*Attachment">
+  List of files to attach.
+</ParamField>
+
+<ParamField body="InReplyTo" type="string">
+  Message-ID of the email being replied to (for threading).
+</ParamField>
+
+<ParamField body="References" type="[]string">
+  List of message IDs for threading context.
+</ParamField>
+
+<ParamField body="Metadata" type="map[string]string">
+  Custom key-value metadata.
+</ParamField>
+
+<ParamField body="Async" type="bool">
+  If true, queue for async processing. Emails with attachments are always async.
+</ParamField>
+
+## Real-time Event Streaming
+
+Stream email events with typed callbacks using `OnReceive`:
+
+```go
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+client.OnReceive(ctx, emailapi.EventHandlers{
+    OnDelivered: func(e *v1.EmailDeliveredEvent) {
+        log.Println("Delivered to:", e.Recipients)
+    },
+    OnReplied: func(e *v1.EmailRepliedEvent) {
+        log.Println("Reply from:", e.From)
+    },
+    OnBounced: func(e *v1.EmailBouncedEvent) {
+        log.Println("Bounced:", e.BounceType, e.Recipients)
+    },
+    OnError: func(err error) {
+        log.Println("Stream error:", err)
+    },
+})
+```
+
+<Note>
+  The stream runs in a background goroutine and automatically reconnects with exponential backoff.
+</Note>
+
+### Available Event Handlers
+
+| Handler | Description |
+|---------|-------------|
+| `OnSent` | Email accepted for delivery |
+| `OnDelivered` | Email delivered to recipient's mailbox |
+| `OnBounced` | Email bounced (hard or soft) |
+| `OnComplained` | Recipient marked email as spam |
+| `OnRejected` | Email rejected before sending |
+| `OnDelayed` | Email delivery delayed |
+| `OnReplied` | Reply received to a sent email |
+| `OnFailed` | Email sending failed permanently |
+| `OnError` | Stream error occurred |
+
+## Error Handling
+
+The SDK provides structured error handling with typed error codes:
+
+```go
+resp, err := client.Send(ctx, req)
+if err != nil {
+    if e := emailapi.ParseError(err); e != nil {
+        switch {
+        case e.Is(emailapi.ErrCodeDomainNotVerified):
+            log.Println("Please verify your domain first")
+        case e.IsCategory(emailapi.CategoryValidation):
+            log.Println("Validation error on field:", e.Field)
+        case e.IsCategory(emailapi.CategoryRateLimit):
+            log.Println("Rate limited, retry later")
+        default:
+            log.Println("Error:", e.Message)
+        }
+    }
+}
+```
+
+### Error Categories
+
+| Category | Range | Description |
+|----------|-------|-------------|
+| `CategoryAuth` | 1xx | Authentication errors |
+| `CategoryAuthz` | 2xx | Authorization errors |
+| `CategoryValidation` | 3xx | Validation errors |
+| `CategoryNotFound` | 4xx | Resource not found |
+| `CategoryDomain` | 5xx | Domain verification errors |
+| `CategoryRateLimit` | 6xx | Rate/usage limit errors |
+| `CategoryInternal` | 9xx | Internal server errors |
+
+## Advanced Usage
+
+Access underlying service clients for domain management:
+
+```go
+// Domain management
+domains, err := client.Domains.ListDomains(ctx, 
+    connect.NewRequest(&v1.ListDomainsRequest{}))
+
+// Direct email service access
+resp, err := client.Emails.SendEmail(ctx, 
+    connect.NewRequest(&v1.SendEmailRequest{...}))
+```
+
