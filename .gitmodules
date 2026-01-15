@@ -1,0 +1,3 @@
+[submodule "packages/sdk-go"]
+	path = packages/sdk-go
+	url = git@github.com:MHamzaAhmad/sea-go.git
