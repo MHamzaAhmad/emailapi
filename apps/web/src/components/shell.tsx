@@ -104,7 +104,7 @@ export function Shell({ children }: ShellProps) {
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" asChild>
                             {/* @ts-expect-error docs route */}
-                            <Link to="/docs">
+                            <Link to="https://docs.simpleemailapi.dev" target="_blank">
                                 <HugeiconsIcon icon={Book02Icon} size={16} />
                             </Link>
                         </Button>
