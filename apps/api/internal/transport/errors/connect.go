@@ -10,13 +10,26 @@ import (
 
 	v1 "github.com/emailapi/api/gen/v1"
 	"github.com/emailapi/api/internal/domain"
+	"github.com/emailapi/api/internal/validation"
 )
 
 // ToConnectError converts a domain.AppError to a connect.Error with details.
 // If the error is not an AppError, it wraps it as an internal error.
+// Also handles ValidationErrors to preserve all validation details.
 func ToConnectError(err error) *connect.Error {
 	if err == nil {
 		return nil
+	}
+
+	// Handle ValidationErrors (multiple validation failures)
+	if ve, ok := err.(*validation.ValidationErrors); ok {
+		return validationErrorsToConnect(ve)
+	}
+
+	// Check if wrapped error contains ValidationErrors
+	var ve *validation.ValidationErrors
+	if errors.As(err, &ve) {
+		return validationErrorsToConnect(ve)
 	}
 
 	appErr, ok := domain.IsAppError(err)
@@ -39,6 +52,32 @@ func ToConnectError(err error) *connect.Error {
 
 	if detailAny, err := connect.NewErrorDetail(detail); err == nil {
 		connectErr.AddDetail(detailAny)
+	}
+
+	return connectErr
+}
+
+// validationErrorsToConnect converts ValidationErrors to a Connect error with multiple details.
+func validationErrorsToConnect(ve *validation.ValidationErrors) *connect.Error {
+	if len(ve.Errors) == 0 {
+		return connect.NewError(connect.CodeInvalidArgument, errors.New("validation failed"))
+	}
+
+	// Use first error for the primary message
+	first := ve.Errors[0]
+	connectErr := connect.NewError(connect.CodeInvalidArgument, errors.New(first.Message))
+
+	// Add ALL errors as ErrorDetail for rich client-side parsing
+	for _, appErr := range ve.Errors {
+		detail := &v1.ErrorDetail{
+			Code:     appErr.Code,
+			Message:  appErr.Message,
+			Field:    appErr.Field,
+			Metadata: appErr.Metadata,
+		}
+		if detailAny, err := connect.NewErrorDetail(detail); err == nil {
+			connectErr.AddDetail(detailAny)
+		}
 	}
 
 	return connectErr

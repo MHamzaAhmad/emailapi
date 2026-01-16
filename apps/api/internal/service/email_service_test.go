@@ -137,15 +137,17 @@ func TestEmailService_SendEmail(t *testing.T) {
 
 		req := &emailapi.SendEmailRequest{}
 
+		// Validator returns errors directly (e.g., ValidationErrors or AppError)
+		// which are passed through without wrapping
 		mockValidator.EXPECT().
 			ValidateSendEmail(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(assert.AnError)
+			Return(domain.ErrInvalidEmailSyntax.Clone().WithField("to[0]"))
 
 		_, err := svc.SendEmail(ctx, req)
 		assert.Error(t, err)
 		appErr, ok := domain.IsAppError(err)
 		assert.True(t, ok)
-		assert.Equal(t, domain.ErrInvalidArgument.Code, appErr.Code)
-		assert.Equal(t, "validation_failed", appErr.Metadata["context"])
+		assert.Equal(t, domain.ErrInvalidEmailSyntax.Code, appErr.Code)
+		assert.Equal(t, "to[0]", appErr.Field)
 	})
 }

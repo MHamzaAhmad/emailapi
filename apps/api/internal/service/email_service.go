@@ -75,13 +75,8 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 	// Validate all email addresses and body content in parallel
 	if s.validator != nil {
 		if err := s.validator.ValidateSendEmail(ctx, userID, req.From, req.To, req.Cc, req.Bcc, req.Body, req.Html); err != nil {
-			// Validator already returns domain.AppError, but we might wrap it or just return it.
-			// Ideally we return it directly, but to preserve "validation failed" context without losing type,
-			// we can rely on ToConnectError's unwrapping.
-			// However, replacing fmt.Errorf("validation failed: %w") with domain.ErrInvalidArgument might be cleaner if we trust the validator.
-			// Let's wrap it in InvalidArgument if it's not already.
-			// But for 100% replacement of fmt.Errorf:
-			return nil, domain.ErrInvalidArgument.Clone().WithCause(err).WithMeta("context", "validation_failed")
+			// Return validation errors directly - they contain typed codes and field info
+			return nil, err
 		}
 	}
 
