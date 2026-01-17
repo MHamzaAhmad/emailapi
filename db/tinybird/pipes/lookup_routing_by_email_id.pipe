@@ -1,0 +1,15 @@
+DESCRIPTION >
+    Lookup routing info by email_id. Used for reply threading (email_id → message_id).
+
+TOKEN emailapi_server READ
+
+NODE lookup
+SQL >
+    %
+    SELECT message_id, email_id, user_id, sent_at
+    FROM email_routing
+    WHERE email_id = {{String(email_id, '')}}
+    ORDER BY sent_at DESC
+    LIMIT 1
+
+TYPE endpoint

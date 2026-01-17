@@ -92,7 +92,8 @@ func TestReputationWorker_Work_Flagging(t *testing.T) {
 	// Log activity (newly flagged)
 	mockActivityRepo.EXPECT().Log(ctx, userID, "reputation", userID, "flagged", "warning", gomock.Any(), gomock.Any()).Return(nil)
 
-	mockCache.EXPECT().Delete(ctx, userID).Return(nil)
+	// Flagged users get soft-suspended (reduced limits)
+	mockCache.EXPECT().SetSoftSuspended(ctx, userID).Return(nil)
 
 	err := worker.Work(ctx, job)
 	require.NoError(t, err)

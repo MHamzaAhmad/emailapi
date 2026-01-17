@@ -19,6 +19,7 @@ type CacheAggregator struct {
 	credit            *CreditCache
 	usage             *UsageCache
 	webRisk           *WebRiskCache
+	routing           *RoutingCache
 }
 
 // NewCacheAggregator creates a new CacheAggregator with all caches.
@@ -34,6 +35,7 @@ func NewCacheAggregator(client *Client) *CacheAggregator {
 		credit:            NewCreditCache(client),
 		usage:             NewUsageCache(client),
 		webRisk:           NewWebRiskCache(client),
+		routing:           NewRoutingCache(client.Underlying()),
 	}
 }
 
@@ -85,4 +87,9 @@ func (c *CacheAggregator) Usage() UsageCacheInterface {
 // WebRisk returns the Web Risk cache for URL threat checking.
 func (c *CacheAggregator) WebRisk() WebRiskCacheInterface {
 	return c.webRisk
+}
+
+// Routing returns the routing cache for email reply threading.
+func (c *CacheAggregator) Routing() RoutingCacheInterface {
+	return c.routing
 }

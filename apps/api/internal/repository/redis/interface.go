@@ -1,6 +1,6 @@
 package redis
 
-//go:generate mockgen -destination=mocks/mock_cache.go -package=mocks github.com/emailapi/api/internal/repository/redis DomainCacheInterface,APIKeyCacheInterface,UserCacheInterface,MXCacheInterface,ReputationCacheInterface,UnsubscribeCacheInterface,PendingAttachmentCacheInterface,WebRiskCacheInterface
+//go:generate mockgen -destination=mocks/mock_cache.go -package=mocks github.com/emailapi/api/internal/repository/redis DomainCacheInterface,APIKeyCacheInterface,UserCacheInterface,MXCacheInterface,ReputationCacheInterface,UnsubscribeCacheInterface,PendingAttachmentCacheInterface,WebRiskCacheInterface,RoutingCacheInterface
 
 import (
 	"context"

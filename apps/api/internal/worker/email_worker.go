@@ -31,18 +31,20 @@ import (
 // SendEmailArgs contains all email data embedded in the job payload.
 // This is the transient storage - data is cleaned up when job completes.
 type SendEmailArgs struct {
-	EmailID    string            `json:"email_id"`
-	UserID     string            `json:"user_id"`
-	From       string            `json:"from"`
-	To         []string          `json:"to"`
-	Cc         []string          `json:"cc,omitempty"`
-	Bcc        []string          `json:"bcc,omitempty"`
-	Subject    string            `json:"subject"`
-	Body       string            `json:"body,omitempty"`
-	HTML       string            `json:"html,omitempty"`
-	InReplyTo  string            `json:"in_reply_to,omitempty"`
-	References []string          `json:"references,omitempty"`
-	Metadata   map[string]string `json:"metadata,omitempty"`
+	EmailID    string   `json:"email_id"`
+	UserID     string   `json:"user_id"`
+	From       string   `json:"from"`
+	To         []string `json:"to"`
+	Cc         []string `json:"cc,omitempty"`
+	Bcc        []string `json:"bcc,omitempty"`
+	Subject    string   `json:"subject"`
+	Body       string   `json:"body,omitempty"`
+	HTML       string   `json:"html,omitempty"`
+	InReplyTo  string   `json:"in_reply_to,omitempty"`
+	References []string `json:"references,omitempty"`
+	// ReplyTo is our email_id - worker resolves to message_id for threading
+	ReplyTo  string            `json:"reply_to,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 	// S3 keys of attachments (populated by attachment worker)
 	AttachmentKeys []AttachmentInfo `json:"attachment_keys,omitempty"`
 	// Optional scheduled time for email delivery
@@ -72,6 +74,8 @@ type EmailWorker struct {
 	s3Factory     s3.FactoryInterface
 	tbRepo        tbrepo.EmailRepositoryInterface
 	webhookSender webhook.Sender
+	// Routing cache for reply_to resolution
+	routingCache redisrepo.RoutingCacheInterface
 	// Usage tracking
 	creditCache redisrepo.CreditCacheInterface
 	polarClient polar.Client
@@ -83,6 +87,7 @@ func NewEmailWorker(
 	s3Factory s3.FactoryInterface,
 	tbRepo tbrepo.EmailRepositoryInterface,
 	webhookSender webhook.Sender,
+	routingCache redisrepo.RoutingCacheInterface,
 	creditCache redisrepo.CreditCacheInterface,
 	polarClient polar.Client,
 ) *EmailWorker {
@@ -91,6 +96,7 @@ func NewEmailWorker(
 		s3Factory:     s3Factory,
 		tbRepo:        tbRepo,
 		webhookSender: webhookSender,
+		routingCache:  routingCache,
 		creditCache:   creditCache,
 		polarClient:   polarClient,
 	}
@@ -98,6 +104,18 @@ func NewEmailWorker(
 
 func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) error {
 	args := job.Args
+
+	// Resolve ReplyTo (our email_id) to InReplyTo (SES message_id) if set
+	if args.ReplyTo != "" && args.InReplyTo == "" {
+		messageID, err := w.resolveReplyTo(ctx, args.ReplyTo, args.UserID)
+		if err != nil {
+			fmt.Printf("Warning: failed to resolve reply_to %s: %v\n", args.ReplyTo, err)
+		} else if messageID != "" {
+			args.InReplyTo = messageID
+			// Also add to References for proper threading
+			args.References = append(args.References, messageID)
+		}
+	}
 
 	// Handle dry-run mode: skip SES, simulate delay, return fake message ID
 	if args.DryRun {
@@ -157,10 +175,8 @@ func (w *EmailWorker) Work(ctx context.Context, job *river.Job[SendEmailArgs]) e
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 
-	// Write routing entry for reply tracking
-	if err := w.tbRepo.InsertRouting(ctx, messageID, args.EmailID, args.UserID); err != nil {
-		fmt.Printf("Warning: failed to insert routing entry: %v\n", err)
-	}
+	// Write routing entry to Redis (fast path) and Tinybird (persistence)
+	w.writeRouting(ctx, messageID, args.EmailID, args.UserID)
 
 	// Log success
 	w.logActivity(ctx, args, "sent", fmt.Sprintf("Message ID: %s", messageID))
@@ -440,4 +456,58 @@ func (w *EmailWorker) generateUnsubscribeLink(args *SendEmailArgs, recipient str
 	token := encodedPayload + "." + signature
 
 	return fmt.Sprintf("%s/unsubscribe?token=%s", strings.TrimSuffix(args.UnsubscribeBaseURL, "/"), token)
+}
+
+// resolveReplyTo resolves an email_id (reply_to) to message_id for threading headers.
+// Checks Redis cache first (fast path), then falls back to Tinybird.
+func (w *EmailWorker) resolveReplyTo(ctx context.Context, replyToEmailID, userID string) (string, error) {
+	// Fast path: check Redis cache
+	if w.routingCache != nil {
+		entry, err := w.routingCache.Get(ctx, replyToEmailID)
+		if err != nil {
+			fmt.Printf("Warning: routing cache lookup failed: %v\n", err)
+		} else if entry != nil {
+			// Verify user owns this email (security check)
+			if entry.UserID != userID {
+				return "", fmt.Errorf("unauthorized: email_id belongs to different user")
+			}
+			return entry.MessageID, nil
+		}
+	}
+
+	// Fallback: query Tinybird
+	if w.tbRepo != nil {
+		routing, err := w.tbRepo.LookupRoutingByEmailID(ctx, replyToEmailID)
+		if err != nil {
+			return "", err
+		}
+		// Verify user owns this email (security check)
+		if routing.UserID != userID {
+			return "", fmt.Errorf("unauthorized: email_id belongs to different user")
+		}
+		// Backfill Redis cache for next time
+		if w.routingCache != nil {
+			_ = w.routingCache.Set(ctx, replyToEmailID, routing.MessageID, routing.UserID)
+		}
+		return routing.MessageID, nil
+	}
+
+	return "", fmt.Errorf("routing not found for email_id %s", replyToEmailID)
+}
+
+// writeRouting writes routing entry to both Redis (fast path) and Tinybird (persistent).
+func (w *EmailWorker) writeRouting(ctx context.Context, messageID, emailID, userID string) {
+	// Write to Redis for fast lookups
+	if w.routingCache != nil {
+		if err := w.routingCache.Set(ctx, emailID, messageID, userID); err != nil {
+			fmt.Printf("Warning: failed to write routing to Redis: %v\n", err)
+		}
+	}
+
+	// Write to Tinybird for persistence
+	if w.tbRepo != nil {
+		if err := w.tbRepo.InsertRouting(ctx, messageID, emailID, userID); err != nil {
+			fmt.Printf("Warning: failed to write routing to Tinybird: %v\n", err)
+		}
+	}
 }

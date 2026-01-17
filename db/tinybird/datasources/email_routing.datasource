@@ -1,5 +1,6 @@
 DESCRIPTION >
-    Email routing table for reply mapping. Maps message_id to user_id for webhook routing.
+    Email routing table for reply threading and webhook routing.
+    Maps email_id to message_id and user_id.
 
 TOKEN emailapi_server APPEND
 TOKEN emailapi_server READ
@@ -12,5 +13,5 @@ SCHEMA >
 
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(sent_at)"
-ENGINE_SORTING_KEY "message_id, sent_at"
+ENGINE_SORTING_KEY "email_id, message_id, sent_at"
 ENGINE_TTL "toDateTime(sent_at) + toIntervalDay(90)"

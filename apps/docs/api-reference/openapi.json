@@ -1593,10 +1593,10 @@
             "title": "references",
             "description": "Explicit threading references. Usually not needed if `in_reply_to` is set."
           },
-          "async": {
-            "type": "boolean",
-            "title": "async",
-            "description": "Set to `true` to return immediately and send the email in the background.\n Recommended for bulk sending or when attachments are large."
+          "replyTo": {
+            "type": "string",
+            "title": "reply_to",
+            "description": "Reply to a previous email using its email_id (from our response).\n Automatically resolves to the correct Message-ID for threading headers.\n For advanced use, you can still use in_reply_to with raw Message-IDs."
           }
         },
         "title": "SendEmailRequest",
@@ -1624,17 +1624,12 @@
           "id": {
             "type": "string",
             "title": "id",
-            "description": "Unique system ID for this email. Use this to track events."
+            "description": "Unique email ID. Use this to track events and for reply_to in future emails."
           },
           "status": {
             "title": "status",
-            "description": "Current status.",
+            "description": "Status is always QUEUED. Listen to webhooks/events for delivery status.",
             "$ref": "#/components/schemas/v1.EmailStatus"
-          },
-          "messageId": {
-            "type": "string",
-            "title": "message_id",
-            "description": "Upstream Message-ID (if available immediately)."
           },
           "statusMessage": {
             "type": "string",

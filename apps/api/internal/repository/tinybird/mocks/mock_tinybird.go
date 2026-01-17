@@ -98,6 +98,21 @@ func (mr *MockEmailRepositoryInterfaceMockRecorder) LookupRouting(ctx, messageID
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LookupRouting", reflect.TypeOf((*MockEmailRepositoryInterface)(nil).LookupRouting), ctx, messageID)
 }
 
+// LookupRoutingByEmailID mocks base method.
+func (m *MockEmailRepositoryInterface) LookupRoutingByEmailID(ctx context.Context, emailID string) (*tinybird.EmailRouting, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LookupRoutingByEmailID", ctx, emailID)
+	ret0, _ := ret[0].(*tinybird.EmailRouting)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LookupRoutingByEmailID indicates an expected call of LookupRoutingByEmailID.
+func (mr *MockEmailRepositoryInterfaceMockRecorder) LookupRoutingByEmailID(ctx, emailID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LookupRoutingByEmailID", reflect.TypeOf((*MockEmailRepositoryInterface)(nil).LookupRoutingByEmailID), ctx, emailID)
+}
+
 // Ping mocks base method.
 func (m *MockEmailRepositoryInterface) Ping(ctx context.Context) error {
 	m.ctrl.T.Helper()

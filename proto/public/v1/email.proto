@@ -75,9 +75,10 @@ message SendEmailRequest {
   // Explicit threading references. Usually not needed if `in_reply_to` is set.
   repeated string references = 12;
 
-  // Set to `true` to return immediately and send the email in the background.
-  // Recommended for bulk sending or when attachments are large.
-  bool async = 13;
+  // Reply to a previous email using its email_id (from our response).
+  // Automatically resolves to the correct Message-ID for threading headers.
+  // For advanced use, you can still use in_reply_to with raw Message-IDs.
+  string reply_to = 13;
 }
 
 // A file attachment.
@@ -99,17 +100,14 @@ message Attachment {
 
 // Response after sending an email.
 message SendEmailResponse {
-  // Unique system ID for this email. Use this to track events.
+  // Unique email ID. Use this to track events and for reply_to in future emails.
   string id = 1;
 
-  // Current status.
+  // Status is always QUEUED. Listen to webhooks/events for delivery status.
   EmailStatus status = 2;
 
-  // Upstream Message-ID (if available immediately).
-  string message_id = 3;
-
   // Human-readable description of the status.
-  string status_message = 4;
+  string status_message = 3;
 }
 
 // Request to stream events.

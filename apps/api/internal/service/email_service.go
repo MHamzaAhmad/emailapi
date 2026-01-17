@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"strings"
 	"time"
 
@@ -59,9 +58,7 @@ func NewEmailService(
 }
 
 // SendEmail handles sending an email request.
-// Behavior is controlled by the async flag:
-// - async=false + no attachments: Send synchronously, return message_id immediately
-// - async=true OR has attachments: Queue for async processing with retries
+// All emails are queued for async processing with retries.
 func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailRequest) (*emailapi.SendEmailResponse, error) {
 	// Get user ID from context (set by auth interceptor)
 	userID, ok := ctx.Value("user_id").(string)
@@ -112,24 +109,20 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 			}
 		}
 
-		// Replace {{unsubscribe_link}} placeholder for SYNC single-recipient emails only
-		// Async emails are handled by the worker which splits multi-recipient into individual sends
+		// Replace {{unsubscribe_link}} placeholder - worker handles splitting for multi-recipient
+		// For single recipient, we can generate the link here
 		hasPlaceholder := strings.Contains(req.Body, "{{unsubscribe_link}}") || strings.Contains(req.Html, "{{unsubscribe_link}}")
 		totalRecipients := len(req.To) + len(req.Cc) + len(req.Bcc)
-		isAsync := req.Async || len(req.Attachments) > 0 || req.ScheduledAt != nil
 
-		if hasPlaceholder && !isAsync && totalRecipients == 1 && len(req.To) == 1 {
-			// Sync + single recipient - generate unique link for them
+		if hasPlaceholder && totalRecipients == 1 && len(req.To) == 1 {
+			// Single recipient - generate unique link for them
 			unsubLink, err := s.unsubscribeSvc.GenerateLink(userID, req.To[0], emailID)
 			if err == nil {
 				req.Body = strings.ReplaceAll(req.Body, "{{unsubscribe_link}}", unsubLink)
 				req.Html = strings.ReplaceAll(req.Html, "{{unsubscribe_link}}", unsubLink)
 			}
-		} else if hasPlaceholder && !isAsync && totalRecipients > 1 {
-			// Sync + multi-recipient = skip placeholder, warn user to use async
-			fmt.Printf("Warning: {{unsubscribe_link}} with %d recipients in sync mode - use async for automatic splitting\n", totalRecipients)
 		}
-		// For async/scheduled/attachments with placeholders: worker handles splitting
+		// For multi-recipient with placeholder: worker handles splitting
 	}
 
 	// Convert metadata
@@ -143,64 +136,13 @@ func (s *EmailService) SendEmail(ctx context.Context, req *emailapi.SendEmailReq
 		return s.queueScheduled(ctx, emailID, userID, req, dryRun)
 	}
 
-	// Handle attachments - always async
+	// Handle attachments
 	if len(req.Attachments) > 0 {
 		return s.queueWithAttachments(ctx, emailID, userID, req, dryRun)
 	}
 
-	// Handle async flag
-	if req.Async {
-		return s.queueForSend(ctx, emailID, userID, req, dryRun)
-	}
-
-	// Sync path: Handle dry-run or send immediately
-	if dryRun {
-		// Simulate SES latency (50-150ms)
-		delay := 50*time.Millisecond + time.Duration(rand.Intn(100))*time.Millisecond
-		time.Sleep(delay)
-
-		fakeMessageID := fmt.Sprintf("dry-run-%s@simpleemailapi.dev", emailID[:8])
-		return &emailapi.SendEmailResponse{
-			Id:            emailID,
-			MessageId:     fakeMessageID,
-			Status:        emailapi.EmailStatus_EMAIL_STATUS_SENT,
-			StatusMessage: "[DRY-RUN] Email simulated successfully",
-		}, nil
-	}
-
-	// Send immediately with timeout
-	sendCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
-	defer cancel()
-
-	messageID, err := s.sendToSES(sendCtx, req)
-	if err != nil {
-		// Log failure
-		s.logActivity(ctx, userID, emailID, "failed", err.Error(), req)
-		return nil, domain.ErrInternal.Clone().WithCause(err).WithMeta("operation", "send_to_ses")
-	}
-
-	// Write routing entry for reply tracking (async - don't block response)
-	if s.analytics != nil {
-		go func() {
-			if err := s.analytics.Email().InsertRouting(context.Background(), messageID, emailID, userID); err != nil {
-				// Log but don't fail - routing is for reply tracking, not critical path
-				fmt.Printf("Warning: failed to insert routing entry: %v\n", err)
-			}
-		}()
-	}
-
-	// Log success (async - don't block response)
-	go s.logActivity(context.Background(), userID, emailID, "sent", fmt.Sprintf("Message ID: %s", messageID), req)
-
-	// Send webhook notification (already async)
-	s.sendWebhook(ctx, userID, emailID, messageID, req, "sent")
-
-	return &emailapi.SendEmailResponse{
-		Id:            emailID,
-		MessageId:     messageID,
-		Status:        emailapi.EmailStatus_EMAIL_STATUS_SENT,
-		StatusMessage: "Email sent successfully",
-	}, nil
+	// Queue for async processing (all emails are queued)
+	return s.queueForSend(ctx, emailID, userID, req, dryRun)
 }
 
 // queueWithAttachments queues an email with attachments for processing.
@@ -276,6 +218,7 @@ func (s *EmailService) queueForSend(ctx context.Context, emailID, userID string,
 		HTML:       req.Html,
 		InReplyTo:  req.InReplyTo,
 		References: req.References,
+		ReplyTo:    req.ReplyTo,
 		Metadata:   req.Metadata,
 		DryRun:     dryRun,
 	}
@@ -321,6 +264,7 @@ func (s *EmailService) queueScheduled(ctx context.Context, emailID, userID strin
 		HTML:       req.Html,
 		InReplyTo:  req.InReplyTo,
 		References: req.References,
+		ReplyTo:    req.ReplyTo,
 		Metadata:   req.Metadata,
 		DryRun:     dryRun,
 	}
@@ -422,7 +366,6 @@ func (s *EmailService) logActivity(ctx context.Context, userID, emailID, action,
 		"to":              req.To,
 		"subject":         req.Subject,
 		"has_attachments": len(req.Attachments) > 0,
-		"async":           req.Async,
 	}
 
 	s.analytics.Email().LogEmailEvent(ctx, userID, emailID, action, status, details, metadata)

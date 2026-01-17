@@ -81,6 +81,35 @@ func (r *EmailRepository) LookupRouting(ctx context.Context, messageID string) (
 	}, nil
 }
 
+// LookupRoutingByEmailID finds the routing info for a given email_id.
+// Used for reply threading to resolve email_id → message_id.
+func (r *EmailRepository) LookupRoutingByEmailID(ctx context.Context, emailID string) (*EmailRouting, error) {
+	params := map[string]string{
+		"email_id": emailID,
+	}
+
+	resp, err := r.client.QueryPipe(ctx, "lookup_routing_by_email_id", params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to lookup routing by email_id: %w", err)
+	}
+
+	if len(resp.Data) == 0 {
+		return nil, fmt.Errorf("routing not found for email ID %s", emailID)
+	}
+
+	row := resp.Data[0]
+
+	sentAtStr, _ := row["sent_at"].(string)
+	sentAt, _ := time.Parse(time.RFC3339, sentAtStr)
+
+	return &EmailRouting{
+		MessageID: row["message_id"].(string),
+		EmailID:   emailID,
+		UserID:    row["user_id"].(string),
+		SentAt:    sentAt,
+	}, nil
+}
+
 // LogActivity logs an activity event to activity_logs datasource.
 func (r *EmailRepository) LogActivity(
 	ctx context.Context,

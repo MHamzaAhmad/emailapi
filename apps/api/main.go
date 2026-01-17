@@ -223,7 +223,7 @@ func main() {
 
 	// Create and register workers
 	workers := river.NewWorkers()
-	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, analyticsAggregator.Email(), webhookSender, cacheAggregator.Credit(), polarClient)
+	emailWorker := worker.NewEmailWorker(sesClient, s3Factory, analyticsAggregator.Email(), webhookSender, cacheAggregator.Routing(), cacheAggregator.Credit(), polarClient)
 	river.AddWorker(workers, emailWorker)
 	logger.Info().Msg("✓ Registered River workers")
 

@@ -22,7 +22,7 @@ func TestEmailWorker_Work_Success(t *testing.T) {
 	mockS3Factory := s3Mocks.NewMockFactoryInterface(ctrl)
 	mockTBRepo := tinybirdMocks.NewMockEmailRepositoryInterface(ctrl)
 
-	worker := NewEmailWorker(mockSES, mockS3Factory, mockTBRepo, nil, nil, nil)
+	worker := NewEmailWorker(mockSES, mockS3Factory, mockTBRepo, nil, nil, nil, nil)
 
 	ctx := context.Background()
 	job := &river.Job[SendEmailArgs]{
@@ -51,7 +51,7 @@ func TestEmailWorker_Work_Success(t *testing.T) {
 }
 
 func TestEmailWorker_Work_DryRun(t *testing.T) {
-	worker := NewEmailWorker(nil, nil, nil, nil, nil, nil)
+	worker := NewEmailWorker(nil, nil, nil, nil, nil, nil, nil)
 	ctx := context.Background()
 	job := &river.Job[SendEmailArgs]{
 		Args: SendEmailArgs{
@@ -71,7 +71,7 @@ func TestEmailWorker_Work_Split(t *testing.T) {
 	mockS3Factory := s3Mocks.NewMockFactoryInterface(ctrl)
 	mockTBRepo := tinybirdMocks.NewMockEmailRepositoryInterface(ctrl)
 
-	worker := NewEmailWorker(mockSES, mockS3Factory, mockTBRepo, nil, nil, nil)
+	worker := NewEmailWorker(mockSES, mockS3Factory, mockTBRepo, nil, nil, nil, nil)
 
 	ctx := context.Background()
 

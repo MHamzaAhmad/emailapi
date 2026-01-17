@@ -14,6 +14,9 @@ type EmailRepositoryInterface interface {
 	// LookupRouting finds the routing info for a given message_id.
 	LookupRouting(ctx context.Context, messageID string) (*EmailRouting, error)
 
+	// LookupRoutingByEmailID finds the routing info for a given email_id (reverse lookup for reply_to).
+	LookupRoutingByEmailID(ctx context.Context, emailID string) (*EmailRouting, error)
+
 	// LogActivity logs an activity event to activity_logs datasource.
 	LogActivity(ctx context.Context, userID, entityType, entityID, action, status, details string, metadata map[string]interface{}) error
 
