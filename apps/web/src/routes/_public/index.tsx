@@ -58,12 +58,12 @@ function LandingContent() {
         <section className="relative px-4 sm:px-6 pt-32 sm:pt-24 pb-16 sm:pb-20 overflow-hidden border-b border-dashed border-border/40">
           <div className="mx-auto max-w-4xl text-center">
             <h1 className="mb-6 text-4xl sm:text-5xl md:text-7xl font-bold tracking-tighter leading-[1.1] text-foreground">
-              The Email API for <br /> <span className="text-muted-foreground/40 font-medium">Indie Hackers.</span>
+              The Email API that <br /> <span className="text-muted-foreground/40 font-medium">Scales with You.</span>
             </h1>
             <p className="mx-auto mb-10 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl font-medium px-4">
-              <span className="text-foreground font-bold">Unlimited domains.</span> Pay only for what you send.
+              <span className="text-foreground font-bold">Unlimited domains. Unlimited projects.</span> One simple API.
               <br />
-              Just <span className="text-foreground">$0.25 per 1,000 emails</span>. No monthly fees for side projects.
+              From your first email to your millionth — <span className="text-foreground">$0.25 per 1,000</span>.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16 sm:mb-24 px-4 w-full">

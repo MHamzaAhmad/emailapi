@@ -74,7 +74,9 @@ function RichCodeRenderer({ language }: { language: string }) {
                 {"\n"}
                 {"  "}subject<Punctuation>:</Punctuation> <String>'Welcome!'</String><Punctuation>,</Punctuation>
                 {"\n"}
-                {"  "}body<Punctuation>:</Punctuation> <String>'Thanks for signing up.'</String>
+                {"  "}body<Punctuation>:</Punctuation> <String>'Thanks for signing up.'</String><Punctuation>,</Punctuation>
+                {"\n"}
+                {"  "}<HoverFunction name="reply_to">reply_to</HoverFunction><Punctuation>:</Punctuation> <String>'eml_abc123'</String> <Comment>// optional: thread replies</Comment>
                 {"\n"}
                 <Punctuation>{"}"})</Punctuation>
                 {"\n\n"}
@@ -104,7 +106,9 @@ function RichCodeRenderer({ language }: { language: string }) {
                 {"\n"}
                 {"    "}<String>"subject"</String><Punctuation>:</Punctuation> <String>"Welcome!"</String><Punctuation>,</Punctuation>
                 {"\n"}
-                {"    "}<String>"body"</String><Punctuation>:</Punctuation> <String>"Thanks for signing up."</String>
+                {"    "}<String>"body"</String><Punctuation>:</Punctuation> <String>"Thanks for signing up."</String><Punctuation>,</Punctuation>
+                {"\n"}
+                {"    "}<String>"reply_to"</String><Punctuation>:</Punctuation> <String>"eml_abc123"</String>
                 {"\n"}
                 {"  "}<String>'{`}`}'</String>
             </span>
@@ -133,6 +137,8 @@ function RichCodeRenderer({ language }: { language: string }) {
                 {"    "}Subject<Punctuation>:</Punctuation> <String>"Welcome!"</String><Punctuation>,</Punctuation>
                 {"\n"}
                 {"    "}Body<Punctuation>:</Punctuation>    <String>"Thanks for signing up."</String><Punctuation>,</Punctuation>
+                {"\n"}
+                {"    "}ReplyTo<Punctuation>:</Punctuation> <String>"eml_abc123"</String><Punctuation>,</Punctuation> <Comment>// optional threading</Comment>
                 {"\n"}
                 {"  "}<Punctuation>{"}"}</Punctuation><Punctuation>)</Punctuation>
                 {"\n"}
@@ -196,6 +202,9 @@ function HoverFunction({ name, children }: { name: string, children: React.React
     } else if (name === "onReceive") {
         signature = "(method) Client.onReceive(handlers: EventHandlers): void";
         description = "Registers real-time event listeners for inbound emails. Uses a persistent trailing connection to stream events with low latency.";
+    } else if (name === "reply_to") {
+        signature = "reply_to?: string";
+        description = "Email ID of a previous message to reply to. Automatically sets threading headers (In-Reply-To, References) so emails appear as a conversation.";
     }
 
     return (
