@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { lazy, Suspense, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   LazySignedIn,
@@ -7,14 +7,12 @@ import {
   LazySignInButton,
 } from '@/components/lazy-clerk'
 
-// CodeWindow is in hero (LCP element) - import directly for faster paint
+// Direct imports for SSR - these components are critical and small
 import { CodeWindow } from '@/components/ui/code-window'
-
-// Lazy-load below-fold sections
-const DomainCalculator = lazy(() => import('@/components/landing/DomainCalculator').then(m => ({ default: m.DomainCalculator })))
-const InboundFeature = lazy(() => import('@/components/landing/InboundFeature').then(m => ({ default: m.InboundFeature })))
-const Pricing = lazy(() => import('@/components/landing/Pricing').then(m => ({ default: m.Pricing })))
-const PerformanceChart = lazy(() => import('@/components/landing/PerformanceChart').then(m => ({ default: m.PerformanceChart })))
+import { DomainCalculator } from '@/components/landing/DomainCalculator'
+import { InboundFeature } from '@/components/landing/InboundFeature'
+import { Pricing } from '@/components/landing/Pricing'
+import { PerformanceChart } from '@/components/landing/PerformanceChart'
 
 export const Route = createFileRoute('/_public/')(
   {
@@ -110,19 +108,13 @@ function LandingContent() {
         </section>
 
         {/* The Hook: Domain Tax Comparison */}
-        <Suspense fallback={null}>
-          <DomainCalculator />
-        </Suspense>
+        <DomainCalculator />
 
         {/* The Enabler: Inbound Feature */}
-        <Suspense fallback={null}>
-          <InboundFeature />
-        </Suspense>
+        <InboundFeature />
 
         {/* Pricing Section */}
-        <Suspense fallback={null}>
-          <Pricing />
-        </Suspense>
+        <Pricing />
 
         {/* Performance Chart Section */}
         <section className="py-24 px-6 bg-background border-t border-dashed border-border/40">
@@ -138,9 +130,7 @@ function LandingContent() {
                 We don't just guess. We benchmark every deploy. See how we stack up against industry standards in real-time latency tests.
               </p>
             </div>
-            <Suspense fallback={<div className="h-[300px] bg-muted/30 rounded-xl animate-pulse" />}>
-              <PerformanceChart />
-            </Suspense>
+            <PerformanceChart />
           </div>
         </section>
 
