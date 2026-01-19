@@ -117,21 +117,25 @@ client := emailapi.NewClient("sea_live_...",
   List of files to attach.
 </ParamField>
 
+<ParamField body="ReplyTo" type="string">
+  Reply to a previous email using its `Id` from our response. We automatically resolve threading headers.
+</ParamField>
+
 <ParamField body="InReplyTo" type="string">
-  Message-ID of the email being replied to (for threading).
+  Raw Message-ID for threading (advanced). Use `ReplyTo` for simpler threading with our email IDs.
 </ParamField>
 
 <ParamField body="References" type="[]string">
-  List of message IDs for threading context.
+  List of message IDs for threading context (advanced).
 </ParamField>
 
 <ParamField body="Metadata" type="map[string]string">
-  Custom key-value metadata.
+  Custom key-value metadata returned in webhooks.
 </ParamField>
 
-<ParamField body="Async" type="bool">
-  If true, queue for async processing. Emails with attachments are always async.
-</ParamField>
+<Note>
+  All emails are queued for reliable delivery with automatic retries. Use [webhooks](/receiving/webhooks) or [event streaming](/sending/go-sdk#real-time-event-streaming) to track delivery status.
+</Note>
 
 ## Real-time Event Streaming
 

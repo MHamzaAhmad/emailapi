@@ -1,0 +1,113 @@
+---
+title: Email Threading
+description: Create threaded email conversations with simple reply_to references.
+---
+
+# Email Threading
+
+Thread emails into conversations by referencing previous emails using our simplified `replyTo` field.
+
+## Quick Start
+
+When you send an email, you receive an `id` in the response. Use this `id` as the `replyTo` value to thread your next email:
+
+<CodeGroup>
+```typescript TypeScript
+import { createClient } from 'simpleemailapi';
+
+const client = createClient({ apiKey: 'sea_live_...' });
+
+// 1. Send the original email
+const original = await client.send({
+  from: 'support@yourdomain.com',
+  to: ['user@example.com'],
+  subject: 'Your Order #12345',
+  body: 'Your order has been received.'
+});
+
+console.log('Original ID:', original.id);
+
+// 2. Send a follow-up in the same thread
+const followUp = await client.send({
+  from: 'support@yourdomain.com',
+  to: ['user@example.com'],
+  subject: 'Re: Your Order #12345',
+  body: 'Your order has shipped!',
+  replyTo: original.id  // ← Thread using our email ID
+});
+```
+
+```go Go
+client := emailapi.NewClient("sea_live_...")
+
+// 1. Send the original email
+original, _ := client.Send(ctx, &v1.SendEmailRequest{
+    From:    "support@yourdomain.com",
+    To:      []string{"user@example.com"},
+    Subject: "Your Order #12345",
+    Body:    "Your order has been received.",
+})
+
+fmt.Println("Original ID:", original.Msg.Id)
+
+// 2. Send a follow-up in the same thread
+followUp, _ := client.Send(ctx, &v1.SendEmailRequest{
+    From:    "support@yourdomain.com",
+    To:      []string{"user@example.com"},
+    Subject: "Re: Your Order #12345",
+    Body:    "Your order has shipped!",
+    ReplyTo: original.Msg.Id,  // ← Thread using our email ID
+})
+```
+</CodeGroup>
+
+## How It Works
+
+When you use `replyTo`:
+
+1. We look up the original email's Message-ID (from when SES sent it)
+2. We set the proper `In-Reply-To` and `References` headers
+3. Email clients group the messages into a conversation
+
+<Note>
+  All emails are queued for reliable delivery. The threading headers are resolved just before sending, so you can queue a reply even before the original email is fully delivered.
+</Note>
+
+## Response Format
+
+All emails return a queued status:
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "QUEUED",
+  "statusMessage": "Email queued for sending"
+}
+```
+
+Use [webhooks](/receiving/webhooks) to track delivery status and get the SES Message-ID when needed.
+
+## Advanced: Raw Message-IDs
+
+If you need to thread with emails from external systems, use `inReplyTo` and `references` with raw Message-IDs:
+
+```typescript
+await client.send({
+  from: 'support@yourdomain.com',
+  to: ['user@example.com'],
+  subject: 'Re: External Thread',
+  body: 'Continuing the conversation...',
+  inReplyTo: '<external-msg-id@other-system.com>',
+  references: ['<root-msg@other.com>', '<reply-1@other.com>']
+});
+```
+
+<Warning>
+  Raw Message-IDs must include angle brackets (`<` and `>`) as per RFC 5322.
+</Warning>
+
+## Best Practices
+
+1. **Store email IDs** - Save the `id` from our response to enable threading later
+2. **Use consistent subjects** - Prefix with "Re:" for clarity, though threading is header-based
+3. **Same sender recommended** - Replies from different senders may not thread in all clients

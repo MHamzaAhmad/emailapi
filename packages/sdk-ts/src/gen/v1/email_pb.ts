@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file v1/email.proto.
  */
 export const file_v1_email: GenFile = /*@__PURE__*/
-  fileDesc("Cg52MS9lbWFpbC5wcm90bxICdjEi6AIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSNAoIbWV0YWRhdGEYCCADKAsyIi52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIjCgthdHRhY2htZW50cxgKIAMoCzIOLnYxLkF0dGFjaG1lbnQSEwoLaW5fcmVwbHlfdG8YCyABKAkSEgoKcmVmZXJlbmNlcxgMIAMoCRINCgVhc3luYxgNIAEoCBovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiZwoKQXR0YWNobWVudBIQCghmaWxlbmFtZRgBIAEoCRIUCgxjb250ZW50X3R5cGUYAiABKAkSDQoDdXJsGAMgASgJSAASGAoOYmFzZTY0X2NvbnRlbnQYBCABKAlIAEIICgZzb3VyY2UibAoRU2VuZEVtYWlsUmVzcG9uc2USCgoCaWQYASABKAkSHwoGc3RhdHVzGAIgASgOMg8udjEuRW1haWxTdGF0dXMSEgoKbWVzc2FnZV9pZBgDIAEoCRIWCg5zdGF0dXNfbWVzc2FnZRgEIAEoCSJNChNTdHJlYW1FdmVudHNSZXF1ZXN0EiIKC2V2ZW50X3R5cGVzGAEgAygOMg0udjEuRXZlbnRUeXBlEhIKCmJhdGNoX3NpemUYAiABKAUiJQoQQWNrRXZlbnRzUmVxdWVzdBIRCglldmVudF9pZHMYASADKAkiKAoRQWNrRXZlbnRzUmVzcG9uc2USEwoLYWNrZWRfY291bnQYASABKAUqkQEKC0VtYWlsU3RhdHVzEhwKGEVNQUlMX1NUQVRVU19VTlNQRUNJRklFRBAAEhcKE0VNQUlMX1NUQVRVU19RVUVVRUQQARIbChdFTUFJTF9TVEFUVVNfUFJPQ0VTU0lORxACEhUKEUVNQUlMX1NUQVRVU19TRU5UEAMSFwoTRU1BSUxfU1RBVFVTX0ZBSUxFRBAEMr4BCgxFbWFpbFNlcnZpY2USOgoJU2VuZEVtYWlsEhQudjEuU2VuZEVtYWlsUmVxdWVzdBoVLnYxLlNlbmRFbWFpbFJlc3BvbnNlIgASNgoMU3RyZWFtRXZlbnRzEhcudjEuU3RyZWFtRXZlbnRzUmVxdWVzdBoJLnYxLkV2ZW50IgAwARI6CglBY2tFdmVudHMSFC52MS5BY2tFdmVudHNSZXF1ZXN0GhUudjEuQWNrRXZlbnRzUmVzcG9uc2UiAEJfCgZjb20udjFCCkVtYWlsUHJvdG9QAVohZ2l0aHViLmNvbS9lbWFpbGFwaS9zZGstZ28vZ2VuL3YxogIDVlhYqgICVjHKAgJWMeICDlYxXEdQQk1ldGFkYXRh6gICVjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_v1_events]);
+  fileDesc("Cg52MS9lbWFpbC5wcm90bxICdjEi6wIKEFNlbmRFbWFpbFJlcXVlc3QSDAoEZnJvbRgBIAEoCRIKCgJ0bxgCIAMoCRIKCgJjYxgDIAMoCRILCgNiY2MYBCADKAkSDwoHc3ViamVjdBgFIAEoCRIMCgRib2R5GAYgASgJEgwKBGh0bWwYByABKAkSNAoIbWV0YWRhdGEYCCADKAsyIi52MS5TZW5kRW1haWxSZXF1ZXN0Lk1ldGFkYXRhRW50cnkSMAoMc2NoZWR1bGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIjCgthdHRhY2htZW50cxgKIAMoCzIOLnYxLkF0dGFjaG1lbnQSEwoLaW5fcmVwbHlfdG8YCyABKAkSEgoKcmVmZXJlbmNlcxgMIAMoCRIQCghyZXBseV90bxgNIAEoCRovCg1NZXRhZGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiZwoKQXR0YWNobWVudBIQCghmaWxlbmFtZRgBIAEoCRIUCgxjb250ZW50X3R5cGUYAiABKAkSDQoDdXJsGAMgASgJSAASGAoOYmFzZTY0X2NvbnRlbnQYBCABKAlIAEIICgZzb3VyY2UiWAoRU2VuZEVtYWlsUmVzcG9uc2USCgoCaWQYASABKAkSHwoGc3RhdHVzGAIgASgOMg8udjEuRW1haWxTdGF0dXMSFgoOc3RhdHVzX21lc3NhZ2UYAyABKAkiTQoTU3RyZWFtRXZlbnRzUmVxdWVzdBIiCgtldmVudF90eXBlcxgBIAMoDjINLnYxLkV2ZW50VHlwZRISCgpiYXRjaF9zaXplGAIgASgFIiUKEEFja0V2ZW50c1JlcXVlc3QSEQoJZXZlbnRfaWRzGAEgAygJIigKEUFja0V2ZW50c1Jlc3BvbnNlEhMKC2Fja2VkX2NvdW50GAEgASgFKpEBCgtFbWFpbFN0YXR1cxIcChhFTUFJTF9TVEFUVVNfVU5TUEVDSUZJRUQQABIXChNFTUFJTF9TVEFUVVNfUVVFVUVEEAESGwoXRU1BSUxfU1RBVFVTX1BST0NFU1NJTkcQAhIVChFFTUFJTF9TVEFUVVNfU0VOVBADEhcKE0VNQUlMX1NUQVRVU19GQUlMRUQQBDK+AQoMRW1haWxTZXJ2aWNlEjoKCVNlbmRFbWFpbBIULnYxLlNlbmRFbWFpbFJlcXVlc3QaFS52MS5TZW5kRW1haWxSZXNwb25zZSIAEjYKDFN0cmVhbUV2ZW50cxIXLnYxLlN0cmVhbUV2ZW50c1JlcXVlc3QaCS52MS5FdmVudCIAMAESOgoJQWNrRXZlbnRzEhQudjEuQWNrRXZlbnRzUmVxdWVzdBoVLnYxLkFja0V2ZW50c1Jlc3BvbnNlIgBCXwoGY29tLnYxQgpFbWFpbFByb3RvUAFaIWdpdGh1Yi5jb20vZW1haWxhcGkvc2RrLWdvL2dlbi92MaICA1ZYWKoCAlYxygICVjHiAg5WMVxHUEJNZXRhZGF0YeoCAlYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_v1_events]);
 
 /**
  * Request to send an email.
@@ -108,12 +108,13 @@ export type SendEmailRequest = Message<"v1.SendEmailRequest"> & {
   references: string[];
 
   /**
-   * Set to `true` to return immediately and send the email in the background.
-   * Recommended for bulk sending or when attachments are large.
+   * Reply to a previous email using its email_id (from our response).
+   * Automatically resolves to the correct Message-ID for threading headers.
+   * For advanced use, you can still use in_reply_to with raw Message-IDs.
    *
-   * @generated from field: bool async = 13;
+   * @generated from field: string reply_to = 13;
    */
-  async: boolean;
+  replyTo: string;
 };
 
 /**
@@ -181,30 +182,23 @@ export const AttachmentSchema: GenMessage<Attachment> = /*@__PURE__*/
  */
 export type SendEmailResponse = Message<"v1.SendEmailResponse"> & {
   /**
-   * Unique system ID for this email. Use this to track events.
+   * Unique email ID. Use this to track events and for reply_to in future emails.
    *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
-   * Current status.
+   * Status is always QUEUED. Listen to webhooks/events for delivery status.
    *
    * @generated from field: v1.EmailStatus status = 2;
    */
   status: EmailStatus;
 
   /**
-   * Upstream Message-ID (if available immediately).
-   *
-   * @generated from field: string message_id = 3;
-   */
-  messageId: string;
-
-  /**
    * Human-readable description of the status.
    *
-   * @generated from field: string status_message = 4;
+   * @generated from field: string status_message = 3;
    */
   statusMessage: string;
 };

@@ -106,11 +106,11 @@ The `client.send` method accepts an object with the following properties:
 </ParamField>
 
 <ParamField body="replyTo" type="string">
-  Email address to use for the Reply-To header. // Actually proto has inReplyTo for threading, but standard email APIs usually have replyTo. Proto has `inReplyTo`. Let's stick to exact types from `SendEmailRequest`.
+  Reply to a previous email using its `id` from our response. We automatically resolve threading headers.
 </ParamField>
 
 <ParamField body="inReplyTo" type="string">
-  Message-ID of the email being replied to (for threading).
+  Raw Message-ID for threading (advanced). Use `replyTo` for simpler threading with our email IDs.
 </ParamField>
 
 <ParamField body="references" type="string[]">
@@ -129,6 +129,7 @@ The `client.send` method accepts an object with the following properties:
   Schedule the email for future delivery.
 </ParamField>
 
-<ParamField body="async" type="boolean">
-  If true, queue for async processing (we handle retries). If false, send synchronously. Emails with attachments are always async.
-</ParamField>
+<Note>
+  All emails are queued for reliable delivery with automatic retries. Use [webhooks](/receiving/webhooks) or [event streaming](/sending/typescript-sdk#real-time-event-streaming) to track delivery status.
+</Note>
+
